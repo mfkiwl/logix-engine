@@ -291,11 +291,16 @@
     "outputSchema": {
       "$defs": {
         "Architecture": {
-          "description": "FPGA families. Milestone 1 supports iCE40 only.",
+          "description": "FPGA families.",
           "oneOf": [
             {
               "const": "ice40",
               "description": "Lattice iCE40.",
+              "type": "string"
+            },
+            {
+              "const": "ecp5",
+              "description": "Lattice ECP5.",
               "type": "string"
             }
           ]
@@ -339,15 +344,22 @@
           "properties": {
             "architecture": {
               "$ref": "#/$defs/Architecture",
-              "description": "The FPGA family: ice40."
+              "description": "The FPGA family: ice40 or ecp5."
             },
             "nextpnr_device": {
-              "description": "The device type nextpnr uses, such as hx8k.",
+              "description": "The device type nextpnr uses, such as hx8k for iCE40 or 25k for\nECP5.",
               "type": "string"
             },
             "nextpnr_package": {
-              "description": "The package nextpnr uses, such as tq144:4k.",
+              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5.",
               "type": "string"
+            },
+            "nextpnr_speed": {
+              "description": "The speed grade nextpnr uses, such as 6. ECP5 only, where it's\nrequired.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "part_number": {
               "description": "The vendor's part number, such as ICE40HX4K-TQ144.",
@@ -458,11 +470,16 @@
     "inputSchema": {
       "$defs": {
         "Architecture": {
-          "description": "FPGA families. Milestone 1 supports iCE40 only.",
+          "description": "FPGA families.",
           "oneOf": [
             {
               "const": "ice40",
               "description": "Lattice iCE40.",
+              "type": "string"
+            },
+            {
+              "const": "ecp5",
+              "description": "Lattice ECP5.",
               "type": "string"
             }
           ]
@@ -532,15 +549,22 @@
           "properties": {
             "architecture": {
               "$ref": "#/$defs/Architecture",
-              "description": "The FPGA family: ice40."
+              "description": "The FPGA family: ice40 or ecp5."
             },
             "nextpnr_device": {
-              "description": "The device type nextpnr uses, such as hx8k.",
+              "description": "The device type nextpnr uses, such as hx8k for iCE40 or 25k for\nECP5.",
               "type": "string"
             },
             "nextpnr_package": {
-              "description": "The package nextpnr uses, such as tq144:4k.",
+              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5.",
               "type": "string"
+            },
+            "nextpnr_speed": {
+              "description": "The speed grade nextpnr uses, such as 6. ECP5 only, where it's\nrequired.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "part_number": {
               "description": "The vendor's part number, such as ICE40HX4K-TQ144.",
@@ -824,11 +848,16 @@
     "inputSchema": {
       "$defs": {
         "Architecture": {
-          "description": "FPGA families. Milestone 1 supports iCE40 only.",
+          "description": "FPGA families.",
           "oneOf": [
             {
               "const": "ice40",
               "description": "Lattice iCE40.",
+              "type": "string"
+            },
+            {
+              "const": "ecp5",
+              "description": "Lattice ECP5.",
               "type": "string"
             }
           ]
@@ -898,15 +927,22 @@
           "properties": {
             "architecture": {
               "$ref": "#/$defs/Architecture",
-              "description": "The FPGA family: ice40."
+              "description": "The FPGA family: ice40 or ecp5."
             },
             "nextpnr_device": {
-              "description": "The device type nextpnr uses, such as hx8k.",
+              "description": "The device type nextpnr uses, such as hx8k for iCE40 or 25k for\nECP5.",
               "type": "string"
             },
             "nextpnr_package": {
-              "description": "The package nextpnr uses, such as tq144:4k.",
+              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5.",
               "type": "string"
+            },
+            "nextpnr_speed": {
+              "description": "The speed grade nextpnr uses, such as 6. ECP5 only, where it's\nrequired.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "part_number": {
               "description": "The vendor's part number, such as ICE40HX4K-TQ144.",
@@ -1283,11 +1319,16 @@
     "inputSchema": {
       "$defs": {
         "Architecture": {
-          "description": "FPGA families. Milestone 1 supports iCE40 only.",
+          "description": "FPGA families.",
           "oneOf": [
             {
               "const": "ice40",
               "description": "Lattice iCE40.",
+              "type": "string"
+            },
+            {
+              "const": "ecp5",
+              "description": "Lattice ECP5.",
               "type": "string"
             }
           ]
@@ -1357,15 +1398,22 @@
           "properties": {
             "architecture": {
               "$ref": "#/$defs/Architecture",
-              "description": "The FPGA family: ice40."
+              "description": "The FPGA family: ice40 or ecp5."
             },
             "nextpnr_device": {
-              "description": "The device type nextpnr uses, such as hx8k.",
+              "description": "The device type nextpnr uses, such as hx8k for iCE40 or 25k for\nECP5.",
               "type": "string"
             },
             "nextpnr_package": {
-              "description": "The package nextpnr uses, such as tq144:4k.",
+              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5.",
               "type": "string"
+            },
+            "nextpnr_speed": {
+              "description": "The speed grade nextpnr uses, such as 6. ECP5 only, where it's\nrequired.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "part_number": {
               "description": "The vendor's part number, such as ICE40HX4K-TQ144.",
@@ -2184,11 +2232,16 @@
     "inputSchema": {
       "$defs": {
         "Architecture": {
-          "description": "FPGA families. Milestone 1 supports iCE40 only.",
+          "description": "FPGA families.",
           "oneOf": [
             {
               "const": "ice40",
               "description": "Lattice iCE40.",
+              "type": "string"
+            },
+            {
+              "const": "ecp5",
+              "description": "Lattice ECP5.",
               "type": "string"
             }
           ]
@@ -2258,15 +2311,22 @@
           "properties": {
             "architecture": {
               "$ref": "#/$defs/Architecture",
-              "description": "The FPGA family: ice40."
+              "description": "The FPGA family: ice40 or ecp5."
             },
             "nextpnr_device": {
-              "description": "The device type nextpnr uses, such as hx8k.",
+              "description": "The device type nextpnr uses, such as hx8k for iCE40 or 25k for\nECP5.",
               "type": "string"
             },
             "nextpnr_package": {
-              "description": "The package nextpnr uses, such as tq144:4k.",
+              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5.",
               "type": "string"
+            },
+            "nextpnr_speed": {
+              "description": "The speed grade nextpnr uses, such as 6. ECP5 only, where it's\nrequired.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "part_number": {
               "description": "The vendor's part number, such as ICE40HX4K-TQ144.",
@@ -2628,11 +2688,16 @@
     "inputSchema": {
       "$defs": {
         "Architecture": {
-          "description": "FPGA families. Milestone 1 supports iCE40 only.",
+          "description": "FPGA families.",
           "oneOf": [
             {
               "const": "ice40",
               "description": "Lattice iCE40.",
+              "type": "string"
+            },
+            {
+              "const": "ecp5",
+              "description": "Lattice ECP5.",
               "type": "string"
             }
           ]
@@ -2702,15 +2767,22 @@
           "properties": {
             "architecture": {
               "$ref": "#/$defs/Architecture",
-              "description": "The FPGA family: ice40."
+              "description": "The FPGA family: ice40 or ecp5."
             },
             "nextpnr_device": {
-              "description": "The device type nextpnr uses, such as hx8k.",
+              "description": "The device type nextpnr uses, such as hx8k for iCE40 or 25k for\nECP5.",
               "type": "string"
             },
             "nextpnr_package": {
-              "description": "The package nextpnr uses, such as tq144:4k.",
+              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5.",
               "type": "string"
+            },
+            "nextpnr_speed": {
+              "description": "The speed grade nextpnr uses, such as 6. ECP5 only, where it's\nrequired.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "part_number": {
               "description": "The vendor's part number, such as ICE40HX4K-TQ144.",

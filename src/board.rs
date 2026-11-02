@@ -110,7 +110,12 @@ pub fn resolve(spec: &BoardSpec) -> Result<ResolvedBoard, ToolError> {
         BoardSpec::Definition(d) => {
             let (fpga_id, fpga) = match (&d.fpga_id, &d.fpga) {
                 (Some(id), None) => (Some(id.clone()), fpga_by_id(id)?),
-                (None, Some(f)) => (None, f.clone()),
+                (None, Some(f)) => {
+                    f.validate().map_err(|e| {
+                        ToolError::request(format!("Invalid FPGA definition: {e}."))
+                    })?;
+                    (None, f.clone())
+                }
                 _ => {
                     return Err(ToolError::request(
                         "A board definition needs exactly one of fpga_id and fpga.",

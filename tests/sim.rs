@@ -890,3 +890,66 @@ async fn failed_calls_carry_their_commands_in_the_error() {
     assert_eq!(commands[0]["tool"], "iverilog");
     assert!(commands[0]["shell"].as_str().unwrap().contains("iverilog"));
 }
+
+/// An ECP5 design with a primitive that has a simulation model (a LUT) and
+/// one that only has a black box for lint (the PLL).
+const ECP5_MAIN: &str = r#"module main(input CLK, output LED0, output LED1);
+  wire [3:0] q;
+  counter c(.clk(CLK), .q(q));
+  LUT4 #(.INIT(16'h8000)) all_ones (.A(q[0]), .B(q[1]), .C(q[2]), .D(q[3]), .Z(LED0));
+`ifdef SYNTHESIZE
+  /* verilator lint_off PINMISSING */
+  EHXPLLL #(.CLKI_DIV(1), .CLKFB_DIV(4), .CLKOP_DIV(6)) pll (.CLKI(CLK), .CLKFB(LED1), .CLKOP(LED1));
+`else
+  assign LED1 = CLK;
+`endif
+endmodule
+"#;
+
+#[tokio::test]
+async fn ecp5_lint_test_and_simulate_use_the_ecp5_models() {
+    let state = engine().await;
+    let (_tmp, src) = project();
+    std::fs::write(src.join("main.v"), ECP5_MAIN).unwrap();
+
+    let c = call();
+    let out = lint::run(
+        &state,
+        lint_input(&src, json!({"board": "icesugar-pro"})),
+        &c,
+    )
+    .await
+    .unwrap();
+    assert!(out.passed, "{:?}", out.diagnostics);
+    let args = &out.commands[0].args;
+    assert!(
+        args.iter()
+            .any(|a| a.ends_with("share/yosys/ecp5/cells_bb.v")),
+        "{args:?}"
+    );
+    // Without a top module, warnings in the models are still off.
+    let out = lint::run(
+        &state,
+        lint_input(&src, json!({"board": "icesugar-pro", "top_module": null})),
+        &call(),
+    )
+    .await
+    .unwrap();
+    assert!(out.passed, "{:?}", out.diagnostics);
+
+    let out = test::run(
+        &state,
+        test_input(&src, json!({"board": "icesugar-pro"})),
+        &call(),
+    )
+    .await
+    .unwrap();
+    assert!(out.passed, "{:?}", out.testbenches);
+    let args = &out.commands[0].args;
+    assert!(args.contains(&"-DNO_INCLUDES".to_string()), "{args:?}");
+    assert!(
+        args.iter()
+            .any(|a| a.ends_with("share/yosys/ecp5/cells_sim.v")),
+        "{args:?}"
+    );
+}

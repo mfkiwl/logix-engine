@@ -28,7 +28,7 @@ The Type columns in this document use these logical types. Each maps to a JSON t
 | catalog ID | string | Lowercase letters, digits and hyphens |
 | board specification | string or object | A catalog ID, or a full board definition |
 | board definition | object | A board entry in the catalog format: its `description`, its FPGA as `fpga_id`, a map of programming variants keyed by variant name (`variants`), and the name of its default variant (`default_variant`) |
-| FPGA definition | object | An FPGA entry in the catalog format: its `architecture` (`ice40` for now), `part_number`, `size`, and the toolchain parameters `nextpnr_device` and `nextpnr_package` |
+| FPGA definition | object | An FPGA entry in the catalog format: its `architecture` (`ice40` or `ecp5`), `part_number`, `size`, and the toolchain parameters `nextpnr_device`, `nextpnr_package` and, for ECP5 only, `nextpnr_speed`, the speed grade |
 | programming variant | object | One way to program a board, such as flash or sram, or a particular cable, such as FT232 or FT2232. It names the programmer to run, such as `openfpgaloader`, and gives the full argument template for it, with variables such as `${VID}`, `${PID}`, `${BUS}`, `${DEV}`, `${SERIAL}` and `${BITSTREAM}`, and the USB filter that finds the device: `vid`, `pid` and an optional `product_regex`, a regular expression the device's product name must match, for boards that share USB IDs. The engine maps the programmer name to its executable and the package that provides it, so there are no separate programmer definitions. Milestone 1 supports the programmers `openfpgaloader` and `iceprog` |
 | catalog query | object | Selects entries from one catalog section. It has `fetch`, a boolean that defaults to false, and `ids`, an optional list of catalog IDs. When `fetch` is true, the section is returned with only the listed IDs, or with all its entries when `ids` is omitted. An ID that isn't in the section is a request error |
 | date tag | string | `yyyy-mm-dd` |
@@ -180,7 +180,7 @@ A package is unpacked into a temporary folder and renamed into place only when i
 
 Checks the design and, optionally, its testbenches with Verilator in lint-only mode, like `apio lint`. It is much faster than a build and finds likely mistakes that synthesis accepts, such as width mismatches. It writes nothing and needs no build folder.
 
-It runs Verilator with Apio's options, so it reports the same problems: `--lint-only --quiet --bbox-unsup --timing -Wno-TIMESCALEMOD -Wno-MULTITOP`, the macros `SYNTHESIZE` (unless `synthesize` is false) and `APIO_SIM=0`, the top module when given, the request's macros, and the FPGA's primitive models, such as `cells_sim.v` with `NO_ICE40_DEFAULT_ASSIGNMENTS` for iCE40, so designs that use primitives such as `SB_IO` lint cleanly. Verilator treats warnings as failures, as in Apio, so `passed` is false when there are warnings too. Warnings in the primitive models aren't the user's to fix, so the engine turns them off with a Verilator config, like Apio's `hardware.vlt`. Without it they would appear when `top_module` is omitted, since Verilator then checks every unused primitive in the models.
+It runs Verilator with Apio's options, so it reports the same problems: `--lint-only --quiet --bbox-unsup --timing -Wno-TIMESCALEMOD -Wno-MULTITOP`, the macros `SYNTHESIZE` (unless `synthesize` is false) and `APIO_SIM=0`, the top module when given, the request's macros, and the FPGA's primitive models, such as `cells_sim.v` with `NO_ICE40_DEFAULT_ASSIGNMENTS` for iCE40, or `cells_sim.v` and the black boxes in `cells_bb.v` for ECP5, so designs that use primitives such as `SB_IO` or `EHXPLLL` lint cleanly. Verilator treats warnings as failures, as in Apio, so `passed` is false when there are warnings too. Warnings in the primitive models aren't the user's to fix, so the engine turns them off with a Verilator config, like Apio's `hardware.vlt`. When `top_module` is omitted, Verilator takes every module that no other module uses as a top module, so the engine passes the model files as libraries (`-v`): only the primitives the design uses are read. With a top module, the files are passed as Apio passes them.
 
 **Problems are the result.** Lint's job is to find problems, so problems in the design are returned in `diagnostics` with `passed` set to false, not as a design error. The other errors in the list below still apply.
 
@@ -570,7 +570,7 @@ Output:
 
 Synthesizes the design, places and routes it, and generates the bitstream in the build folder. A build with no changes since the last one returns quickly with `up_to_date` set.
 
-For iCE40 it runs yosys (`synth_ice40`), nextpnr-ice40 and icepack with the same commands as Apio, so the bitstreams match Apio's for the same package versions.
+It runs the same commands as Apio, so the bitstreams match Apio's for the same package versions: for iCE40, yosys (`synth_ice40`), nextpnr-ice40 and icepack; for ECP5, yosys (`synth_ecp5`), nextpnr-ecp5 (with Apio's `--timing-allow-fail --force`) and `ecppack --compress`. The constraint file is in the architecture's format: `.pcf` for iCE40, `.lpf` for ECP5.
 
 **Table 6.** build tool inputs
 
@@ -588,7 +588,7 @@ For iCE40 it runs yosys (`synth_ice40`), nextpnr-ice40 and icepack with the same
 | --- | --- | --- |
 | `bitstream` | relative path | Path of the bitstream, relative to the build folder |
 | `up_to_date` | boolean | True if nothing had to be rebuilt |
-| `resources_usage` | map of resource usage | Resource use, keyed by the toolchain's resource names. For iCE40: `ICESTORM_LC` (logic cells, each a LUT and a flip-flop), `ICESTORM_RAM` (block RAMs), `SB_IO` (I/O pins), `SB_GB` (global buffers), `ICESTORM_PLL` and others. Each value has integer `used` and `available` fields |
+| `resources_usage` | map of resource usage | Resource use, keyed by the toolchain's resource names. For iCE40: `ICESTORM_LC` (logic cells, each a LUT and a flip-flop), `ICESTORM_RAM` (block RAMs), `SB_IO` (I/O pins), `SB_GB` (global buffers), `ICESTORM_PLL` and others. For ECP5: `TRELLIS_COMB` (LUTs), `TRELLIS_FF` (flip-flops), `TRELLIS_IO`, `DP16KD` (block RAMs), `MULT18X18D`, `EHXPLLL` and others. Each value has integer `used` and `available` fields |
 | `timing` | map of numbers | Maximum frequency in MHz for each clock net, keyed by the clock net name nextpnr reports, rounded to 0.01 MHz |
 | `warnings` | list of diagnostics | Warnings from the tools. See diagnostic fields in [Table 4](#results-and-errors) |
 | `commands` | list of commands | The programs this call ran, in order, so they can be run again without the engine. See [Commands](#commands) |
@@ -607,7 +607,7 @@ For iCE40 it runs yosys (`synth_ice40`), nextpnr-ice40 and icepack with the same
 
 **Build record.** When a build succeeds, the engine writes a build record into the build folder. It holds the full board spec the build used and its checksum. The `program_board` tool reads it to get the board. A build that fails removes the old record, so `program_board` can't program a stale bitstream.
 
-**Build folder files.** The engine creates the build folder if needed, and first writes a marker file, `.logix-build`, which tells the [clean_build tool](#clean_build-tool) the folder is a build folder. A build makes `hardware.json` (synthesized netlist), `hardware.asc` (placed and routed design), `hardware.pnr` (nextpnr's report), `hardware.bin` (the bitstream), the tool logs `synth.log` and `pnr.log`, and the build record `build-record.json`, written last. These names are a fixed engine convention, the same for every build and host, taken from Apio. Each build replaces the files the previous build made, such as the bitstream, intermediate files and reports. When a build has to run again, it deletes the previous build's outputs first, so a failed build never leaves an old bitstream that looks current. An up-to-date build keeps them. The engine never deletes files in the build folder that it didn't make, such as files put there by the host or the user.
+**Build folder files.** The engine creates the build folder if needed, and first writes a marker file, `.logix-build`, which tells the [clean_build tool](#clean_build-tool) the folder is a build folder. A build makes `hardware.json` (synthesized netlist), the placed and routed design (`hardware.asc` for iCE40, `hardware.config` for ECP5), `hardware.pnr` (nextpnr's report), the bitstream (`hardware.bin` for iCE40, `hardware.bit` for ECP5), the tool logs `synth.log` and `pnr.log`, and the build record `build-record.json`, written last. These names are a fixed engine convention, the same for every build and host, taken from Apio. Each build replaces the files the previous build made, such as the bitstream, intermediate files and reports. When a build has to run again, it deletes the previous build's outputs first, so a failed build never leaves an old bitstream that looks current. An up-to-date build keeps them. The engine never deletes files in the build folder that it didn't make, such as files put there by the host or the user.
 
 **Example**
 
@@ -785,7 +785,7 @@ Output:
 }
 ```
 
-**Catalog contents.** The catalog is data in the engine's repo, `catalog/boards.json` and `catalog/fpgas.json`, imported from Apio's definitions. Milestone 1 has every iCE40 FPGA and the 22 iCE40 boards that program with `openfpgaloader` or `iceprog`. The other iCE40 boards and the other architectures are added as their programmers and toolchains are supported.
+**Catalog contents.** The catalog is data in the engine's repo, `catalog/boards.json` and `catalog/fpgas.json`, imported from Apio's definitions. It has every iCE40 and ECP5 FPGA, and the boards that program with `openfpgaloader` or `iceprog`: 22 iCE40 boards and 26 ECP5 boards. Apio gives no USB IDs for some ECP5 boards that program through a cable named with openFPGALoader's `-c` option, such as `-c ft2232`; their filter is the cable's default USB IDs in openFPGALoader. The other boards, Gowin and Xilinx are added as their programmers and toolchains are supported.
 
 ## get_engine_info tool
 

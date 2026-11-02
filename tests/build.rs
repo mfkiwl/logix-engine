@@ -171,6 +171,68 @@ async fn builds_then_is_up_to_date_until_an_input_changes() {
     );
 }
 
+/// An ECP5 build with Apio's commands, for the iCESugar-Pro.
+#[tokio::test]
+async fn builds_an_ecp5_design() {
+    let state = engine().await;
+    let tmp = tempfile::tempdir().unwrap();
+    let src = tmp.path().canonicalize().unwrap();
+    let from = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/designs/blinky-ecp5");
+    for f in ["main.v", "main.lpf"] {
+        std::fs::copy(from.join(f), src.join(f)).unwrap();
+    }
+    let out = build_it(
+        &state,
+        &src,
+        json!({"board": "icesugar-pro", "constraint_file": "main.lpf"}),
+    )
+    .await
+    .unwrap();
+    let tools: Vec<_> = out.commands.iter().map(|c| c.tool.as_str()).collect();
+    assert_eq!(tools, ["yosys", "nextpnr-ecp5", "ecppack"]);
+    assert!(
+        out.commands[0]
+            .args
+            .iter()
+            .any(|a| a.starts_with("synth_ecp5 -top main"))
+    );
+    let pnr = &out.commands[1].args[1..];
+    assert_eq!(
+        &pnr[..6],
+        ["--25k", "--package", "CABGA256", "--speed", "6", "--json"]
+    );
+    assert!(pnr.contains(&"--timing-allow-fail".to_string()));
+    assert_eq!(out.bitstream, "hardware.bit");
+    let bit = std::fs::read(src.join("_build/default/hardware.bit")).unwrap();
+    assert!(bit.len() > 10_000, "{}", bit.len());
+    assert!(
+        out.resources_usage["TRELLIS_COMB"].used > 0,
+        "{:?}",
+        out.resources_usage
+    );
+    assert_eq!(out.timing.len(), 1, "{:?}", out.timing);
+
+    // A pin that doesn't exist is a design error.
+    std::fs::write(
+        src.join("main.lpf"),
+        "LOCATE COMP \"CLK\" SITE \"P6\";\nLOCATE COMP \"LED0\" SITE \"ZZ99\";\n",
+    )
+    .unwrap();
+    let err = build_it(
+        &state,
+        &src,
+        json!({"board": "icesugar-pro", "constraint_file": "main.lpf"}),
+    )
+    .await
+    .unwrap_err();
+    assert_eq!(
+        err.category,
+        logix_engine::errors::Category::Design,
+        "{err:?}"
+    );
+    assert!(!src.join("_build/default/hardware.bit").exists());
+}
+
 #[tokio::test]
 async fn a_syntax_error_is_a_design_error_and_removes_the_old_bitstream() {
     let state = engine().await;

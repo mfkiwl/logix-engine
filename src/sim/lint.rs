@@ -62,13 +62,21 @@ pub fn verilator_args(
         args.push(top.into());
     }
     args.extend(req.sources.define_args());
-    args.extend(lib.defines.iter().map(OsString::from));
+    args.extend(lib.lint_defines.iter().map(OsString::from));
     args.extend(includes.iter().cloned());
     let mut lib_dir = OsString::from("-I");
     lib_dir.push(&lib.include_dir);
     args.push(lib_dir);
     args.push(config.into());
-    args.extend(lib.files.iter().map(OsString::from));
+    // Without a top module, every module no other module uses is a top, so
+    // the models are read as libraries (-v): only the primitives the design
+    // uses are checked. With one, the files are passed as Apio passes them.
+    for f in &lib.lint_files {
+        if req.top_module.is_none() {
+            args.push("-v".into());
+        }
+        args.push(f.into());
+    }
     args.extend(req.sources.all_files().into_iter().map(OsString::from));
     args
 }

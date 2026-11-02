@@ -1,10 +1,12 @@
-//! The iCE40 build (docs/tool-api.md, "build tool"): yosys, nextpnr-ice40 and
-//! icepack, run with the same commands as Apio, so the bitstreams match.
+//! The build (docs/tool-api.md, "build tool"), run with the same commands as
+//! Apio, so the bitstreams match: yosys, nextpnr-ice40 and icepack for
+//! iCE40; yosys, nextpnr-ecp5 and ecppack for ECP5.
 //!
 //! Build folder files: the marker `.logix-build` (written first, it tells
 //! clean_build the folder is a build folder), `hardware.json` (yosys),
-//! `hardware.asc` and `hardware.pnr` (nextpnr's placed design and report),
-//! `hardware.bin` (the bitstream), the logs `synth.log` and `pnr.log`, and
+//! `hardware.asc` (iCE40) or `hardware.config` (ECP5) and `hardware.pnr`
+//! (nextpnr's placed design and report), `hardware.bin` (iCE40) or
+//! `hardware.bit` (ECP5), the bitstream, the logs `synth.log` and `pnr.log`, and
 //! the build record `build-record.json` (written last, on success only).
 //! These names are a fixed convention of the engine, documented in the tool
 //! API, so hosts can rely on them.
@@ -21,6 +23,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 use crate::board::ResolvedBoard;
+use crate::catalog::{Architecture, FpgaDefinition};
 use crate::errors::{Category, Diagnostic, ToolError};
 use crate::progress::OutputLevel;
 use crate::progress::Phases;
@@ -32,17 +35,96 @@ use parse::ResourceUsage;
 
 pub const MARKER: &str = ".logix-build";
 pub const RECORD: &str = "build-record.json";
-pub const BITSTREAM: &str = "hardware.bin";
-/// Every file a build makes, deleted before a build runs again.
+/// Every file a build makes, for any architecture, deleted before a build
+/// runs again.
 pub const OUTPUTS: &[&str] = &[
     RECORD,
     "hardware.json",
     "hardware.asc",
+    "hardware.config",
     "hardware.pnr",
-    BITSTREAM,
+    "hardware.bin",
+    "hardware.bit",
     "synth.log",
     "pnr.log",
 ];
+
+/// The bitstream's file name in the build folder.
+pub fn bitstream_name(arch: Architecture) -> &'static str {
+    match arch {
+        Architecture::Ice40 => "hardware.bin",
+        Architecture::Ecp5 => "hardware.bit",
+    }
+}
+
+/// yosys's synthesis command for the architecture.
+fn synth_command(arch: Architecture) -> &'static str {
+    match arch {
+        Architecture::Ice40 => "synth_ice40",
+        Architecture::Ecp5 => "synth_ecp5",
+    }
+}
+
+/// The place-and-route program and its arguments, Apio's, plus the log
+/// file. Run in the build folder.
+pub fn pnr_command(
+    fpga: &FpgaDefinition,
+    constraint_file: &Path,
+    verbose: bool,
+) -> (&'static str, Vec<OsString>) {
+    let mut args: Vec<OsString> = vec![
+        format!("--{}", fpga.nextpnr_device).into(),
+        "--package".into(),
+        fpga.nextpnr_package.clone().into(),
+    ];
+    let tool = match fpga.architecture {
+        Architecture::Ice40 => {
+            for a in ["--json", "hardware.json", "--asc", "hardware.asc"] {
+                args.push(a.into());
+            }
+            args.extend(["--report".into(), "hardware.pnr".into(), "--pcf".into()]);
+            args.push(constraint_file.into());
+            "nextpnr-ice40"
+        }
+        Architecture::Ecp5 => {
+            args.push("--speed".into());
+            args.push(fpga.nextpnr_speed.clone().unwrap_or_default().into());
+            for a in ["--json", "hardware.json", "--textcfg", "hardware.config"] {
+                args.push(a.into());
+            }
+            args.extend(["--report".into(), "hardware.pnr".into(), "--lpf".into()]);
+            args.push(constraint_file.into());
+            args.extend(["--timing-allow-fail".into(), "--force".into()]);
+            "nextpnr-ecp5"
+        }
+    };
+    args.extend(["--log".into(), "pnr.log".into()]);
+    if !verbose {
+        args.push("-q".into());
+    }
+    (tool, args)
+}
+
+/// The bitstream packer and its arguments, Apio's. Run in the build
+/// folder. `package_dir` is the toolchain package's folder.
+pub fn pack_command(arch: Architecture, package_dir: &Path) -> (&'static str, Vec<OsString>) {
+    match arch {
+        Architecture::Ice40 => (
+            "icepack",
+            vec!["hardware.asc".into(), "hardware.bin".into()],
+        ),
+        Architecture::Ecp5 => (
+            "ecppack",
+            vec![
+                "--compress".into(),
+                "--db".into(),
+                package_dir.join("share/trellis/database").into(),
+                "hardware.config".into(),
+                "hardware.bit".into(),
+            ],
+        ),
+    }
+}
 /// The package with the iCE40 tools.
 pub const TOOLCHAIN: &str = "oss-cad-suite";
 
@@ -346,7 +428,8 @@ pub async fn build(
         .packages
         .ensure(&needed, state.auto_install, &phases, &call.cancel)
         .await?;
-    let bin = state.packages.package_dir(&spec).join("bin");
+    let package_dir = state.packages.package_dir(&spec);
+    let bin = package_dir.join("bin");
 
     let out = &req.build_folder;
     fs::create_dir_all(out).map_err(|e| io_error("create the build folder", e))?;
@@ -371,7 +454,8 @@ pub async fn build(
         out.join("synth.log").into(),
         "-p".into(),
         format!(
-            "synth_ice40 -top {} -json \"{}\"",
+            "{} -top {} -json \"{}\"",
+            synth_command(req.board.fpga.architecture),
             req.top_module,
             out.join("hardware.json").display()
         )
@@ -403,33 +487,12 @@ pub async fn build(
     // Place and route.
     phases.start("Placing and routing");
     let fpga = &req.board.fpga;
-    let mut args: Vec<OsString> = vec![
-        format!("--{}", fpga.nextpnr_device).into(),
-        "--package".into(),
-        fpga.nextpnr_package.clone().into(),
-        "--json".into(),
-        "hardware.json".into(),
-        "--asc".into(),
-        "hardware.asc".into(),
-        "--report".into(),
-        "hardware.pnr".into(),
-        "--pcf".into(),
-        req.source_folder.join(&req.constraint_file).into(),
-        "--log".into(),
-        "pnr.log".into(),
-    ];
-    if !req.verbose {
-        args.push("-q".into());
-    }
-    let pnr = run_step(
-        "placing and routing",
-        "nextpnr-ice40",
-        &bin,
-        args,
-        out,
-        call,
-    )
-    .await;
+    let (pnr_tool, args) = pnr_command(
+        fpga,
+        &req.source_folder.join(&req.constraint_file),
+        req.verbose,
+    );
+    let pnr = run_step("placing and routing", pnr_tool, &bin, args, out, call).await;
     let pnr_out = match &pnr {
         Ok(o) => o.clone(),
         Err(e) => e.details.clone(),
@@ -440,8 +503,8 @@ pub async fn build(
 
     // Bitstream.
     phases.start("Packing bitstream");
-    let args: Vec<OsString> = vec!["hardware.asc".into(), BITSTREAM.into()];
-    run_step("packing the bitstream", "icepack", &bin, args, out, call).await?;
+    let (pack_tool, args) = pack_command(fpga.architecture, &package_dir);
+    run_step("packing the bitstream", pack_tool, &bin, args, out, call).await?;
 
     let report = fs::read_to_string(out.join("hardware.pnr"))
         .map_err(|e| ToolError::new(Category::Tool, format!("nextpnr wrote no report: {e}")))?;
@@ -452,7 +515,7 @@ pub async fn build(
     let mut seen = std::collections::HashSet::new();
     warnings.retain(|w| seen.insert((w.file.clone(), w.line, w.text.clone())));
     let result = BuildResult {
-        bitstream: BITSTREAM.into(),
+        bitstream: bitstream_name(fpga.architecture).into(),
         up_to_date: false,
         resources_usage,
         timing,

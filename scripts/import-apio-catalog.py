@@ -12,12 +12,15 @@ APIO_PACKAGES_FOLDER defaults to ~/.apio/packages. It must hold Apio's
 definitions package (boards.jsonc, programmers.jsonc) and oss-cad-suite
 package (FPGAS.jsonc). Review the diff after running it.
 
-What's imported (Milestone 1):
-- Every iCE40 FPGA.
-- The iCE40 boards whose programmer the engine supports: openfpgaloader and
-  iceprog. Each gets one programming variant, "flash", with Apio's full
+What's imported:
+- Every iCE40 and ECP5 FPGA. ECP5 FPGAs also get nextpnr_speed.
+- The iCE40 and ECP5 boards whose programmer the engine supports:
+  openfpgaloader and iceprog. Each gets one programming variant, "flash", with Apio's full
   command arguments. Apio's ${BIN_FILE} becomes ${BITSTREAM}, added at the
-  end when Apio leaves it out.
+  end when Apio leaves it out. An openFPGALoader board without a USB filter
+  in Apio, such as one programmed with an external cable, gets the default
+  USB IDs of the cable its -c option names (CABLE_USB_IDS), so the engine
+  can find the device.
 """
 
 import json
@@ -25,7 +28,17 @@ import os
 import re
 import sys
 
-ARCHITECTURES = {"ice40"}
+ARCHITECTURES = {"ice40", "ecp5"}
+
+# openFPGALoader's default USB IDs for the cables Apio's boards name with -c
+# (openFPGALoader's src/cable.hpp).
+CABLE_USB_IDS = {
+    "ft2232": ("0403", "6010"),
+    "ft232": ("0403", "6014"),
+    "ft231X": ("0403", "6015"),
+    "usb-blaster": ("09fb", "6001"),
+    "cmsisdap": ("0d28", "0204"),
+}
 PROGRAMMERS = {"openfpgaloader", "iceprog"}
 
 
@@ -88,19 +101,26 @@ def main():
             "nextpnr_device": params["nextpnr-type"],
             "nextpnr_package": params["nextpnr-package"],
         }
+        if "nextpnr-speed" in params:
+            fpgas[fid]["nextpnr_speed"] = params["nextpnr-speed"]
 
     boards, skipped = {}, []
     for bid, b in sorted(apio_boards.items()):
         if b["fpga-id"] not in fpgas:
             continue
         pid = b["programmer"]["id"]
-        if pid not in PROGRAMMERS or "usb" not in b:
-            skipped.append(f"{bid} ({pid})")
-            continue
         args = " ".join(
             a for a in [apio_programmers[pid].get("args", ""), b["programmer"].get("extra-args", "")] if a
         )
-        args = args.replace("${BIN_FILE}", "${BITSTREAM}")
+        if "usb" not in b and pid == "openfpgaloader":
+            cable = re.search(r"-c (\S+)", args)
+            if cable and cable.group(1) in CABLE_USB_IDS:
+                vid, upid = CABLE_USB_IDS[cable.group(1)]
+                b = dict(b, usb={"vid": vid, "pid": upid})
+        if pid not in PROGRAMMERS or "usb" not in b:
+            skipped.append(f"{bid} ({pid})")
+            continue
+        args = re.sub(r"\s+", " ", args).replace("${BIN_FILE}", "${BITSTREAM}")
         if "${BITSTREAM}" not in args:
             args += " ${BITSTREAM}"
         usb = {"vid": b["usb"]["vid"].lower(), "pid": b["usb"]["pid"].lower()}

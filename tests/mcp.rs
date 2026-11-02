@@ -266,7 +266,8 @@ async fn get_catalog_returns_the_requested_entries() {
         alhambra["variants"]["flash"]["usb"]["product_regex"],
         "^Alhambra II.*"
     );
-    assert_eq!(out["fpgas"].as_object().unwrap().len(), 40);
+    assert_eq!(out["fpgas"].as_object().unwrap().len(), 79);
+    assert_eq!(out["fpgas"]["lfe5u-25f-6bg256c"]["nextpnr_speed"], "6");
     assert_eq!(out["fpgas"]["ice40hx4k-tq144-8k"]["architecture"], "ice40");
 
     // An unknown ID is a request error.

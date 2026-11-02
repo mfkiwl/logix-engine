@@ -47,10 +47,15 @@ pub struct Sources {
 pub struct SimLibrary {
     /// Folder to search for included files.
     pub include_dir: PathBuf,
-    /// Model files, compiled with the design.
+    /// Model files Icarus compiles with the design.
     pub files: Vec<PathBuf>,
-    /// Macros the models need, as -D arguments.
+    /// Model files Verilator reads with the design: the simulation models,
+    /// plus black boxes for primitives that have none.
+    pub lint_files: Vec<PathBuf>,
+    /// Macros Icarus needs for the models, as -D arguments.
     pub defines: Vec<String>,
+    /// Macros Verilator needs for the models, as -D arguments.
+    pub lint_defines: Vec<String>,
     /// Verilator warnings to turn off in the model files besides its lint
     /// group, which is always off there. Warnings in the models aren't the
     /// user's to fix.
@@ -64,11 +69,29 @@ impl SimLibrary {
         match board.fpga.architecture {
             Architecture::Ice40 => {
                 let dir = package_dir.join("share/yosys/ice40");
+                let defines = vec!["-DNO_ICE40_DEFAULT_ASSIGNMENTS".to_string()];
                 SimLibrary {
                     files: vec![dir.join("cells_sim.v")],
+                    lint_files: vec![dir.join("cells_sim.v")],
                     include_dir: dir,
-                    defines: vec!["-DNO_ICE40_DEFAULT_ASSIGNMENTS".into()],
+                    lint_defines: defines.clone(),
+                    defines,
                     verilator_rules_off: vec!["COMBDLY"],
+                }
+            }
+            Architecture::Ecp5 => {
+                let dir = package_dir.join("share/yosys/ecp5");
+                SimLibrary {
+                    files: vec![dir.join("cells_sim.v")],
+                    lint_files: vec![dir.join("cells_sim.v"), dir.join("cells_bb.v")],
+                    include_dir: dir,
+                    // Per https://github.com/YosysHQ/yosys/issues/5668, as Apio.
+                    defines: vec!["-DNO_INCLUDES".into()],
+                    lint_defines: vec![],
+                    // Apio's: duplicate modules from the models' includes, a
+                    // width mismatch in a model, and the models' partial pin
+                    // lists.
+                    verilator_rules_off: vec!["MODDUP", "WIDTHEXPAND", "PINMISSING"],
                 }
             }
         }

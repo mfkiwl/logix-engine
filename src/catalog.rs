@@ -66,24 +66,57 @@ pub struct UsbFilter {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct FpgaDefinition {
-    /// The FPGA family: ice40.
+    /// The FPGA family: ice40 or ecp5.
     pub architecture: Architecture,
     /// The vendor's part number, such as ICE40HX4K-TQ144.
     pub part_number: String,
     /// The device size, such as 8k.
     pub size: String,
-    /// The device type nextpnr uses, such as hx8k.
+    /// The device type nextpnr uses, such as hx8k for iCE40 or 25k for
+    /// ECP5.
     pub nextpnr_device: String,
-    /// The package nextpnr uses, such as tq144:4k.
+    /// The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for
+    /// ECP5.
     pub nextpnr_package: String,
+    /// The speed grade nextpnr uses, such as 6. ECP5 only, where it's
+    /// required.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub nextpnr_speed: Option<String>,
 }
 
-/// FPGA families. Milestone 1 supports iCE40 only.
+impl FpgaDefinition {
+    /// Checks that the FPGA has the fields its architecture needs.
+    pub fn validate(&self) -> Result<(), String> {
+        let word = |name: &str, v: &str| {
+            if v.is_empty()
+                || !v
+                    .bytes()
+                    .all(|c| c.is_ascii_alphanumeric() || b":-_".contains(&c))
+            {
+                Err(format!("bad {name} {v:?}"))
+            } else {
+                Ok(())
+            }
+        };
+        word("nextpnr_device", &self.nextpnr_device)?;
+        word("nextpnr_package", &self.nextpnr_package)?;
+        match (self.architecture, &self.nextpnr_speed) {
+            (Architecture::Ecp5, Some(speed)) => word("nextpnr_speed", speed),
+            (Architecture::Ecp5, None) => Err("an ecp5 FPGA needs nextpnr_speed".into()),
+            (Architecture::Ice40, Some(_)) => Err("an ice40 FPGA has no nextpnr_speed".into()),
+            (Architecture::Ice40, None) => Ok(()),
+        }
+    }
+}
+
+/// FPGA families.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum Architecture {
     /// Lattice iCE40.
     Ice40,
+    /// Lattice ECP5.
+    Ecp5,
 }
 
 #[derive(Debug, Deserialize)]
@@ -195,10 +228,11 @@ impl Catalog {
     }
 
     pub fn validate(&self) -> Result<(), String> {
-        for id in self.fpgas.keys() {
+        for (id, f) in &self.fpgas {
             if !is_catalog_id(id) {
                 return Err(format!("bad FPGA ID {id:?}"));
             }
+            f.validate().map_err(|e| format!("FPGA {id}: {e}"))?;
         }
         for (id, b) in &self.boards {
             if !is_catalog_id(id) {
@@ -230,10 +264,57 @@ mod tests {
     use super::*;
 
     #[test]
-    fn builtin_catalog_has_the_milestone_1_boards() {
+    fn fpgas_need_their_architectures_fields() {
+        let ecp5 = FpgaDefinition {
+            architecture: Architecture::Ecp5,
+            part_number: "LFE5U-25F-6BG256C".into(),
+            size: "25k".into(),
+            nextpnr_device: "25k".into(),
+            nextpnr_package: "CABGA256".into(),
+            nextpnr_speed: Some("6".into()),
+        };
+        assert!(ecp5.validate().is_ok());
+        let no_speed = FpgaDefinition {
+            nextpnr_speed: None,
+            ..ecp5.clone()
+        };
+        assert!(no_speed.validate().unwrap_err().contains("nextpnr_speed"));
+        let ice40 = FpgaDefinition {
+            architecture: Architecture::Ice40,
+            ..ecp5.clone()
+        };
+        assert!(ice40.validate().unwrap_err().contains("no nextpnr_speed"));
+        let bad = FpgaDefinition {
+            nextpnr_package: "a b".into(),
+            ..ecp5
+        };
+        assert!(bad.validate().unwrap_err().contains("nextpnr_package"));
+    }
+
+    #[test]
+    fn builtin_catalog_has_the_ice40_and_ecp5_boards() {
         let c = builtin();
-        assert_eq!(c.fpgas.len(), 40);
-        assert_eq!(c.boards.len(), 22);
+        let count = |a: Architecture| {
+            let fpgas = c.fpgas.values().filter(|f| f.architecture == a).count();
+            let boards = c
+                .boards
+                .values()
+                .filter(|b| c.fpgas[&b.fpga_id].architecture == a)
+                .count();
+            (fpgas, boards)
+        };
+        assert_eq!(count(Architecture::Ice40), (40, 22));
+        assert_eq!(count(Architecture::Ecp5), (39, 26));
+        let sugar = &c.boards["icesugar-pro"];
+        let f = &c.fpgas[&sugar.fpga_id];
+        assert_eq!(
+            (
+                f.nextpnr_device.as_str(),
+                f.nextpnr_package.as_str(),
+                f.nextpnr_speed.as_deref()
+            ),
+            ("25k", "CABGA256", Some("6"))
+        );
         let alhambra = &c.boards["alhambra-ii"];
         assert_eq!(alhambra.fpga_id, "ice40hx4k-tq144-8k");
         let v = &alhambra.variants[&alhambra.default_variant];
