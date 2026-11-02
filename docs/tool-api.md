@@ -785,7 +785,7 @@ Output:
 }
 ```
 
-**Catalog contents.** The catalog is data in the engine's repo, `catalog/boards.json` and `catalog/fpgas.json`, imported from Apio's definitions. It has every iCE40 and ECP5 FPGA, and the boards that program with `openfpgaloader` or `iceprog`: 22 iCE40 boards and 26 ECP5 boards. Apio gives no USB IDs for some ECP5 boards that program through a cable named with openFPGALoader's `-c` option, such as `-c ft2232`; their filter is the cable's default USB IDs in openFPGALoader. The other boards, Gowin and Xilinx are added as their programmers and toolchains are supported.
+**Catalog contents.** The catalog is data in the engine's repo, `catalog/boards.json` and `catalog/fpgas.json`, imported from Apio's definitions. It has every iCE40 and ECP5 FPGA, and the boards that program with `openfpgaloader` or `iceprog`: 22 iCE40 boards and 26 ECP5 boards. Every board variant has a USB filter, whatever its architecture, as in Apio. A few of Apio's boards have none, mostly boards programmed through a cable named with openFPGALoader's `-c` option, such as `-c ft2232`. The import gives those the cable's default USB IDs in openFPGALoader, so the engine can still find the device. The other boards, Gowin and Xilinx are added as their programmers and toolchains are supported.
 
 ## get_engine_info tool
 
