@@ -7,6 +7,7 @@ pub mod clean_build;
 pub mod format;
 pub mod get_catalog;
 pub mod get_engine_info;
+pub mod graph;
 pub mod install_packages;
 pub mod lint;
 pub mod list_devices;
@@ -116,6 +117,7 @@ pub fn all_definitions() -> Vec<Tool> {
         definition::<test::Test>(),
         definition::<simulate::Simulate>(),
         definition::<format::Format>(),
+        definition::<graph::Graph>(),
         definition::<build::Build>(),
         definition::<clean_build::CleanBuild>(),
         definition::<list_devices::ListDevices>(),
@@ -185,6 +187,7 @@ pub async fn call(
     use format::Format;
     use get_catalog::GetCatalog;
     use get_engine_info::GetEngineInfo;
+    use graph::Graph;
     use install_packages::InstallPackages;
     use lint::Lint;
     use list_devices::ListDevices;
@@ -231,6 +234,13 @@ pub async fn call(
         Format::NAME => to_call_result(with_commands(
             match parse_input::<Format>(arguments) {
                 Ok(input) => format::run(state, input, call).await,
+                Err(e) => Err(e),
+            },
+            call,
+        )),
+        Graph::NAME => to_call_result(with_commands(
+            match parse_input::<Graph>(arguments) {
+                Ok(input) => graph::run(state, input, call).await,
                 Err(e) => Err(e),
             },
             call,

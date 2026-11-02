@@ -12,6 +12,7 @@ pub mod commands;
 pub mod devices;
 pub mod errors;
 pub mod format;
+pub mod graph;
 pub mod logging;
 pub mod mcp_progress;
 pub mod packages;

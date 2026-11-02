@@ -518,6 +518,54 @@ Output:
 }
 ```
 
+## graph tool
+
+Draws a diagram of one module of the design, its cells, ports and the wires between them, like `apio graph --no-viewer`. Yosys reads the design without synthesizing it and writes the module as a Graphviz `.dot` file, then Graphviz's `dot` draws it. Both come from the toolchain package. The host shows the file, such as an SVG in a web view.
+
+The commands are Apio's: `yosys -p "read_verilog -sv <files>; show -format dot -colors 1 -wireshape plaintext -prefix graph <module>" -DSYNTHESIZE <defines> -q`, then `dot -T<format> graph.dot -o graph.<format>`. Both run in the build folder, with the design files as absolute paths, since yosys can't take a quoted output path. FPGA primitives, such as `SB_LUT4`, are drawn as boxes. Each call replaces `graph.dot` and the graph in the build folder, and deletes the old ones first, so a failed call never leaves an old graph looking current.
+
+**Table 33.** graph tool inputs
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `top_module` | text | Yes | The module to draw, such as the design's top module, or any module in the design files, like `apio graph -t uart` |
+| `source_folder`, `source_files`, `build_folder` | See folder fields in [Table 2](#folders) | Yes | The design files, without testbenches or included files. Paths with a double quote (`"`) are refused, since yosys reads them from a script |
+| `defines` | map of text | No | Macro definitions, as in the [build tool](#build-tool). `SYNTHESIZE` is always defined |
+| `format` | enum | No | `svg`, `pdf` or `png`. Defaults to `svg` |
+| `verbose` | boolean | No | Run yosys without `-q`. Defaults to false |
+
+**Table 34.** graph tool outputs
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `graph_file` | relative path | The graph, relative to the build folder, such as `graph.svg` |
+| `diagnostics` | list of diagnostics | Yosys warnings while reading the design, at file and line where known. Often empty |
+| `commands` | list of commands | The programs this call ran: yosys, then dot. See [Commands](#commands) |
+
+**Errors:** design errors, with diagnostics, for errors in the design, such as a syntax error, or a `top_module` that isn't in the files. Setup errors with `install_packages`, for the toolchain package. Request errors, such as a missing file. Tool failures, when yosys or dot fails without reporting a problem. Engine errors and cancellation.
+
+**Example**
+
+Input:
+
+```json
+{
+  "top_module": "main",
+  "source_folder": "/home/u/proj",
+  "source_files": ["main.v", "uart.v"],
+  "build_folder": "/home/u/proj/_build/default"
+}
+```
+
+Output:
+
+```json
+{
+  "graph_file": "graph.svg",
+  "diagnostics": []
+}
+```
+
 ## build tool
 
 Synthesizes the design, places and routes it, and generates the bitstream in the build folder. A build with no changes since the last one returns quickly with `up_to_date` set.

@@ -1959,6 +1959,226 @@
     }
   },
   {
+    "name": "graph",
+    "description": "Draws a diagram of a design module, its cells, ports and the wires between them, like apio graph --no-viewer: yosys reads the design without synthesizing it and Graphviz draws the module. Writes graph.svg (or .pdf or .png) and Graphviz's graph.dot in the build folder, replacing the last ones; graph_file gives its path relative to the build folder. List the design files; the engine doesn't search for them. Errors in the design, such as a syntax error or a top module that isn't in the files, are design errors with diagnostics at file and line. The first call may install the toolchain package first, which takes a few minutes.",
+    "inputSchema": {
+      "$defs": {
+        "GraphFormat": {
+          "description": "The file format of the graph.",
+          "oneOf": [
+            {
+              "const": "svg",
+              "description": "SVG, which browsers and web views show and scale.",
+              "type": "string"
+            },
+            {
+              "const": "pdf",
+              "description": "PDF.",
+              "type": "string"
+            },
+            {
+              "const": "png",
+              "description": "PNG, a bitmap.",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "description": "What to draw.",
+      "properties": {
+        "build_folder": {
+          "description": "The build folder, as an absolute path, where the graph is written.\nIt may or may not be inside the source folder, and is created if\nneeded.",
+          "type": "string"
+        },
+        "defines": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "Verilog macro definitions, from name to value, such as\n{\"WIDTH\": \"8\"}. An empty value defines the macro with no text, for\n`ifdef. SYNTHESIZE is always defined, as in build.",
+          "type": "object"
+        },
+        "format": {
+          "$ref": "#/$defs/GraphFormat",
+          "default": "svg",
+          "description": "The graph's file format: svg, pdf or png. Defaults to svg."
+        },
+        "source_files": {
+          "description": "The design files (.v or .sv), relative to the source folder, with /\nas the separator, such as [\"main.v\", \"rtl/uart.v\"]. Don't list\nincluded files or testbenches.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "source_folder": {
+          "description": "The folder with the design files, as an absolute path.",
+          "type": "string"
+        },
+        "top_module": {
+          "description": "The module to draw, such as main, the design's top module, or any\nmodule in the design files, such as uart, like apio graph -t uart.",
+          "type": "string"
+        },
+        "verbose": {
+          "default": false,
+          "description": "Let yosys print more detail, shown in the live output and the logs.\nIt doesn't change the result. Defaults to false.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "top_module",
+        "source_folder",
+        "source_files",
+        "build_folder"
+      ],
+      "title": "GraphInput",
+      "type": "object"
+    },
+    "outputSchema": {
+      "$defs": {
+        "CommandRecord": {
+          "additionalProperties": false,
+          "description": "One program the engine ran, with what it takes to run it again.",
+          "properties": {
+            "args": {
+              "description": "The program as an absolute path, then its arguments, exactly as\npassed.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "cwd": {
+              "description": "The folder it ran in, as an absolute path.",
+              "type": "string"
+            },
+            "package": {
+              "description": "The package the program came from, with its version, such as\n\"oss-cad-suite 2026-10-22\". Omitted for a program from elsewhere, such\nas a custom programmer command.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "shell": {
+              "description": "One shell command line that runs it again the same way: in the same\nfolder, with the same minimal environment (PATH, HOME and TMPDIR).",
+              "type": "string"
+            },
+            "tool": {
+              "description": "The program's name, such as yosys.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "tool",
+            "cwd",
+            "args",
+            "shell"
+          ],
+          "type": "object"
+        },
+        "Diagnostic": {
+          "description": "A problem reported by a tool, at a file and line when known.",
+          "properties": {
+            "column": {
+              "description": "Column number, starting at 1, when known.",
+              "minimum": 1,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "file": {
+              "description": "File, relative to the source folder, when known.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "line": {
+              "description": "Line number, starting at 1, when known.",
+              "minimum": 1,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "severity": {
+              "$ref": "#/$defs/Severity"
+            },
+            "text": {
+              "description": "The problem, in words.",
+              "type": "string"
+            },
+            "time_ns": {
+              "description": "For a testbench failure, the simulation time it happened at, in\nnanoseconds, when known.",
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "tool": {
+              "description": "Name of the tool that reported it, when known.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "severity",
+            "text"
+          ],
+          "type": "object"
+        },
+        "Severity": {
+          "description": "How serious a diagnostic is.",
+          "enum": [
+            "error",
+            "warning",
+            "info"
+          ],
+          "type": "string"
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "description": "What graph made.",
+      "properties": {
+        "commands": {
+          "description": "The programs this call ran, in order, each with the exact command and\na shell line that runs it again without the engine, such as for a bug\nreport to the tool's developers.",
+          "items": {
+            "$ref": "#/$defs/CommandRecord"
+          },
+          "type": "array"
+        },
+        "diagnostics": {
+          "description": "Yosys warnings while reading the design, at file and line where\nknown. Often empty.",
+          "items": {
+            "$ref": "#/$defs/Diagnostic"
+          },
+          "type": "array"
+        },
+        "graph_file": {
+          "description": "The graph, relative to the build folder, such as graph.svg.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "graph_file",
+        "diagnostics",
+        "commands"
+      ],
+      "title": "GraphOutput",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": true
+    }
+  },
+  {
     "name": "build",
     "description": "Builds an FPGA design into a bitstream: synthesizes the Verilog or SystemVerilog sources, places and routes them on the board's FPGA using the constraint file (.pcf, which maps top-level ports to pins), and packs the bitstream into the build folder. Give the source files explicitly; the engine doesn't search for them, though `include files are found next to the including file or in the source folder. A build with no changes since the last one returns at once with up_to_date set. The first build may install the toolchain package first, which takes a few minutes. Design problems come back as a design error with diagnostics at file and line. After a successful build, program_board programs the bitstream into the board.",
     "inputSchema": {
