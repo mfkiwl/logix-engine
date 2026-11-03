@@ -643,7 +643,7 @@
       "properties": {
         "board": {
           "$ref": "#/$defs/BoardSpec",
-          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40."
+          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40 or EHXPLLL for ECP5."
         },
         "defines": {
           "additionalProperties": {
@@ -1021,7 +1021,7 @@
       "properties": {
         "board": {
           "$ref": "#/$defs/BoardSpec",
-          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40."
+          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40 or EHXPLLL for ECP5."
         },
         "build_folder": {
           "description": "Where the compiled testbenches and their waveforms go, as an absolute\npath. One of its last two folder names must contain \"build\", such as\n/home/u/proj/_build/default. It is created if needed.",
@@ -1492,7 +1492,7 @@
       "properties": {
         "board": {
           "$ref": "#/$defs/BoardSpec",
-          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40."
+          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40 or EHXPLLL for ECP5."
         },
         "build_folder": {
           "description": "Where the compiled testbench and its waveform go, as an absolute path.\nOne of its last two folder names must contain \"build\", such as\n/home/u/proj/_build/default. It is created if needed.",
@@ -2228,7 +2228,7 @@
   },
   {
     "name": "build",
-    "description": "Builds an FPGA design into a bitstream: synthesizes the Verilog or SystemVerilog sources, places and routes them on the board's FPGA using the constraint file (.pcf, which maps top-level ports to pins), and packs the bitstream into the build folder. Give the source files explicitly; the engine doesn't search for them, though `include files are found next to the including file or in the source folder. A build with no changes since the last one returns at once with up_to_date set. The first build may install the toolchain package first, which takes a few minutes. Design problems come back as a design error with diagnostics at file and line. After a successful build, program_board programs the bitstream into the board.",
+    "description": "Builds an FPGA design into a bitstream: synthesizes the Verilog or SystemVerilog sources, places and routes them on the board's FPGA using the constraint file, which maps top-level ports to pins (.pcf for iCE40, .lpf for ECP5), and packs the bitstream into the build folder. Give the source files explicitly; the engine doesn't search for them, though `include files are found next to the including file or in the source folder. A build with no changes since the last one returns at once with up_to_date set. The first build may install the toolchain package first, which takes a few minutes. Design problems come back as a design error with diagnostics at file and line. After a successful build, program_board programs the bitstream into the board.",
     "inputSchema": {
       "$defs": {
         "Architecture": {
@@ -2412,7 +2412,7 @@
           "type": "string"
         },
         "constraint_file": {
-          "description": "The constraint file (.pcf), relative to the source folder.",
+          "description": "The constraint file, relative to the source folder: .pcf for iCE40,\n.lpf for ECP5.",
           "type": "string"
         },
         "defines": {

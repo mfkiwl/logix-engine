@@ -49,7 +49,7 @@ fn default_true() -> bool {
 pub struct SimulateInput {
     /// The target board: a catalog ID such as alhambra-ii (get_catalog lists
     /// them), or a full board definition. It selects the FPGA's primitive
-    /// models, such as SB_IO for iCE40.
+    /// models, such as SB_IO for iCE40 or EHXPLLL for ECP5.
     pub board: BoardSpec,
     /// The folder with the design files, as an absolute path. The testbench
     /// runs in it, so it reads data files, such as with $readmemh, relative
