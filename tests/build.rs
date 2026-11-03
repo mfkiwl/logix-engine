@@ -233,6 +233,73 @@ async fn builds_an_ecp5_design() {
     assert!(!src.join("_build/default/hardware.bit").exists());
 }
 
+/// A Gowin build with Apio's commands, for the Tang Nano 9K.
+#[tokio::test]
+async fn builds_a_gowin_design() {
+    let state = engine().await;
+    let tmp = tempfile::tempdir().unwrap();
+    let src = tmp.path().canonicalize().unwrap();
+    let from = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/designs/blinky-gowin");
+    for f in ["main.v", "main.cst"] {
+        std::fs::copy(from.join(f), src.join(f)).unwrap();
+    }
+    let input = json!({"board": "sipeed-tang-nano-9k", "constraint_file": "main.cst"});
+    let out = build_it(&state, &src, input.clone()).await.unwrap();
+    let tools: Vec<_> = out.commands.iter().map(|c| c.tool.as_str()).collect();
+    assert_eq!(tools, ["yosys", "nextpnr-himbaechel", "gowin_pack"]);
+    assert!(
+        out.commands[0]
+            .args
+            .iter()
+            .any(|a| a.starts_with("synth_gowin -top main; write_json "))
+    );
+    let pnr = &out.commands[1].args[1..];
+    assert_eq!(
+        &pnr[..10],
+        [
+            "--device",
+            "GW1NR-LV9QN88PC6/I5",
+            "--json",
+            "hardware.json",
+            "--write",
+            "hardware.pnr.json",
+            "--report",
+            "hardware.pnr",
+            "--vopt",
+            "family=GW1N-9C"
+        ]
+    );
+    assert_eq!(pnr[10], "--vopt");
+    assert!(pnr[11].starts_with("cst=") && pnr[11].ends_with("main.cst"));
+    assert_eq!(
+        out.commands[2].args[1..],
+        ["-d", "GW1N-9C", "-o", "hardware.fs", "hardware.pnr.json"]
+    );
+    assert_eq!(out.bitstream, "hardware.fs");
+    let fs = std::fs::read(src.join("_build/default/hardware.fs")).unwrap();
+    assert!(fs.len() > 10_000, "{}", fs.len());
+    assert!(
+        out.resources_usage["LUT4"].used > 0 && out.resources_usage["DFF"].used > 0,
+        "{:?}",
+        out.resources_usage
+    );
+    assert_eq!(out.timing.len(), 1, "{:?}", out.timing);
+
+    // A pin that doesn't exist is a design error.
+    std::fs::write(
+        src.join("main.cst"),
+        "IO_LOC \"CLK\" 52;\nIO_LOC \"LED0\" 999;\n",
+    )
+    .unwrap();
+    let err = build_it(&state, &src, input).await.unwrap_err();
+    assert_eq!(
+        err.category,
+        logix_engine::errors::Category::Design,
+        "{err:?}"
+    );
+    assert!(!src.join("_build/default/hardware.fs").exists());
+}
+
 #[tokio::test]
 async fn a_syntax_error_is_a_design_error_and_removes_the_old_bitstream() {
     let state = engine().await;

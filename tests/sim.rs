@@ -953,3 +953,74 @@ async fn ecp5_lint_test_and_simulate_use_the_ecp5_models() {
         "{args:?}"
     );
 }
+
+/// A Gowin design with a primitive that has a simulation model (a LUT) and
+/// one that only has a black box for lint (IODELAY, from the GW1N file).
+const GOWIN_MAIN: &str = r#"module main(input CLK, output LED0, output LED1);
+  wire [3:0] q;
+  counter c(.clk(CLK), .q(q));
+  LUT4 #(.INIT(16'h8000)) all_ones (.I0(q[0]), .I1(q[1]), .I2(q[2]), .I3(q[3]), .F(LED0));
+`ifdef SYNTHESIZE
+  IODELAY #(.C_STATIC_DLY(0)) delay (.DI(CLK), .SDTAP(1'b0), .SETN(1'b0), .VALUE(1'b0), .DF(), .DO(LED1));
+`else
+  assign LED1 = CLK;
+`endif
+endmodule
+"#;
+
+#[tokio::test]
+async fn gowin_lint_test_and_simulate_use_the_gowin_models() {
+    let state = engine().await;
+    let (_tmp, src) = project();
+    std::fs::write(src.join("main.v"), GOWIN_MAIN).unwrap();
+    let board = json!({"board": "sipeed-tang-nano-9k"});
+
+    let out = lint::run(&state, lint_input(&src, board.clone()), &call())
+        .await
+        .unwrap();
+    assert!(out.passed, "{:?}", out.diagnostics);
+    let args = &out.commands[0].args;
+    assert!(
+        args.iter()
+            .any(|a| a.ends_with("share/yosys/gowin/cells_xtra_gw1n.v")),
+        "{args:?}"
+    );
+    // Without a top module, warnings in the models are still off.
+    let out = lint::run(
+        &state,
+        lint_input(
+            &src,
+            json!({"board": "sipeed-tang-nano-9k", "top_module": null}),
+        ),
+        &call(),
+    )
+    .await
+    .unwrap();
+    assert!(out.passed, "{:?}", out.diagnostics);
+    // A GW2A board gets the GW2A black boxes.
+    let out = lint::run(
+        &state,
+        lint_input(&src, json!({"board": "sipeed-tang-nano-20k"})),
+        &call(),
+    )
+    .await
+    .unwrap();
+    assert!(out.passed, "{:?}", out.diagnostics);
+    assert!(
+        out.commands[0]
+            .args
+            .iter()
+            .any(|a| a.ends_with("share/yosys/gowin/cells_xtra_gw2a.v"))
+    );
+
+    let out = test::run(&state, test_input(&src, board), &call())
+        .await
+        .unwrap();
+    assert!(out.passed, "{:?}", out.testbenches);
+    let args = &out.commands[0].args;
+    assert!(
+        args.iter()
+            .any(|a| a.ends_with("share/yosys/gowin/cells_sim.v")),
+        "{args:?}"
+    );
+}

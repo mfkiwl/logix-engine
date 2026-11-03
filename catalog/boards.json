@@ -65,6 +65,21 @@
         }
       }
     },
+    "brs-100-gw1nr9": {
+      "description": "BrisbaneSilicon 9k",
+      "fpga_id": "gw1nr-lv9qn88pc6-i5",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify -b brs-100-gw1nr9 -f ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
+          }
+        }
+      }
+    },
     "butterstick-r10-2g-85k-ft2232h": {
       "description": "butterstick r1.0 FT2232H",
       "fpga_id": "lfe5um5g-85f-8bg381c",
@@ -353,6 +368,21 @@
         }
       }
     },
+    "epm11": {
+      "description": "BrisbaneSilicon EPM11",
+      "fpga_id": "gw1nr-lv9qn88pc6-i5",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify -b epm11 -f ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
+          }
+        }
+      }
+    },
     "fleafpga-ohm-ft2232h": {
       "description": "FleaFPGA-Ohm_(FT2232H)",
       "fpga_id": "lfe5u-25f-6bg381c",
@@ -615,6 +645,96 @@
             "vid": "0403",
             "pid": "6010",
             "product_regex": "^Dual RS232-HS"
+          }
+        }
+      }
+    },
+    "sipeed-tang-nano": {
+      "description": "Sipeed Tang Nano",
+      "fpga_id": "gw1n-lv1qn48c6-i5",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify -b tangnano ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
+          }
+        }
+      }
+    },
+    "sipeed-tang-nano-1k": {
+      "description": "Sipeed Tang Nano 1k",
+      "fpga_id": "gw1nz-lv1qn48c6-i5",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify -b tangnano1k -f ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
+          }
+        }
+      }
+    },
+    "sipeed-tang-nano-20k": {
+      "description": "Sipeed Tang Nano 20k",
+      "fpga_id": "gw2ar-lv18qn88c8-i7",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify -b tangnano20k -f ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
+          }
+        }
+      }
+    },
+    "sipeed-tang-nano-4k": {
+      "description": "Sipeed Tang Nano 4k",
+      "fpga_id": "gw1nsr-lv4cqn48pc7-i6",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify -b tangnano4k -f ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
+          }
+        }
+      }
+    },
+    "sipeed-tang-nano-9k": {
+      "description": "Sipeed Tang Nano 9k",
+      "fpga_id": "gw1nr-lv9qn88pc6-i5",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify -b tangnano9k -f ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
+          }
+        }
+      }
+    },
+    "sipeed-tang-primer-20k": {
+      "description": "Sipeed Tang Primer 20k",
+      "fpga_id": "gw2a-lv18pg256c8-i7",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify -b tangprimer20k -f ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
           }
         }
       }

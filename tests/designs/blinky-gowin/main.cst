@@ -1,0 +1,4 @@
+// Sipeed Tang Nano 9K: 27 MHz clock and an LED.
+IO_LOC  "CLK" 52;
+IO_PORT "CLK" IO_TYPE=LVCMOS33 PULL_MODE=NONE;
+IO_LOC  "LED0" 10;

@@ -66,32 +66,47 @@ pub struct UsbFilter {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct FpgaDefinition {
-    /// The FPGA family: ice40 or ecp5.
+    /// The FPGA family: ice40, ecp5 or gowin.
     pub architecture: Architecture,
     /// The vendor's part number, such as ICE40HX4K-TQ144.
     pub part_number: String,
     /// The device size, such as 8k.
     pub size: String,
-    /// The device type nextpnr uses, such as hx8k for iCE40 or 25k for
-    /// ECP5.
+    /// The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5 or
+    /// GW1NR-LV9QN88PC6/I5 for Gowin.
     pub nextpnr_device: String,
     /// The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for
-    /// ECP5.
-    pub nextpnr_package: String,
+    /// ECP5. Required for iCE40 and ECP5; Gowin has none, since its
+    /// nextpnr_device names the package.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub nextpnr_package: Option<String>,
     /// The speed grade nextpnr uses, such as 6. ECP5 only, where it's
     /// required.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub nextpnr_speed: Option<String>,
+    /// The device family nextpnr uses, such as GW1N-9C, when nextpnr can't
+    /// tell it from nextpnr_device. Gowin only, optional.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub nextpnr_family: Option<String>,
+    /// The device the bitstream packer (gowin_pack) uses, such as GW1N-9C.
+    /// Gowin only, where it's required.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub packer_device: Option<String>,
+    /// The family yosys synthesizes for, such as gw2a. Gowin only,
+    /// optional: omitted means yosys's default, the GW1N family.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub yosys_family: Option<String>,
 }
 
 impl FpgaDefinition {
-    /// Checks that the FPGA has the fields its architecture needs.
+    /// Checks that the FPGA has the fields its architecture needs, and only
+    /// those.
     pub fn validate(&self) -> Result<(), String> {
         let word = |name: &str, v: &str| {
             if v.is_empty()
                 || !v
                     .bytes()
-                    .all(|c| c.is_ascii_alphanumeric() || b":-_".contains(&c))
+                    .all(|c| c.is_ascii_alphanumeric() || b":-_/".contains(&c))
             {
                 Err(format!("bad {name} {v:?}"))
             } else {
@@ -99,13 +114,35 @@ impl FpgaDefinition {
             }
         };
         word("nextpnr_device", &self.nextpnr_device)?;
-        word("nextpnr_package", &self.nextpnr_package)?;
-        match (self.architecture, &self.nextpnr_speed) {
-            (Architecture::Ecp5, Some(speed)) => word("nextpnr_speed", speed),
-            (Architecture::Ecp5, None) => Err("an ecp5 FPGA needs nextpnr_speed".into()),
-            (Architecture::Ice40, Some(_)) => Err("an ice40 FPGA has no nextpnr_speed".into()),
-            (Architecture::Ice40, None) => Ok(()),
+        let arch = format!("{:?}", self.architecture).to_lowercase();
+        let fields = [
+            ("nextpnr_package", &self.nextpnr_package),
+            ("nextpnr_speed", &self.nextpnr_speed),
+            ("nextpnr_family", &self.nextpnr_family),
+            ("packer_device", &self.packer_device),
+            ("yosys_family", &self.yosys_family),
+        ];
+        for (name, value) in fields {
+            let (allowed, required) = match (self.architecture, name) {
+                (Architecture::Ice40, "nextpnr_package") => (true, true),
+                (Architecture::Ecp5, "nextpnr_package" | "nextpnr_speed") => (true, true),
+                (Architecture::Gowin, "packer_device") => (true, true),
+                (Architecture::Gowin, "nextpnr_family" | "yosys_family") => (true, false),
+                _ => (false, false),
+            };
+            match value {
+                Some(v) if allowed => word(name, v)?,
+                Some(_) => return Err(format!("{arch} FPGAs have no {name}")),
+                None if required => return Err(format!("{arch} FPGAs need {name}")),
+                None => {}
+            }
         }
+        Ok(())
+    }
+
+    /// The nextpnr package, empty when there is none.
+    pub fn package(&self) -> &str {
+        self.nextpnr_package.as_deref().unwrap_or_default()
     }
 }
 
@@ -117,6 +154,8 @@ pub enum Architecture {
     Ice40,
     /// Lattice ECP5.
     Ecp5,
+    /// Gowin (GW1N, GW2A and GW5A).
+    Gowin,
 }
 
 #[derive(Debug, Deserialize)]
@@ -270,29 +309,77 @@ mod tests {
             part_number: "LFE5U-25F-6BG256C".into(),
             size: "25k".into(),
             nextpnr_device: "25k".into(),
-            nextpnr_package: "CABGA256".into(),
+            nextpnr_package: Some("CABGA256".into()),
             nextpnr_speed: Some("6".into()),
+            nextpnr_family: None,
+            packer_device: None,
+            yosys_family: None,
         };
         assert!(ecp5.validate().is_ok());
         let no_speed = FpgaDefinition {
             nextpnr_speed: None,
             ..ecp5.clone()
         };
-        assert!(no_speed.validate().unwrap_err().contains("nextpnr_speed"));
+        assert_eq!(
+            no_speed.validate().unwrap_err(),
+            "ecp5 FPGAs need nextpnr_speed"
+        );
         let ice40 = FpgaDefinition {
             architecture: Architecture::Ice40,
             ..ecp5.clone()
         };
-        assert!(ice40.validate().unwrap_err().contains("no nextpnr_speed"));
+        assert_eq!(
+            ice40.validate().unwrap_err(),
+            "ice40 FPGAs have no nextpnr_speed"
+        );
         let bad = FpgaDefinition {
-            nextpnr_package: "a b".into(),
-            ..ecp5
+            nextpnr_package: Some("a b".into()),
+            ..ecp5.clone()
         };
         assert!(bad.validate().unwrap_err().contains("nextpnr_package"));
+
+        let gowin = FpgaDefinition {
+            architecture: Architecture::Gowin,
+            part_number: "GW1NR-LV9QN88PC6/I5".into(),
+            size: "9k".into(),
+            nextpnr_device: "GW1NR-LV9QN88PC6/I5".into(),
+            nextpnr_package: None,
+            nextpnr_speed: None,
+            nextpnr_family: Some("GW1N-9C".into()),
+            packer_device: Some("GW1N-9C".into()),
+            yosys_family: None,
+        };
+        assert!(gowin.validate().is_ok());
+        let no_packer = FpgaDefinition {
+            packer_device: None,
+            ..gowin.clone()
+        };
+        assert_eq!(
+            no_packer.validate().unwrap_err(),
+            "gowin FPGAs need packer_device"
+        );
+        let with_package = FpgaDefinition {
+            nextpnr_package: Some("QN88".into()),
+            ..gowin.clone()
+        };
+        assert_eq!(
+            with_package.validate().unwrap_err(),
+            "gowin FPGAs have no nextpnr_package"
+        );
+        let ecp5_with_family = FpgaDefinition {
+            yosys_family: Some("gw2a".into()),
+            ..ecp5
+        };
+        assert!(
+            ecp5_with_family
+                .validate()
+                .unwrap_err()
+                .contains("yosys_family")
+        );
     }
 
     #[test]
-    fn builtin_catalog_has_the_ice40_and_ecp5_boards() {
+    fn builtin_catalog_has_the_ice40_ecp5_and_gowin_boards() {
         let c = builtin();
         let count = |a: Architecture| {
             let fpgas = c.fpgas.values().filter(|f| f.architecture == a).count();
@@ -305,12 +392,20 @@ mod tests {
         };
         assert_eq!(count(Architecture::Ice40), (40, 22));
         assert_eq!(count(Architecture::Ecp5), (39, 26));
+        assert_eq!(count(Architecture::Gowin), (241, 8));
+        let nano = &c.fpgas[&c.boards["sipeed-tang-nano-9k"].fpga_id];
+        assert_eq!(nano.nextpnr_device, "GW1NR-LV9QN88PC6/I5");
+        assert_eq!(nano.nextpnr_family.as_deref(), Some("GW1N-9C"));
+        assert_eq!(nano.packer_device.as_deref(), Some("GW1N-9C"));
+        assert_eq!(nano.yosys_family, None);
+        let primer = &c.fpgas[&c.boards["sipeed-tang-primer-20k"].fpga_id];
+        assert_eq!(primer.yosys_family.as_deref(), Some("gw2a"));
         let sugar = &c.boards["icesugar-pro"];
         let f = &c.fpgas[&sugar.fpga_id];
         assert_eq!(
             (
                 f.nextpnr_device.as_str(),
-                f.nextpnr_package.as_str(),
+                f.package(),
                 f.nextpnr_speed.as_deref()
             ),
             ("25k", "CABGA256", Some("6"))
@@ -321,7 +416,7 @@ mod tests {
         assert_eq!(v.programmer, "openfpgaloader");
         assert_eq!(v.usb.vid, "0403");
         assert_eq!(v.usb.pid, "6010");
-        assert_eq!(c.fpgas["ice40hx4k-tq144-8k"].nextpnr_package, "tq144:4k");
+        assert_eq!(c.fpgas["ice40hx4k-tq144-8k"].package(), "tq144:4k");
         assert!(c.boards.values().all(|b| {
             b.variants
                 .values()

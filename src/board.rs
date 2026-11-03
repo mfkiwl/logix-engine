@@ -190,7 +190,7 @@ mod tests {
             .unwrap(),
         )
         .unwrap();
-        assert_eq!(inline.fpga.nextpnr_package, "tq144");
+        assert_eq!(inline.fpga.package(), "tq144");
         assert_ne!(by_id.checksum(), inline.checksum());
         // Neither or both.
         assert!(resolve(&parse(custom(json!({}))).unwrap()).is_err());

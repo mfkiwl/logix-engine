@@ -94,6 +94,29 @@ impl SimLibrary {
                     verilator_rules_off: vec!["MODDUP", "WIDTHEXPAND", "PINMISSING"],
                 }
             }
+            Architecture::Gowin => {
+                let dir = package_dir.join("share/yosys/gowin");
+                let mut lint_files = vec![dir.join("cells_sim.v")];
+                // Black boxes for the primitives without a model, per family,
+                // chosen by the device name as Apio does.
+                let device = board.fpga.nextpnr_device.to_uppercase();
+                for (prefix, family) in [("GW1N", "gw1n"), ("GW2A", "gw2a"), ("GW5A", "gw5a")] {
+                    if device.starts_with(prefix) {
+                        lint_files.push(dir.join(format!("cells_xtra_{family}.v")));
+                        break;
+                    }
+                }
+                SimLibrary {
+                    files: vec![dir.join("cells_sim.v")],
+                    lint_files,
+                    include_dir: dir,
+                    defines: vec![],
+                    lint_defines: vec![],
+                    // Apio's: timing blocks the models carry, and modules
+                    // the black boxes declare again.
+                    verilator_rules_off: vec!["SPECIFYIGN", "MODDUP"],
+                }
+            }
         }
     }
 }

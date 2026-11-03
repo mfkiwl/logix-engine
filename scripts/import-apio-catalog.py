@@ -13,8 +13,10 @@ definitions package (boards.jsonc, programmers.jsonc) and oss-cad-suite
 package (FPGAS.jsonc). Review the diff after running it.
 
 What's imported:
-- Every iCE40 and ECP5 FPGA. ECP5 FPGAs also get nextpnr_speed.
-- The iCE40 and ECP5 boards whose programmer the engine supports:
+- Every iCE40, ECP5 and Gowin FPGA. ECP5 FPGAs also get nextpnr_speed.
+  Gowin FPGAs get nextpnr_device, packer_device, and nextpnr_family and
+  yosys_family when Apio gives them (not empty), and no nextpnr_package.
+- The iCE40, ECP5 and Gowin boards whose programmer the engine supports:
   openfpgaloader and iceprog. Each gets one programming variant, "flash", with Apio's full
   command arguments. Apio's ${BIN_FILE} becomes ${BITSTREAM}, added at the
   end when Apio leaves it out. An openFPGALoader board without a USB filter
@@ -28,7 +30,7 @@ import os
 import re
 import sys
 
-ARCHITECTURES = {"ice40", "ecp5"}
+ARCHITECTURES = {"ice40", "ecp5", "gowin"}
 
 # openFPGALoader's default USB IDs for the cables Apio's boards name with -c
 # (openFPGALoader's src/cable.hpp).
@@ -98,9 +100,19 @@ def main():
             "architecture": f["arch"],
             "part_number": f["vendor-part"],
             "size": f["size"],
-            "nextpnr_device": params["nextpnr-type"],
-            "nextpnr_package": params["nextpnr-package"],
         }
+        if f["arch"] == "gowin":
+            fpgas[fid]["nextpnr_device"] = params["nextpnr-device"]
+            for apio, ours in [
+                ("nextpnr-family", "nextpnr_family"),
+                ("packer-device", "packer_device"),
+                ("yosys-family", "yosys_family"),
+            ]:
+                if params.get(apio):
+                    fpgas[fid][ours] = params[apio]
+        else:
+            fpgas[fid]["nextpnr_device"] = params["nextpnr-type"]
+            fpgas[fid]["nextpnr_package"] = params["nextpnr-package"]
         if "nextpnr-speed" in params:
             fpgas[fid]["nextpnr_speed"] = params["nextpnr-speed"]
 

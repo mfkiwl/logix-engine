@@ -266,7 +266,10 @@ async fn get_catalog_returns_the_requested_entries() {
         alhambra["variants"]["flash"]["usb"]["product_regex"],
         "^Alhambra II.*"
     );
-    assert_eq!(out["fpgas"].as_object().unwrap().len(), 79);
+    assert_eq!(out["fpgas"].as_object().unwrap().len(), 320);
+    let gowin = &out["fpgas"]["gw1nr-lv9qn88pc6-i5"];
+    assert_eq!(gowin["packer_device"], "GW1N-9C");
+    assert!(gowin.get("nextpnr_package").is_none(), "{gowin}");
     assert_eq!(out["fpgas"]["lfe5u-25f-6bg256c"]["nextpnr_speed"], "6");
     assert_eq!(out["fpgas"]["ice40hx4k-tq144-8k"]["architecture"], "ice40");
 

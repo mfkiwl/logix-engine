@@ -1,12 +1,14 @@
 //! The build (docs/tool-api.md, "build tool"), run with the same commands as
 //! Apio, so the bitstreams match: yosys, nextpnr-ice40 and icepack for
-//! iCE40; yosys, nextpnr-ecp5 and ecppack for ECP5.
+//! iCE40; yosys, nextpnr-ecp5 and ecppack for ECP5; yosys,
+//! nextpnr-himbaechel and gowin_pack for Gowin.
 //!
 //! Build folder files: the marker `.logix-build` (written first, it tells
 //! clean_build the folder is a build folder), `hardware.json` (yosys),
-//! `hardware.asc` (iCE40) or `hardware.config` (ECP5) and `hardware.pnr`
-//! (nextpnr's placed design and report), `hardware.bin` (iCE40) or
-//! `hardware.bit` (ECP5), the bitstream, the logs `synth.log` and `pnr.log`, and
+//! `hardware.asc` (iCE40), `hardware.config` (ECP5) or `hardware.pnr.json`
+//! (Gowin), nextpnr's placed design, and `hardware.pnr`, its report,
+//! `hardware.bin` (iCE40), `hardware.bit` (ECP5) or `hardware.fs` (Gowin),
+//! the bitstream, the logs `synth.log` and `pnr.log`, and
 //! the build record `build-record.json` (written last, on success only).
 //! These names are a fixed convention of the engine, documented in the tool
 //! API, so hosts can rely on them.
@@ -42,9 +44,11 @@ pub const OUTPUTS: &[&str] = &[
     "hardware.json",
     "hardware.asc",
     "hardware.config",
+    "hardware.pnr.json",
     "hardware.pnr",
     "hardware.bin",
     "hardware.bit",
+    "hardware.fs",
     "synth.log",
     "pnr.log",
 ];
@@ -54,14 +58,24 @@ pub fn bitstream_name(arch: Architecture) -> &'static str {
     match arch {
         Architecture::Ice40 => "hardware.bin",
         Architecture::Ecp5 => "hardware.bit",
+        Architecture::Gowin => "hardware.fs",
     }
 }
 
-/// yosys's synthesis command for the architecture.
-fn synth_command(arch: Architecture) -> &'static str {
-    match arch {
-        Architecture::Ice40 => "synth_ice40",
-        Architecture::Ecp5 => "synth_ecp5",
+/// yosys's synthesis script (its -p argument), Apio's, writing the
+/// netlist to `json`.
+pub fn synth_script(fpga: &FpgaDefinition, top: &str, json: &Path) -> String {
+    let json = json.display();
+    match fpga.architecture {
+        Architecture::Ice40 => format!("synth_ice40 -top {top} -json \"{json}\""),
+        Architecture::Ecp5 => format!("synth_ecp5 -top {top} -json \"{json}\""),
+        Architecture::Gowin => {
+            let family = match &fpga.yosys_family {
+                Some(f) => format!(" -family {f}"),
+                None => String::new(),
+            };
+            format!("synth_gowin -top {top}{family}; write_json \"{json}\"")
+        }
     }
 }
 
@@ -72,11 +86,11 @@ pub fn pnr_command(
     constraint_file: &Path,
     verbose: bool,
 ) -> (&'static str, Vec<OsString>) {
-    let mut args: Vec<OsString> = vec![
-        format!("--{}", fpga.nextpnr_device).into(),
-        "--package".into(),
-        fpga.nextpnr_package.clone().into(),
-    ];
+    let mut args: Vec<OsString> = Vec::new();
+    if fpga.architecture != Architecture::Gowin {
+        args.push(format!("--{}", fpga.nextpnr_device).into());
+        args.extend(["--package".into(), fpga.package().into()]);
+    }
     let tool = match fpga.architecture {
         Architecture::Ice40 => {
             for a in ["--json", "hardware.json", "--asc", "hardware.asc"] {
@@ -97,6 +111,20 @@ pub fn pnr_command(
             args.extend(["--timing-allow-fail".into(), "--force".into()]);
             "nextpnr-ecp5"
         }
+        Architecture::Gowin => {
+            args.extend(["--device".into(), fpga.nextpnr_device.clone().into()]);
+            for a in ["--json", "hardware.json", "--write", "hardware.pnr.json"] {
+                args.push(a.into());
+            }
+            args.extend(["--report".into(), "hardware.pnr".into()]);
+            if let Some(family) = &fpga.nextpnr_family {
+                args.extend(["--vopt".into(), format!("family={family}").into()]);
+            }
+            let mut cst = OsString::from("cst=");
+            cst.push(constraint_file);
+            args.extend(["--vopt".into(), cst]);
+            "nextpnr-himbaechel"
+        }
     };
     args.extend(["--log".into(), "pnr.log".into()]);
     if !verbose {
@@ -107,8 +135,8 @@ pub fn pnr_command(
 
 /// The bitstream packer and its arguments, Apio's. Run in the build
 /// folder. `package_dir` is the toolchain package's folder.
-pub fn pack_command(arch: Architecture, package_dir: &Path) -> (&'static str, Vec<OsString>) {
-    match arch {
+pub fn pack_command(fpga: &FpgaDefinition, package_dir: &Path) -> (&'static str, Vec<OsString>) {
+    match fpga.architecture {
         Architecture::Ice40 => (
             "icepack",
             vec!["hardware.asc".into(), "hardware.bin".into()],
@@ -123,9 +151,19 @@ pub fn pack_command(arch: Architecture, package_dir: &Path) -> (&'static str, Ve
                 "hardware.bit".into(),
             ],
         ),
+        Architecture::Gowin => (
+            "gowin_pack",
+            vec![
+                "-d".into(),
+                fpga.packer_device.clone().unwrap_or_default().into(),
+                "-o".into(),
+                "hardware.fs".into(),
+                "hardware.pnr.json".into(),
+            ],
+        ),
     }
 }
-/// The package with the iCE40 tools.
+/// The package with the build tools.
 pub const TOOLCHAIN: &str = "oss-cad-suite";
 
 /// A checked build request.
@@ -453,13 +491,7 @@ pub async fn build(
         "-l".into(),
         out.join("synth.log").into(),
         "-p".into(),
-        format!(
-            "{} -top {} -json \"{}\"",
-            synth_command(req.board.fpga.architecture),
-            req.top_module,
-            out.join("hardware.json").display()
-        )
-        .into(),
+        synth_script(&req.board.fpga, &req.top_module, &out.join("hardware.json")).into(),
         "-DSYNTHESIZE".into(),
     ];
     args.extend(base);
@@ -503,7 +535,7 @@ pub async fn build(
 
     // Bitstream.
     phases.start("Packing bitstream");
-    let (pack_tool, args) = pack_command(fpga.architecture, &package_dir);
+    let (pack_tool, args) = pack_command(fpga, &package_dir);
     run_step("packing the bitstream", pack_tool, &bin, args, out, call).await?;
 
     let report = fs::read_to_string(out.join("hardware.pnr"))

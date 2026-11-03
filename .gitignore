@@ -29,3 +29,4 @@ rustc-ice-*.txt
 # Editor swap files
 *.swp
 *.swo
+__pycache__/

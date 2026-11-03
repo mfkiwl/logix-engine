@@ -302,6 +302,11 @@
               "const": "ecp5",
               "description": "Lattice ECP5.",
               "type": "string"
+            },
+            {
+              "const": "gowin",
+              "description": "Gowin (GW1N, GW2A and GW5A).",
+              "type": "string"
             }
           ]
         },
@@ -344,18 +349,35 @@
           "properties": {
             "architecture": {
               "$ref": "#/$defs/Architecture",
-              "description": "The FPGA family: ice40 or ecp5."
+              "description": "The FPGA family: ice40, ecp5 or gowin."
             },
             "nextpnr_device": {
-              "description": "The device type nextpnr uses, such as hx8k for iCE40 or 25k for\nECP5.",
+              "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5 or\nGW1NR-LV9QN88PC6/I5 for Gowin.",
               "type": "string"
             },
+            "nextpnr_family": {
+              "description": "The device family nextpnr uses, such as GW1N-9C, when nextpnr can't\ntell it from nextpnr_device. Gowin only, optional.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "nextpnr_package": {
-              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5.",
-              "type": "string"
+              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5. Required for iCE40 and ECP5; Gowin has none, since its\nnextpnr_device names the package.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "nextpnr_speed": {
               "description": "The speed grade nextpnr uses, such as 6. ECP5 only, where it's\nrequired.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "packer_device": {
+              "description": "The device the bitstream packer (gowin_pack) uses, such as GW1N-9C.\nGowin only, where it's required.",
               "type": [
                 "string",
                 "null"
@@ -368,14 +390,20 @@
             "size": {
               "description": "The device size, such as 8k.",
               "type": "string"
+            },
+            "yosys_family": {
+              "description": "The family yosys synthesizes for, such as gw2a. Gowin only,\noptional: omitted means yosys's default, the GW1N family.",
+              "type": [
+                "string",
+                "null"
+              ]
             }
           },
           "required": [
             "architecture",
             "part_number",
             "size",
-            "nextpnr_device",
-            "nextpnr_package"
+            "nextpnr_device"
           ],
           "type": "object"
         },
@@ -481,6 +509,11 @@
               "const": "ecp5",
               "description": "Lattice ECP5.",
               "type": "string"
+            },
+            {
+              "const": "gowin",
+              "description": "Gowin (GW1N, GW2A and GW5A).",
+              "type": "string"
             }
           ]
         },
@@ -549,18 +582,35 @@
           "properties": {
             "architecture": {
               "$ref": "#/$defs/Architecture",
-              "description": "The FPGA family: ice40 or ecp5."
+              "description": "The FPGA family: ice40, ecp5 or gowin."
             },
             "nextpnr_device": {
-              "description": "The device type nextpnr uses, such as hx8k for iCE40 or 25k for\nECP5.",
+              "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5 or\nGW1NR-LV9QN88PC6/I5 for Gowin.",
               "type": "string"
             },
+            "nextpnr_family": {
+              "description": "The device family nextpnr uses, such as GW1N-9C, when nextpnr can't\ntell it from nextpnr_device. Gowin only, optional.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "nextpnr_package": {
-              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5.",
-              "type": "string"
+              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5. Required for iCE40 and ECP5; Gowin has none, since its\nnextpnr_device names the package.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "nextpnr_speed": {
               "description": "The speed grade nextpnr uses, such as 6. ECP5 only, where it's\nrequired.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "packer_device": {
+              "description": "The device the bitstream packer (gowin_pack) uses, such as GW1N-9C.\nGowin only, where it's required.",
               "type": [
                 "string",
                 "null"
@@ -573,14 +623,20 @@
             "size": {
               "description": "The device size, such as 8k.",
               "type": "string"
+            },
+            "yosys_family": {
+              "description": "The family yosys synthesizes for, such as gw2a. Gowin only,\noptional: omitted means yosys's default, the GW1N family.",
+              "type": [
+                "string",
+                "null"
+              ]
             }
           },
           "required": [
             "architecture",
             "part_number",
             "size",
-            "nextpnr_device",
-            "nextpnr_package"
+            "nextpnr_device"
           ],
           "type": "object"
         },
@@ -643,7 +699,7 @@
       "properties": {
         "board": {
           "$ref": "#/$defs/BoardSpec",
-          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40 or EHXPLLL for ECP5."
+          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40, EHXPLLL for ECP5 or rPLL for Gowin."
         },
         "defines": {
           "additionalProperties": {
@@ -859,6 +915,11 @@
               "const": "ecp5",
               "description": "Lattice ECP5.",
               "type": "string"
+            },
+            {
+              "const": "gowin",
+              "description": "Gowin (GW1N, GW2A and GW5A).",
+              "type": "string"
             }
           ]
         },
@@ -927,18 +988,35 @@
           "properties": {
             "architecture": {
               "$ref": "#/$defs/Architecture",
-              "description": "The FPGA family: ice40 or ecp5."
+              "description": "The FPGA family: ice40, ecp5 or gowin."
             },
             "nextpnr_device": {
-              "description": "The device type nextpnr uses, such as hx8k for iCE40 or 25k for\nECP5.",
+              "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5 or\nGW1NR-LV9QN88PC6/I5 for Gowin.",
               "type": "string"
             },
+            "nextpnr_family": {
+              "description": "The device family nextpnr uses, such as GW1N-9C, when nextpnr can't\ntell it from nextpnr_device. Gowin only, optional.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "nextpnr_package": {
-              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5.",
-              "type": "string"
+              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5. Required for iCE40 and ECP5; Gowin has none, since its\nnextpnr_device names the package.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "nextpnr_speed": {
               "description": "The speed grade nextpnr uses, such as 6. ECP5 only, where it's\nrequired.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "packer_device": {
+              "description": "The device the bitstream packer (gowin_pack) uses, such as GW1N-9C.\nGowin only, where it's required.",
               "type": [
                 "string",
                 "null"
@@ -951,14 +1029,20 @@
             "size": {
               "description": "The device size, such as 8k.",
               "type": "string"
+            },
+            "yosys_family": {
+              "description": "The family yosys synthesizes for, such as gw2a. Gowin only,\noptional: omitted means yosys's default, the GW1N family.",
+              "type": [
+                "string",
+                "null"
+              ]
             }
           },
           "required": [
             "architecture",
             "part_number",
             "size",
-            "nextpnr_device",
-            "nextpnr_package"
+            "nextpnr_device"
           ],
           "type": "object"
         },
@@ -1021,7 +1105,7 @@
       "properties": {
         "board": {
           "$ref": "#/$defs/BoardSpec",
-          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40 or EHXPLLL for ECP5."
+          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40, EHXPLLL for ECP5 or rPLL for Gowin."
         },
         "build_folder": {
           "description": "Where the compiled testbenches and their waveforms go, as an absolute\npath. One of its last two folder names must contain \"build\", such as\n/home/u/proj/_build/default. It is created if needed.",
@@ -1330,6 +1414,11 @@
               "const": "ecp5",
               "description": "Lattice ECP5.",
               "type": "string"
+            },
+            {
+              "const": "gowin",
+              "description": "Gowin (GW1N, GW2A and GW5A).",
+              "type": "string"
             }
           ]
         },
@@ -1398,18 +1487,35 @@
           "properties": {
             "architecture": {
               "$ref": "#/$defs/Architecture",
-              "description": "The FPGA family: ice40 or ecp5."
+              "description": "The FPGA family: ice40, ecp5 or gowin."
             },
             "nextpnr_device": {
-              "description": "The device type nextpnr uses, such as hx8k for iCE40 or 25k for\nECP5.",
+              "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5 or\nGW1NR-LV9QN88PC6/I5 for Gowin.",
               "type": "string"
             },
+            "nextpnr_family": {
+              "description": "The device family nextpnr uses, such as GW1N-9C, when nextpnr can't\ntell it from nextpnr_device. Gowin only, optional.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "nextpnr_package": {
-              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5.",
-              "type": "string"
+              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5. Required for iCE40 and ECP5; Gowin has none, since its\nnextpnr_device names the package.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "nextpnr_speed": {
               "description": "The speed grade nextpnr uses, such as 6. ECP5 only, where it's\nrequired.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "packer_device": {
+              "description": "The device the bitstream packer (gowin_pack) uses, such as GW1N-9C.\nGowin only, where it's required.",
               "type": [
                 "string",
                 "null"
@@ -1422,14 +1528,20 @@
             "size": {
               "description": "The device size, such as 8k.",
               "type": "string"
+            },
+            "yosys_family": {
+              "description": "The family yosys synthesizes for, such as gw2a. Gowin only,\noptional: omitted means yosys's default, the GW1N family.",
+              "type": [
+                "string",
+                "null"
+              ]
             }
           },
           "required": [
             "architecture",
             "part_number",
             "size",
-            "nextpnr_device",
-            "nextpnr_package"
+            "nextpnr_device"
           ],
           "type": "object"
         },
@@ -1492,7 +1604,7 @@
       "properties": {
         "board": {
           "$ref": "#/$defs/BoardSpec",
-          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40 or EHXPLLL for ECP5."
+          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40, EHXPLLL for ECP5 or rPLL for Gowin."
         },
         "build_folder": {
           "description": "Where the compiled testbench and its waveform go, as an absolute path.\nOne of its last two folder names must contain \"build\", such as\n/home/u/proj/_build/default. It is created if needed.",
@@ -2228,7 +2340,7 @@
   },
   {
     "name": "build",
-    "description": "Builds an FPGA design into a bitstream: synthesizes the Verilog or SystemVerilog sources, places and routes them on the board's FPGA using the constraint file, which maps top-level ports to pins (.pcf for iCE40, .lpf for ECP5), and packs the bitstream into the build folder. Give the source files explicitly; the engine doesn't search for them, though `include files are found next to the including file or in the source folder. A build with no changes since the last one returns at once with up_to_date set. The first build may install the toolchain package first, which takes a few minutes. Design problems come back as a design error with diagnostics at file and line. After a successful build, program_board programs the bitstream into the board.",
+    "description": "Builds an FPGA design into a bitstream: synthesizes the Verilog or SystemVerilog sources, places and routes them on the board's FPGA using the constraint file, which maps top-level ports to pins (.pcf for iCE40, .lpf for ECP5, .cst for Gowin), and packs the bitstream into the build folder. Give the source files explicitly; the engine doesn't search for them, though `include files are found next to the including file or in the source folder. A build with no changes since the last one returns at once with up_to_date set. The first build may install the toolchain package first, which takes a few minutes. Design problems come back as a design error with diagnostics at file and line. After a successful build, program_board programs the bitstream into the board.",
     "inputSchema": {
       "$defs": {
         "Architecture": {
@@ -2242,6 +2354,11 @@
             {
               "const": "ecp5",
               "description": "Lattice ECP5.",
+              "type": "string"
+            },
+            {
+              "const": "gowin",
+              "description": "Gowin (GW1N, GW2A and GW5A).",
               "type": "string"
             }
           ]
@@ -2311,18 +2428,35 @@
           "properties": {
             "architecture": {
               "$ref": "#/$defs/Architecture",
-              "description": "The FPGA family: ice40 or ecp5."
+              "description": "The FPGA family: ice40, ecp5 or gowin."
             },
             "nextpnr_device": {
-              "description": "The device type nextpnr uses, such as hx8k for iCE40 or 25k for\nECP5.",
+              "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5 or\nGW1NR-LV9QN88PC6/I5 for Gowin.",
               "type": "string"
             },
+            "nextpnr_family": {
+              "description": "The device family nextpnr uses, such as GW1N-9C, when nextpnr can't\ntell it from nextpnr_device. Gowin only, optional.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "nextpnr_package": {
-              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5.",
-              "type": "string"
+              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5. Required for iCE40 and ECP5; Gowin has none, since its\nnextpnr_device names the package.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "nextpnr_speed": {
               "description": "The speed grade nextpnr uses, such as 6. ECP5 only, where it's\nrequired.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "packer_device": {
+              "description": "The device the bitstream packer (gowin_pack) uses, such as GW1N-9C.\nGowin only, where it's required.",
               "type": [
                 "string",
                 "null"
@@ -2335,14 +2469,20 @@
             "size": {
               "description": "The device size, such as 8k.",
               "type": "string"
+            },
+            "yosys_family": {
+              "description": "The family yosys synthesizes for, such as gw2a. Gowin only,\noptional: omitted means yosys's default, the GW1N family.",
+              "type": [
+                "string",
+                "null"
+              ]
             }
           },
           "required": [
             "architecture",
             "part_number",
             "size",
-            "nextpnr_device",
-            "nextpnr_package"
+            "nextpnr_device"
           ],
           "type": "object"
         },
@@ -2412,7 +2552,7 @@
           "type": "string"
         },
         "constraint_file": {
-          "description": "The constraint file, relative to the source folder: .pcf for iCE40,\n.lpf for ECP5.",
+          "description": "The constraint file, relative to the source folder: .pcf for iCE40,\n.lpf for ECP5, .cst for Gowin.",
           "type": "string"
         },
         "defines": {
@@ -2699,6 +2839,11 @@
               "const": "ecp5",
               "description": "Lattice ECP5.",
               "type": "string"
+            },
+            {
+              "const": "gowin",
+              "description": "Gowin (GW1N, GW2A and GW5A).",
+              "type": "string"
             }
           ]
         },
@@ -2767,18 +2912,35 @@
           "properties": {
             "architecture": {
               "$ref": "#/$defs/Architecture",
-              "description": "The FPGA family: ice40 or ecp5."
+              "description": "The FPGA family: ice40, ecp5 or gowin."
             },
             "nextpnr_device": {
-              "description": "The device type nextpnr uses, such as hx8k for iCE40 or 25k for\nECP5.",
+              "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5 or\nGW1NR-LV9QN88PC6/I5 for Gowin.",
               "type": "string"
             },
+            "nextpnr_family": {
+              "description": "The device family nextpnr uses, such as GW1N-9C, when nextpnr can't\ntell it from nextpnr_device. Gowin only, optional.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "nextpnr_package": {
-              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5.",
-              "type": "string"
+              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5. Required for iCE40 and ECP5; Gowin has none, since its\nnextpnr_device names the package.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "nextpnr_speed": {
               "description": "The speed grade nextpnr uses, such as 6. ECP5 only, where it's\nrequired.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "packer_device": {
+              "description": "The device the bitstream packer (gowin_pack) uses, such as GW1N-9C.\nGowin only, where it's required.",
               "type": [
                 "string",
                 "null"
@@ -2791,14 +2953,20 @@
             "size": {
               "description": "The device size, such as 8k.",
               "type": "string"
+            },
+            "yosys_family": {
+              "description": "The family yosys synthesizes for, such as gw2a. Gowin only,\noptional: omitted means yosys's default, the GW1N family.",
+              "type": [
+                "string",
+                "null"
+              ]
             }
           },
           "required": [
             "architecture",
             "part_number",
             "size",
-            "nextpnr_device",
-            "nextpnr_package"
+            "nextpnr_device"
           ],
           "type": "object"
         },
