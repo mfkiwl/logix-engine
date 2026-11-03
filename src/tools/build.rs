@@ -51,7 +51,8 @@ pub struct BuildInput {
     #[schemars(length(min = 1))]
     pub source_files: Vec<String>,
     /// The constraint file, relative to the source folder: .pcf for iCE40,
-    /// .lpf for ECP5, .cst for Gowin, .xdc for Xilinx.
+    /// .lpf for ECP5, .cst for Gowin, .xdc for Xilinx. Another extension is
+    /// refused, since each family's tools read only their own format.
     pub constraint_file: String,
     /// Where the build writes its files, as an absolute path. One of its last
     /// two folder names must contain "build", such as
@@ -160,6 +161,27 @@ pub fn check_source_file(src: &Path, field: &str, rel: &str) -> Result<(), ToolE
     Ok(())
 }
 
+/// Checks that the constraint file's extension is its FPGA family's format
+/// (any case). The tools don't check it: nextpnr-ice40 reads any file given
+/// to `--pcf` as PCF, so a misnamed file would otherwise build as if the
+/// name were right, or fail with a puzzling parse error.
+pub fn check_constraint_extension(
+    board: &board::ResolvedBoard,
+    rel: &str,
+) -> Result<(), ToolError> {
+    let arch = board.fpga.architecture;
+    let wanted = arch.constraint_extension();
+    let ext = Path::new(rel).extension().and_then(|e| e.to_str());
+    if ext.is_some_and(|e| e.eq_ignore_ascii_case(wanted)) {
+        return Ok(());
+    }
+    Err(ToolError::request(format!(
+        "constraint_file: {rel:?} isn't a .{wanted} file. {} FPGAs, as on the {}, need a .{wanted} constraint file.",
+        arch.label(),
+        board.description,
+    )))
+}
+
 /// Checks a build folder against the path rules and returns its real path.
 pub fn check_build_folder(build_folder: &str, src: &Path) -> Result<PathBuf, ToolError> {
     paths::check_build_folder(build_folder, paths::home_folder().as_deref(), Some(src))
@@ -179,6 +201,7 @@ pub fn check(input: BuildInput) -> Result<BuildRequest, ToolError> {
         check_source_file(&src, "source_files", f)?;
     }
     check_source_file(&src, "constraint_file", &input.constraint_file)?;
+    check_constraint_extension(&board, &input.constraint_file)?;
     let build_folder = check_build_folder(&input.build_folder, &src)?;
     Ok(BuildRequest {
         board,
@@ -207,4 +230,34 @@ pub async fn run(
         timing: r.timing,
         warnings: r.warnings,
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::board::BoardSpec;
+
+    fn board(id: &str) -> board::ResolvedBoard {
+        board::resolve(&BoardSpec::Id(id.to_string())).unwrap()
+    }
+
+    #[test]
+    fn constraint_file_must_match_the_family() {
+        let ice40 = board("alhambra-ii");
+        assert!(check_constraint_extension(&ice40, "pinout.pcf").is_ok());
+        assert!(check_constraint_extension(&ice40, "pins/Pinout.PCF").is_ok());
+        for bad in ["pinout.lpf", "pinout", "pinout.pcf.txt", "pcf"] {
+            let err = check_constraint_extension(&ice40, bad).unwrap_err();
+            assert_eq!(err.category, crate::errors::Category::Request, "{bad}");
+        }
+        let err = check_constraint_extension(&ice40, "pinout.lpf").unwrap_err();
+        assert_eq!(
+            err.message,
+            "constraint_file: \"pinout.lpf\" isn't a .pcf file. iCE40 FPGAs, as on the Alhambra II, need a .pcf constraint file."
+        );
+        assert!(check_constraint_extension(&board("icesugar-pro"), "main.lpf").is_ok());
+        assert!(check_constraint_extension(&board("sipeed-tang-nano-9k"), "main.cst").is_ok());
+        assert!(check_constraint_extension(&board("arty-a7-35t"), "main.xdc").is_ok());
+        assert!(check_constraint_extension(&board("arty-a7-35t"), "main.pcf").is_err());
+    }
 }

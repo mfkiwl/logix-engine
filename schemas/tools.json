@@ -2661,7 +2661,7 @@
           "type": "string"
         },
         "constraint_file": {
-          "description": "The constraint file, relative to the source folder: .pcf for iCE40,\n.lpf for ECP5, .cst for Gowin, .xdc for Xilinx.",
+          "description": "The constraint file, relative to the source folder: .pcf for iCE40,\n.lpf for ECP5, .cst for Gowin, .xdc for Xilinx. Another extension is\nrefused, since each family's tools read only their own format.",
           "type": "string"
         },
         "defines": {

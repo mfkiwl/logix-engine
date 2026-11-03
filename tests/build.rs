@@ -477,6 +477,15 @@ async fn request_errors() {
         let err = build_it(&state, &src, extra.clone()).await.unwrap_err();
         assert_eq!(err.category, Category::Request, "{extra}: {err:?}");
     }
+    // A PCF file named .lpf, for an iCE40 board: nextpnr would read it as PCF
+    // anyway, but the name is the wrong family's format.
+    std::fs::copy(src.join("pinout.pcf"), src.join("pinout.lpf")).unwrap();
+    let err = build_it(&state, &src, json!({"constraint_file": "pinout.lpf"}))
+        .await
+        .unwrap_err();
+    assert_eq!(err.category, Category::Request, "{err:?}");
+    assert!(err.message.contains("isn't a .pcf file"), "{}", err.message);
+    std::fs::remove_file(src.join("pinout.lpf")).unwrap();
     // An include from outside the source folder.
     std::fs::write(tmp.path().join("outside.vh"), "").unwrap();
     std::fs::write(

@@ -185,6 +185,30 @@ pub enum Architecture {
     Xilinx,
 }
 
+impl Architecture {
+    /// The family's name for people, such as "iCE40".
+    pub fn label(self) -> &'static str {
+        match self {
+            Architecture::Ice40 => "iCE40",
+            Architecture::Ecp5 => "ECP5",
+            Architecture::Gowin => "Gowin",
+            Architecture::Xilinx => "Xilinx",
+        }
+    }
+
+    /// The extension of the family's constraint file format, without the dot.
+    /// Each family's place-and-route tool reads only its own format, and
+    /// takes the format from its command-line option, not the file name.
+    pub fn constraint_extension(self) -> &'static str {
+        match self {
+            Architecture::Ice40 => "pcf",
+            Architecture::Ecp5 => "lpf",
+            Architecture::Gowin => "cst",
+            Architecture::Xilinx => "xdc",
+        }
+    }
+}
+
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct BoardsFile {
