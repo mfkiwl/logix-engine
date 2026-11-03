@@ -93,6 +93,7 @@ async fn get_engine_info_reports_the_launch_settings() {
         out["packages"],
         json!([
             {"name": "oss-cad-suite", "version": "2026-10-22", "status": "missing"},
+            {"name": "openxc7", "version": "2026-10-22", "status": "missing"},
             {"name": "verible", "version": "2026-10-22", "status": "missing"}
         ])
     );
@@ -212,7 +213,10 @@ async fn real_install_packages_with_progress() {
     let result = client.call_tool(params).await.unwrap();
     assert_ne!(result.is_error, Some(true), "{result:?}");
     let out = result.structured_content.unwrap();
-    assert_eq!(out["installed"], json!(["oss-cad-suite", "verible"]));
+    assert_eq!(
+        out["installed"],
+        json!(["oss-cad-suite", "openxc7", "verible"])
+    );
     for p in out["packages"].as_array().unwrap() {
         assert_eq!(p["status"], "installed", "{p}");
     }
@@ -223,13 +227,17 @@ async fn real_install_packages_with_progress() {
         progress[0].message.as_deref(),
         Some("Installing oss-cad-suite")
     );
-    assert!(
-        progress
-            .iter()
-            .any(|p| p.message.as_deref() == Some("Installing verible"))
-    );
+    for name in ["openxc7", "verible"] {
+        let message = format!("Installing {name}");
+        assert!(
+            progress
+                .iter()
+                .any(|p| p.message.as_deref() == Some(message.as_str())),
+            "{name}"
+        );
+    }
     // One phase per package, 100 each.
-    assert!(progress.iter().all(|p| p.total == Some(200.0)));
+    assert!(progress.iter().all(|p| p.total == Some(300.0)));
     assert!(progress.windows(2).all(|w| w[1].progress > w[0].progress));
     client.cancel().await.unwrap();
 }
@@ -266,7 +274,7 @@ async fn get_catalog_returns_the_requested_entries() {
         alhambra["variants"]["flash"]["usb"]["product_regex"],
         "^Alhambra II.*"
     );
-    assert_eq!(out["fpgas"].as_object().unwrap().len(), 320);
+    assert_eq!(out["fpgas"].as_object().unwrap().len(), 532);
     let gowin = &out["fpgas"]["gw1nr-lv9qn88pc6-i5"];
     assert_eq!(gowin["packer_device"], "GW1N-9C");
     assert!(gowin.get("nextpnr_package").is_none(), "{gowin}");

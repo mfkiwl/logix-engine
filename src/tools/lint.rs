@@ -38,7 +38,8 @@ impl EngineTool for Lint {
 pub struct LintInput {
     /// The target board: a catalog ID such as alhambra-ii (get_catalog lists
     /// them), or a full board definition. It selects the FPGA's primitive
-    /// models, such as SB_IO for iCE40, EHXPLLL for ECP5 or rPLL for Gowin.
+    /// models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE
+    /// for Xilinx.
     pub board: BoardSpec,
     /// Name of the top-level module, such as main. When omitted, Verilator
     /// checks every module that no other module uses.

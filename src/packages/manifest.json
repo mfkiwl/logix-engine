@@ -16,6 +16,21 @@
       }
     },
     {
+      "name": "openxc7",
+      "version": "2026-10-22",
+      "description": "nextpnr-xilinx, Project X-Ray's database and bitstream tools for Xilinx 7 Series FPGAs, from Apio's packages",
+      "files": {
+        "darwin-arm64": {
+          "owner": "fpgawars",
+          "repo": "tools-openxc7",
+          "tag": "2026-10-22",
+          "file": "apio-openxc7-darwin-arm64-20261022.tgz",
+          "size": 123525394,
+          "sha256": "c5b478bcce623dad299c382e5cc322f67fc4826834754b23ffe04846e34522ee"
+        }
+      }
+    },
+    {
       "name": "verible",
       "version": "2026-10-22",
       "description": "Verible's Verilog formatter and other Verilog tools, from Apio's packages",

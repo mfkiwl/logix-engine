@@ -66,18 +66,18 @@ pub struct UsbFilter {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct FpgaDefinition {
-    /// The FPGA family: ice40, ecp5 or gowin.
+    /// The FPGA family: ice40, ecp5, gowin or xilinx.
     pub architecture: Architecture,
     /// The vendor's part number, such as ICE40HX4K-TQ144.
     pub part_number: String,
     /// The device size, such as 8k.
     pub size: String,
-    /// The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5 or
-    /// GW1NR-LV9QN88PC6/I5 for Gowin.
+    /// The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5,
+    /// GW1NR-LV9QN88PC6/I5 for Gowin or xc7a35tcsg324-1 for Xilinx.
     pub nextpnr_device: String,
     /// The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for
-    /// ECP5. Required for iCE40 and ECP5; Gowin has none, since its
-    /// nextpnr_device names the package.
+    /// ECP5. Required for iCE40 and ECP5; Gowin and Xilinx have none,
+    /// since their nextpnr_device names the package.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub nextpnr_package: Option<String>,
     /// The speed grade nextpnr uses, such as 6. ECP5 only, where it's
@@ -96,6 +96,15 @@ pub struct FpgaDefinition {
     /// optional: omitted means yosys's default, the GW1N family.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub yosys_family: Option<String>,
+    /// The architecture yosys synthesizes for (synth_xilinx -arch), such
+    /// as xc7. Xilinx only, where it's required.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub yosys_arch: Option<String>,
+    /// The FPGA family's folder in the Project X-Ray database, which the
+    /// bitstream tools read, such as artix7, spartan7 or zynq7. Xilinx
+    /// only, where it's required.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub prjxray_family: Option<String>,
 }
 
 impl FpgaDefinition {
@@ -121,6 +130,8 @@ impl FpgaDefinition {
             ("nextpnr_family", &self.nextpnr_family),
             ("packer_device", &self.packer_device),
             ("yosys_family", &self.yosys_family),
+            ("yosys_arch", &self.yosys_arch),
+            ("prjxray_family", &self.prjxray_family),
         ];
         for (name, value) in fields {
             let (allowed, required) = match (self.architecture, name) {
@@ -128,6 +139,7 @@ impl FpgaDefinition {
                 (Architecture::Ecp5, "nextpnr_package" | "nextpnr_speed") => (true, true),
                 (Architecture::Gowin, "packer_device") => (true, true),
                 (Architecture::Gowin, "nextpnr_family" | "yosys_family") => (true, false),
+                (Architecture::Xilinx, "yosys_arch" | "prjxray_family") => (true, true),
                 _ => (false, false),
             };
             match value {
@@ -135,6 +147,19 @@ impl FpgaDefinition {
                 Some(_) => return Err(format!("{arch} FPGAs have no {name}")),
                 None if required => return Err(format!("{arch} FPGAs need {name}")),
                 None => {}
+            }
+        }
+        // These name folders in the Project X-Ray database.
+        if self.architecture == Architecture::Xilinx {
+            for (name, v) in [
+                ("nextpnr_device", Some(&self.nextpnr_device)),
+                ("prjxray_family", self.prjxray_family.as_ref()),
+            ] {
+                if let Some(v) = v
+                    && v.contains('/')
+                {
+                    return Err(format!("bad {name} {v:?}"));
+                }
             }
         }
         Ok(())
@@ -156,6 +181,8 @@ pub enum Architecture {
     Ecp5,
     /// Gowin (GW1N, GW2A and GW5A).
     Gowin,
+    /// AMD/Xilinx 7 Series (Artix-7, Spartan-7 and Zynq-7000).
+    Xilinx,
 }
 
 #[derive(Debug, Deserialize)]
@@ -314,6 +341,8 @@ mod tests {
             nextpnr_family: None,
             packer_device: None,
             yosys_family: None,
+            yosys_arch: None,
+            prjxray_family: None,
         };
         assert!(ecp5.validate().is_ok());
         let no_speed = FpgaDefinition {
@@ -348,6 +377,8 @@ mod tests {
             nextpnr_family: Some("GW1N-9C".into()),
             packer_device: Some("GW1N-9C".into()),
             yosys_family: None,
+            yosys_arch: None,
+            prjxray_family: None,
         };
         assert!(gowin.validate().is_ok());
         let no_packer = FpgaDefinition {
@@ -370,6 +401,38 @@ mod tests {
             yosys_family: Some("gw2a".into()),
             ..ecp5
         };
+        let xilinx = FpgaDefinition {
+            architecture: Architecture::Xilinx,
+            part_number: "XC7A35T-1CSG324".into(),
+            size: "35k".into(),
+            nextpnr_device: "xc7a35tcsg324-1".into(),
+            nextpnr_package: None,
+            nextpnr_speed: None,
+            nextpnr_family: None,
+            packer_device: None,
+            yosys_family: None,
+            yosys_arch: Some("xc7".into()),
+            prjxray_family: Some("artix7".into()),
+        };
+        assert!(xilinx.validate().is_ok());
+        let no_family = FpgaDefinition {
+            prjxray_family: None,
+            ..xilinx.clone()
+        };
+        assert_eq!(
+            no_family.validate().unwrap_err(),
+            "xilinx FPGAs need prjxray_family"
+        );
+        let bad_family = FpgaDefinition {
+            prjxray_family: Some("/etc".into()),
+            ..xilinx
+        };
+        assert!(
+            bad_family
+                .validate()
+                .unwrap_err()
+                .contains("prjxray_family")
+        );
         assert!(
             ecp5_with_family
                 .validate()
@@ -379,7 +442,7 @@ mod tests {
     }
 
     #[test]
-    fn builtin_catalog_has_the_ice40_ecp5_and_gowin_boards() {
+    fn builtin_catalog_has_every_architectures_boards() {
         let c = builtin();
         let count = |a: Architecture| {
             let fpgas = c.fpgas.values().filter(|f| f.architecture == a).count();
@@ -393,6 +456,11 @@ mod tests {
         assert_eq!(count(Architecture::Ice40), (40, 22));
         assert_eq!(count(Architecture::Ecp5), (39, 26));
         assert_eq!(count(Architecture::Gowin), (241, 8));
+        assert_eq!(count(Architecture::Xilinx), (212, 23));
+        let arty = &c.fpgas[&c.boards["arty-a7-35t"].fpga_id];
+        assert_eq!(arty.nextpnr_device, "xc7a35tcsg324-1");
+        assert_eq!(arty.yosys_arch.as_deref(), Some("xc7"));
+        assert_eq!(arty.prjxray_family.as_deref(), Some("artix7"));
         let nano = &c.fpgas[&c.boards["sipeed-tang-nano-9k"].fpga_id];
         assert_eq!(nano.nextpnr_device, "GW1NR-LV9QN88PC6/I5");
         assert_eq!(nano.nextpnr_family.as_deref(), Some("GW1N-9C"));

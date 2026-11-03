@@ -1024,3 +1024,61 @@ async fn gowin_lint_test_and_simulate_use_the_gowin_models() {
         "{args:?}"
     );
 }
+
+/// A Xilinx design with a primitive that has a simulation model (a LUT) and
+/// one that only has a black box for lint (the PLL).
+const XILINX_MAIN: &str = r#"module main(input CLK, output LED0, output LED1);
+  wire [3:0] q;
+  counter c(.clk(CLK), .q(q));
+  LUT4 #(.INIT(16'h8000)) all_ones (.I0(q[0]), .I1(q[1]), .I2(q[2]), .I3(q[3]), .O(LED0));
+`ifdef SYNTHESIZE
+  wire fb;
+  /* verilator lint_off PINCONNECTEMPTY */
+  PLLE2_BASE #(.CLKFBOUT_MULT(8), .CLKIN1_PERIOD(10.0)) pll (
+    .CLKIN1(CLK), .CLKFBIN(fb), .CLKFBOUT(fb), .CLKOUT0(LED1), .RST(1'b0), .PWRDWN(1'b0),
+    .CLKOUT1(), .CLKOUT2(), .CLKOUT3(), .CLKOUT4(), .CLKOUT5(), .LOCKED()
+  );
+`else
+  assign LED1 = CLK;
+`endif
+endmodule
+"#;
+
+#[tokio::test]
+async fn xilinx_lint_test_and_simulate_use_the_xilinx_models() {
+    let state = engine().await;
+    let (_tmp, src) = project();
+    std::fs::write(src.join("main.v"), XILINX_MAIN).unwrap();
+    let board = json!({"board": "arty-a7-35t"});
+
+    let out = lint::run(&state, lint_input(&src, board.clone()), &call())
+        .await
+        .unwrap();
+    assert!(out.passed, "{:?}", out.diagnostics);
+    let args = &out.commands[0].args;
+    assert!(
+        args.iter()
+            .any(|a| a.ends_with("share/yosys/xilinx/cells_xtra.v")),
+        "{args:?}"
+    );
+    // Without a top module, warnings in the models are still off.
+    let out = lint::run(
+        &state,
+        lint_input(&src, json!({"board": "arty-a7-35t", "top_module": null})),
+        &call(),
+    )
+    .await
+    .unwrap();
+    assert!(out.passed, "{:?}", out.diagnostics);
+
+    let out = test::run(&state, test_input(&src, board), &call())
+        .await
+        .unwrap();
+    assert!(out.passed, "{:?}", out.testbenches);
+    let args = &out.commands[0].args;
+    assert!(
+        args.iter()
+            .any(|a| a.ends_with("share/yosys/xilinx/cells_sim.v")),
+        "{args:?}"
+    );
+}

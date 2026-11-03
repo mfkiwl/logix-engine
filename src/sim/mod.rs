@@ -117,6 +117,20 @@ impl SimLibrary {
                     verilator_rules_off: vec!["SPECIFYIGN", "MODDUP"],
                 }
             }
+            Architecture::Xilinx => {
+                let dir = package_dir.join("share/yosys/xilinx");
+                SimLibrary {
+                    files: vec![dir.join("cells_sim.v")],
+                    // Black boxes for the primitives without a model, such
+                    // as PLLE2_BASE.
+                    lint_files: vec![dir.join("cells_sim.v"), dir.join("cells_xtra.v")],
+                    include_dir: dir,
+                    defines: vec![],
+                    lint_defines: vec![],
+                    // Apio's: timing blocks the models carry.
+                    verilator_rules_off: vec!["SPECIFYIGN"],
+                }
+            }
         }
     }
 }

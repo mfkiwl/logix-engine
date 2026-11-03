@@ -1,6 +1,7 @@
 //! Build and clean_build tests with the real toolchain. They share one engine
-//! folder, target/tmp/test-engine, so oss-cad-suite is downloaded once (about
-//! 526 MB) and reused by later runs. CI caches it.
+//! folder, target/tmp/test-engine, so oss-cad-suite (about 526 MB) and
+//! openxc7 (about 124 MB) are downloaded once and reused by later runs. CI
+//! caches them.
 
 #![allow(clippy::result_large_err)]
 
@@ -35,12 +36,14 @@ async fn engine() -> EngineState {
     );
     READY
         .get_or_init(|| async {
-            let missing = packages.needing_install(&["oss-cad-suite"]).unwrap();
+            let missing = packages
+                .needing_install(&["oss-cad-suite", "openxc7"])
+                .unwrap();
             let phases = Phases::new(Arc::new(NoProgress), missing.len());
             packages
                 .ensure(&missing, true, &phases, &CancellationToken::new())
                 .await
-                .expect("install oss-cad-suite for the build tests");
+                .expect("install oss-cad-suite and openxc7 for the build tests");
         })
         .await;
     EngineState {
@@ -298,6 +301,79 @@ async fn builds_a_gowin_design() {
         "{err:?}"
     );
     assert!(!src.join("_build/default/hardware.fs").exists());
+}
+
+/// A Xilinx build with Apio's commands, for the Arty A7-35T: yosys from
+/// oss-cad-suite, the rest from openxc7.
+#[tokio::test]
+async fn builds_a_xilinx_design() {
+    let state = engine().await;
+    let tmp = tempfile::tempdir().unwrap();
+    let src = tmp.path().canonicalize().unwrap();
+    let from = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/designs/blinky-xilinx");
+    for f in ["main.v", "main.xdc"] {
+        std::fs::copy(from.join(f), src.join(f)).unwrap();
+    }
+    let input = json!({"board": "arty-a7-35t", "constraint_file": "main.xdc"});
+    let out = build_it(&state, &src, input.clone()).await.unwrap();
+    let tools: Vec<_> = out.commands.iter().map(|c| c.tool.as_str()).collect();
+    assert_eq!(
+        tools,
+        ["yosys", "nextpnr-xilinx", "fasm2frames", "xc7frames2bit"]
+    );
+    let packages: Vec<_> = out
+        .commands
+        .iter()
+        .map(|c| c.package.clone().unwrap_or_default())
+        .collect();
+    assert!(packages[0].starts_with("oss-cad-suite "), "{packages:?}");
+    assert!(
+        packages[1..].iter().all(|p| p.starts_with("openxc7 ")),
+        "{packages:?}"
+    );
+    assert!(
+        out.commands[0]
+            .args
+            .iter()
+            .any(|a| a.starts_with("synth_xilinx -arch xc7 -top main; write_json "))
+    );
+    let pnr = &out.commands[1].args[1..];
+    assert_eq!(&pnr[..3], ["--device", "xc7a35tcsg324-1", "-o"]);
+    assert!(pnr[3].starts_with("xdc=") && pnr[3].ends_with("main.xdc"));
+    assert_eq!(
+        &pnr[4..10],
+        [
+            "-o",
+            "fasm=hardware.fasm",
+            "--json",
+            "hardware.json",
+            "--report",
+            "hardware.pnr"
+        ]
+    );
+    let frames = &out.commands[2].args[1..];
+    assert!(frames[3].ends_with("share/nextpnr/external/prjxray-db/artix7"));
+    assert_eq!(&frames[4..], ["hardware.fasm", "hardware.frames"]);
+    assert!(out.commands[3].args[2].ends_with("prjxray-db/artix7/xc7a35tcsg324-1/part.yaml"));
+    assert_eq!(out.bitstream, "hardware.bit");
+    let bit = std::fs::read(src.join("_build/default/hardware.bit")).unwrap();
+    assert!(bit.len() > 100_000, "{}", bit.len());
+    assert!(!out.resources_usage.is_empty(), "{:?}", out.resources_usage);
+    assert_eq!(out.timing.len(), 1, "{:?}", out.timing);
+
+    // A pin that doesn't exist is a design error.
+    std::fs::write(
+        src.join("main.xdc"),
+        "set_property PACKAGE_PIN E3 [get_ports CLK]\nset_property PACKAGE_PIN ZZ99 [get_ports LED0]\n",
+    )
+    .unwrap();
+    let err = build_it(&state, &src, input).await.unwrap_err();
+    assert_eq!(
+        err.category,
+        logix_engine::errors::Category::Design,
+        "{err:?}"
+    );
+    assert!(!src.join("_build/default/hardware.bit").exists());
 }
 
 #[tokio::test]

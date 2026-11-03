@@ -1,14 +1,16 @@
 //! The build (docs/tool-api.md, "build tool"), run with the same commands as
 //! Apio, so the bitstreams match: yosys, nextpnr-ice40 and icepack for
 //! iCE40; yosys, nextpnr-ecp5 and ecppack for ECP5; yosys,
-//! nextpnr-himbaechel and gowin_pack for Gowin.
+//! nextpnr-himbaechel and gowin_pack for Gowin; yosys, nextpnr-xilinx,
+//! fasm2frames and xc7frames2bit for Xilinx.
 //!
 //! Build folder files: the marker `.logix-build` (written first, it tells
 //! clean_build the folder is a build folder), `hardware.json` (yosys),
-//! `hardware.asc` (iCE40), `hardware.config` (ECP5) or `hardware.pnr.json`
-//! (Gowin), nextpnr's placed design, and `hardware.pnr`, its report,
-//! `hardware.bin` (iCE40), `hardware.bit` (ECP5) or `hardware.fs` (Gowin),
-//! the bitstream, the logs `synth.log` and `pnr.log`, and
+//! `hardware.asc` (iCE40), `hardware.config` (ECP5), `hardware.pnr.json`
+//! (Gowin) or `hardware.fasm` (Xilinx), nextpnr's placed design, and
+//! `hardware.pnr`, its report, `hardware.frames` (Xilinx, the frames the
+//! bitstream is made from), `hardware.bin` (iCE40), `hardware.bit` (ECP5
+//! and Xilinx) or `hardware.fs` (Gowin), the bitstream, the logs `synth.log` and `pnr.log`, and
 //! the build record `build-record.json` (written last, on success only).
 //! These names are a fixed convention of the engine, documented in the tool
 //! API, so hosts can rely on them.
@@ -27,6 +29,7 @@ use sha2::{Digest, Sha256};
 use crate::board::ResolvedBoard;
 use crate::catalog::{Architecture, FpgaDefinition};
 use crate::errors::{Category, Diagnostic, ToolError};
+use crate::packages::manifest::PackageSpec;
 use crate::progress::OutputLevel;
 use crate::progress::Phases;
 use crate::runner::{RunError, command_line, run_tool_with};
@@ -45,6 +48,8 @@ pub const OUTPUTS: &[&str] = &[
     "hardware.asc",
     "hardware.config",
     "hardware.pnr.json",
+    "hardware.fasm",
+    "hardware.frames",
     "hardware.pnr",
     "hardware.bin",
     "hardware.bit",
@@ -59,6 +64,7 @@ pub fn bitstream_name(arch: Architecture) -> &'static str {
         Architecture::Ice40 => "hardware.bin",
         Architecture::Ecp5 => "hardware.bit",
         Architecture::Gowin => "hardware.fs",
+        Architecture::Xilinx => "hardware.bit",
     }
 }
 
@@ -76,6 +82,10 @@ pub fn synth_script(fpga: &FpgaDefinition, top: &str, json: &Path) -> String {
             };
             format!("synth_gowin -top {top}{family}; write_json \"{json}\"")
         }
+        Architecture::Xilinx => {
+            let arch = fpga.yosys_arch.as_deref().unwrap_or_default();
+            format!("synth_xilinx -arch {arch} -top {top}; write_json \"{json}\"")
+        }
     }
 }
 
@@ -87,7 +97,7 @@ pub fn pnr_command(
     verbose: bool,
 ) -> (&'static str, Vec<OsString>) {
     let mut args: Vec<OsString> = Vec::new();
-    if fpga.architecture != Architecture::Gowin {
+    if matches!(fpga.architecture, Architecture::Ice40 | Architecture::Ecp5) {
         args.push(format!("--{}", fpga.nextpnr_device).into());
         args.extend(["--package".into(), fpga.package().into()]);
     }
@@ -125,6 +135,16 @@ pub fn pnr_command(
             args.extend(["--vopt".into(), cst]);
             "nextpnr-himbaechel"
         }
+        Architecture::Xilinx => {
+            args.extend(["--device".into(), fpga.nextpnr_device.clone().into()]);
+            let mut xdc = OsString::from("xdc=");
+            xdc.push(constraint_file);
+            args.extend(["-o".into(), xdc, "-o".into(), "fasm=hardware.fasm".into()]);
+            for a in ["--json", "hardware.json", "--report", "hardware.pnr"] {
+                args.push(a.into());
+            }
+            "nextpnr-xilinx"
+        }
     };
     args.extend(["--log".into(), "pnr.log".into()]);
     if !verbose {
@@ -133,15 +153,19 @@ pub fn pnr_command(
     (tool, args)
 }
 
-/// The bitstream packer and its arguments, Apio's. Run in the build
-/// folder. `package_dir` is the toolchain package's folder.
-pub fn pack_command(fpga: &FpgaDefinition, package_dir: &Path) -> (&'static str, Vec<OsString>) {
+/// The programs that pack the bitstream, with their arguments, Apio's.
+/// Run in order in the build folder. `package_dir` is the folder of the
+/// package with the place-and-route tools (see `pnr_package`).
+pub fn pack_commands(
+    fpga: &FpgaDefinition,
+    package_dir: &Path,
+) -> Vec<(&'static str, Vec<OsString>)> {
     match fpga.architecture {
-        Architecture::Ice40 => (
+        Architecture::Ice40 => vec![(
             "icepack",
             vec!["hardware.asc".into(), "hardware.bin".into()],
-        ),
-        Architecture::Ecp5 => (
+        )],
+        Architecture::Ecp5 => vec![(
             "ecppack",
             vec![
                 "--compress".into(),
@@ -150,8 +174,8 @@ pub fn pack_command(fpga: &FpgaDefinition, package_dir: &Path) -> (&'static str,
                 "hardware.config".into(),
                 "hardware.bit".into(),
             ],
-        ),
-        Architecture::Gowin => (
+        )],
+        Architecture::Gowin => vec![(
             "gowin_pack",
             vec![
                 "-d".into(),
@@ -160,11 +184,55 @@ pub fn pack_command(fpga: &FpgaDefinition, package_dir: &Path) -> (&'static str,
                 "hardware.fs".into(),
                 "hardware.pnr.json".into(),
             ],
-        ),
+        )],
+        Architecture::Xilinx => {
+            let device = &fpga.nextpnr_device;
+            let db = package_dir
+                .join("share/nextpnr/external/prjxray-db")
+                .join(fpga.prjxray_family.as_deref().unwrap_or_default());
+            vec![
+                (
+                    "fasm2frames",
+                    vec![
+                        "--part".into(),
+                        device.into(),
+                        "--db-root".into(),
+                        db.clone().into(),
+                        "hardware.fasm".into(),
+                        "hardware.frames".into(),
+                    ],
+                ),
+                (
+                    "xc7frames2bit",
+                    vec![
+                        "--part_file".into(),
+                        db.join(device).join("part.yaml").into(),
+                        "--part_name".into(),
+                        device.into(),
+                        "--frm_file".into(),
+                        "hardware.frames".into(),
+                        "--output_file".into(),
+                        "hardware.bit".into(),
+                    ],
+                ),
+            ]
+        }
     }
 }
-/// The package with the build tools.
+
+/// The package with the build tools: yosys, and every architecture's
+/// place-and-route and packing tools except Xilinx's.
 pub const TOOLCHAIN: &str = "oss-cad-suite";
+/// The package with Xilinx's place-and-route and packing tools.
+pub const XILINX_TOOLCHAIN: &str = "openxc7";
+
+/// The package with the architecture's place-and-route and packing tools.
+pub fn pnr_package(arch: Architecture) -> &'static str {
+    match arch {
+        Architecture::Xilinx => XILINX_TOOLCHAIN,
+        _ => TOOLCHAIN,
+    }
+}
 
 /// A checked build request.
 #[derive(Debug, Clone)]
@@ -272,6 +340,7 @@ pub fn inputs_checksum(
     req: &BuildRequest,
     includes: &BTreeSet<String>,
     toolchain_version: &str,
+    pnr_toolchain: Option<&PackageSpec>,
 ) -> Result<String, ToolError> {
     let mut contents = BTreeMap::new();
     for rel in req
@@ -282,7 +351,7 @@ pub fn inputs_checksum(
     {
         contents.insert(rel.clone(), file_checksum(&req.source_folder.join(rel))?);
     }
-    let key = serde_json::json!({
+    let mut key = serde_json::json!({
         "engine_version": crate::state::ENGINE_VERSION,
         "toolchain": [TOOLCHAIN, toolchain_version],
         "board": req.board,
@@ -292,6 +361,10 @@ pub fn inputs_checksum(
         "defines": req.defines,
         "contents": contents,
     });
+    // A second package, for Xilinx.
+    if let Some(p) = pnr_toolchain {
+        key["pnr_toolchain"] = serde_json::json!([p.name, p.version]);
+    }
     Ok(hex::encode(Sha256::digest(key.to_string().as_bytes())))
 }
 
@@ -448,7 +521,19 @@ pub async fn build(
         .get(TOOLCHAIN)
         .cloned()
         .ok_or_else(|| ToolError::engine(format!("{TOOLCHAIN} isn't in the manifest.")))?;
-    let checksum = inputs_checksum(&req, &includes, &spec.version)?;
+    let fpga = &req.board.fpga;
+    let pnr_spec = match pnr_package(fpga.architecture) {
+        TOOLCHAIN => None,
+        name => Some(
+            state
+                .packages
+                .manifest()
+                .get(name)
+                .cloned()
+                .ok_or_else(|| ToolError::engine(format!("{name} isn't in the manifest.")))?,
+        ),
+    };
+    let checksum = inputs_checksum(&req, &includes, &spec.version, pnr_spec.as_ref())?;
 
     if let Some(record) = read_record(&req.build_folder)
         && record.inputs_checksum == checksum
@@ -460,7 +545,11 @@ pub async fn build(
         return Ok(result);
     }
 
-    let needed = state.packages.needing_install(&[TOOLCHAIN])?;
+    let mut names = vec![TOOLCHAIN];
+    if let Some(p) = &pnr_spec {
+        names.push(&p.name);
+    }
+    let needed = state.packages.needing_install(&names)?;
     let phases = Phases::new(call.progress.clone(), needed.len() + 3);
     state
         .packages
@@ -468,6 +557,12 @@ pub async fn build(
         .await?;
     let package_dir = state.packages.package_dir(&spec);
     let bin = package_dir.join("bin");
+    // The place-and-route and packing tools' package.
+    let pnr_dir = match &pnr_spec {
+        Some(p) => state.packages.package_dir(p),
+        None => package_dir.clone(),
+    };
+    let pnr_bin = pnr_dir.join("bin");
 
     let out = &req.build_folder;
     fs::create_dir_all(out).map_err(|e| io_error("create the build folder", e))?;
@@ -518,13 +613,12 @@ pub async fn build(
 
     // Place and route.
     phases.start("Placing and routing");
-    let fpga = &req.board.fpga;
     let (pnr_tool, args) = pnr_command(
         fpga,
         &req.source_folder.join(&req.constraint_file),
         req.verbose,
     );
-    let pnr = run_step("placing and routing", pnr_tool, &bin, args, out, call).await;
+    let pnr = run_step("placing and routing", pnr_tool, &pnr_bin, args, out, call).await;
     let pnr_out = match &pnr {
         Ok(o) => o.clone(),
         Err(e) => e.details.clone(),
@@ -535,8 +629,17 @@ pub async fn build(
 
     // Bitstream.
     phases.start("Packing bitstream");
-    let (pack_tool, args) = pack_command(fpga, &package_dir);
-    run_step("packing the bitstream", pack_tool, &bin, args, out, call).await?;
+    for (pack_tool, args) in pack_commands(fpga, &pnr_dir) {
+        run_step(
+            "packing the bitstream",
+            pack_tool,
+            &pnr_bin,
+            args,
+            out,
+            call,
+        )
+        .await?;
+    }
 
     let report = fs::read_to_string(out.join("hardware.pnr"))
         .map_err(|e| ToolError::new(Category::Tool, format!("nextpnr wrote no report: {e}")))?;

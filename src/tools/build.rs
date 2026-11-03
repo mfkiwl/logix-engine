@@ -21,7 +21,7 @@ impl EngineTool for Build {
     const NAME: &'static str = "build";
     const DESCRIPTION: &'static str = "Builds an FPGA design into a bitstream: synthesizes the \
         Verilog or SystemVerilog sources, places and routes them on the board's FPGA using the \
-        constraint file, which maps top-level ports to pins (.pcf for iCE40, .lpf for ECP5, .cst for Gowin), and packs the bitstream into \
+        constraint file, which maps top-level ports to pins (.pcf for iCE40, .lpf for ECP5, .cst for Gowin, .xdc for Xilinx), and packs the bitstream into \
         the build folder. Give the source files explicitly; the engine doesn't search for them, \
         though `include files are found next to the including file or in the source folder. A \
         build with no changes since the last one returns at once with up_to_date set. The first \
@@ -51,7 +51,7 @@ pub struct BuildInput {
     #[schemars(length(min = 1))]
     pub source_files: Vec<String>,
     /// The constraint file, relative to the source folder: .pcf for iCE40,
-    /// .lpf for ECP5, .cst for Gowin.
+    /// .lpf for ECP5, .cst for Gowin, .xdc for Xilinx.
     pub constraint_file: String,
     /// Where the build writes its files, as an absolute path. One of its last
     /// two folder names must contain "build", such as

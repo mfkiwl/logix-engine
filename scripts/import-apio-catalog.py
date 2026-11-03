@@ -9,14 +9,16 @@ Apio: then keep the new entries and restore any local edits it overwrote.
 Usage: scripts/import-apio-catalog.py [APIO_PACKAGES_FOLDER]
 
 APIO_PACKAGES_FOLDER defaults to ~/.apio/packages. It must hold Apio's
-definitions package (boards.jsonc, programmers.jsonc) and oss-cad-suite
-package (FPGAS.jsonc). Review the diff after running it.
+definitions package (boards.jsonc, programmers.jsonc), oss-cad-suite
+package (FPGAS.jsonc) and openxc7 package (FPGAS.jsonc, the Xilinx FPGAs). Review the diff after running it.
 
 What's imported:
-- Every iCE40, ECP5 and Gowin FPGA. ECP5 FPGAs also get nextpnr_speed.
+- Every iCE40, ECP5, Gowin and Xilinx FPGA. ECP5 FPGAs also get nextpnr_speed.
   Gowin FPGAs get nextpnr_device, packer_device, and nextpnr_family and
   yosys_family when Apio gives them (not empty), and no nextpnr_package.
-- The iCE40, ECP5 and Gowin boards whose programmer the engine supports:
+  Xilinx FPGAs get nextpnr_device, yosys_arch, and prjxray_family (Apio's
+  yosys-family, the Project X-Ray database folder).
+- The iCE40, ECP5, Gowin and Xilinx boards whose programmer the engine supports:
   openfpgaloader and iceprog. Each gets one programming variant, "flash", with Apio's full
   command arguments. Apio's ${BIN_FILE} becomes ${BITSTREAM}, added at the
   end when Apio leaves it out. An openFPGALoader board without a USB filter
@@ -30,7 +32,7 @@ import os
 import re
 import sys
 
-ARCHITECTURES = {"ice40", "ecp5", "gowin"}
+ARCHITECTURES = {"ice40", "ecp5", "gowin", "xilinx"}
 
 # openFPGALoader's default USB IDs for the cables Apio's boards name with -c
 # (openFPGALoader's src/cable.hpp).
@@ -88,6 +90,7 @@ def main():
     definitions = os.path.join(packages, "definitions")
     oss = os.path.join(packages, "oss-cad-suite")
     apio_fpgas = load_jsonc(os.path.join(oss, "FPGAS.jsonc"))
+    apio_fpgas.update(load_jsonc(os.path.join(packages, "openxc7", "FPGAS.jsonc")))
     apio_boards = load_jsonc(os.path.join(definitions, "boards.jsonc"))
     apio_programmers = load_jsonc(os.path.join(definitions, "programmers.jsonc"))
 
@@ -110,6 +113,10 @@ def main():
             ]:
                 if params.get(apio):
                     fpgas[fid][ours] = params[apio]
+        elif f["arch"] == "xilinx":
+            fpgas[fid]["nextpnr_device"] = params["nextpnr-device"]
+            fpgas[fid]["yosys_arch"] = params["yosys-arch"]
+            fpgas[fid]["prjxray_family"] = params["yosys-family"]
         else:
             fpgas[fid]["nextpnr_device"] = params["nextpnr-type"]
             fpgas[fid]["nextpnr_package"] = params["nextpnr-package"]

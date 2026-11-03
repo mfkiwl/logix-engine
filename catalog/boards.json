@@ -1,6 +1,36 @@
 {
   "source": "Logix Engine catalog. First imported from Apio's definitions 2026-10-26 and oss-cad-suite 2026-10-22 packages; maintained here since.",
   "boards": {
+    "alchitry-au": {
+      "description": "Alchitry Au (Xilinx, Artix7)",
+      "fpga_id": "xc7a35tftg256-1",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify --board alchitry_au ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
+          }
+        }
+      }
+    },
+    "alchitry-au-plus": {
+      "description": "Alchitry Au+ (Xilinx, Artix7)",
+      "fpga_id": "xc7a100tftg256-1",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify --board alchitry_au_plus ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
+          }
+        }
+      }
+    },
     "alchitry-cu": {
       "description": "Alchitry Cu Development Board",
       "fpga_id": "ice40hx8k-cb132",
@@ -33,6 +63,22 @@
         }
       }
     },
+    "alinx-ax7035": {
+      "description": "Alinx ARTIX-7 AX7035",
+      "fpga_id": "xc7a35tfgg484-2",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify -f -c ft232 --fpga-part xc7a35t ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6014",
+            "product_regex": "Digilent USB Device"
+          }
+        }
+      }
+    },
     "arice1": {
       "description": "ARiCE v1",
       "fpga_id": "ice40up5k-sg48",
@@ -49,6 +95,66 @@
         }
       }
     },
+    "arty-a7-100t": {
+      "description": "Arty A7-100T (Xilinx, Artix7)",
+      "fpga_id": "xc7a100tcsg324-1",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify --board arty_a7_100t ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
+          }
+        }
+      }
+    },
+    "arty-a7-35t": {
+      "description": "Arty A7-35T (Xilinx, Artix7)",
+      "fpga_id": "xc7a35tcsg324-1",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify --board arty_a7_35t ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
+          }
+        }
+      }
+    },
+    "arty-s7-25": {
+      "description": "Arty S7-25 (Xilinx, Spartan7)",
+      "fpga_id": "xc7s25csga324-1",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify --board arty_s7_25 ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
+          }
+        }
+      }
+    },
+    "arty-s7-50": {
+      "description": "Arty S7-50 (Xilinx, Spartan7)",
+      "fpga_id": "xc7s50csga324-1",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify --board arty_s7_50 ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
+          }
+        }
+      }
+    },
     "azukar2": {
       "description": "AZUKAR v2",
       "fpga_id": "ice40hx4k-tq144-8k",
@@ -61,6 +167,22 @@
             "vid": "0403",
             "pid": "6010",
             "product_regex": "^--.. Azukar FPGA ..--"
+          }
+        }
+      }
+    },
+    "basys3": {
+      "description": "Basys3 (Xilinx, Artix7)",
+      "fpga_id": "xc7a35tcpg236-1",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify --board basys3 ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010",
+            "product_regex": "^Digilent USB Device*"
           }
         }
       }
@@ -106,6 +228,21 @@
           "usb": {
             "vid": "0403",
             "pid": "6014"
+          }
+        }
+      }
+    },
+    "cmod-a7-35t": {
+      "description": "Cmod A7-35T (Xilinx, Artix7)",
+      "fpga_id": "xc7a35tcpg236-1",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify --board cmoda7_35t ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
           }
         }
       }
@@ -303,6 +440,21 @@
           "usb": {
             "vid": "09fb",
             "pid": "6001"
+          }
+        }
+      }
+    },
+    "colorlight-i9plus": {
+      "description": "Colorlight i9+ (Xilinx, Artix7)",
+      "fpga_id": "xc7a50tfgg484-1",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify --board colorlight-i9+ -c cmsisdap ${BITSTREAM}",
+          "usb": {
+            "vid": "0d28",
+            "pid": "0204"
           }
         }
       }
@@ -618,6 +770,36 @@
         }
       }
     },
+    "microphase-a7-lite": {
+      "description": "MicroPhase A7-Lite (Xilinx, Artix7)",
+      "fpga_id": "xc7a200tfbg484-3",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify -c ft232 --fpga-part xc7a200tfbg484 ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6014"
+          }
+        }
+      }
+    },
+    "mimas-a7": {
+      "description": "Mimas A7 (Xilinx, Artix7)",
+      "fpga_id": "xc7a50tfgg484-1",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify --board mimas_a7 ${BITSTREAM}",
+          "usb": {
+            "vid": "2a19",
+            "pid": "1009"
+          }
+        }
+      }
+    },
     "mimas-ecp5-mini": {
       "description": "Mimas ECP5 Mini",
       "fpga_id": "lfe5u-45f-6bg256c",
@@ -626,6 +808,36 @@
         "flash": {
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
+          }
+        }
+      }
+    },
+    "nexys-a7-100t": {
+      "description": "Nexys A7-100T / Nexys 4 DDR (Xilinx, Artix7)",
+      "fpga_id": "xc7a100tcsg324-1",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify --board nexys_a7_100 ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
+          }
+        }
+      }
+    },
+    "nexys-a7-50t": {
+      "description": "Nexys A7-50T (Xilinx, Artix7)",
+      "fpga_id": "xc7a50tcsg324-1",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify --board nexys_a7_50 ${BITSTREAM}",
           "usb": {
             "vid": "0403",
             "pid": "6010"
@@ -645,6 +857,51 @@
             "vid": "0403",
             "pid": "6010",
             "product_regex": "^Dual RS232-HS"
+          }
+        }
+      }
+    },
+    "pynq-z1": {
+      "description": "Pynq-Z1 (Xilinx, Zynq7 PL)",
+      "fpga_id": "xc7z020clg400-1",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify --board pynq_z1 ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
+          }
+        }
+      }
+    },
+    "pynq-z2": {
+      "description": "Pynq-Z2 (Xilinx, Zynq7 PL)",
+      "fpga_id": "xc7z020clg400-1",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify --board pynq_z2 ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
+          }
+        }
+      }
+    },
+    "qmtech-xc7a100t-ft2232h": {
+      "description": "QMTECH XC7A100T core board (Xilinx, Artix7)",
+      "fpga_id": "xc7a100tfgg676-1",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify -c ft2232 --fpga-part xc7a100tfgg676 ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
           }
         }
       }
@@ -863,6 +1120,96 @@
             "vid": "0403",
             "pid": "6014",
             "product_regex": "^.*Single RS232.*"
+          }
+        }
+      }
+    },
+    "zedboard": {
+      "description": "ZedBoard (Xilinx, Zynq7 PL)",
+      "fpga_id": "xc7z020clg484-1",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify --board zedboard ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6014"
+          }
+        }
+      }
+    },
+    "zxtres": {
+      "description": "ZXTRES (Xilinx, Artix7)",
+      "fpga_id": "xc7a35tfgg484-2",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify -c usb-blaster ${BITSTREAM}",
+          "usb": {
+            "vid": "09fb",
+            "pid": "6001"
+          }
+        }
+      }
+    },
+    "zxtres-plus": {
+      "description": "ZXTRES+ (Xilinx, Artix7)",
+      "fpga_id": "xc7a100tfgg484-2",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify -c usb-blaster ${BITSTREAM}",
+          "usb": {
+            "vid": "09fb",
+            "pid": "6001"
+          }
+        }
+      }
+    },
+    "zxtres-plus-plus": {
+      "description": "ZXTRES++ (Xilinx, Artix7)",
+      "fpga_id": "xc7a200tfbg484-2",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify -c usb-blaster ${BITSTREAM}",
+          "usb": {
+            "vid": "09fb",
+            "pid": "6001"
+          }
+        }
+      }
+    },
+    "zybo-z7-10": {
+      "description": "Zybo Z7-10 (Xilinx, Zynq7 PL)",
+      "fpga_id": "xc7z010clg400-1",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify --board zybo_z7_10 ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
+          }
+        }
+      }
+    },
+    "zybo-z7-20": {
+      "description": "Zybo Z7-20 (Xilinx, Zynq7 PL)",
+      "fpga_id": "xc7z020clg400-1",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify --board zybo_z7_20 ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6010"
           }
         }
       }

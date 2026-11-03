@@ -307,6 +307,11 @@
               "const": "gowin",
               "description": "Gowin (GW1N, GW2A and GW5A).",
               "type": "string"
+            },
+            {
+              "const": "xilinx",
+              "description": "AMD/Xilinx 7 Series (Artix-7, Spartan-7 and Zynq-7000).",
+              "type": "string"
             }
           ]
         },
@@ -349,10 +354,10 @@
           "properties": {
             "architecture": {
               "$ref": "#/$defs/Architecture",
-              "description": "The FPGA family: ice40, ecp5 or gowin."
+              "description": "The FPGA family: ice40, ecp5, gowin or xilinx."
             },
             "nextpnr_device": {
-              "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5 or\nGW1NR-LV9QN88PC6/I5 for Gowin.",
+              "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5,\nGW1NR-LV9QN88PC6/I5 for Gowin or xc7a35tcsg324-1 for Xilinx.",
               "type": "string"
             },
             "nextpnr_family": {
@@ -363,7 +368,7 @@
               ]
             },
             "nextpnr_package": {
-              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5. Required for iCE40 and ECP5; Gowin has none, since its\nnextpnr_device names the package.",
+              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5. Required for iCE40 and ECP5; Gowin and Xilinx have none,\nsince their nextpnr_device names the package.",
               "type": [
                 "string",
                 "null"
@@ -387,9 +392,23 @@
               "description": "The vendor's part number, such as ICE40HX4K-TQ144.",
               "type": "string"
             },
+            "prjxray_family": {
+              "description": "The FPGA family's folder in the Project X-Ray database, which the\nbitstream tools read, such as artix7, spartan7 or zynq7. Xilinx\nonly, where it's required.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "size": {
               "description": "The device size, such as 8k.",
               "type": "string"
+            },
+            "yosys_arch": {
+              "description": "The architecture yosys synthesizes for (synth_xilinx -arch), such\nas xc7. Xilinx only, where it's required.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "yosys_family": {
               "description": "The family yosys synthesizes for, such as gw2a. Gowin only,\noptional: omitted means yosys's default, the GW1N family.",
@@ -514,6 +533,11 @@
               "const": "gowin",
               "description": "Gowin (GW1N, GW2A and GW5A).",
               "type": "string"
+            },
+            {
+              "const": "xilinx",
+              "description": "AMD/Xilinx 7 Series (Artix-7, Spartan-7 and Zynq-7000).",
+              "type": "string"
             }
           ]
         },
@@ -582,10 +606,10 @@
           "properties": {
             "architecture": {
               "$ref": "#/$defs/Architecture",
-              "description": "The FPGA family: ice40, ecp5 or gowin."
+              "description": "The FPGA family: ice40, ecp5, gowin or xilinx."
             },
             "nextpnr_device": {
-              "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5 or\nGW1NR-LV9QN88PC6/I5 for Gowin.",
+              "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5,\nGW1NR-LV9QN88PC6/I5 for Gowin or xc7a35tcsg324-1 for Xilinx.",
               "type": "string"
             },
             "nextpnr_family": {
@@ -596,7 +620,7 @@
               ]
             },
             "nextpnr_package": {
-              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5. Required for iCE40 and ECP5; Gowin has none, since its\nnextpnr_device names the package.",
+              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5. Required for iCE40 and ECP5; Gowin and Xilinx have none,\nsince their nextpnr_device names the package.",
               "type": [
                 "string",
                 "null"
@@ -620,9 +644,23 @@
               "description": "The vendor's part number, such as ICE40HX4K-TQ144.",
               "type": "string"
             },
+            "prjxray_family": {
+              "description": "The FPGA family's folder in the Project X-Ray database, which the\nbitstream tools read, such as artix7, spartan7 or zynq7. Xilinx\nonly, where it's required.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "size": {
               "description": "The device size, such as 8k.",
               "type": "string"
+            },
+            "yosys_arch": {
+              "description": "The architecture yosys synthesizes for (synth_xilinx -arch), such\nas xc7. Xilinx only, where it's required.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "yosys_family": {
               "description": "The family yosys synthesizes for, such as gw2a. Gowin only,\noptional: omitted means yosys's default, the GW1N family.",
@@ -699,7 +737,7 @@
       "properties": {
         "board": {
           "$ref": "#/$defs/BoardSpec",
-          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40, EHXPLLL for ECP5 or rPLL for Gowin."
+          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE\nfor Xilinx."
         },
         "defines": {
           "additionalProperties": {
@@ -920,6 +958,11 @@
               "const": "gowin",
               "description": "Gowin (GW1N, GW2A and GW5A).",
               "type": "string"
+            },
+            {
+              "const": "xilinx",
+              "description": "AMD/Xilinx 7 Series (Artix-7, Spartan-7 and Zynq-7000).",
+              "type": "string"
             }
           ]
         },
@@ -988,10 +1031,10 @@
           "properties": {
             "architecture": {
               "$ref": "#/$defs/Architecture",
-              "description": "The FPGA family: ice40, ecp5 or gowin."
+              "description": "The FPGA family: ice40, ecp5, gowin or xilinx."
             },
             "nextpnr_device": {
-              "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5 or\nGW1NR-LV9QN88PC6/I5 for Gowin.",
+              "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5,\nGW1NR-LV9QN88PC6/I5 for Gowin or xc7a35tcsg324-1 for Xilinx.",
               "type": "string"
             },
             "nextpnr_family": {
@@ -1002,7 +1045,7 @@
               ]
             },
             "nextpnr_package": {
-              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5. Required for iCE40 and ECP5; Gowin has none, since its\nnextpnr_device names the package.",
+              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5. Required for iCE40 and ECP5; Gowin and Xilinx have none,\nsince their nextpnr_device names the package.",
               "type": [
                 "string",
                 "null"
@@ -1026,9 +1069,23 @@
               "description": "The vendor's part number, such as ICE40HX4K-TQ144.",
               "type": "string"
             },
+            "prjxray_family": {
+              "description": "The FPGA family's folder in the Project X-Ray database, which the\nbitstream tools read, such as artix7, spartan7 or zynq7. Xilinx\nonly, where it's required.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "size": {
               "description": "The device size, such as 8k.",
               "type": "string"
+            },
+            "yosys_arch": {
+              "description": "The architecture yosys synthesizes for (synth_xilinx -arch), such\nas xc7. Xilinx only, where it's required.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "yosys_family": {
               "description": "The family yosys synthesizes for, such as gw2a. Gowin only,\noptional: omitted means yosys's default, the GW1N family.",
@@ -1105,7 +1162,7 @@
       "properties": {
         "board": {
           "$ref": "#/$defs/BoardSpec",
-          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40, EHXPLLL for ECP5 or rPLL for Gowin."
+          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE\nfor Xilinx."
         },
         "build_folder": {
           "description": "Where the compiled testbenches and their waveforms go, as an absolute\npath. One of its last two folder names must contain \"build\", such as\n/home/u/proj/_build/default. It is created if needed.",
@@ -1419,6 +1476,11 @@
               "const": "gowin",
               "description": "Gowin (GW1N, GW2A and GW5A).",
               "type": "string"
+            },
+            {
+              "const": "xilinx",
+              "description": "AMD/Xilinx 7 Series (Artix-7, Spartan-7 and Zynq-7000).",
+              "type": "string"
             }
           ]
         },
@@ -1487,10 +1549,10 @@
           "properties": {
             "architecture": {
               "$ref": "#/$defs/Architecture",
-              "description": "The FPGA family: ice40, ecp5 or gowin."
+              "description": "The FPGA family: ice40, ecp5, gowin or xilinx."
             },
             "nextpnr_device": {
-              "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5 or\nGW1NR-LV9QN88PC6/I5 for Gowin.",
+              "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5,\nGW1NR-LV9QN88PC6/I5 for Gowin or xc7a35tcsg324-1 for Xilinx.",
               "type": "string"
             },
             "nextpnr_family": {
@@ -1501,7 +1563,7 @@
               ]
             },
             "nextpnr_package": {
-              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5. Required for iCE40 and ECP5; Gowin has none, since its\nnextpnr_device names the package.",
+              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5. Required for iCE40 and ECP5; Gowin and Xilinx have none,\nsince their nextpnr_device names the package.",
               "type": [
                 "string",
                 "null"
@@ -1525,9 +1587,23 @@
               "description": "The vendor's part number, such as ICE40HX4K-TQ144.",
               "type": "string"
             },
+            "prjxray_family": {
+              "description": "The FPGA family's folder in the Project X-Ray database, which the\nbitstream tools read, such as artix7, spartan7 or zynq7. Xilinx\nonly, where it's required.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "size": {
               "description": "The device size, such as 8k.",
               "type": "string"
+            },
+            "yosys_arch": {
+              "description": "The architecture yosys synthesizes for (synth_xilinx -arch), such\nas xc7. Xilinx only, where it's required.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "yosys_family": {
               "description": "The family yosys synthesizes for, such as gw2a. Gowin only,\noptional: omitted means yosys's default, the GW1N family.",
@@ -1604,7 +1680,7 @@
       "properties": {
         "board": {
           "$ref": "#/$defs/BoardSpec",
-          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40, EHXPLLL for ECP5 or rPLL for Gowin."
+          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE\nfor Xilinx."
         },
         "build_folder": {
           "description": "Where the compiled testbench and its waveform go, as an absolute path.\nOne of its last two folder names must contain \"build\", such as\n/home/u/proj/_build/default. It is created if needed.",
@@ -2340,7 +2416,7 @@
   },
   {
     "name": "build",
-    "description": "Builds an FPGA design into a bitstream: synthesizes the Verilog or SystemVerilog sources, places and routes them on the board's FPGA using the constraint file, which maps top-level ports to pins (.pcf for iCE40, .lpf for ECP5, .cst for Gowin), and packs the bitstream into the build folder. Give the source files explicitly; the engine doesn't search for them, though `include files are found next to the including file or in the source folder. A build with no changes since the last one returns at once with up_to_date set. The first build may install the toolchain package first, which takes a few minutes. Design problems come back as a design error with diagnostics at file and line. After a successful build, program_board programs the bitstream into the board.",
+    "description": "Builds an FPGA design into a bitstream: synthesizes the Verilog or SystemVerilog sources, places and routes them on the board's FPGA using the constraint file, which maps top-level ports to pins (.pcf for iCE40, .lpf for ECP5, .cst for Gowin, .xdc for Xilinx), and packs the bitstream into the build folder. Give the source files explicitly; the engine doesn't search for them, though `include files are found next to the including file or in the source folder. A build with no changes since the last one returns at once with up_to_date set. The first build may install the toolchain package first, which takes a few minutes. Design problems come back as a design error with diagnostics at file and line. After a successful build, program_board programs the bitstream into the board.",
     "inputSchema": {
       "$defs": {
         "Architecture": {
@@ -2359,6 +2435,11 @@
             {
               "const": "gowin",
               "description": "Gowin (GW1N, GW2A and GW5A).",
+              "type": "string"
+            },
+            {
+              "const": "xilinx",
+              "description": "AMD/Xilinx 7 Series (Artix-7, Spartan-7 and Zynq-7000).",
               "type": "string"
             }
           ]
@@ -2428,10 +2509,10 @@
           "properties": {
             "architecture": {
               "$ref": "#/$defs/Architecture",
-              "description": "The FPGA family: ice40, ecp5 or gowin."
+              "description": "The FPGA family: ice40, ecp5, gowin or xilinx."
             },
             "nextpnr_device": {
-              "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5 or\nGW1NR-LV9QN88PC6/I5 for Gowin.",
+              "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5,\nGW1NR-LV9QN88PC6/I5 for Gowin or xc7a35tcsg324-1 for Xilinx.",
               "type": "string"
             },
             "nextpnr_family": {
@@ -2442,7 +2523,7 @@
               ]
             },
             "nextpnr_package": {
-              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5. Required for iCE40 and ECP5; Gowin has none, since its\nnextpnr_device names the package.",
+              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5. Required for iCE40 and ECP5; Gowin and Xilinx have none,\nsince their nextpnr_device names the package.",
               "type": [
                 "string",
                 "null"
@@ -2466,9 +2547,23 @@
               "description": "The vendor's part number, such as ICE40HX4K-TQ144.",
               "type": "string"
             },
+            "prjxray_family": {
+              "description": "The FPGA family's folder in the Project X-Ray database, which the\nbitstream tools read, such as artix7, spartan7 or zynq7. Xilinx\nonly, where it's required.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "size": {
               "description": "The device size, such as 8k.",
               "type": "string"
+            },
+            "yosys_arch": {
+              "description": "The architecture yosys synthesizes for (synth_xilinx -arch), such\nas xc7. Xilinx only, where it's required.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "yosys_family": {
               "description": "The family yosys synthesizes for, such as gw2a. Gowin only,\noptional: omitted means yosys's default, the GW1N family.",
@@ -2552,7 +2647,7 @@
           "type": "string"
         },
         "constraint_file": {
-          "description": "The constraint file, relative to the source folder: .pcf for iCE40,\n.lpf for ECP5, .cst for Gowin.",
+          "description": "The constraint file, relative to the source folder: .pcf for iCE40,\n.lpf for ECP5, .cst for Gowin, .xdc for Xilinx.",
           "type": "string"
         },
         "defines": {
@@ -2844,6 +2939,11 @@
               "const": "gowin",
               "description": "Gowin (GW1N, GW2A and GW5A).",
               "type": "string"
+            },
+            {
+              "const": "xilinx",
+              "description": "AMD/Xilinx 7 Series (Artix-7, Spartan-7 and Zynq-7000).",
+              "type": "string"
             }
           ]
         },
@@ -2912,10 +3012,10 @@
           "properties": {
             "architecture": {
               "$ref": "#/$defs/Architecture",
-              "description": "The FPGA family: ice40, ecp5 or gowin."
+              "description": "The FPGA family: ice40, ecp5, gowin or xilinx."
             },
             "nextpnr_device": {
-              "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5 or\nGW1NR-LV9QN88PC6/I5 for Gowin.",
+              "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5,\nGW1NR-LV9QN88PC6/I5 for Gowin or xc7a35tcsg324-1 for Xilinx.",
               "type": "string"
             },
             "nextpnr_family": {
@@ -2926,7 +3026,7 @@
               ]
             },
             "nextpnr_package": {
-              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5. Required for iCE40 and ECP5; Gowin has none, since its\nnextpnr_device names the package.",
+              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5. Required for iCE40 and ECP5; Gowin and Xilinx have none,\nsince their nextpnr_device names the package.",
               "type": [
                 "string",
                 "null"
@@ -2950,9 +3050,23 @@
               "description": "The vendor's part number, such as ICE40HX4K-TQ144.",
               "type": "string"
             },
+            "prjxray_family": {
+              "description": "The FPGA family's folder in the Project X-Ray database, which the\nbitstream tools read, such as artix7, spartan7 or zynq7. Xilinx\nonly, where it's required.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "size": {
               "description": "The device size, such as 8k.",
               "type": "string"
+            },
+            "yosys_arch": {
+              "description": "The architecture yosys synthesizes for (synth_xilinx -arch), such\nas xc7. Xilinx only, where it's required.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "yosys_family": {
               "description": "The family yosys synthesizes for, such as gw2a. Gowin only,\noptional: omitted means yosys's default, the GW1N family.",
