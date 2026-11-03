@@ -29,7 +29,7 @@ What's imported:
 
 Local edits to restore after an import: boards moved to another programmer
 (the ULX3S boards to openFPGALoader, odt-icyblue-feather to iceprog, both
-with tested false), serial_regex filters (the iCESugar boards) and notes.
+with tested false), serial_regex filters (the iCESugar boards), user_notes and maintainer_notes.
 """
 
 import json

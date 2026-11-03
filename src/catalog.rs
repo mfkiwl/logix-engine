@@ -34,10 +34,17 @@ pub struct BoardDefinition {
     /// programming hasn't been tried on hardware, such as ones moved to a
     /// different programmer.
     pub tested: bool,
-    /// Warnings and missing information for people, such as a USB filter
-    /// that also matches other boards or a step needed before programming.
+    /// Warnings and missing information for the board's users, such as a
+    /// USB filter that also matches other boards or a step needed before
+    /// programming.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub notes: Option<String>,
+    pub user_notes: Option<String>,
+    /// For the catalog's maintainers: where the definition's settings come
+    /// from and why they changed. Kept in catalog/boards.json only; get_catalog
+    /// never returns it.
+    #[serde(default, skip_serializing)]
+    #[schemars(skip)]
+    pub maintainer_notes: Option<String>,
 }
 
 /// One way to program a board, such as to flash with a particular cable.
@@ -543,8 +550,17 @@ mod tests {
         // Boards moved to another programmer are marked untested, with a note.
         for id in ["ulx3s-12f", "ulx3s-85f", "odt-icyblue-feather"] {
             assert!(!c.boards[id].tested, "{id}");
-            assert!(c.boards[id].notes.is_some(), "{id}");
+            assert!(c.boards[id].user_notes.is_some(), "{id}");
+            assert!(c.boards[id].maintainer_notes.is_some(), "{id}");
         }
+        // Every untested board says why, for maintainers.
+        for (id, b) in &c.boards {
+            assert!(b.tested || b.maintainer_notes.is_some(), "{id}");
+        }
+        // Maintainer notes stay in the catalog file.
+        let json = serde_json::to_value(&c.boards["ulx3s-12f"]).unwrap();
+        assert!(json.get("maintainer_notes").is_none());
+        assert!(json.get("user_notes").is_some());
         assert!(c.boards["alhambra-ii"].tested);
         // The iCESugar boards share USB IDs; their serial numbers start with
         // a board ID (icesprog's source): 0700, 0710 Pro, 0720 nano.

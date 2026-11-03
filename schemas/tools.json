@@ -346,16 +346,16 @@
               "pattern": "^[a-z0-9-]+$",
               "type": "string"
             },
-            "notes": {
-              "description": "Warnings and missing information for people, such as a USB filter\nthat also matches other boards or a step needed before programming.",
+            "tested": {
+              "description": "Whether programming this board is known to work: tested on the board,\nor used unchanged in a tool that relies on it. False for boards whose\nprogramming hasn't been tried on hardware, such as ones moved to a\ndifferent programmer.",
+              "type": "boolean"
+            },
+            "user_notes": {
+              "description": "Warnings and missing information for the board's users, such as a\nUSB filter that also matches other boards or a step needed before\nprogramming.",
               "type": [
                 "string",
                 "null"
               ]
-            },
-            "tested": {
-              "description": "Whether programming this board is known to work: tested on the board,\nor used unchanged in a tool that relies on it. False for boards whose\nprogramming hasn't been tried on hardware, such as ones moved to a\ndifferent programmer.",
-              "type": "boolean"
             },
             "variants": {
               "additionalProperties": {

@@ -129,7 +129,8 @@ pub fn resolve(spec: &BoardSpec) -> Result<ResolvedBoard, ToolError> {
                 default_variant: d.default_variant.clone(),
                 variants: d.variants.clone(),
                 tested: false,
-                notes: None,
+                user_notes: None,
+                maintainer_notes: None,
             };
             as_catalog
                 .validate()

@@ -231,7 +231,7 @@
         }
       },
       "tested": true,
-      "notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+      "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
     },
     "butterstick-r10-2g-85k-ft2232h": {
       "description": "butterstick r1.0 FT2232H",
@@ -652,7 +652,7 @@
         }
       },
       "tested": true,
-      "notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+      "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
     },
     "fpga101": {
       "description": "FPGA 101 - Workshop Badge",
@@ -755,7 +755,7 @@
         }
       },
       "tested": true,
-      "notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+      "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
     },
     "icebreaker-bitsy1": {
       "description": "iCEBreaker bitsy",
@@ -773,7 +773,7 @@
         }
       },
       "tested": true,
-      "notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+      "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
     },
     "icenode": {
       "description": "ICENode",
@@ -840,7 +840,8 @@
         }
       },
       "tested": true,
-      "notes": "icesprog programs the first iCESugar it finds, so the engine refuses when other boards with the same USB IDs are connected, such as an iCESugar-Pro."
+      "user_notes": "Connect only this iCESugar when programming: its programmer can't tell iCESugar boards apart, so the engine refuses when another board with the same USB IDs, such as an iCESugar-Pro, is connected.",
+      "maintainer_notes": "iCESugar boards share USB IDs and product name. The serial number's first 4 characters are the board ID, as icesprog's source reads it: 0700 iCESugar, 0710 iCESugar-Pro, 0720 iCESugar-nano. 0700 also seen in a real iCESugar v1.5's USB log."
     },
     "icesugar-nano": {
       "description": "iCESugar-nano",
@@ -858,7 +859,8 @@
         }
       },
       "tested": true,
-      "notes": "icesprog programs the first iCESugar it finds, so the engine refuses when other boards with the same USB IDs are connected, such as an iCESugar-Pro."
+      "user_notes": "Connect only this iCESugar when programming: its programmer can't tell iCESugar boards apart, so the engine refuses when another board with the same USB IDs, such as an iCESugar-Pro, is connected.",
+      "maintainer_notes": "iCESugar boards share USB IDs and product name. The serial number's first 4 characters are the board ID, as icesprog's source reads it: 0700 iCESugar, 0710 iCESugar-Pro, 0720 iCESugar-nano. 0720 comes from icesprog's source only; no log from a real nano found."
     },
     "icesugar-pro": {
       "description": "Icesugar Pro",
@@ -876,7 +878,8 @@
           }
         }
       },
-      "tested": true
+      "tested": true,
+      "maintainer_notes": "iCESugar boards share USB IDs and product name. The serial number's first 4 characters are the board ID, as icesprog's source reads it: 0700 iCESugar, 0710 iCESugar-Pro, 0720 iCESugar-nano. 0710 checked on a real iCESugar-Pro."
     },
     "icesugar-pro-ram": {
       "description": "Icesugar Pro (RAM)",
@@ -894,7 +897,8 @@
           }
         }
       },
-      "tested": true
+      "tested": true,
+      "maintainer_notes": "iCESugar boards share USB IDs and product name. The serial number's first 4 characters are the board ID, as icesprog's source reads it: 0700 iCESugar, 0710 iCESugar-Pro, 0720 iCESugar-nano. 0710 checked on a real iCESugar-Pro."
     },
     "icezum": {
       "description": "Icezum Alhambra",
@@ -1025,7 +1029,8 @@
         }
       },
       "tested": false,
-      "notes": "Programmed with iceprog through its FTDI FT232H chip, as the board maker's examples do, not tried on hardware yet. Its USB filter matches other devices with an FT232H chip."
+      "user_notes": "Its USB filter matches any device with an FTDI FT232H chip.",
+      "maintainer_notes": "Programmed with iceprog through its FTDI FT232H chip, as the board maker's examples do (github.com/skerr92/ice5lp4k_examples). It was defined with icesprog, which can only reach MuseLab's iCELink, not an FTDI chip. Not tried on hardware."
     },
     "ok-ice40pro": {
       "description": "OK-iCE40Pro",
@@ -1060,7 +1065,7 @@
         }
       },
       "tested": true,
-      "notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the other OrangeCrab r0.2 size (25K or 85K), so the engine can't tell which one is connected."
+      "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the other OrangeCrab r0.2 size (25K or 85K), so the engine can't tell which one is connected."
     },
     "orangecrab-r02-85f": {
       "description": "OrangeCrab r0.2 85K",
@@ -1078,7 +1083,7 @@
         }
       },
       "tested": true,
-      "notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the other OrangeCrab r0.2 size (25K or 85K), so the engine can't tell which one is connected."
+      "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the other OrangeCrab r0.2 size (25K or 85K), so the engine can't tell which one is connected."
     },
     "pico-ice": {
       "description": "pico-ice",
@@ -1096,7 +1101,7 @@
         }
       },
       "tested": true,
-      "notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+      "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
     },
     "pynq-z1": {
       "description": "Pynq-Z1 (Xilinx, Zynq7 PL)",
@@ -1258,7 +1263,7 @@
         }
       },
       "tested": true,
-      "notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the Soan-Papdi-Mini."
+      "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the Soan-Papdi-Mini."
     },
     "soan-papdi-mini": {
       "description": "Soan-Papdi-Mini",
@@ -1276,7 +1281,7 @@
         }
       },
       "tested": true,
-      "notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+      "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
     },
     "thetamachines-eth4k": {
       "description": "Theta Machines ETH4K",
@@ -1310,7 +1315,8 @@
         }
       },
       "tested": false,
-      "notes": "Programmed with openFPGALoader, which writes the FPGA's SRAM, not tried on hardware yet. Its USB filter matches every ULX3S size and other devices with an FTDI FT231X chip."
+      "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches every ULX3S size and any device with an FTDI FT231X chip.",
+      "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware."
     },
     "ulx3s-25f": {
       "description": "ULX3S 25K",
@@ -1327,7 +1333,8 @@
         }
       },
       "tested": false,
-      "notes": "Programmed with openFPGALoader, which writes the FPGA's SRAM, not tried on hardware yet. Its USB filter matches every ULX3S size and other devices with an FTDI FT231X chip."
+      "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches every ULX3S size and any device with an FTDI FT231X chip.",
+      "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware."
     },
     "ulx3s-45f": {
       "description": "ULX3S 45K",
@@ -1344,7 +1351,8 @@
         }
       },
       "tested": false,
-      "notes": "Programmed with openFPGALoader, which writes the FPGA's SRAM, not tried on hardware yet. Its USB filter matches every ULX3S size and other devices with an FTDI FT231X chip."
+      "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches every ULX3S size and any device with an FTDI FT231X chip.",
+      "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware."
     },
     "ulx3s-85f": {
       "description": "ULX3S 85K",
@@ -1361,7 +1369,8 @@
         }
       },
       "tested": false,
-      "notes": "Programmed with openFPGALoader, which writes the FPGA's SRAM, not tried on hardware yet. Its USB filter matches every ULX3S size and other devices with an FTDI FT231X chip."
+      "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches every ULX3S size and any device with an FTDI FT231X chip.",
+      "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware."
     },
     "upduino": {
       "description": "UPDuino v1.0",
