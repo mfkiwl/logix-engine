@@ -15,6 +15,13 @@
           "additionalProperties": false,
           "description": "A toolchain package and whether it's installed.",
           "properties": {
+            "bin_folder": {
+              "description": "The folder with the package's programs, as an absolute path, when\nthe package is installed. For hosts that run one of its programs\ndirectly, such as Verible's language server verible-verilog-ls from\nthe verible package. Omitted when the package isn't installed.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "name": {
               "description": "The package name, such as oss-cad-suite.",
               "type": "string"
@@ -156,6 +163,13 @@
           "additionalProperties": false,
           "description": "A toolchain package and whether it's installed.",
           "properties": {
+            "bin_folder": {
+              "description": "The folder with the package's programs, as an absolute path, when\nthe package is installed. For hosts that run one of its programs\ndirectly, such as Verible's language server verible-verilog-ls from\nthe verible package. Omitted when the package isn't installed.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "name": {
               "description": "The package name, such as oss-cad-suite.",
               "type": "string"

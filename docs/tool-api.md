@@ -808,7 +808,7 @@ Returns the engine's version, platform and package status. A host calls it when 
 | `auto_install` | boolean | Whether automatic package install and repair is on. It is on by default, and the host turns it off with the `--no-auto-install` command-line argument when it launches the engine |
 | `command_line` | list of text | The command-line arguments the engine was launched with, as given, for diagnostics |
 | `log_file` | absolute path | The log file this engine process writes, in the `logs` subfolder of the engine folder |
-| `packages` | list of packages | Every package in the engine's manifest. Each has a text `name`, a date tag `version` and a `status`: `installed`, `missing` or `broken` |
+| `packages` | list of packages | Every package in the engine's manifest. Each has a text `name`, a date tag `version`, a `status`: `installed`, `missing` or `broken`, and, when installed, `bin_folder`: the absolute path of the folder with its programs, for hosts that run one directly, such as Verible's language server `verible-verilog-ls` from the `verible` package |
 
 **Errors:** engine errors only.
 
@@ -826,7 +826,7 @@ Output:
   "command_line": ["--engine-folder", "/Users/u/.apio/engine"],
   "log_file": "/Users/u/.apio/engine/logs/20261028-4123.log",
   "packages": [
-    { "name": "oss-cad-suite", "version": "2026-11-20", "status": "installed" },
+    { "name": "oss-cad-suite", "version": "2026-11-20", "status": "installed", "bin_folder": "/Users/u/.apio/engine/packages/oss-cad-suite/2026-11-20/bin" },
     { "name": "examples", "version": "2026-10-15", "status": "missing" }
   ]
 }

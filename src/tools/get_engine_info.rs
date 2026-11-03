@@ -5,6 +5,8 @@ use serde::{Deserialize, Serialize};
 
 use super::EngineTool;
 use crate::errors::ToolError;
+use crate::packages::PackageManager;
+use crate::packages::manifest::PackageSpec;
 use crate::state::{self, EngineState};
 
 pub struct GetEngineInfo;
@@ -64,6 +66,12 @@ pub struct PackageInfo {
     #[schemars(pattern(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}(-[1-9][0-9]*)?$"))]
     pub version: String,
     pub status: PackageStatus,
+    /// The folder with the package's programs, as an absolute path, when
+    /// the package is installed. For hosts that run one of its programs
+    /// directly, such as Verible's language server verible-verilog-ls from
+    /// the verible package. Omitted when the package isn't installed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub bin_folder: Option<String>,
 }
 
 /// Whether a package is ready to use.
@@ -105,10 +113,19 @@ pub fn package_list(state: &EngineState) -> Vec<PackageInfo> {
         .manifest()
         .packages
         .iter()
-        .map(|spec| PackageInfo {
-            name: spec.name.clone(),
-            version: spec.version.clone(),
-            status: state.packages.status(spec),
-        })
+        .map(|spec| package_info(&state.packages, spec))
         .collect()
+}
+
+/// One package's name, version, status and, when installed, its programs'
+/// folder.
+pub fn package_info(packages: &PackageManager, spec: &PackageSpec) -> PackageInfo {
+    let status = packages.status(spec);
+    PackageInfo {
+        name: spec.name.clone(),
+        version: spec.version.clone(),
+        status,
+        bin_folder: (status == PackageStatus::Installed)
+            .then(|| packages.package_dir(spec).join("bin").display().to_string()),
+    }
 }

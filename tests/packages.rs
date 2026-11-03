@@ -15,7 +15,7 @@ use logix_engine::packages::manifest::{self, Manifest};
 use logix_engine::packages::{PackageManager, RECORD_FILE};
 use logix_engine::progress::{NoProgress, Phases, ProgressSink};
 use logix_engine::state::EngineState;
-use logix_engine::tools::get_engine_info::PackageStatus;
+use logix_engine::tools::get_engine_info::{PackageStatus, package_info};
 use logix_engine::tools::{Call, install_packages};
 use sha2::{Digest, Sha256};
 use tokio_util::sync::CancellationToken;
@@ -203,6 +203,7 @@ async fn installs_a_missing_package() {
     let s = setup(good_package(), None, None);
     let spec = s.pm.manifest().get("pkg").unwrap().clone();
     assert_eq!(s.pm.status(&spec), PackageStatus::Missing);
+    assert_eq!(package_info(&s.pm, &spec).bin_folder, None);
     assert_eq!(s.pm.needing_install(&["pkg"]).unwrap().len(), 1);
 
     s.pm.install(&spec, &phases(), &CancellationToken::new())
@@ -210,6 +211,12 @@ async fn installs_a_missing_package() {
         .unwrap();
 
     assert_eq!(s.pm.status(&spec), PackageStatus::Installed);
+    // get_engine_info reports where its programs are.
+    let info = package_info(&s.pm, &spec);
+    assert_eq!(
+        info.bin_folder.as_deref(),
+        Some(s.pm.package_dir(&spec).join("bin").to_str().unwrap())
+    );
     assert!(s.pm.needing_install(&["pkg"]).unwrap().is_empty());
     let dir = s.pm.package_dir(&spec);
     assert_eq!(dir, s.engine.join("packages/pkg/2026-01-02"));
