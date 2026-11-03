@@ -75,6 +75,9 @@ pub enum ActionCode {
     FixDevicePermissions,
     /// A driver required by the board is missing.
     InstallDrivers,
+    /// Other connected devices have the board's USB IDs, and the board's
+    /// programmer can't tell them apart. Disconnect them and retry.
+    DisconnectDevices,
 }
 
 /// A suggested action, with a code for the host and a description for people.
@@ -200,6 +203,7 @@ mod tests {
             ActionCode::SelectDevice,
             ActionCode::FixDevicePermissions,
             ActionCode::InstallDrivers,
+            ActionCode::DisconnectDevices,
         ]
         .iter()
         .map(|c| serde_json::to_value(c).unwrap())
@@ -211,7 +215,8 @@ mod tests {
                 "connect_board",
                 "select_device",
                 "fix_device_permissions",
-                "install_drivers"
+                "install_drivers",
+                "disconnect_devices"
             ])
             .as_array()
             .unwrap()

@@ -126,12 +126,21 @@ pub async fn run_with(
     let bin = state.packages.package_dir(&spec).join("bin");
 
     phases.start("Finding device");
+    let connected = scan()?;
     let device = devices::select(
-        &scan()?,
+        &connected,
         &variant.usb,
         input.serial_number.as_deref(),
         &board.description,
     )?;
+    if custom.is_none() {
+        program::check_alone(
+            &variant.programmer,
+            &connected,
+            &variant.usb,
+            &board.description,
+        )?;
+    }
     let (program, args) =
         program::command(variant, custom, &device, &bitstream, &bin, input.verbose)?;
     let programmer = match custom {

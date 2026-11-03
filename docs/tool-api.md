@@ -27,9 +27,9 @@ The Type columns in this document use these logical types. Each maps to a JSON t
 | build folder path | string | An absolute path that satisfies the path keyword rules |
 | catalog ID | string | Lowercase letters, digits and hyphens |
 | board specification | string or object | A catalog ID, or a full board definition |
-| board definition | object | A board entry in the catalog format: its `description`, its FPGA as `fpga_id`, a map of programming variants keyed by variant name (`variants`), and the name of its default variant (`default_variant`) |
+| board definition | object | A board entry in the catalog format: its `description`, its FPGA as `fpga_id`, a map of programming variants keyed by variant name (`variants`), and the name of its default variant (`default_variant`). Catalog entries also have `tested` and optional `notes` (see [Catalog contents](#get_catalog-tool)); board definitions in requests don't take them |
 | FPGA definition | object | An FPGA entry in the catalog format: its `architecture` (`ice40`, `ecp5`, `gowin` or `xilinx`), `part_number`, `size`, and the toolchain parameters: `nextpnr_device` for every architecture; `nextpnr_package` for iCE40 and ECP5; `nextpnr_speed`, the speed grade, for ECP5 only; for Gowin only, `packer_device` (the device `gowin_pack` uses) and, when needed, `nextpnr_family` and `yosys_family`; and for Xilinx only, `yosys_arch` (such as `xc7`) and `prjxray_family` (the Project X-Ray database folder, such as `artix7`). A field that doesn't belong to the architecture is a request error |
-| programming variant | object | One way to program a board, such as flash or sram, or a particular cable, such as FT232 or FT2232. It names the programmer to run, such as `openfpgaloader`, and gives the full argument template for it, with variables such as `${VID}`, `${PID}`, `${BUS}`, `${DEV}`, `${SERIAL}` and `${BITSTREAM}`, and the USB filter that finds the device: `vid`, `pid` and an optional `product_regex`, a regular expression the device's product name must match, for boards that share USB IDs. The engine maps the programmer name to its executable and the package that provides it, so there are no separate programmer definitions. Milestone 1 supports the programmers `openfpgaloader` and `iceprog` |
+| programming variant | object | One way to program a board, such as flash or sram, or a particular cable, such as FT232 or FT2232. It names the programmer to run, such as `openfpgaloader`, and gives the full argument template for it, with variables such as `${VID}`, `${PID}`, `${BUS}`, `${DEV}`, `${SERIAL}` and `${BITSTREAM}`, and the USB filter that finds the device: `vid`, `pid`, an optional `product_regex`, a regular expression the device's product name must match, for boards that share USB IDs, and an optional `serial_regex`, a regular expression the device's serial number must match, for boards that share USB IDs and product names but whose serial numbers tell them apart. The engine maps the programmer name to its executable and the package that provides it, so there are no separate programmer definitions. The engine supports the programmers `openfpgaloader`, `iceprog`, `dfu-util` and `icesprog`, all from the toolchain package |
 | catalog query | object | Selects entries from one catalog section. It has `fetch`, a boolean that defaults to false, and `ids`, an optional list of catalog IDs. When `fetch` is true, the section is returned with only the listed IDs, or with all its entries when `ids` is omitted. An ID that isn't in the section is a request error |
 | date tag | string | `yyyy-mm-dd` |
 | USB ID | string | A 16-bit USB vendor or product ID, written as exactly four lowercase hexadecimal digits, such as `1d50`. Inputs are matched without regard to case |
@@ -94,6 +94,7 @@ On success, a tool returns its output object as structured content. On failure, 
 | `select_device` | Several devices match; pick one and retry with its serial number |
 | `fix_device_permissions` | A device was found but cannot be opened |
 | `install_drivers` | A driver required by the board is missing |
+| `disconnect_devices` | Other connected devices have the board's USB IDs and its programmer can't tell them apart; disconnect them and retry |
 
 ### Presentation
 
@@ -115,7 +116,7 @@ A host that wants to show the tools' output as it happens, such as in a console,
 
 Lines that the engine reads into diagnostics still come in the tool result too. The live lines are for showing, not for parsing.
 
-**Verbose.** Tools that run other tools take an optional boolean `verbose`, like Apio's `--verbose`. It asks those tools to print more detail, which shows in the live output and the logs, and never changes the result. Each tool maps it to what its tools offer: `build` runs yosys and nextpnr without `-q`, `lint` runs Verilator without `--quiet`, `test` and `simulate` run iverilog with `-v`, `format` adds Verible's `--verbose`, and `program_board` adds openFPGALoader's `--verbose` or iceprog's `-v`. A build that is up to date runs nothing, so it prints nothing extra.
+**Verbose.** Tools that run other tools take an optional boolean `verbose`, like Apio's `--verbose`. It asks those tools to print more detail, which shows in the live output and the logs, and never changes the result. Each tool maps it to what its tools offer: `build` runs yosys and nextpnr without `-q`, `lint` runs Verilator without `--quiet`, `test` and `simulate` run iverilog with `-v`, `format` adds Verible's `--verbose`, and `program_board` adds openFPGALoader's `--verbose`, or iceprog's or dfu-util's `-v` (icesprog has no such option). A build that is up to date runs nothing, so it prints nothing extra.
 
 ### Commands
 
@@ -672,7 +673,7 @@ Programs a bitstream into the board it was built for. The `program_board` tool t
 | `programmer` | catalog ID | The programmer that was used, such as `openfpgaloader`, or `custom` when `programmer_command` was given |
 | `commands` | list of commands | The programs this call ran, in order, so they can be run again without the engine. See [Commands](#commands) |
 
-**Errors:** setup errors with `connect_board` when no device matches, `select_device` when several match, `fix_device_permissions` or `install_drivers`. With `select_device`, `data.candidates` lists the matching devices so the host can let the user pick one and retry. A request error when the build folder has no build record. Other request errors, tool failures, engine errors and cancellation.
+**Errors:** setup errors with `connect_board` when no device matches (for a dfu-util board, also when it isn't in its bootloader mode), `select_device` when several match, `disconnect_devices` when the programmer can't tell the board from other connected devices, `fix_device_permissions` or `install_drivers`. icesprog opens the first device with the board's USB IDs, so the engine runs it only when no other device with those IDs is connected; dfu-util refuses by itself when several devices match. With `select_device`, `data.candidates` lists the matching devices so the host can let the user pick one and retry. A request error when the build folder has no build record. Other request errors, tool failures, engine errors and cancellation.
 
 **Example of a `select_device` error**
 
@@ -778,14 +779,17 @@ Output:
           "args": "--force-terminal-mode --verify -b ice40_generic --vid ${VID} --pid ${PID} --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": { "vid": "0403", "pid": "6010", "product_regex": "^Alhambra II.*" }
         }
-      }
+      },
+      "tested": true
     }
   },
   "fpgas": {}
 }
 ```
 
-**Catalog contents.** The catalog is data in the engine's repo, `catalog/boards.json` and `catalog/fpgas.json`, imported from Apio's definitions. It has every iCE40, ECP5, Gowin and Xilinx FPGA (Xilinx FPGAs come from Apio's openxc7 package), and the boards that program with `openfpgaloader` or `iceprog`: 22 iCE40 boards, 26 ECP5 boards, and all 8 Gowin and 23 Xilinx boards. Every board variant has a USB filter, whatever its architecture, as in Apio. A few of Apio's boards have none, mostly boards programmed through a cable named with openFPGALoader's `-c` option, such as `-c ft2232`. The import gives those the cable's default USB IDs in openFPGALoader, so the engine can still find the device. The other boards are added as their programmers are supported.
+**Catalog contents.** The catalog is data in the engine's repo, `catalog/boards.json` and `catalog/fpgas.json`, first imported from Apio's definitions. It has every iCE40, ECP5, Gowin and Xilinx FPGA (Xilinx FPGAs come from Apio's openxc7 package), and 95 boards: 31 iCE40, 33 ECP5, 8 Gowin and 23 Xilinx, programmed with `openfpgaloader`, `iceprog`, `dfu-util` or `icesprog`. Every board variant has a USB filter, whatever its architecture, as in Apio. A few of Apio's boards have none, mostly boards programmed through a cable named with openFPGALoader's `-c` option, such as `-c ft2232`. The import gives those the cable's default USB IDs in openFPGALoader, so the engine can still find the device.
+
+**Trust and notes.** Each catalog board has `tested`: true when its programming is known to work, because it was tried on the board or is used unchanged by a tool that people rely on; false when it hasn't been tried on hardware, such as a board moved to a different programmer. Optional `notes` give warnings and missing information for people, such as a USB filter that also matches other boards, or a step needed before programming. A USB filter can't always tell one board model from another: boards that use the same USB chip and report the same names look alike to the engine. Hosts can show both fields where users pick a board.
 
 ## get_engine_info tool
 

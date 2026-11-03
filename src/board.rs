@@ -128,6 +128,8 @@ pub fn resolve(spec: &BoardSpec) -> Result<ResolvedBoard, ToolError> {
                 fpga_id: fpga_id.clone().unwrap_or_else(|| "custom".into()),
                 default_variant: d.default_variant.clone(),
                 variants: d.variants.clone(),
+                tested: false,
+                notes: None,
             };
             as_catalog
                 .validate()

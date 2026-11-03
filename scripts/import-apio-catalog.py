@@ -19,12 +19,17 @@ What's imported:
   Xilinx FPGAs get nextpnr_device, yosys_arch, and prjxray_family (Apio's
   yosys-family, the Project X-Ray database folder).
 - The iCE40, ECP5, Gowin and Xilinx boards whose programmer the engine supports:
-  openfpgaloader and iceprog. Each gets one programming variant, "flash", with Apio's full
-  command arguments. Apio's ${BIN_FILE} becomes ${BITSTREAM}, added at the
+  openfpgaloader, iceprog, dfu (named dfu-util in the engine) and icesprog.
+  Each gets one programming variant, "flash", with Apio's full command
+  arguments, and tested true. Apio's ${BIN_FILE} becomes ${BITSTREAM}, added at the
   end when Apio leaves it out. An openFPGALoader board without a USB filter
   in Apio, such as one programmed with an external cable, gets the default
   USB IDs of the cable its -c option names (CABLE_USB_IDS), so the engine
   can find the device.
+
+Local edits to restore after an import: boards moved to another programmer
+(the ULX3S boards to openFPGALoader, odt-icyblue-feather to iceprog, both
+with tested false), serial_regex filters (the iCESugar boards) and notes.
 """
 
 import json
@@ -43,7 +48,8 @@ CABLE_USB_IDS = {
     "usb-blaster": ("09fb", "6001"),
     "cmsisdap": ("0d28", "0204"),
 }
-PROGRAMMERS = {"openfpgaloader", "iceprog"}
+# Apio's programmer IDs the engine supports, and the engine's names for them.
+PROGRAMMERS = {"openfpgaloader": "openfpgaloader", "iceprog": "iceprog", "dfu": "dfu-util", "icesprog": "icesprog"}
 
 
 def load_jsonc(path):
@@ -149,7 +155,8 @@ def main():
             "description": b["description"],
             "fpga_id": b["fpga-id"],
             "default_variant": "flash",
-            "variants": {"flash": {"programmer": pid, "args": args.strip(), "usb": usb}},
+            "variants": {"flash": {"programmer": PROGRAMMERS[pid], "args": args.strip(), "usb": usb}},
+            "tested": True,
         }
 
     root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "catalog")

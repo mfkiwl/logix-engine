@@ -141,7 +141,7 @@ The engine must support all of Apio's current functionality, so that Apio can be
 | HDL languages | Verilog and SystemVerilog |
 | Constraint files | Each architecture's native format, such as `.pcf` for iCE40, `.lpf` for ECP5 and `.cst` for Gowin |
 | Build toolchains | Synthesis, place and route, and bitstream generation for each architecture, with the tools Apio uses, such as Yosys, nextpnr, IceStorm, Project Trellis and Apicula |
-| Programmers | Every programmer Apio supports, such as openFPGALoader, iceprog, dfu-util and tinyprog, including board-specific programmer options |
+| Programmers | The programmers of the supported boards, today openFPGALoader, iceprog, dfu-util and icesprog, including board-specific programmer options. Boards whose programmers are legacy are dropped, with the reason recorded (see Milestone 2) |
 | Simulation and testing | Running testbenches and producing waveform files. When a local frontend asks, launching a packaged waveform viewer, such as GTKWave, fully detached so it outlives the session. The request is refused for remote frontends, which view waveforms on their own |
 | Lint and format | Checking and formatting HDL source, as Apio does with Verilator and Verible |
 | Reports and graphs | Resource utilization and timing reports, and design graphs in SVG, PNG and PDF |
@@ -371,6 +371,21 @@ Milestone 1 tested the interface with an AI coding agent as the host, before any
 | First start | `apio api get-system`, which installs the packages | `install_packages`, with progress |
 | Stop | Cancelling the running Apio command | Cancellation of every tool |
 
+**Boards dropped from Milestone 2 (decided 2026-11-03).** The catalog has 95 of Apio's 109 boards. The 14 others are dropped because their programmers are legacy or inactive, or not in the packages the engine uses. None of the programmers the engine supports can program them:
+
+| Programmer | Boards | Reason |
+| --- | --- | --- |
+| tinyprog | tinyfpga-bx, tinyfpga-ex-rev1, tinyfpga-ex-rev2 | Legacy: the TinyFPGA project is inactive. Needs a serial port |
+| tinyfpgab | tinyfpga-b2 | Legacy, older than tinyprog. Needs a serial port |
+| blackiceprog | blackice, blackice-ii, blackice-mx | Legacy: myStorm is discontinued. Needs a serial port |
+| icefunprog | icefun, icewerx | Niche and old. Needs a serial port |
+| iceprogduino | ice40-hx1k-evb, ice40-hx8k-evb | Legacy. Needs a serial port |
+| iceburn | iceblink40-hx1k | Legacy: the board is discontinued |
+| pi-sicle-loader | pi-sicle | Legacy, and works only when running on a Raspberry Pi |
+| apollo | cynthion-r1-4 | Current, but apollo isn't in the toolchain packages. Can be added later as its own package |
+
+Five boards are programmed differently from Apio, so the catalog marks them `tested: false`: the four ULX3S boards use openFPGALoader instead of fujprog, which is legacy, and odt-icyblue-feather uses iceprog, as the board maker's examples do, because Apio's icesprog can't program its FTDI chip. The iCESugar boards get a serial number filter (`serial_regex`), since the iCESugar, iCESugar-Pro and iCESugar-nano share USB IDs and product names.
+
 ## Development methodology
 
 The engine will be implemented and maintained by human-guided AI. The human directs the work and judges the results, with a general understanding of the code and architecture but without reviewing every line. The code is therefore not required to be human-readable or intuitive. In general, the AI-generated code is treated like machine code: people are not expected to inspect or understand it. In contrast, the functionality, external interfaces and requirements must be straightforward, intuitive and easy for people to understand.
@@ -395,8 +410,7 @@ The project relies heavily on AI-generated tests to catch regressions, since hum
 ## Open questions
 
 - Whether to publish the catalog as its own package, so boards can be added without a new engine binary, as Apio does with its definitions package and remote config. For now the catalog lives in the engine repo's `catalog/` folder and is built into the engine.
-- When to add the rest of Apio's iCE40 and ECP5 boards to the catalog (Milestone 2 needs them). The catalog has the 22 iCE40 and 26 ECP5 boards that program with openFPGALoader or iceprog. The other 20 iCE40 boards use dfu-util, icesprog, blackiceprog, iceprogduino, icefunprog, iCEburn, pi-sicle-loader, tinyfpgab or tinyprog, and the other 10 ECP5 boards use dfu-util, fujprog, tinyprog or apollo, or could switch to openFPGALoader (next question).
-- Whether to make openFPGALoader the only programmer. It can likely program about 93 of Apio's 109 boards, which would simplify packages and testing. The other 16, including the serial port boards and the iCESugar boards, would no longer be supported, and each switched board must be tested on hardware.
+- Whether to move more boards to openFPGALoader, which would simplify packages and testing. Its DFU support may cover the dfu-util boards, but each moved board must be tested on hardware.
 - Whether to support Linux arm64 and single-board computers attached to the target board, such as a Raspberry Pi.
 - Which hardware test interface to use for the engine's own hardware tests, and whether the same interface can serve the on-board verification feature for user designs.
 - Whether the network adapter is part of the first release.

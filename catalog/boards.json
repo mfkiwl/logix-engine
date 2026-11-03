@@ -14,7 +14,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "alchitry-au-plus": {
       "description": "Alchitry Au+ (Xilinx, Artix7)",
@@ -29,7 +30,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "alchitry-cu": {
       "description": "Alchitry Cu Development Board",
@@ -45,7 +47,8 @@
             "product_regex": "^Alchitry Cu"
           }
         }
-      }
+      },
+      "tested": true
     },
     "alhambra-ii": {
       "description": "Alhambra II",
@@ -61,7 +64,8 @@
             "product_regex": "^Alhambra II.*"
           }
         }
-      }
+      },
+      "tested": true
     },
     "alinx-ax7035": {
       "description": "Alinx ARTIX-7 AX7035",
@@ -77,7 +81,8 @@
             "product_regex": "Digilent USB Device"
           }
         }
-      }
+      },
+      "tested": true
     },
     "arice1": {
       "description": "ARiCE v1",
@@ -93,7 +98,8 @@
             "product_regex": "^Single RS232-HS"
           }
         }
-      }
+      },
+      "tested": true
     },
     "arty-a7-100t": {
       "description": "Arty A7-100T (Xilinx, Artix7)",
@@ -108,7 +114,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "arty-a7-35t": {
       "description": "Arty A7-35T (Xilinx, Artix7)",
@@ -123,7 +130,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "arty-s7-25": {
       "description": "Arty S7-25 (Xilinx, Spartan7)",
@@ -138,7 +146,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "arty-s7-50": {
       "description": "Arty S7-50 (Xilinx, Spartan7)",
@@ -153,7 +162,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "azukar2": {
       "description": "AZUKAR v2",
@@ -169,7 +179,8 @@
             "product_regex": "^--.. Azukar FPGA ..--"
           }
         }
-      }
+      },
+      "tested": true
     },
     "basys3": {
       "description": "Basys3 (Xilinx, Artix7)",
@@ -185,7 +196,8 @@
             "product_regex": "^Digilent USB Device*"
           }
         }
-      }
+      },
+      "tested": true
     },
     "brs-100-gw1nr9": {
       "description": "BrisbaneSilicon 9k",
@@ -200,7 +212,26 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
+    },
+    "butterstick-r10-2g-85k": {
+      "description": "butterstick r1.0 DFU",
+      "fpga_id": "lfe5um5g-85f-8bg381c",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "dfu-util",
+          "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM} --reset",
+          "usb": {
+            "vid": "1209",
+            "pid": "5af1",
+            "product_regex": "^butterstick (dfu v1.1)"
+          }
+        }
+      },
+      "tested": true,
+      "notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
     },
     "butterstick-r10-2g-85k-ft2232h": {
       "description": "butterstick r1.0 FT2232H",
@@ -215,7 +246,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "butterstick-r10-2g-85k-ft232h": {
       "description": "butterstick r1.0 FT232H",
@@ -230,7 +262,8 @@
             "pid": "6014"
           }
         }
-      }
+      },
+      "tested": true
     },
     "cmod-a7-35t": {
       "description": "Cmod A7-35T (Xilinx, Artix7)",
@@ -245,7 +278,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "colorlight-5a-75b-v61": {
       "description": "ColorLight-5A-75B-V61",
@@ -260,7 +294,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "colorlight-5a-75b-v7": {
       "description": "ColorLight-5A-75B-V7",
@@ -275,7 +310,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "colorlight-5a-75b-v8": {
       "description": "ColorLight-5A-75B-V8",
@@ -290,7 +326,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "colorlight-5a-75e-v6": {
       "description": "ColorLight-5A-75E-V6",
@@ -305,7 +342,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "colorlight-5a-75e-v71-ft2232h": {
       "description": "ColorLight-5A-75E-V71",
@@ -320,7 +358,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "colorlight-5a-75e-v71-ft232h": {
       "description": "ColorLight-5A-75E-V71",
@@ -335,7 +374,8 @@
             "pid": "6014"
           }
         }
-      }
+      },
+      "tested": true
     },
     "colorlight-5a-75e-v71-usb-blaster": {
       "description": "ColorLight-5A-75E-V71",
@@ -350,7 +390,8 @@
             "pid": "6001"
           }
         }
-      }
+      },
+      "tested": true
     },
     "colorlight-i5-v7-0": {
       "description": "ColorLight-i5",
@@ -366,7 +407,8 @@
             "product_regex": "^DAPLink CMSIS-DAP|^CMSIS-DAP-v1-MuseLab"
           }
         }
-      }
+      },
+      "tested": true
     },
     "colorlight-i5-v7-0-ram": {
       "description": "ColorLight-i5 (RAM)",
@@ -382,7 +424,8 @@
             "product_regex": "^DAPLink CMSIS-DAP|^CMSIS-DAP-v1-MuseLab"
           }
         }
-      }
+      },
+      "tested": true
     },
     "colorlight-i9-v7-2-cmsis-dap": {
       "description": "ColorLight-i9",
@@ -397,7 +440,8 @@
             "pid": "0204"
           }
         }
-      }
+      },
+      "tested": true
     },
     "colorlight-i9-v7-2-ft2232h": {
       "description": "ColorLight-i9",
@@ -412,7 +456,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "colorlight-i9-v7-2-ft232h": {
       "description": "ColorLight-i9",
@@ -427,7 +472,8 @@
             "pid": "6014"
           }
         }
-      }
+      },
+      "tested": true
     },
     "colorlight-i9-v7-2-usb-blaster": {
       "description": "ColorLight-i9",
@@ -442,7 +488,8 @@
             "pid": "6001"
           }
         }
-      }
+      },
+      "tested": true
     },
     "colorlight-i9plus": {
       "description": "Colorlight i9+ (Xilinx, Artix7)",
@@ -457,7 +504,8 @@
             "pid": "0204"
           }
         }
-      }
+      },
+      "tested": true
     },
     "ecp5-evaluation-board": {
       "description": "ECP5-Evaluation-Board",
@@ -472,7 +520,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "ecp5-mini-12": {
       "description": "ECP5-Mini-12",
@@ -487,7 +536,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "ecp5-mini-25": {
       "description": "ECP5-Mini-12",
@@ -502,7 +552,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "edu-ciaa-fpga": {
       "description": "EDU-CIAA-FPGA",
@@ -518,7 +569,8 @@
             "product_regex": "^Dual RS232-HS"
           }
         }
-      }
+      },
+      "tested": true
     },
     "epm11": {
       "description": "BrisbaneSilicon EPM11",
@@ -533,7 +585,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "fleafpga-ohm-ft2232h": {
       "description": "FleaFPGA-Ohm_(FT2232H)",
@@ -548,7 +601,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "fleafpga-ohm-ft232h": {
       "description": "FleaFPGA-Ohm_(FT232H)",
@@ -563,7 +617,8 @@
             "pid": "6014"
           }
         }
-      }
+      },
+      "tested": true
     },
     "fleafpga-ohm-usb-blaster": {
       "description": "FleaFPGA-Ohm_(USB-Blaster)",
@@ -578,7 +633,26 @@
             "pid": "6001"
           }
         }
-      }
+      },
+      "tested": true
+    },
+    "fomu": {
+      "description": "Fomu",
+      "fpga_id": "ice40up5k-uwg30",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "dfu-util",
+          "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
+          "usb": {
+            "vid": "1209",
+            "pid": "5bf0",
+            "product_regex": "^Fomu Hacker running DFU Bootloader v1.8.8"
+          }
+        }
+      },
+      "tested": true,
+      "notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
     },
     "fpga101": {
       "description": "FPGA 101 - Workshop Badge",
@@ -594,7 +668,8 @@
             "product_regex": "^Single RS232-HS"
           }
         }
-      }
+      },
+      "tested": true
     },
     "go-board": {
       "description": "The Go Board",
@@ -610,7 +685,8 @@
             "product_regex": "^Dual RS232-HS"
           }
         }
-      }
+      },
+      "tested": true
     },
     "ice40-hx8k": {
       "description": "iCE40-HX8K Breakout Board",
@@ -626,7 +702,8 @@
             "product_regex": "^(Dual RS232-HS)|(Lattice FTUSB Interface Cable)"
           }
         }
-      }
+      },
+      "tested": true
     },
     "ice40-up5k": {
       "description": "iCE40 UltraPlus Breakout",
@@ -642,7 +719,8 @@
             "product_regex": "^(USB <-> Serial Converter)|(Lattice iCE40UP5K Breakout)"
           }
         }
-      }
+      },
+      "tested": true
     },
     "icebreaker": {
       "description": "iCEBreaker",
@@ -658,7 +736,44 @@
             "product_regex": "^(Dual RS232-HS)|(iCEBreaker.*)"
           }
         }
-      }
+      },
+      "tested": true
+    },
+    "icebreaker-bitsy0": {
+      "description": "iCEBreaker bitsy",
+      "fpga_id": "ice40up5k-sg48",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "dfu-util",
+          "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
+          "usb": {
+            "vid": "1d50",
+            "pid": "6146",
+            "product_regex": "^iCEBreaker bitsy v0.*"
+          }
+        }
+      },
+      "tested": true,
+      "notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+    },
+    "icebreaker-bitsy1": {
+      "description": "iCEBreaker bitsy",
+      "fpga_id": "ice40up5k-sg48",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "dfu-util",
+          "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
+          "usb": {
+            "vid": "1d50",
+            "pid": "6146",
+            "product_regex": "^iCEBreaker bitsy1.*"
+          }
+        }
+      },
+      "tested": true,
+      "notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
     },
     "icenode": {
       "description": "ICENode",
@@ -673,7 +788,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "icepi-zero": {
       "description": "Icepi Zero",
@@ -688,7 +804,8 @@
             "pid": "6015"
           }
         }
-      }
+      },
+      "tested": true
     },
     "icestick": {
       "description": "iCEstick Eval Kit",
@@ -704,7 +821,44 @@
             "product_regex": "^(Dual RS232-HS)|(Lattice FTUSB Interface Cable)"
           }
         }
-      }
+      },
+      "tested": true
+    },
+    "icesugar-1-5": {
+      "description": "iCESugar v1.5",
+      "fpga_id": "ice40up5k-sg48",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "icesprog",
+          "args": "${BITSTREAM}",
+          "usb": {
+            "vid": "1d50",
+            "pid": "602b",
+            "serial_regex": "^0700"
+          }
+        }
+      },
+      "tested": true,
+      "notes": "icesprog programs the first iCESugar it finds, so the engine refuses when other boards with the same USB IDs are connected, such as an iCESugar-Pro."
+    },
+    "icesugar-nano": {
+      "description": "iCESugar-nano",
+      "fpga_id": "ice40lp1k-cm36",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "icesprog",
+          "args": "${BITSTREAM}",
+          "usb": {
+            "vid": "1d50",
+            "pid": "602b",
+            "serial_regex": "^0720"
+          }
+        }
+      },
+      "tested": true,
+      "notes": "icesprog programs the first iCESugar it finds, so the engine refuses when other boards with the same USB IDs are connected, such as an iCESugar-Pro."
     },
     "icesugar-pro": {
       "description": "Icesugar Pro",
@@ -717,10 +871,12 @@
           "usb": {
             "vid": "1d50",
             "pid": "602b",
-            "product_regex": "^DAPLink CMSIS-DAP|^CMSIS-DAP-v1-MuseLab"
+            "product_regex": "^DAPLink CMSIS-DAP|^CMSIS-DAP-v1-MuseLab",
+            "serial_regex": "^0710"
           }
         }
-      }
+      },
+      "tested": true
     },
     "icesugar-pro-ram": {
       "description": "Icesugar Pro (RAM)",
@@ -733,10 +889,12 @@
           "usb": {
             "vid": "1d50",
             "pid": "602b",
-            "product_regex": "^DAPLink CMSIS-DAP|^CMSIS-DAP-v1-MuseLab"
+            "product_regex": "^DAPLink CMSIS-DAP|^CMSIS-DAP-v1-MuseLab",
+            "serial_regex": "^0710"
           }
         }
-      }
+      },
+      "tested": true
     },
     "icezum": {
       "description": "Icezum Alhambra",
@@ -752,7 +910,8 @@
             "product_regex": "^IceZUM Alhambra.*"
           }
         }
-      }
+      },
+      "tested": true
     },
     "kefir": {
       "description": "Kéfir I iCE40-HX4K",
@@ -768,7 +927,8 @@
             "product_regex": "^Milk JTAG:u"
           }
         }
-      }
+      },
+      "tested": true
     },
     "microphase-a7-lite": {
       "description": "MicroPhase A7-Lite (Xilinx, Artix7)",
@@ -783,7 +943,8 @@
             "pid": "6014"
           }
         }
-      }
+      },
+      "tested": true
     },
     "mimas-a7": {
       "description": "Mimas A7 (Xilinx, Artix7)",
@@ -798,7 +959,8 @@
             "pid": "1009"
           }
         }
-      }
+      },
+      "tested": true
     },
     "mimas-ecp5-mini": {
       "description": "Mimas ECP5 Mini",
@@ -813,7 +975,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "nexys-a7-100t": {
       "description": "Nexys A7-100T / Nexys 4 DDR (Xilinx, Artix7)",
@@ -828,7 +991,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "nexys-a7-50t": {
       "description": "Nexys A7-50T (Xilinx, Artix7)",
@@ -843,7 +1007,25 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
+    },
+    "odt-icyblue-feather": {
+      "description": "ODT_IcyBlue_Feather",
+      "fpga_id": "ice5lp4k-sg48",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "iceprog",
+          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6014"
+          }
+        }
+      },
+      "tested": false,
+      "notes": "Programmed with iceprog through its FTDI FT232H chip, as the board maker's examples do, not tried on hardware yet. Its USB filter matches other devices with an FT232H chip."
     },
     "ok-ice40pro": {
       "description": "OK-iCE40Pro",
@@ -859,7 +1041,62 @@
             "product_regex": "^Dual RS232-HS"
           }
         }
-      }
+      },
+      "tested": true
+    },
+    "orangecrab-r02-25f": {
+      "description": "OrangeCrab r0.2 25K",
+      "fpga_id": "lfe5u-25f-6mg285c",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "dfu-util",
+          "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
+          "usb": {
+            "vid": "1209",
+            "pid": "5af0",
+            "product_regex": "^OrangeCrab r0.2 DFU bootloader"
+          }
+        }
+      },
+      "tested": true,
+      "notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the other OrangeCrab r0.2 size (25K or 85K), so the engine can't tell which one is connected."
+    },
+    "orangecrab-r02-85f": {
+      "description": "OrangeCrab r0.2 85K",
+      "fpga_id": "lfe5u-85f-6mg285c",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "dfu-util",
+          "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
+          "usb": {
+            "vid": "1209",
+            "pid": "5af0",
+            "product_regex": "^OrangeCrab r0.2 DFU bootloader"
+          }
+        }
+      },
+      "tested": true,
+      "notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the other OrangeCrab r0.2 size (25K or 85K), so the engine can't tell which one is connected."
+    },
+    "pico-ice": {
+      "description": "pico-ice",
+      "fpga_id": "ice40up5k-sg48",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "dfu-util",
+          "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM} --reset",
+          "usb": {
+            "vid": "1209",
+            "pid": "b1c0",
+            "product_regex": "^DFU flash"
+          }
+        }
+      },
+      "tested": true,
+      "notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
     },
     "pynq-z1": {
       "description": "Pynq-Z1 (Xilinx, Zynq7 PL)",
@@ -874,7 +1111,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "pynq-z2": {
       "description": "Pynq-Z2 (Xilinx, Zynq7 PL)",
@@ -889,7 +1127,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "qmtech-xc7a100t-ft2232h": {
       "description": "QMTECH XC7A100T core board (Xilinx, Artix7)",
@@ -904,7 +1143,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "sipeed-tang-nano": {
       "description": "Sipeed Tang Nano",
@@ -919,7 +1159,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "sipeed-tang-nano-1k": {
       "description": "Sipeed Tang Nano 1k",
@@ -934,7 +1175,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "sipeed-tang-nano-20k": {
       "description": "Sipeed Tang Nano 20k",
@@ -949,7 +1191,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "sipeed-tang-nano-4k": {
       "description": "Sipeed Tang Nano 4k",
@@ -964,7 +1207,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "sipeed-tang-nano-9k": {
       "description": "Sipeed Tang Nano 9k",
@@ -979,7 +1223,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "sipeed-tang-primer-20k": {
       "description": "Sipeed Tang Primer 20k",
@@ -994,7 +1239,44 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
+    },
+    "soan-papdi": {
+      "description": "Soan-Papdi",
+      "fpga_id": "ice40up5k-sg48",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "dfu-util",
+          "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
+          "usb": {
+            "vid": "1d50",
+            "pid": "6146",
+            "product_regex": "^Soan Papdi.*"
+          }
+        }
+      },
+      "tested": true,
+      "notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the Soan-Papdi-Mini."
+    },
+    "soan-papdi-mini": {
+      "description": "Soan-Papdi-Mini",
+      "fpga_id": "ice40up5k-sg48",
+      "default_variant": "flash",
+      "variants": {
+        "flash": {
+          "programmer": "dfu-util",
+          "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
+          "usb": {
+            "vid": "1d50",
+            "pid": "6146",
+            "product_regex": "^Soan Papdi Mini.*"
+          }
+        }
+      },
+      "tested": true,
+      "notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
     },
     "thetamachines-eth4k": {
       "description": "Theta Machines ETH4K",
@@ -1010,7 +1292,76 @@
             "product_regex": "^ETH4K"
           }
         }
-      }
+      },
+      "tested": true
+    },
+    "ulx3s-12f": {
+      "description": "ULX3S 12K",
+      "fpga_id": "lfe5u-12f-6bg381c",
+      "default_variant": "sram",
+      "variants": {
+        "sram": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6015"
+          }
+        }
+      },
+      "tested": false,
+      "notes": "Programmed with openFPGALoader, which writes the FPGA's SRAM, not tried on hardware yet. Its USB filter matches every ULX3S size and other devices with an FTDI FT231X chip."
+    },
+    "ulx3s-25f": {
+      "description": "ULX3S 25K",
+      "fpga_id": "lfe5u-25f-6bg381c",
+      "default_variant": "sram",
+      "variants": {
+        "sram": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6015"
+          }
+        }
+      },
+      "tested": false,
+      "notes": "Programmed with openFPGALoader, which writes the FPGA's SRAM, not tried on hardware yet. Its USB filter matches every ULX3S size and other devices with an FTDI FT231X chip."
+    },
+    "ulx3s-45f": {
+      "description": "ULX3S 45K",
+      "fpga_id": "lfe5u-45f-6bg381c",
+      "default_variant": "sram",
+      "variants": {
+        "sram": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6015"
+          }
+        }
+      },
+      "tested": false,
+      "notes": "Programmed with openFPGALoader, which writes the FPGA's SRAM, not tried on hardware yet. Its USB filter matches every ULX3S size and other devices with an FTDI FT231X chip."
+    },
+    "ulx3s-85f": {
+      "description": "ULX3S 85K",
+      "fpga_id": "lfe5u-85f-6bg381c",
+      "default_variant": "sram",
+      "variants": {
+        "sram": {
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+          "usb": {
+            "vid": "0403",
+            "pid": "6015"
+          }
+        }
+      },
+      "tested": false,
+      "notes": "Programmed with openFPGALoader, which writes the FPGA's SRAM, not tried on hardware yet. Its USB filter matches every ULX3S size and other devices with an FTDI FT231X chip."
     },
     "upduino": {
       "description": "UPDuino v1.0",
@@ -1026,7 +1377,8 @@
             "product_regex": "^Single RS232-HS"
           }
         }
-      }
+      },
+      "tested": true
     },
     "upduino2": {
       "description": "UPDuino v2.0",
@@ -1042,7 +1394,8 @@
             "product_regex": "^Single RS232-HS"
           }
         }
-      }
+      },
+      "tested": true
     },
     "upduino21": {
       "description": "UPduino v2.1",
@@ -1058,7 +1411,8 @@
             "product_regex": "^(Single RS232-HS)|(UPduino v2.*)"
           }
         }
-      }
+      },
+      "tested": true
     },
     "upduino3": {
       "description": "UPduino v3.0",
@@ -1074,7 +1428,8 @@
             "product_regex": "^UPduino v3\\.0"
           }
         }
-      }
+      },
+      "tested": true
     },
     "upduino31": {
       "description": "UPduino v3.1",
@@ -1090,7 +1445,8 @@
             "product_regex": "^UPduino v3\\.1"
           }
         }
-      }
+      },
+      "tested": true
     },
     "versa": {
       "description": "ECP5 Versa",
@@ -1106,7 +1462,8 @@
             "product_regex": "^(USB <-> Serial Converter)|(Lattice ECP5 Versa Board)"
           }
         }
-      }
+      },
+      "tested": true
     },
     "vsdsquadron-fm": {
       "description": "VSDSquadron FPGA Mini",
@@ -1122,7 +1479,8 @@
             "product_regex": "^.*Single RS232.*"
           }
         }
-      }
+      },
+      "tested": true
     },
     "zedboard": {
       "description": "ZedBoard (Xilinx, Zynq7 PL)",
@@ -1137,7 +1495,8 @@
             "pid": "6014"
           }
         }
-      }
+      },
+      "tested": true
     },
     "zxtres": {
       "description": "ZXTRES (Xilinx, Artix7)",
@@ -1152,7 +1511,8 @@
             "pid": "6001"
           }
         }
-      }
+      },
+      "tested": true
     },
     "zxtres-plus": {
       "description": "ZXTRES+ (Xilinx, Artix7)",
@@ -1167,7 +1527,8 @@
             "pid": "6001"
           }
         }
-      }
+      },
+      "tested": true
     },
     "zxtres-plus-plus": {
       "description": "ZXTRES++ (Xilinx, Artix7)",
@@ -1182,7 +1543,8 @@
             "pid": "6001"
           }
         }
-      }
+      },
+      "tested": true
     },
     "zybo-z7-10": {
       "description": "Zybo Z7-10 (Xilinx, Zynq7 PL)",
@@ -1197,7 +1559,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     },
     "zybo-z7-20": {
       "description": "Zybo Z7-20 (Xilinx, Zynq7 PL)",
@@ -1212,7 +1575,8 @@
             "pid": "6010"
           }
         }
-      }
+      },
+      "tested": true
     }
   }
 }

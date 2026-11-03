@@ -94,21 +94,25 @@ pub fn scan() -> Result<Vec<Device>, ToolError> {
     Ok(out)
 }
 
-/// Whether a device passes a board's USB filter: same IDs (case doesn't
-/// matter), and a product name matching product_regex when there is one.
+/// Whether a device has the filter's USB IDs (case doesn't matter).
+pub fn same_ids(device: &Device, filter: &UsbFilter) -> bool {
+    device.vid.eq_ignore_ascii_case(&filter.vid) && device.pid.eq_ignore_ascii_case(&filter.pid)
+}
+
+/// Whether a device passes a board's USB filter: same IDs, a product name
+/// matching product_regex and a serial number matching serial_regex, when
+/// the filter has them.
 pub fn matches(device: &Device, filter: &UsbFilter) -> bool {
-    if !device.vid.eq_ignore_ascii_case(&filter.vid)
-        || !device.pid.eq_ignore_ascii_case(&filter.pid)
-    {
-        return false;
-    }
-    match &filter.product_regex {
+    let fits = |re: &Option<String>, value: &Option<String>| match re {
         None => true,
-        Some(re) => match (regex::Regex::new(re), &device.product) {
-            (Ok(re), Some(product)) => re.is_match(product),
+        Some(re) => match (regex::Regex::new(re), value) {
+            (Ok(re), Some(v)) => re.is_match(v),
             _ => false,
         },
-    }
+    };
+    same_ids(device, filter)
+        && fits(&filter.product_regex, &device.product)
+        && fits(&filter.serial_regex, &device.serial_number)
 }
 
 /// Picks the one device to program: matching the filter, and the serial
@@ -184,6 +188,7 @@ pub mod tests {
             vid: "0403".into(),
             pid: "6010".into(),
             product_regex: re.map(Into::into),
+            serial_regex: None,
         }
     }
 
@@ -213,8 +218,34 @@ pub mod tests {
                 vid: "0403".into(),
                 pid: "6010".into(),
                 product_regex: None,
+                serial_regex: None,
             }
         ));
+        // iCESugar boards share IDs and product name; the serial tells them apart.
+        let nano_filter = UsbFilter {
+            vid: "1d50".into(),
+            pid: "602b".into(),
+            product_regex: Some("^DAPLink CMSIS-DAP".into()),
+            serial_regex: Some("^0720".into()),
+        };
+        let pro = device(
+            "1d50",
+            "602b",
+            Some("DAPLink CMSIS-DAP"),
+            Some("0710000100380027"),
+            7,
+        );
+        let nano = device(
+            "1d50",
+            "602b",
+            Some("DAPLink CMSIS-DAP"),
+            Some("0720000100380027"),
+            8,
+        );
+        let no_serial = device("1d50", "602b", Some("DAPLink CMSIS-DAP"), None, 9);
+        assert!(matches(&nano, &nano_filter));
+        assert!(!matches(&pro, &nano_filter));
+        assert!(!matches(&no_serial, &nano_filter), "no serial, no match");
     }
 
     #[test]

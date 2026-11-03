@@ -17,8 +17,40 @@ pub fn programmer_executable(programmer: &str) -> Option<&'static str> {
     match programmer {
         "openfpgaloader" => Some("openFPGALoader"),
         "iceprog" => Some("iceprog"),
+        "dfu-util" => Some("dfu-util"),
+        "icesprog" => Some("icesprog"),
         _ => None,
     }
+}
+
+/// icesprog can't be told which device to use: it opens the first device
+/// with its USB IDs. So it runs only when the board is the only connected
+/// device with those IDs, and doesn't write to another board instead, such
+/// as an iCESugar-Pro when an iCESugar-nano was asked for.
+pub fn check_alone(
+    programmer: &str,
+    devices: &[Device],
+    filter: &catalog::UsbFilter,
+    board_name: &str,
+) -> Result<(), ToolError> {
+    if programmer != "icesprog" {
+        return Ok(());
+    }
+    let same = devices
+        .iter()
+        .filter(|d| crate::devices::same_ids(d, filter))
+        .count();
+    if same <= 1 {
+        return Ok(());
+    }
+    Err(ToolError::setup(format!(
+        "{same} connected devices have the {board_name}'s USB IDs {}:{}, and icesprog can't tell them apart.",
+        filter.vid, filter.pid
+    ))
+    .with_action(
+        ActionCode::DisconnectDevices,
+        format!("Disconnect the other boards, leaving only the {board_name}, then retry."),
+    ))
 }
 
 /// Fills in a template for a device and bitstream. The template is split
@@ -62,6 +94,7 @@ pub fn verbose_flag(programmer: &str) -> Option<&'static str> {
     match programmer {
         "openfpgaloader" => Some("--verbose"),
         "iceprog" => Some("-v"),
+        "dfu-util" => Some("-v"),
         _ => None,
     }
 }
@@ -123,7 +156,8 @@ pub enum ProgressLine {
     Other,
 }
 
-/// Reads progress from openFPGALoader and iceprog output lines.
+/// Reads progress from programmer output lines, such as openFPGALoader's,
+/// iceprog's and dfu-util's.
 pub fn progress_line(line: &str) -> ProgressLine {
     let lower = line.to_lowercase();
     let percent = percent_re()
@@ -143,7 +177,25 @@ pub fn failure(programmer: &str, board_name: &str, output: &str, status: &str) -
     let lower = output.to_lowercase();
     let details = crate::text::to_multiline_text(output);
     let has = |words: &[&str]| words.iter().any(|w| lower.contains(w));
-    let err = if has(&[
+    let err = if has(&["more than one dfu capable"]) {
+        ToolError::setup(format!(
+            "Several connected devices could be the {board_name}, and {programmer} won't choose."
+        ))
+        .with_action(
+            ActionCode::DisconnectDevices,
+            format!("Disconnect the other boards, leaving only the {board_name}, then retry."),
+        )
+    } else if has(&["no dfu capable usb device"]) {
+        ToolError::setup(format!(
+            "The {board_name} wasn't found in its bootloader (DFU) mode."
+        ))
+        .with_action(
+            ActionCode::ConnectBoard,
+            format!(
+                "Connect the {board_name} by USB in its bootloader mode, usually by holding its button while plugging it in, then retry."
+            ),
+        )
+    } else if has(&[
         "insufficient permissions",
         "permission denied",
         "access denied",
@@ -167,6 +219,7 @@ pub fn failure(programmer: &str, board_name: &str, output: &str, status: &str) -
         "cannot find",
         "no device found",
         "not found",
+        "icelink open fail",
     ]) {
         ToolError::setup(format!("The {board_name} wasn't found by {programmer}.")).with_action(
             ActionCode::ConnectBoard,
@@ -283,6 +336,25 @@ mod tests {
     }
 
     #[test]
+    fn icesprog_runs_only_alone() {
+        let filter = catalog::UsbFilter {
+            vid: "1d50".into(),
+            pid: "602b".into(),
+            product_regex: None,
+            serial_regex: Some("^0720".into()),
+        };
+        let nano = device("1d50", "602b", Some("DAPLink CMSIS-DAP"), Some("0720"), 3);
+        let pro = device("1d50", "602b", Some("DAPLink CMSIS-DAP"), Some("0710"), 4);
+        let other = device("0403", "6010", None, None, 5);
+        let both = [nano.clone(), pro, other.clone()];
+        assert!(check_alone("icesprog", &[nano, other], &filter, "iCESugar-nano").is_ok());
+        let e = check_alone("icesprog", &both, &filter, "iCESugar-nano").unwrap_err();
+        assert_eq!(e.action.unwrap().code, ActionCode::DisconnectDevices);
+        assert!(e.message.starts_with("2 connected devices"));
+        assert!(check_alone("dfu-util", &both, &filter, "x").is_ok());
+    }
+
+    #[test]
     fn progress_lines() {
         assert_eq!(
             progress_line("Writing: [====>     ] 45.33%"),
@@ -340,6 +412,31 @@ mod tests {
             "exit 1",
         );
         assert!(e.message.contains("in use"));
+        // Real output, dfu-util 0.11-dev from oss-cad-suite, with no device.
+        let e = failure(
+            "dfu-util",
+            "OrangeCrab r0.2 25K",
+            "dfu-util 0.11-dev\n\ndfu-util: Warning: File too short for DFU suffix\ndfu-util: A valid DFU suffix will be required in a future dfu-util release\ndfu-util: No DFU capable USB device available",
+            "exit 74",
+        );
+        assert_eq!(e.action.unwrap().code, ActionCode::ConnectBoard);
+        assert!(e.message.contains("bootloader"));
+        // dfu-util's message from its source (main.c) for several matches.
+        let e = failure(
+            "dfu-util",
+            "Fomu",
+            "dfu-util: More than one DFU capable USB device found! Try `--list' and specify the serial number or disconnect all but one device",
+            "exit 74",
+        );
+        assert_eq!(e.action.unwrap().code, ActionCode::DisconnectDevices);
+        // icesprog's message with no iCELink (its source, and issue reports).
+        let e = failure(
+            "icesprog",
+            "iCESugar-nano",
+            "iCELink open fail!",
+            "exit 255",
+        );
+        assert_eq!(e.action.unwrap().code, ActionCode::ConnectBoard);
         let e = failure("openFPGALoader", "Alhambra II", "segfault", "signal 11");
         assert_eq!(e.category, Category::Tool);
         assert_eq!(e.details, "segfault");

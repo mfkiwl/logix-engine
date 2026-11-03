@@ -346,6 +346,17 @@
               "pattern": "^[a-z0-9-]+$",
               "type": "string"
             },
+            "notes": {
+              "description": "Warnings and missing information for people, such as a USB filter\nthat also matches other boards or a step needed before programming.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "tested": {
+              "description": "Whether programming this board is known to work: tested on the board,\nor used unchanged in a tool that relies on it. False for boards whose\nprogramming hasn't been tried on hardware, such as ones moved to a\ndifferent programmer.",
+              "type": "boolean"
+            },
             "variants": {
               "additionalProperties": {
                 "$ref": "#/$defs/ProgrammingVariant"
@@ -358,7 +369,8 @@
             "description",
             "fpga_id",
             "default_variant",
-            "variants"
+            "variants",
+            "tested"
           ],
           "type": "object"
         },
@@ -449,7 +461,7 @@
               "type": "string"
             },
             "programmer": {
-              "description": "The programmer to run: openfpgaloader or iceprog.",
+              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
               "type": "string"
             },
             "usb": {
@@ -475,6 +487,13 @@
             },
             "product_regex": {
               "description": "A regular expression the device's product name must match, when\nseveral boards share the same USB IDs. Omitted means any product name.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "serial_regex": {
+              "description": "A regular expression the device's serial number must match, for\nboards that share USB IDs and product names but have serial numbers\nthat tell them apart. Omitted means any serial number.",
               "type": [
                 "string",
                 "null"
@@ -701,7 +720,7 @@
               "type": "string"
             },
             "programmer": {
-              "description": "The programmer to run: openfpgaloader or iceprog.",
+              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
               "type": "string"
             },
             "usb": {
@@ -727,6 +746,13 @@
             },
             "product_regex": {
               "description": "A regular expression the device's product name must match, when\nseveral boards share the same USB IDs. Omitted means any product name.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "serial_regex": {
+              "description": "A regular expression the device's serial number must match, for\nboards that share USB IDs and product names but have serial numbers\nthat tell them apart. Omitted means any serial number.",
               "type": [
                 "string",
                 "null"
@@ -1126,7 +1152,7 @@
               "type": "string"
             },
             "programmer": {
-              "description": "The programmer to run: openfpgaloader or iceprog.",
+              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
               "type": "string"
             },
             "usb": {
@@ -1152,6 +1178,13 @@
             },
             "product_regex": {
               "description": "A regular expression the device's product name must match, when\nseveral boards share the same USB IDs. Omitted means any product name.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "serial_regex": {
+              "description": "A regular expression the device's serial number must match, for\nboards that share USB IDs and product names but have serial numbers\nthat tell them apart. Omitted means any serial number.",
               "type": [
                 "string",
                 "null"
@@ -1644,7 +1677,7 @@
               "type": "string"
             },
             "programmer": {
-              "description": "The programmer to run: openfpgaloader or iceprog.",
+              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
               "type": "string"
             },
             "usb": {
@@ -1670,6 +1703,13 @@
             },
             "product_regex": {
               "description": "A regular expression the device's product name must match, when\nseveral boards share the same USB IDs. Omitted means any product name.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "serial_regex": {
+              "description": "A regular expression the device's serial number must match, for\nboards that share USB IDs and product names but have serial numbers\nthat tell them apart. Omitted means any serial number.",
               "type": [
                 "string",
                 "null"
@@ -2604,7 +2644,7 @@
               "type": "string"
             },
             "programmer": {
-              "description": "The programmer to run: openfpgaloader or iceprog.",
+              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
               "type": "string"
             },
             "usb": {
@@ -2630,6 +2670,13 @@
             },
             "product_regex": {
               "description": "A regular expression the device's product name must match, when\nseveral boards share the same USB IDs. Omitted means any product name.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "serial_regex": {
+              "description": "A regular expression the device's serial number must match, for\nboards that share USB IDs and product names but have serial numbers\nthat tell them apart. Omitted means any serial number.",
               "type": [
                 "string",
                 "null"
@@ -3107,7 +3154,7 @@
               "type": "string"
             },
             "programmer": {
-              "description": "The programmer to run: openfpgaloader or iceprog.",
+              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
               "type": "string"
             },
             "usb": {
@@ -3133,6 +3180,13 @@
             },
             "product_regex": {
               "description": "A regular expression the device's product name must match, when\nseveral boards share the same USB IDs. Omitted means any product name.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "serial_regex": {
+              "description": "A regular expression the device's serial number must match, for\nboards that share USB IDs and product names but have serial numbers\nthat tell them apart. Omitted means any serial number.",
               "type": [
                 "string",
                 "null"

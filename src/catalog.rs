@@ -10,7 +10,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 /// The programmers the engine can run, by catalog ID.
-pub const PROGRAMMERS: &[&str] = &["openfpgaloader", "iceprog"];
+pub const PROGRAMMERS: &[&str] = &["openfpgaloader", "iceprog", "dfu-util", "icesprog"];
 
 /// The variables a programming variant's argument template may use.
 pub const TEMPLATE_VARIABLES: &[&str] = &["VID", "PID", "BUS", "DEV", "SERIAL", "BITSTREAM"];
@@ -29,13 +29,22 @@ pub struct BoardDefinition {
     pub default_variant: String,
     /// The ways to program the board, by variant name.
     pub variants: BTreeMap<String, ProgrammingVariant>,
+    /// Whether programming this board is known to work: tested on the board,
+    /// or used unchanged in a tool that relies on it. False for boards whose
+    /// programming hasn't been tried on hardware, such as ones moved to a
+    /// different programmer.
+    pub tested: bool,
+    /// Warnings and missing information for people, such as a USB filter
+    /// that also matches other boards or a step needed before programming.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub notes: Option<String>,
 }
 
 /// One way to program a board, such as to flash with a particular cable.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ProgrammingVariant {
-    /// The programmer to run: openfpgaloader or iceprog.
+    /// The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.
     pub programmer: String,
     /// The programmer's arguments, as a template. The engine replaces
     /// ${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,
@@ -60,6 +69,11 @@ pub struct UsbFilter {
     /// several boards share the same USB IDs. Omitted means any product name.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub product_regex: Option<String>,
+    /// A regular expression the device's serial number must match, for
+    /// boards that share USB IDs and product names but have serial numbers
+    /// that tell them apart. Omitted means any serial number.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub serial_regex: Option<String>,
 }
 
 /// An FPGA: its architecture, part and toolchain parameters.
@@ -298,6 +312,9 @@ impl BoardDefinition {
             if let Some(re) = &v.usb.product_regex {
                 regex::Regex::new(re).map_err(|e| ctx(format!("bad product_regex: {e}")))?;
             }
+            if let Some(re) = &v.usb.serial_regex {
+                regex::Regex::new(re).map_err(|e| ctx(format!("bad serial_regex: {e}")))?;
+            }
         }
         Ok(())
     }
@@ -477,8 +494,8 @@ mod tests {
                 .count();
             (fpgas, boards)
         };
-        assert_eq!(count(Architecture::Ice40), (40, 22));
-        assert_eq!(count(Architecture::Ecp5), (39, 26));
+        assert_eq!(count(Architecture::Ice40), (40, 31));
+        assert_eq!(count(Architecture::Ecp5), (39, 33));
         assert_eq!(count(Architecture::Gowin), (241, 8));
         assert_eq!(count(Architecture::Xilinx), (212, 23));
         let arty = &c.fpgas[&c.boards["arty-a7-35t"].fpga_id];
@@ -512,8 +529,38 @@ mod tests {
         assert!(c.boards.values().all(|b| {
             b.variants
                 .values()
-                .all(|v| v.programmer == "openfpgaloader" || v.programmer == "iceprog")
+                .all(|v| PROGRAMMERS.contains(&v.programmer.as_str()))
         }));
+        assert_eq!(c.boards.len(), 95);
+        for p in PROGRAMMERS {
+            assert!(
+                c.boards
+                    .values()
+                    .any(|b| b.variants.values().any(|v| v.programmer == *p)),
+                "no board uses {p}"
+            );
+        }
+        // Boards moved to another programmer are marked untested, with a note.
+        for id in ["ulx3s-12f", "ulx3s-85f", "odt-icyblue-feather"] {
+            assert!(!c.boards[id].tested, "{id}");
+            assert!(c.boards[id].notes.is_some(), "{id}");
+        }
+        assert!(c.boards["alhambra-ii"].tested);
+        // The iCESugar boards share USB IDs; their serial numbers start with
+        // a board ID (icesprog's source): 0700, 0710 Pro, 0720 nano.
+        for (id, re) in [
+            ("icesugar-1-5", "^0700"),
+            ("icesugar-pro", "^0710"),
+            ("icesugar-pro-ram", "^0710"),
+            ("icesugar-nano", "^0720"),
+        ] {
+            let b = &c.boards[id];
+            assert_eq!(
+                b.variants[&b.default_variant].usb.serial_regex.as_deref(),
+                Some(re),
+                "{id}"
+            );
+        }
     }
 
     #[test]
@@ -536,8 +583,11 @@ mod tests {
         let mut b = ok.clone();
         b.variants.get_mut("flash").unwrap().usb.vid = "0403A".into();
         assert!(b.validate().is_err());
-        let mut b = ok;
+        let mut b = ok.clone();
         b.variants.get_mut("flash").unwrap().usb.product_regex = Some("(".into());
+        assert!(b.validate().is_err());
+        let mut b = ok;
+        b.variants.get_mut("flash").unwrap().usb.serial_regex = Some("(".into());
         assert!(b.validate().is_err());
     }
 }
