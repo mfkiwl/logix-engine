@@ -342,7 +342,7 @@ async fn builds_a_xilinx_design() {
     for f in ["main.v", "main.xdc"] {
         std::fs::copy(from.join(f), src.join(f)).unwrap();
     }
-    let input = json!({"board": "arty-a7", "constraint_file": "main.xdc"});
+    let input = json!({"board": "arty-a7-35t", "constraint_file": "main.xdc"});
     let out = build_it(&state, &src, input.clone()).await.unwrap();
     let tools: Vec<_> = out.commands.iter().map(|c| c.tool.as_str()).collect();
     assert_eq!(

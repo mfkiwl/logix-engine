@@ -331,20 +331,20 @@
         },
         "BoardDefinition": {
           "additionalProperties": false,
-          "description": "A board: its FPGA and its variants. A board is a name: two boards with\ndifferent names are unrelated, even when their hardware is identical.",
+          "description": "A board: its FPGA and its variants. A board is a name: two boards with\ndifferent names are unrelated, even when their hardware is identical, as\nare the sizes of a board sold with several FPGA sizes.",
           "properties": {
             "description": {
               "description": "The board's name for people, such as \"Alhambra II\".",
               "type": "string"
             },
             "fpga_id": {
-              "description": "The board's FPGA, as a catalog ID of the fpgas section, such as\nice40hx4k-tq144-8k. A configuration may use another size of it.",
+              "description": "The board's FPGA, as a catalog ID of the fpgas section, such as\nice40hx4k-tq144-8k. Every configuration uses it.",
               "pattern": "^[a-z0-9-]+$",
               "type": "string"
             },
             "variants": {
               "$ref": "#/$defs/Variants",
-              "description": "The board's choices, such as its FPGA size, the cable or the memory to\nprogram, and how to program it with each combination that exists."
+              "description": "The board's choices, such as the cable or the memory to program, and\nhow to program it with each combination that exists."
             }
           },
           "required": [
@@ -361,14 +361,6 @@
             "args": {
               "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
               "type": "string"
-            },
-            "fpga_id": {
-              "description": "The FPGA, when it isn't the board's, such as a larger size. It has\nthe board FPGA's architecture and package, so the same constraint\nfile works.",
-              "pattern": "^[a-z0-9-]+$",
-              "type": [
-                "string",
-                "null"
-              ]
             },
             "programmer": {
               "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
@@ -393,7 +385,7 @@
               "additionalProperties": {
                 "type": "string"
               },
-              "description": "The value of every dimension, by dimension ID, such as\n{\"size\": \"85k\"}. Omitted or empty for a board without dimensions.",
+              "description": "The value of every dimension, by dimension ID, such as\n{\"memory\": \"ram\"}. Omitted or empty for a board without dimensions.",
               "type": "object"
             }
           },
@@ -407,15 +399,15 @@
         },
         "Dimension": {
           "additionalProperties": false,
-          "description": "One kind of choice, such as the FPGA size.",
+          "description": "One kind of choice, such as the memory to program.",
           "properties": {
             "id": {
-              "description": "The dimension's ID, used in configurations and variant inputs, such as\nsize, connection or memory.",
+              "description": "The dimension's ID, used in configurations and variant inputs, such as\nconnection or memory.",
               "pattern": "^[a-z0-9-]+$",
               "type": "string"
             },
             "label": {
-              "description": "The dimension's name for people, such as \"FPGA size\".",
+              "description": "The dimension's name for people, such as \"Connection\".",
               "type": "string"
             },
             "values": {
@@ -576,7 +568,7 @@
         },
         "Variants": {
           "additionalProperties": false,
-          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). Every configuration works with the same project: the\nsame sources and constraint file.",
+          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). They differ only in how the board is programmed: every\nconfiguration has the same FPGA and pins, so the same project works.",
           "properties": {
             "configurations": {
               "description": "The combinations that exist, each with how to program the board. The\nfirst is the board's default. Combinations that aren't listed don't\nexist.",
@@ -587,7 +579,7 @@
               "type": "array"
             },
             "dimensions": {
-              "description": "The kinds of choice the board offers, in the order to show them, such\nas size, connection and memory. Omitted or empty for a board with\none configuration.",
+              "description": "The kinds of choice the board offers, in the order to show them, such\nas connection and memory. Omitted or empty for a board with\none configuration.",
               "items": {
                 "$ref": "#/$defs/Dimension"
               },
@@ -690,7 +682,7 @@
             },
             "variants": {
               "$ref": "#/$defs/Variants",
-              "description": "The board's choices and how to program it with each, as in the\ncatalog. A configuration's fpga_id must be a catalog ID."
+              "description": "The board's choices and how to program it with each, as in the\ncatalog."
             }
           },
           "required": [
@@ -721,14 +713,6 @@
               "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
               "type": "string"
             },
-            "fpga_id": {
-              "description": "The FPGA, when it isn't the board's, such as a larger size. It has\nthe board FPGA's architecture and package, so the same constraint\nfile works.",
-              "pattern": "^[a-z0-9-]+$",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
             "programmer": {
               "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
               "type": "string"
@@ -752,7 +736,7 @@
               "additionalProperties": {
                 "type": "string"
               },
-              "description": "The value of every dimension, by dimension ID, such as\n{\"size\": \"85k\"}. Omitted or empty for a board without dimensions.",
+              "description": "The value of every dimension, by dimension ID, such as\n{\"memory\": \"ram\"}. Omitted or empty for a board without dimensions.",
               "type": "object"
             }
           },
@@ -766,15 +750,15 @@
         },
         "Dimension": {
           "additionalProperties": false,
-          "description": "One kind of choice, such as the FPGA size.",
+          "description": "One kind of choice, such as the memory to program.",
           "properties": {
             "id": {
-              "description": "The dimension's ID, used in configurations and variant inputs, such as\nsize, connection or memory.",
+              "description": "The dimension's ID, used in configurations and variant inputs, such as\nconnection or memory.",
               "pattern": "^[a-z0-9-]+$",
               "type": "string"
             },
             "label": {
-              "description": "The dimension's name for people, such as \"FPGA size\".",
+              "description": "The dimension's name for people, such as \"Connection\".",
               "type": "string"
             },
             "values": {
@@ -935,7 +919,7 @@
         },
         "Variants": {
           "additionalProperties": false,
-          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). Every configuration works with the same project: the\nsame sources and constraint file.",
+          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). They differ only in how the board is programmed: every\nconfiguration has the same FPGA and pins, so the same project works.",
           "properties": {
             "configurations": {
               "description": "The combinations that exist, each with how to program the board. The\nfirst is the board's default. Combinations that aren't listed don't\nexist.",
@@ -946,7 +930,7 @@
               "type": "array"
             },
             "dimensions": {
-              "description": "The kinds of choice the board offers, in the order to show them, such\nas size, connection and memory. Omitted or empty for a board with\none configuration.",
+              "description": "The kinds of choice the board offers, in the order to show them, such\nas connection and memory. Omitted or empty for a board with\none configuration.",
               "items": {
                 "$ref": "#/$defs/Dimension"
               },
@@ -1230,7 +1214,7 @@
             },
             "variants": {
               "$ref": "#/$defs/Variants",
-              "description": "The board's choices and how to program it with each, as in the\ncatalog. A configuration's fpga_id must be a catalog ID."
+              "description": "The board's choices and how to program it with each, as in the\ncatalog."
             }
           },
           "required": [
@@ -1261,14 +1245,6 @@
               "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
               "type": "string"
             },
-            "fpga_id": {
-              "description": "The FPGA, when it isn't the board's, such as a larger size. It has\nthe board FPGA's architecture and package, so the same constraint\nfile works.",
-              "pattern": "^[a-z0-9-]+$",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
             "programmer": {
               "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
               "type": "string"
@@ -1292,7 +1268,7 @@
               "additionalProperties": {
                 "type": "string"
               },
-              "description": "The value of every dimension, by dimension ID, such as\n{\"size\": \"85k\"}. Omitted or empty for a board without dimensions.",
+              "description": "The value of every dimension, by dimension ID, such as\n{\"memory\": \"ram\"}. Omitted or empty for a board without dimensions.",
               "type": "object"
             }
           },
@@ -1306,15 +1282,15 @@
         },
         "Dimension": {
           "additionalProperties": false,
-          "description": "One kind of choice, such as the FPGA size.",
+          "description": "One kind of choice, such as the memory to program.",
           "properties": {
             "id": {
-              "description": "The dimension's ID, used in configurations and variant inputs, such as\nsize, connection or memory.",
+              "description": "The dimension's ID, used in configurations and variant inputs, such as\nconnection or memory.",
               "pattern": "^[a-z0-9-]+$",
               "type": "string"
             },
             "label": {
-              "description": "The dimension's name for people, such as \"FPGA size\".",
+              "description": "The dimension's name for people, such as \"Connection\".",
               "type": "string"
             },
             "values": {
@@ -1475,7 +1451,7 @@
         },
         "Variants": {
           "additionalProperties": false,
-          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). Every configuration works with the same project: the\nsame sources and constraint file.",
+          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). They differ only in how the board is programmed: every\nconfiguration has the same FPGA and pins, so the same project works.",
           "properties": {
             "configurations": {
               "description": "The combinations that exist, each with how to program the board. The\nfirst is the board's default. Combinations that aren't listed don't\nexist.",
@@ -1486,7 +1462,7 @@
               "type": "array"
             },
             "dimensions": {
-              "description": "The kinds of choice the board offers, in the order to show them, such\nas size, connection and memory. Omitted or empty for a board with\none configuration.",
+              "description": "The kinds of choice the board offers, in the order to show them, such\nas connection and memory. Omitted or empty for a board with\none configuration.",
               "items": {
                 "$ref": "#/$defs/Dimension"
               },
@@ -1863,7 +1839,7 @@
             },
             "variants": {
               "$ref": "#/$defs/Variants",
-              "description": "The board's choices and how to program it with each, as in the\ncatalog. A configuration's fpga_id must be a catalog ID."
+              "description": "The board's choices and how to program it with each, as in the\ncatalog."
             }
           },
           "required": [
@@ -1894,14 +1870,6 @@
               "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
               "type": "string"
             },
-            "fpga_id": {
-              "description": "The FPGA, when it isn't the board's, such as a larger size. It has\nthe board FPGA's architecture and package, so the same constraint\nfile works.",
-              "pattern": "^[a-z0-9-]+$",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
             "programmer": {
               "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
               "type": "string"
@@ -1925,7 +1893,7 @@
               "additionalProperties": {
                 "type": "string"
               },
-              "description": "The value of every dimension, by dimension ID, such as\n{\"size\": \"85k\"}. Omitted or empty for a board without dimensions.",
+              "description": "The value of every dimension, by dimension ID, such as\n{\"memory\": \"ram\"}. Omitted or empty for a board without dimensions.",
               "type": "object"
             }
           },
@@ -1939,15 +1907,15 @@
         },
         "Dimension": {
           "additionalProperties": false,
-          "description": "One kind of choice, such as the FPGA size.",
+          "description": "One kind of choice, such as the memory to program.",
           "properties": {
             "id": {
-              "description": "The dimension's ID, used in configurations and variant inputs, such as\nsize, connection or memory.",
+              "description": "The dimension's ID, used in configurations and variant inputs, such as\nconnection or memory.",
               "pattern": "^[a-z0-9-]+$",
               "type": "string"
             },
             "label": {
-              "description": "The dimension's name for people, such as \"FPGA size\".",
+              "description": "The dimension's name for people, such as \"Connection\".",
               "type": "string"
             },
             "values": {
@@ -2108,7 +2076,7 @@
         },
         "Variants": {
           "additionalProperties": false,
-          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). Every configuration works with the same project: the\nsame sources and constraint file.",
+          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). They differ only in how the board is programmed: every\nconfiguration has the same FPGA and pins, so the same project works.",
           "properties": {
             "configurations": {
               "description": "The combinations that exist, each with how to program the board. The\nfirst is the board's default. Combinations that aren't listed don't\nexist.",
@@ -2119,7 +2087,7 @@
               "type": "array"
             },
             "dimensions": {
-              "description": "The kinds of choice the board offers, in the order to show them, such\nas size, connection and memory. Omitted or empty for a board with\none configuration.",
+              "description": "The kinds of choice the board offers, in the order to show them, such\nas connection and memory. Omitted or empty for a board with\none configuration.",
               "items": {
                 "$ref": "#/$defs/Dimension"
               },
@@ -2938,7 +2906,7 @@
             },
             "variants": {
               "$ref": "#/$defs/Variants",
-              "description": "The board's choices and how to program it with each, as in the\ncatalog. A configuration's fpga_id must be a catalog ID."
+              "description": "The board's choices and how to program it with each, as in the\ncatalog."
             }
           },
           "required": [
@@ -2969,14 +2937,6 @@
               "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
               "type": "string"
             },
-            "fpga_id": {
-              "description": "The FPGA, when it isn't the board's, such as a larger size. It has\nthe board FPGA's architecture and package, so the same constraint\nfile works.",
-              "pattern": "^[a-z0-9-]+$",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
             "programmer": {
               "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
               "type": "string"
@@ -3000,7 +2960,7 @@
               "additionalProperties": {
                 "type": "string"
               },
-              "description": "The value of every dimension, by dimension ID, such as\n{\"size\": \"85k\"}. Omitted or empty for a board without dimensions.",
+              "description": "The value of every dimension, by dimension ID, such as\n{\"memory\": \"ram\"}. Omitted or empty for a board without dimensions.",
               "type": "object"
             }
           },
@@ -3014,15 +2974,15 @@
         },
         "Dimension": {
           "additionalProperties": false,
-          "description": "One kind of choice, such as the FPGA size.",
+          "description": "One kind of choice, such as the memory to program.",
           "properties": {
             "id": {
-              "description": "The dimension's ID, used in configurations and variant inputs, such as\nsize, connection or memory.",
+              "description": "The dimension's ID, used in configurations and variant inputs, such as\nconnection or memory.",
               "pattern": "^[a-z0-9-]+$",
               "type": "string"
             },
             "label": {
-              "description": "The dimension's name for people, such as \"FPGA size\".",
+              "description": "The dimension's name for people, such as \"Connection\".",
               "type": "string"
             },
             "values": {
@@ -3183,7 +3143,7 @@
         },
         "Variants": {
           "additionalProperties": false,
-          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). Every configuration works with the same project: the\nsame sources and constraint file.",
+          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). They differ only in how the board is programmed: every\nconfiguration has the same FPGA and pins, so the same project works.",
           "properties": {
             "configurations": {
               "description": "The combinations that exist, each with how to program the board. The\nfirst is the board's default. Combinations that aren't listed don't\nexist.",
@@ -3194,7 +3154,7 @@
               "type": "array"
             },
             "dimensions": {
-              "description": "The kinds of choice the board offers, in the order to show them, such\nas size, connection and memory. Omitted or empty for a board with\none configuration.",
+              "description": "The kinds of choice the board offers, in the order to show them, such\nas connection and memory. Omitted or empty for a board with\none configuration.",
               "items": {
                 "$ref": "#/$defs/Dimension"
               },
@@ -3556,7 +3516,7 @@
             },
             "variants": {
               "$ref": "#/$defs/Variants",
-              "description": "The board's choices and how to program it with each, as in the\ncatalog. A configuration's fpga_id must be a catalog ID."
+              "description": "The board's choices and how to program it with each, as in the\ncatalog."
             }
           },
           "required": [
@@ -3587,14 +3547,6 @@
               "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
               "type": "string"
             },
-            "fpga_id": {
-              "description": "The FPGA, when it isn't the board's, such as a larger size. It has\nthe board FPGA's architecture and package, so the same constraint\nfile works.",
-              "pattern": "^[a-z0-9-]+$",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
             "programmer": {
               "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
               "type": "string"
@@ -3618,7 +3570,7 @@
               "additionalProperties": {
                 "type": "string"
               },
-              "description": "The value of every dimension, by dimension ID, such as\n{\"size\": \"85k\"}. Omitted or empty for a board without dimensions.",
+              "description": "The value of every dimension, by dimension ID, such as\n{\"memory\": \"ram\"}. Omitted or empty for a board without dimensions.",
               "type": "object"
             }
           },
@@ -3632,15 +3584,15 @@
         },
         "Dimension": {
           "additionalProperties": false,
-          "description": "One kind of choice, such as the FPGA size.",
+          "description": "One kind of choice, such as the memory to program.",
           "properties": {
             "id": {
-              "description": "The dimension's ID, used in configurations and variant inputs, such as\nsize, connection or memory.",
+              "description": "The dimension's ID, used in configurations and variant inputs, such as\nconnection or memory.",
               "pattern": "^[a-z0-9-]+$",
               "type": "string"
             },
             "label": {
-              "description": "The dimension's name for people, such as \"FPGA size\".",
+              "description": "The dimension's name for people, such as \"Connection\".",
               "type": "string"
             },
             "values": {
@@ -3801,7 +3753,7 @@
         },
         "Variants": {
           "additionalProperties": false,
-          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). Every configuration works with the same project: the\nsame sources and constraint file.",
+          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). They differ only in how the board is programmed: every\nconfiguration has the same FPGA and pins, so the same project works.",
           "properties": {
             "configurations": {
               "description": "The combinations that exist, each with how to program the board. The\nfirst is the board's default. Combinations that aren't listed don't\nexist.",
@@ -3812,7 +3764,7 @@
               "type": "array"
             },
             "dimensions": {
-              "description": "The kinds of choice the board offers, in the order to show them, such\nas size, connection and memory. Omitted or empty for a board with\none configuration.",
+              "description": "The kinds of choice the board offers, in the order to show them, such\nas connection and memory. Omitted or empty for a board with\none configuration.",
               "items": {
                 "$ref": "#/$defs/Dimension"
               },

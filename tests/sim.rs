@@ -1049,7 +1049,7 @@ async fn xilinx_lint_test_and_simulate_use_the_xilinx_models() {
     let state = engine().await;
     let (_tmp, src) = project();
     std::fs::write(src.join("main.v"), XILINX_MAIN).unwrap();
-    let board = json!({"board": "arty-a7"});
+    let board = json!({"board": "arty-a7-35t"});
 
     let out = lint::run(&state, lint_input(&src, board.clone()), &call())
         .await
@@ -1064,7 +1064,7 @@ async fn xilinx_lint_test_and_simulate_use_the_xilinx_models() {
     // Without a top module, warnings in the models are still off.
     let out = lint::run(
         &state,
-        lint_input(&src, json!({"board": "arty-a7", "top_module": null})),
+        lint_input(&src, json!({"board": "arty-a7-35t", "top_module": null})),
         &call(),
     )
     .await

@@ -264,7 +264,7 @@ mod tests {
         );
         assert!(check_constraint_extension(&board("icesugar-pro"), "main.lpf").is_ok());
         assert!(check_constraint_extension(&board("sipeed-tang-nano-9k"), "main.cst").is_ok());
-        assert!(check_constraint_extension(&board("arty-a7"), "main.xdc").is_ok());
-        assert!(check_constraint_extension(&board("arty-a7"), "main.pcf").is_err());
+        assert!(check_constraint_extension(&board("arty-a7-35t"), "main.xdc").is_ok());
+        assert!(check_constraint_extension(&board("arty-a7-35t"), "main.pcf").is_err());
     }
 }

@@ -107,46 +107,31 @@
         ]
       }
     },
-    "arty-a7": {
-      "description": "Arty A7 (Xilinx, Artix7)",
-      "fpga_id": "xc7a35tcsg324-1",
+    "arty-a7-100t": {
+      "description": "Arty A7-100T (Xilinx, Artix7)",
+      "fpga_id": "xc7a100tcsg324-1",
       "variants": {
-        "dimensions": [
-          {
-            "id": "size",
-            "label": "FPGA size",
-            "values": [
-              {
-                "id": "35t",
-                "label": "35T"
-              },
-              {
-                "id": "100t",
-                "label": "100T"
-              }
-            ]
-          }
-        ],
         "configurations": [
           {
-            "when": {
-              "size": "35t"
-            },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board arty_a7_35t ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board arty_a7_100t ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": true
-          },
+          }
+        ]
+      }
+    },
+    "arty-a7-35t": {
+      "description": "Arty A7-35T (Xilinx, Artix7)",
+      "fpga_id": "xc7a35tcsg324-1",
+      "variants": {
+        "configurations": [
           {
-            "when": {
-              "size": "100t"
-            },
-            "fpga_id": "xc7a100tcsg324-1",
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board arty_a7_100t ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board arty_a7_35t ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
@@ -624,31 +609,12 @@
         ]
       }
     },
-    "ecp5-mini": {
-      "description": "ECP5-Mini",
+    "ecp5-mini-12": {
+      "description": "ECP5-Mini-12",
       "fpga_id": "lfe5u-12f-6bg256c",
       "variants": {
-        "dimensions": [
-          {
-            "id": "size",
-            "label": "FPGA size",
-            "values": [
-              {
-                "id": "12k",
-                "label": "12K"
-              },
-              {
-                "id": "25k",
-                "label": "25K"
-              }
-            ]
-          }
-        ],
         "configurations": [
           {
-            "when": {
-              "size": "12k"
-            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
             "usb": {
@@ -656,12 +622,16 @@
               "pid": "6010"
             },
             "tested": true
-          },
+          }
+        ]
+      }
+    },
+    "ecp5-mini-25": {
+      "description": "ECP5-Mini-25",
+      "fpga_id": "lfe5u-25f-6bg256c",
+      "variants": {
+        "configurations": [
           {
-            "when": {
-              "size": "25k"
-            },
-            "fpga_id": "lfe5u-25f-6bg256c",
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
             "usb": {
@@ -1225,31 +1195,12 @@
         ]
       }
     },
-    "orangecrab-r02": {
-      "description": "OrangeCrab r0.2",
+    "orangecrab-r02-25f": {
+      "description": "OrangeCrab r0.2 25K",
       "fpga_id": "lfe5u-25f-6mg285c",
       "variants": {
-        "dimensions": [
-          {
-            "id": "size",
-            "label": "FPGA size",
-            "values": [
-              {
-                "id": "25k",
-                "label": "25K"
-              },
-              {
-                "id": "85k",
-                "label": "85K"
-              }
-            ]
-          }
-        ],
         "configurations": [
           {
-            "when": {
-              "size": "25k"
-            },
             "programmer": "dfu-util",
             "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
             "usb": {
@@ -1258,13 +1209,17 @@
               "product_regex": "^OrangeCrab r0.2 DFU bootloader"
             },
             "tested": true,
-            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
-          },
+            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the other OrangeCrab r0.2 size (25K or 85K), so the engine can't tell which one is connected."
+          }
+        ]
+      }
+    },
+    "orangecrab-r02-85f": {
+      "description": "OrangeCrab r0.2 85K",
+      "fpga_id": "lfe5u-85f-6mg285c",
+      "variants": {
+        "configurations": [
           {
-            "when": {
-              "size": "85k"
-            },
-            "fpga_id": "lfe5u-85f-6mg285c",
             "programmer": "dfu-util",
             "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
             "usb": {
@@ -1273,7 +1228,7 @@
               "product_regex": "^OrangeCrab r0.2 DFU bootloader"
             },
             "tested": true,
-            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the other OrangeCrab r0.2 size (25K or 85K), so the engine can't tell which one is connected."
           }
         ]
       }
@@ -1506,39 +1461,12 @@
         ]
       }
     },
-    "ulx3s": {
-      "description": "ULX3S",
+    "ulx3s-12f": {
+      "description": "ULX3S 12K",
       "fpga_id": "lfe5u-12f-6bg381c",
       "variants": {
-        "dimensions": [
-          {
-            "id": "size",
-            "label": "FPGA size",
-            "values": [
-              {
-                "id": "12k",
-                "label": "12K"
-              },
-              {
-                "id": "25k",
-                "label": "25K"
-              },
-              {
-                "id": "45k",
-                "label": "45K"
-              },
-              {
-                "id": "85k",
-                "label": "85K"
-              }
-            ]
-          }
-        ],
         "configurations": [
           {
-            "when": {
-              "size": "12k"
-            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
@@ -1546,14 +1474,18 @@
               "pid": "6015"
             },
             "tested": false,
-            "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches any device with an FTDI FT231X chip.",
+            "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches every ULX3S size and any device with an FTDI FT231X chip.",
             "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware."
-          },
+          }
+        ]
+      }
+    },
+    "ulx3s-25f": {
+      "description": "ULX3S 25K",
+      "fpga_id": "lfe5u-25f-6bg381c",
+      "variants": {
+        "configurations": [
           {
-            "when": {
-              "size": "25k"
-            },
-            "fpga_id": "lfe5u-25f-6bg381c",
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
@@ -1561,14 +1493,18 @@
               "pid": "6015"
             },
             "tested": false,
-            "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches any device with an FTDI FT231X chip.",
+            "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches every ULX3S size and any device with an FTDI FT231X chip.",
             "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware."
-          },
+          }
+        ]
+      }
+    },
+    "ulx3s-45f": {
+      "description": "ULX3S 45K",
+      "fpga_id": "lfe5u-45f-6bg381c",
+      "variants": {
+        "configurations": [
           {
-            "when": {
-              "size": "45k"
-            },
-            "fpga_id": "lfe5u-45f-6bg381c",
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
@@ -1576,14 +1512,18 @@
               "pid": "6015"
             },
             "tested": false,
-            "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches any device with an FTDI FT231X chip.",
+            "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches every ULX3S size and any device with an FTDI FT231X chip.",
             "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware."
-          },
+          }
+        ]
+      }
+    },
+    "ulx3s-85f": {
+      "description": "ULX3S 85K",
+      "fpga_id": "lfe5u-85f-6bg381c",
+      "variants": {
+        "configurations": [
           {
-            "when": {
-              "size": "85k"
-            },
-            "fpga_id": "lfe5u-85f-6bg381c",
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
@@ -1591,7 +1531,7 @@
               "pid": "6015"
             },
             "tested": false,
-            "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches any device with an FTDI FT231X chip.",
+            "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches every ULX3S size and any device with an FTDI FT231X chip.",
             "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware."
           }
         ]

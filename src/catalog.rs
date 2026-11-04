@@ -16,29 +16,30 @@ pub const PROGRAMMERS: &[&str] = &["openfpgaloader", "iceprog", "dfu-util", "ice
 pub const TEMPLATE_VARIABLES: &[&str] = &["VID", "PID", "BUS", "DEV", "SERIAL", "BITSTREAM"];
 
 /// A board: its FPGA and its variants. A board is a name: two boards with
-/// different names are unrelated, even when their hardware is identical.
+/// different names are unrelated, even when their hardware is identical, as
+/// are the sizes of a board sold with several FPGA sizes.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct BoardDefinition {
     /// The board's name for people, such as "Alhambra II".
     pub description: String,
     /// The board's FPGA, as a catalog ID of the fpgas section, such as
-    /// ice40hx4k-tq144-8k. A configuration may use another size of it.
+    /// ice40hx4k-tq144-8k. Every configuration uses it.
     #[schemars(pattern(r"^[a-z0-9-]+$"))]
     pub fpga_id: String,
-    /// The board's choices, such as its FPGA size, the cable or the memory to
-    /// program, and how to program it with each combination that exists.
+    /// The board's choices, such as the cable or the memory to program, and
+    /// how to program it with each combination that exists.
     pub variants: Variants,
 }
 
 /// A board's choices (dimensions) and the combinations that exist
-/// (configurations). Every configuration works with the same project: the
-/// same sources and constraint file.
+/// (configurations). They differ only in how the board is programmed: every
+/// configuration has the same FPGA and pins, so the same project works.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Variants {
     /// The kinds of choice the board offers, in the order to show them, such
-    /// as size, connection and memory. Omitted or empty for a board with
+    /// as connection and memory. Omitted or empty for a board with
     /// one configuration.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub dimensions: Vec<Dimension>,
@@ -49,15 +50,15 @@ pub struct Variants {
     pub configurations: Vec<Configuration>,
 }
 
-/// One kind of choice, such as the FPGA size.
+/// One kind of choice, such as the memory to program.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Dimension {
     /// The dimension's ID, used in configurations and variant inputs, such as
-    /// size, connection or memory.
+    /// connection or memory.
     #[schemars(pattern(r"^[a-z0-9-]+$"))]
     pub id: String,
-    /// The dimension's name for people, such as "FPGA size".
+    /// The dimension's name for people, such as "Connection".
     pub label: String,
     /// The possible values, in the order to show them.
     #[schemars(length(min = 1))]
@@ -85,15 +86,9 @@ pub struct DimensionValue {
 #[serde(deny_unknown_fields)]
 pub struct Configuration {
     /// The value of every dimension, by dimension ID, such as
-    /// {"size": "85k"}. Omitted or empty for a board without dimensions.
+    /// {"memory": "ram"}. Omitted or empty for a board without dimensions.
     #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
     pub when: BTreeMap<String, String>,
-    /// The FPGA, when it isn't the board's, such as a larger size. It has
-    /// the board FPGA's architecture and package, so the same constraint
-    /// file works.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[schemars(pattern(r"^[a-z0-9-]+$"))]
-    pub fpga_id: Option<String>,
     /// The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.
     pub programmer: String,
     /// The programmer's arguments, as a template. The engine replaces
@@ -369,11 +364,6 @@ impl Configuration {
         if let Some(re) = &self.usb.serial_regex {
             regex::Regex::new(re).map_err(|e| format!("bad serial_regex: {e}"))?;
         }
-        if let Some(id) = &self.fpga_id
-            && !is_catalog_id(id)
-        {
-            return Err(format!("bad fpga_id {id:?}"));
-        }
         Ok(())
     }
 
@@ -541,30 +531,12 @@ impl Catalog {
                 return Err(format!("bad board ID {id:?}"));
             }
             b.validate().map_err(|e| format!("board {id}: {e}"))?;
-            let fpga = self
-                .fpgas
-                .get(&b.fpga_id)
-                .ok_or_else(|| format!("board {id}: unknown FPGA {}", b.fpga_id))?;
-            for c in &b.variants.configurations {
-                let Some(other) = &c.fpga_id else { continue };
-                let f = self
-                    .fpgas
-                    .get(other)
-                    .ok_or_else(|| format!("board {id}: unknown FPGA {other}"))?;
-                check_same_pins(fpga, f).map_err(|e| format!("board {id}: {other}: {e}"))?;
+            if !self.fpgas.contains_key(&b.fpga_id) {
+                return Err(format!("board {id}: unknown FPGA {}", b.fpga_id));
             }
         }
         Ok(())
     }
-}
-
-/// Checks that a configuration's FPGA takes the same constraint file as the
-/// board's: the same architecture and the same package.
-pub fn check_same_pins(board: &FpgaDefinition, other: &FpgaDefinition) -> Result<(), String> {
-    if board.architecture != other.architecture || board.nextpnr_package != other.nextpnr_package {
-        return Err("not the same architecture and package as the board's FPGA".into());
-    }
-    Ok(())
 }
 
 /// The catalog built into this engine release.
@@ -708,10 +680,10 @@ mod tests {
             (fpgas, boards)
         };
         assert_eq!(count(Architecture::Ice40), (40, 31));
-        assert_eq!(count(Architecture::Ecp5), (39, 17));
+        assert_eq!(count(Architecture::Ecp5), (39, 22));
         assert_eq!(count(Architecture::Gowin), (241, 8));
-        assert_eq!(count(Architecture::Xilinx), (212, 22));
-        let arty = &c.fpgas[&c.boards["arty-a7"].fpga_id];
+        assert_eq!(count(Architecture::Xilinx), (212, 23));
+        let arty = &c.fpgas[&c.boards["arty-a7-35t"].fpga_id];
         assert_eq!(arty.nextpnr_device, "xc7a35tcsg324-1");
         assert_eq!(arty.yosys_arch.as_deref(), Some("xc7"));
         assert_eq!(arty.prjxray_family.as_deref(), Some("artix7"));
@@ -741,7 +713,7 @@ mod tests {
         assert!(alhambra.variants.dimensions.is_empty());
         assert_eq!(c.fpgas["ice40hx4k-tq144-8k"].package(), "tq144:4k");
         let configurations = || c.boards.values().flat_map(|b| &b.variants.configurations);
-        assert_eq!(c.boards.len(), 78);
+        assert_eq!(c.boards.len(), 84);
         assert_eq!(configurations().count(), 95);
         // Users pick boards by description, so no two boards share one.
         let mut descriptions: Vec<&str> =
@@ -755,7 +727,8 @@ mod tests {
                 "no board uses {p}"
             );
         }
-        // Boards with variants: sizes, connections and memories.
+        // Boards with variants: connections and memories. Sizes are separate
+        // boards, since the pins may differ.
         let dims = |id: &str| -> Vec<(String, usize)> {
             c.boards[id]
                 .variants
@@ -765,10 +738,6 @@ mod tests {
                 .collect()
         };
         for (id, dim, n) in [
-            ("arty-a7", "size", 2),
-            ("ulx3s", "size", 4),
-            ("orangecrab-r02", "size", 2),
-            ("ecp5-mini", "size", 2),
             ("icesugar-pro", "memory", 2),
             ("colorlight-i5-v7-0", "memory", 2),
             ("colorlight-5a-75e-v71", "connection", 3),
@@ -782,13 +751,9 @@ mod tests {
             .boards
             .values()
             .filter(|b| !b.variants.dimensions.is_empty());
-        assert_eq!(with_dimensions.count(), 10);
-        // A size's FPGA comes from its configuration.
-        let arty = &c.boards["arty-a7"].variants.configurations[1];
-        assert_eq!(arty.when["size"], "100t");
-        assert_eq!(arty.fpga_id.as_deref(), Some("xc7a100tcsg324-1"));
+        assert_eq!(with_dimensions.count(), 6);
         // Boards moved to another programmer are marked untested, with a note.
-        for id in ["ulx3s", "odt-icyblue-feather"] {
+        for id in ["ulx3s-12f", "ulx3s-85f", "odt-icyblue-feather"] {
             for v in &c.boards[id].variants.configurations {
                 assert!(!v.tested, "{id}");
                 assert!(v.user_notes.is_some(), "{id}");
@@ -802,7 +767,7 @@ mod tests {
             }
         }
         // Maintainer notes stay in the catalog file.
-        let json = serde_json::to_value(&c.boards["ulx3s"]).unwrap();
+        let json = serde_json::to_value(&c.boards["ulx3s-12f"]).unwrap();
         let first = &json["variants"]["configurations"][0];
         assert!(first.get("maintainer_notes").is_none());
         assert!(first.get("user_notes").is_some());
@@ -853,14 +818,5 @@ mod tests {
         let mut b = ok;
         first(&mut b).when.insert("size".into(), "1k".into());
         assert!(b.validate().is_err());
-    }
-
-    #[test]
-    fn a_configurations_fpga_needs_the_same_pins() {
-        let mut c = builtin().clone();
-        let arty = c.boards.get_mut("arty-a7").unwrap();
-        arty.variants.configurations[1].fpga_id = Some("ice40up5k-sg48".into());
-        let e = c.validate().unwrap_err();
-        assert!(e.contains("package"), "{e}");
     }
 }

@@ -36,12 +36,12 @@ pub struct BoardInputDefinition {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub fpga: Option<FpgaDefinition>,
     /// The board's choices and how to program it with each, as in the
-    /// catalog. A configuration's fpga_id must be a catalog ID.
+    /// catalog.
     pub variants: Variants,
 }
 
 /// A board's variant: a value for some or all of its dimensions, by
-/// dimension ID, such as {"size": "85k", "memory": "ram"}. The first
+/// dimension ID, such as {"connection": "ft232h", "memory": "ram"}. The first
 /// configuration with these values is used; omitted dimensions match any
 /// value, so an empty variant means the board's default configuration.
 pub type VariantInput = BTreeMap<String, String>;
@@ -129,17 +129,13 @@ pub fn resolve(spec: &BoardSpec, variant: &VariantInput) -> Result<ResolvedBoard
                 ))
             })?;
             let (configuration, name) = configure(&b.description, &b.variants, variant)?;
-            let fpga_id = configuration
-                .fpga_id
-                .clone()
-                .unwrap_or_else(|| b.fpga_id.clone());
             Ok(ResolvedBoard {
                 board_id: Some(id.clone()),
                 description: b.description.clone(),
                 name,
                 variant: configuration.when.clone(),
-                fpga: fpga_by_id(&fpga_id)?,
-                fpga_id: Some(fpga_id),
+                fpga: fpga_by_id(&b.fpga_id)?,
+                fpga_id: Some(b.fpga_id.clone()),
                 configuration,
             })
         }
@@ -162,16 +158,6 @@ pub fn resolve(spec: &BoardSpec, variant: &VariantInput) -> Result<ResolvedBoard
                 .validate()
                 .map_err(|e| ToolError::request(format!("Invalid board definition: {e}.")))?;
             let (configuration, name) = configure(&d.description, &d.variants, variant)?;
-            let (fpga_id, fpga) = match &configuration.fpga_id {
-                None => (fpga_id, fpga),
-                Some(other) => {
-                    let f = fpga_by_id(other)?;
-                    catalog::check_same_pins(&fpga, &f).map_err(|e| {
-                        ToolError::request(format!("Invalid board definition: {other}: {e}."))
-                    })?;
-                    (Some(other.clone()), f)
-                }
-            };
             Ok(ResolvedBoard {
                 board_id: None,
                 description: d.description.clone(),
@@ -216,16 +202,20 @@ mod tests {
     #[test]
     fn variants_pick_a_configuration() {
         // The default is the first configuration.
-        let small = resolve(&id("ulx3s"), &VariantInput::new()).unwrap();
-        assert_eq!(small.variant, variant(json!({"size": "12k"})));
-        assert_eq!(small.fpga_id.as_deref(), Some("lfe5u-12f-6bg381c"));
-        assert_eq!(small.name, "ULX3S (12K)");
-        // A size changes the FPGA, and the checksum, so the build starts over.
-        let big = resolve(&id("ulx3s"), &variant(json!({"size": "85k"}))).unwrap();
-        assert_eq!(big.fpga_id.as_deref(), Some("lfe5u-85f-6bg381c"));
-        assert_eq!(big.fpga.nextpnr_device, "85k");
-        assert_ne!(small.checksum(), big.checksum());
-        // Memory changes only the programming, and still the checksum.
+        let dfu = resolve(&id("butterstick-r10-2g-85k"), &VariantInput::new()).unwrap();
+        assert_eq!(dfu.variant, variant(json!({"connection": "dfu"})));
+        assert_eq!(dfu.name, "butterstick r1.0 (USB bootloader)");
+        let cable = resolve(
+            &id("butterstick-r10-2g-85k"),
+            &variant(json!({"connection": "ft232h"})),
+        )
+        .unwrap();
+        assert_eq!(cable.configuration.programmer, "openfpgaloader");
+        assert_eq!(cable.configuration.usb.pid, "6014");
+        // Every configuration has the board's FPGA.
+        assert_eq!(dfu.fpga, cable.fpga);
+        // Memory changes only the programming, and still the checksum, so
+        // the build starts over.
         let flash = resolve(&id("icesugar-pro"), &VariantInput::new()).unwrap();
         let ram = resolve(&id("icesugar-pro"), &variant(json!({"memory": "ram"}))).unwrap();
         assert_eq!(flash.fpga, ram.fpga);
@@ -234,9 +224,9 @@ mod tests {
         assert_eq!(ram.name, "Icesugar Pro (RAM)");
         // Errors name what exists.
         let e = |b: &str, v| resolve(&id(b), &variant(v)).unwrap_err().message;
-        assert!(e("ulx3s", json!({"size": "99k"})).contains("12k, 25k, 45k, 85k"));
-        assert!(e("ulx3s", json!({"memory": "ram"})).contains("dimensions: size"));
-        assert!(e("alhambra-ii", json!({"size": "1k"})).contains("no variants"));
+        assert!(e("icesugar-pro", json!({"memory": "eeprom"})).contains("flash, ram"));
+        assert!(e("icesugar-pro", json!({"size": "1k"})).contains("dimensions: memory"));
+        assert!(e("alhambra-ii", json!({"memory": "ram"})).contains("no variants"));
     }
 
     #[test]
@@ -329,11 +319,6 @@ mod tests {
         let mut bad = custom(json!({"fpga_id": "ice40up5k-sg48"}));
         bad["variants"]["configurations"][0]["programmer"] = json!("tinyprog");
         assert!(resolve(&parse(bad).unwrap(), &none).is_err());
-        // A configuration's FPGA needs the same pins as the board's.
-        let mut other = custom(json!({"fpga_id": "ice40up5k-sg48"}));
-        other["variants"]["configurations"][0]["fpga_id"] = json!("ice40hx4k-tq144-8k");
-        let e = resolve(&parse(other).unwrap(), &none).unwrap_err().message;
-        assert!(e.contains("package"), "{e}");
     }
 
     #[test]

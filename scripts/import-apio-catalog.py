@@ -28,8 +28,8 @@ What's imported:
   can find the device.
 
 Local edits to restore after an import: the boards merged into one board with
-dimensions (FPGA size, connection or memory; see docs/requirements.md, Boards
-and variants), unique descriptions, boards moved to another programmer
+dimensions (connection or memory; see docs/requirements.md, Boards and
+variants), unique descriptions, boards moved to another programmer
 (the ULX3S boards to openFPGALoader, odt-icyblue-feather to iceprog, both
 with tested false), serial_regex filters (the iCESugar boards), user_notes and maintainer_notes.
 """
