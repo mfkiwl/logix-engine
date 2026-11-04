@@ -102,7 +102,8 @@ pub fn verbose_flag(programmer: &str) -> Option<&'static str> {
 /// How the board will be programmed, as the engine says before it starts,
 /// such as "Programming the RAM of the butterstick r1.0 through the FT232H
 /// adapter.". `board` is the board's name (its description, without the
-/// variant: the line says it).
+/// variant: the line says it). An untested configuration ends with
+/// " (untested)" before the period.
 pub fn plan(board: &str, c: &Configuration) -> Option<String> {
     let memory = memory_word(c)?;
     let connection = c.when.get("connection").map(String::as_str);
@@ -119,7 +120,10 @@ pub fn plan(board: &str, c: &Configuration) -> Option<String> {
             format!(" through the {label}")
         }
     };
-    Some(format!("Programming the {memory} of the {board}{through}."))
+    let untested = if c.tested { "" } else { " (untested)" };
+    Some(format!(
+        "Programming the {memory} of the {board}{through}{untested}."
+    ))
 }
 
 /// What a successful programming means, such as "Programmed the RAM of the
@@ -377,6 +381,12 @@ mod tests {
             "Programmed the RAM of the butterstick r1.0: the design is lost when the board is powered off."
         );
         assert_eq!(writing_phase(&stick[2]), "Writing RAM");
+        let arty = &c.boards["arty-a7-35t"].variants.configurations[0];
+        assert!(!arty.tested);
+        assert_eq!(
+            plan("Arty A7-35T (Xilinx, Artix7)", arty).unwrap(),
+            "Programming the flash of the Arty A7-35T (Xilinx, Artix7) through its USB port (untested)."
+        );
     }
 
     #[test]
