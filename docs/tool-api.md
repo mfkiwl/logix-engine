@@ -587,7 +587,7 @@ It runs each architecture's open source flow: for iCE40, yosys (`synth_ice40`), 
 | `variant` | variant | No | The board's configuration. Omitted means its first |
 | `top_module` | text | Yes | Name of the top-level module |
 | `source_folder`, `source_files`, `constraint_file`, `build_folder` | See folder fields in [Table 2](#folders) | Yes | The constraint file is required |
-| `defines` | map of text | No | Verilog and SystemVerilog macro definitions, from name to value, such as `{ "USE_PLL": "", "WIDTH": "8" }`. Names follow Verilog identifier rules, and a bad name is a request error. An empty value defines the macro with no text, for use with `` `ifdef ``. The engine always passes each value explicitly, so every tool sees the same text, and passes them in name order, so the same request always gives the same tool commands. `SYNTHESIZE` is always defined, as in Apio |
+| `defines` | map of text | No | Verilog and SystemVerilog macro definitions, from name to value, such as `{ "USE_PLL": "", "WIDTH": "8" }`. Names follow Verilog identifier rules, and a bad name is a request error. An empty value defines the macro with no text, for use with `` `ifdef ``. The engine always passes each value explicitly, so every tool sees the same text, and passes them in name order, so the same request always gives the same tool commands. `SYNTHESIZE` is always defined |
 | `verbose` | boolean | No | Let yosys and nextpnr print more detail, shown in the live output and the logs. Defaults to false. See [Verbose](#live-tool-output) |
 
 **Table 7.** build tool outputs
