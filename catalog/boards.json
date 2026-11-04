@@ -7,6 +7,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify --board alchitry_au ${BITSTREAM}",
             "usb": {
@@ -24,6 +28,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify --board alchitry_au_plus ${BITSTREAM}",
             "usb": {
@@ -41,6 +49,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -59,6 +71,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -b ice40_generic --vid ${VID} --pid ${PID} --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
@@ -77,6 +93,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "ft232h",
+              "memory": "flash"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -f -c ft232 --fpga-part xc7a35t ${BITSTREAM}",
             "usb": {
@@ -95,6 +115,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -113,6 +137,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify --board arty_a7_100t ${BITSTREAM}",
             "usb": {
@@ -130,6 +158,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify --board arty_a7_35t ${BITSTREAM}",
             "usb": {
@@ -147,6 +179,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify --board arty_s7_25 ${BITSTREAM}",
             "usb": {
@@ -164,6 +200,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify --board arty_s7_50 ${BITSTREAM}",
             "usb": {
@@ -181,6 +221,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -199,6 +243,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify --board basys3 ${BITSTREAM}",
             "usb": {
@@ -217,6 +265,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -b brs-100-gw1nr9 -f ${BITSTREAM}",
             "usb": {
@@ -232,49 +284,10 @@
       "description": "butterstick r1.0",
       "fpga_id": "lfe5um5g-85f-8bg381c",
       "variants": {
-        "dimensions": [
-          {
-            "id": "connection",
-            "label": "Connection",
-            "values": [
-              {
-                "id": "dfu",
-                "label": "USB bootloader",
-                "help": "The board's own USB port, with the board in its bootloader mode."
-              },
-              {
-                "id": "ft2232h",
-                "label": "FT2232H adapter",
-                "help": "A USB adapter with an FTDI FT2232H chip, connected to the board's JTAG pins."
-              },
-              {
-                "id": "ft232h",
-                "label": "FT232H adapter",
-                "help": "A USB adapter with an FTDI FT232H chip, connected to the board's JTAG pins."
-              }
-            ]
-          },
-          {
-            "id": "memory",
-            "label": "Memory",
-            "values": [
-              {
-                "id": "flash",
-                "label": "Flash",
-                "help": "Kept when the board is powered off."
-              },
-              {
-                "id": "ram",
-                "label": "RAM",
-                "help": "Faster to upload; lost when the board is powered off."
-              }
-            ]
-          }
-        ],
         "configurations": [
           {
             "when": {
-              "connection": "dfu",
+              "connection": "bootloader",
               "memory": "flash"
             },
             "programmer": "dfu-util",
@@ -322,6 +335,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify --board cmoda7_35t ${BITSTREAM}",
             "usb": {
@@ -339,6 +356,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "ft2232h",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
             "usb": {
@@ -356,6 +377,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "ft2232h",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
             "usb": {
@@ -373,6 +398,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "ft2232h",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
             "usb": {
@@ -390,6 +419,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "ft2232h",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
             "usb": {
@@ -405,33 +438,11 @@
       "description": "ColorLight-5A-75E-V71",
       "fpga_id": "lfe5u-25f-6bg256c",
       "variants": {
-        "dimensions": [
-          {
-            "id": "connection",
-            "label": "Connection",
-            "values": [
-              {
-                "id": "ft2232h",
-                "label": "FT2232H adapter",
-                "help": "A USB adapter with an FTDI FT2232H chip, connected to the board's JTAG pins."
-              },
-              {
-                "id": "ft232h",
-                "label": "FT232H adapter",
-                "help": "A USB adapter with an FTDI FT232H chip, connected to the board's JTAG pins."
-              },
-              {
-                "id": "usb-blaster",
-                "label": "USB-Blaster",
-                "help": "An Altera USB-Blaster or compatible adapter, connected to the board's JTAG pins."
-              }
-            ]
-          }
-        ],
         "configurations": [
           {
             "when": {
-              "connection": "ft2232h"
+              "connection": "ft2232h",
+              "memory": "ram"
             },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
@@ -443,7 +454,8 @@
           },
           {
             "when": {
-              "connection": "ft232h"
+              "connection": "ft232h",
+              "memory": "ram"
             },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
@@ -455,7 +467,8 @@
           },
           {
             "when": {
-              "connection": "usb-blaster"
+              "connection": "usb-blaster",
+              "memory": "ram"
             },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c usb-blaster -v --file-type bin ${BITSTREAM}",
@@ -472,27 +485,10 @@
       "description": "ColorLight-i5",
       "fpga_id": "lfe5u-25f-6bg381c",
       "variants": {
-        "dimensions": [
-          {
-            "id": "memory",
-            "label": "Memory",
-            "values": [
-              {
-                "id": "flash",
-                "label": "Flash",
-                "help": "Kept when the board is powered off."
-              },
-              {
-                "id": "ram",
-                "label": "RAM",
-                "help": "Faster to upload; lost when the board is powered off."
-              }
-            ]
-          }
-        ],
         "configurations": [
           {
             "when": {
+              "connection": "usb",
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
@@ -506,6 +502,7 @@
           },
           {
             "when": {
+              "connection": "usb",
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
@@ -524,38 +521,11 @@
       "description": "ColorLight-i9 v7.2",
       "fpga_id": "lfe5u-45f-6bg381c",
       "variants": {
-        "dimensions": [
-          {
-            "id": "connection",
-            "label": "Connection",
-            "values": [
-              {
-                "id": "cmsis-dap",
-                "label": "CMSIS-DAP adapter",
-                "help": "A CMSIS-DAP (DAPLink) USB adapter, connected to the board's JTAG pins."
-              },
-              {
-                "id": "ft2232h",
-                "label": "FT2232H adapter",
-                "help": "A USB adapter with an FTDI FT2232H chip, connected to the board's JTAG pins."
-              },
-              {
-                "id": "ft232h",
-                "label": "FT232H adapter",
-                "help": "A USB adapter with an FTDI FT232H chip, connected to the board's JTAG pins."
-              },
-              {
-                "id": "usb-blaster",
-                "label": "USB-Blaster",
-                "help": "An Altera USB-Blaster or compatible adapter, connected to the board's JTAG pins."
-              }
-            ]
-          }
-        ],
         "configurations": [
           {
             "when": {
-              "connection": "cmsis-dap"
+              "connection": "cmsis-dap",
+              "memory": "ram"
             },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c cmsisdap -v --file-type bin ${BITSTREAM}",
@@ -567,7 +537,8 @@
           },
           {
             "when": {
-              "connection": "ft2232h"
+              "connection": "ft2232h",
+              "memory": "ram"
             },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
@@ -579,7 +550,8 @@
           },
           {
             "when": {
-              "connection": "ft232h"
+              "connection": "ft232h",
+              "memory": "ram"
             },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
@@ -591,7 +563,8 @@
           },
           {
             "when": {
-              "connection": "usb-blaster"
+              "connection": "usb-blaster",
+              "memory": "ram"
             },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c usb-blaster -v --file-type bin ${BITSTREAM}",
@@ -610,6 +583,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify --board colorlight-i9+ -c cmsisdap ${BITSTREAM}",
             "usb": {
@@ -627,6 +604,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
             "usb": {
@@ -644,6 +625,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "ft2232h",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
             "usb": {
@@ -661,6 +646,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "ft2232h",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
             "usb": {
@@ -678,6 +667,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -696,6 +689,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -b epm11 -f ${BITSTREAM}",
             "usb": {
@@ -711,33 +708,11 @@
       "description": "FleaFPGA-Ohm",
       "fpga_id": "lfe5u-25f-6bg381c",
       "variants": {
-        "dimensions": [
-          {
-            "id": "connection",
-            "label": "Connection",
-            "values": [
-              {
-                "id": "ft2232h",
-                "label": "FT2232H adapter",
-                "help": "A USB adapter with an FTDI FT2232H chip, connected to the board's JTAG pins."
-              },
-              {
-                "id": "ft232h",
-                "label": "FT232H adapter",
-                "help": "A USB adapter with an FTDI FT232H chip, connected to the board's JTAG pins."
-              },
-              {
-                "id": "usb-blaster",
-                "label": "USB-Blaster",
-                "help": "An Altera USB-Blaster or compatible adapter, connected to the board's JTAG pins."
-              }
-            ]
-          }
-        ],
         "configurations": [
           {
             "when": {
-              "connection": "ft2232h"
+              "connection": "ft2232h",
+              "memory": "ram"
             },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
@@ -749,7 +724,8 @@
           },
           {
             "when": {
-              "connection": "ft232h"
+              "connection": "ft232h",
+              "memory": "ram"
             },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
@@ -761,7 +737,8 @@
           },
           {
             "when": {
-              "connection": "usb-blaster"
+              "connection": "usb-blaster",
+              "memory": "ram"
             },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c usb-blaster -v --file-type bin ${BITSTREAM}",
@@ -780,6 +757,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "bootloader",
+              "memory": "flash"
+            },
             "programmer": "dfu-util",
             "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
             "usb": {
@@ -788,7 +769,8 @@
               "product_regex": "^Fomu Hacker running DFU Bootloader v1.8.8"
             },
             "tested": true,
-            "user_notes": "Programming through the USB bootloader needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+            "user_notes": "Programming through the USB bootloader needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in.",
+            "maintainer_notes": "Memory flash: Fomu's bootloader (foboot) stores the design in flash, but the board starts its bootloader at power-up, so whether the design comes back by itself is to check on hardware."
           }
         ]
       }
@@ -799,6 +781,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -817,6 +803,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -835,6 +825,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -853,6 +847,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -871,6 +869,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -889,6 +891,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "bootloader",
+              "memory": "flash"
+            },
             "programmer": "dfu-util",
             "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
             "usb": {
@@ -908,6 +914,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "bootloader",
+              "memory": "flash"
+            },
             "programmer": "dfu-util",
             "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
             "usb": {
@@ -927,6 +937,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -944,6 +958,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c ft231X --pins=7:3:5:6 -v --file-type bin ${BITSTREAM}",
             "usb": {
@@ -961,6 +979,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -979,6 +1001,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "icesprog",
             "args": "${BITSTREAM}",
             "usb": {
@@ -999,6 +1025,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "icesprog",
             "args": "${BITSTREAM}",
             "usb": {
@@ -1017,27 +1047,10 @@
       "description": "Icesugar Pro",
       "fpga_id": "lfe5u-25f-6bg256c",
       "variants": {
-        "dimensions": [
-          {
-            "id": "memory",
-            "label": "Memory",
-            "values": [
-              {
-                "id": "flash",
-                "label": "Flash",
-                "help": "Kept when the board is powered off."
-              },
-              {
-                "id": "ram",
-                "label": "RAM",
-                "help": "Faster to upload; lost when the board is powered off."
-              }
-            ]
-          }
-        ],
         "configurations": [
           {
             "when": {
+              "connection": "usb",
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
@@ -1053,6 +1066,7 @@
           },
           {
             "when": {
+              "connection": "usb",
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
@@ -1075,6 +1089,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -1093,6 +1111,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} -I B ${BITSTREAM}",
             "usb": {
@@ -1111,13 +1133,18 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "unspecified",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c ft232 --fpga-part xc7a200tfbg484 ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6014"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Programmed through an FT232 (openFPGALoader -c ft232); not found in the board's documentation whether the chip is on the board or an external adapter."
           }
         ]
       }
@@ -1128,6 +1155,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify --board mimas_a7 ${BITSTREAM}",
             "usb": {
@@ -1145,13 +1176,18 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "unspecified",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Programmed through an FT2232 (openFPGALoader -c ft2232); not found in the board's documentation whether the chip is on the board or an external adapter."
           }
         ]
       }
@@ -1162,6 +1198,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify --board nexys_a7_100 ${BITSTREAM}",
             "usb": {
@@ -1179,6 +1219,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify --board nexys_a7_50 ${BITSTREAM}",
             "usb": {
@@ -1196,6 +1240,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -1215,6 +1263,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -1233,6 +1285,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "bootloader",
+              "memory": "flash"
+            },
             "programmer": "dfu-util",
             "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
             "usb": {
@@ -1252,6 +1308,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "bootloader",
+              "memory": "flash"
+            },
             "programmer": "dfu-util",
             "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
             "usb": {
@@ -1271,6 +1331,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "bootloader",
+              "memory": "flash"
+            },
             "programmer": "dfu-util",
             "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM} --reset",
             "usb": {
@@ -1290,6 +1354,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify --board pynq_z1 ${BITSTREAM}",
             "usb": {
@@ -1307,6 +1375,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify --board pynq_z2 ${BITSTREAM}",
             "usb": {
@@ -1324,6 +1396,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "ft2232h",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c ft2232 --fpga-part xc7a100tfgg676 ${BITSTREAM}",
             "usb": {
@@ -1341,6 +1417,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -b tangnano ${BITSTREAM}",
             "usb": {
@@ -1358,6 +1438,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -b tangnano1k -f ${BITSTREAM}",
             "usb": {
@@ -1375,6 +1459,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -b tangnano20k -f ${BITSTREAM}",
             "usb": {
@@ -1392,6 +1480,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -b tangnano4k -f ${BITSTREAM}",
             "usb": {
@@ -1409,6 +1501,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -b tangnano9k -f ${BITSTREAM}",
             "usb": {
@@ -1426,6 +1522,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -b tangprimer20k -f ${BITSTREAM}",
             "usb": {
@@ -1443,6 +1543,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "bootloader",
+              "memory": "flash"
+            },
             "programmer": "dfu-util",
             "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
             "usb": {
@@ -1462,6 +1566,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "bootloader",
+              "memory": "flash"
+            },
             "programmer": "dfu-util",
             "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
             "usb": {
@@ -1481,6 +1589,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -1499,6 +1611,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
@@ -1518,6 +1634,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
@@ -1537,6 +1657,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
@@ -1556,6 +1680,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
@@ -1575,6 +1703,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -1593,6 +1725,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -1611,6 +1747,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -1629,6 +1769,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -1647,6 +1791,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -1665,6 +1813,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -1683,6 +1835,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "flash"
+            },
             "programmer": "iceprog",
             "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {
@@ -1701,6 +1857,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify --board zedboard ${BITSTREAM}",
             "usb": {
@@ -1718,6 +1878,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb-blaster",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c usb-blaster ${BITSTREAM}",
             "usb": {
@@ -1735,6 +1899,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb-blaster",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c usb-blaster ${BITSTREAM}",
             "usb": {
@@ -1752,6 +1920,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb-blaster",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c usb-blaster ${BITSTREAM}",
             "usb": {
@@ -1769,6 +1941,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify --board zybo_z7_10 ${BITSTREAM}",
             "usb": {
@@ -1786,6 +1962,10 @@
       "variants": {
         "configurations": [
           {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify --board zybo_z7_20 ${BITSTREAM}",
             "usb": {

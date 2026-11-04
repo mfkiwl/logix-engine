@@ -274,6 +274,11 @@ async fn get_catalog_returns_the_requested_entries() {
         alhambra["variants"]["configurations"][0]["usb"]["product_regex"],
         "^Alhambra II.*"
     );
+    // The standard dimensions, derived and labeled by the engine.
+    let dims = &alhambra["variants"]["dimensions"];
+    assert_eq!(dims[0]["id"], "connection");
+    assert_eq!(dims[0]["values"][0]["label"], "USB");
+    assert_eq!(dims[1]["values"][0]["id"], "flash");
     assert_eq!(out["fpgas"].as_object().unwrap().len(), 532);
     let gowin = &out["fpgas"]["gw1nr-lv9qn88pc6-i5"];
     assert_eq!(gowin["packer_device"], "GW1N-9C");

@@ -20,8 +20,9 @@ What's imported:
   yosys-family, the Project X-Ray database folder).
 - The iCE40, ECP5, Gowin and Xilinx boards whose programmer the engine supports:
   openfpgaloader, iceprog, dfu (named dfu-util in the engine) and icesprog.
-  Each gets no dimensions and one configuration with Apio's full command
-  arguments, and tested true. Apio's ${BIN_FILE} becomes ${BITSTREAM}, added at the
+  Each gets one configuration with Apio's full command arguments, tested
+  true, and the standard connection and memory values the command implies
+  (standard_values). Apio's ${BIN_FILE} becomes ${BITSTREAM}, added at the
   end when Apio leaves it out. An openFPGALoader board without a USB filter
   in Apio, such as one programmed with an external cable, gets the default
   USB IDs of the cable its -c option names (CABLE_USB_IDS), so the engine
@@ -82,6 +83,31 @@ def load_jsonc(path):
             out.append(c)
             i += 1
     return json.loads(re.sub(r",(\s*[}\]])", r"\1", "".join(out)))
+
+
+CABLE_CONNECTIONS = {"ft2232": "ft2232h", "ft232": "ft232h", "usb-blaster": "usb-blaster",
+                     "cmsisdap": "cmsis-dap"}
+
+
+def standard_values(programmer, args, arch):
+    """The standard connection and memory values a command implies (see
+    docs/requirements.md, Boards and variants). openFPGALoader writes RAM
+    unless told to write flash (-f), except on iCE40; a -c cable without a
+    board name is taken as an external adapter, which may need fixing by
+    hand (e.g. an FTDI chip on the board is "usb")."""
+    words = args.split()
+    if programmer == "openfpgaloader":
+        flash = "-f" in words or "--write-flash" in words or arch == "ice40"
+        memory = "flash" if flash else "ram"
+        if "-c" in words and "-b" not in words and "--board" not in words:
+            cable = words[words.index("-c") + 1]
+            connection = CABLE_CONNECTIONS.get(cable, "unspecified")
+        else:
+            connection = "usb"
+    else:
+        memory = "flash"
+        connection = "bootloader" if programmer == "dfu-util" else "usb"
+    return {"connection": connection, "memory": memory}
 
 
 def build_info(folder):
@@ -157,7 +183,9 @@ def main():
             "description": b["description"],
             "fpga_id": b["fpga-id"],
             "variants": {"configurations": [
-                {"programmer": PROGRAMMERS[pid], "args": args.strip(), "usb": usb, "tested": True}
+                {"when": standard_values(PROGRAMMERS[pid], args.strip(),
+                                         fpgas[b["fpga-id"]]["architecture"]),
+                 "programmer": PROGRAMMERS[pid], "args": args.strip(), "usb": usb, "tested": True}
             ]},
         }
 

@@ -109,7 +109,15 @@ fn configure(
     let c = variants
         .select(variant)
         .map_err(|e| ToolError::request(format!("variant: {e}.")))?;
-    let labels = c.labels(&variants.dimensions);
+    // Only the dimensions the board has a choice in, e.g. "Icesugar Pro
+    // (RAM)", not "Alhambra II (USB, Flash)".
+    let choices: Vec<_> = variants
+        .dimensions
+        .iter()
+        .filter(|d| d.values.len() > 1)
+        .cloned()
+        .collect();
+    let labels = c.labels(&choices);
     let name = if labels.is_empty() {
         description.to_string()
     } else {
@@ -154,10 +162,12 @@ pub fn resolve(spec: &BoardSpec, variant: &VariantInput) -> Result<ResolvedBoard
                     ));
                 }
             };
-            d.variants
+            let mut variants = d.variants.clone();
+            variants
                 .validate()
                 .map_err(|e| ToolError::request(format!("Invalid board definition: {e}.")))?;
-            let (configuration, name) = configure(&d.description, &d.variants, variant)?;
+            variants.derive_dimensions();
+            let (configuration, name) = configure(&d.description, &variants, variant)?;
             Ok(ResolvedBoard {
                 board_id: None,
                 description: d.description.clone(),
@@ -193,8 +203,13 @@ mod tests {
         let b = resolve(&parse(json!("alhambra-ii")).unwrap(), &VariantInput::new()).unwrap();
         assert_eq!(b.board_id.as_deref(), Some("alhambra-ii"));
         assert_eq!(b.fpga.nextpnr_device, "hx8k");
+        // Every board has the standard dimensions; one value each here, so
+        // the name doesn't mention them.
         assert_eq!(b.name, "Alhambra II");
-        assert!(b.variant.is_empty());
+        assert_eq!(
+            b.variant,
+            variant(json!({"connection": "usb", "memory": "flash"}))
+        );
         let err = resolve(&parse(json!("nope")).unwrap(), &VariantInput::new()).unwrap_err();
         assert!(err.message.contains("get_catalog"), "{}", err.message);
     }
@@ -205,7 +220,7 @@ mod tests {
         let dfu = resolve(&id("butterstick-r10-2g-85k"), &VariantInput::new()).unwrap();
         assert_eq!(
             dfu.variant,
-            variant(json!({"connection": "dfu", "memory": "flash"}))
+            variant(json!({"connection": "bootloader", "memory": "flash"}))
         );
         assert_eq!(dfu.name, "butterstick r1.0 (USB bootloader, Flash)");
         // RAM alone picks the first cable, the first configuration with it.
@@ -221,7 +236,7 @@ mod tests {
         // The bootloader can't write RAM.
         let e = resolve(
             &id("butterstick-r10-2g-85k"),
-            &variant(json!({"connection": "dfu", "memory": "ram"})),
+            &variant(json!({"connection": "bootloader", "memory": "ram"})),
         )
         .unwrap_err();
         assert!(e.message.contains("no configuration"), "{}", e.message);
@@ -245,21 +260,17 @@ mod tests {
         // Errors name what exists.
         let e = |b: &str, v| resolve(&id(b), &variant(v)).unwrap_err().message;
         assert!(e("icesugar-pro", json!({"memory": "eeprom"})).contains("flash, ram"));
-        assert!(e("icesugar-pro", json!({"size": "1k"})).contains("dimensions: memory"));
-        assert!(e("alhambra-ii", json!({"memory": "ram"})).contains("no variants"));
+        assert!(
+            e("icesugar-pro", json!({"size": "1k"})).contains("dimensions: connection, memory")
+        );
+        assert!(e("alhambra-ii", json!({"memory": "ram"})).contains("Its values: flash"));
     }
 
     #[test]
     fn partial_variants_and_missing_combinations() {
-        let variants: Variants = serde_json::from_value(json!({
-            "dimensions": [
-                {"id": "connection", "label": "Connection", "values": [
-                    {"id": "dfu", "label": "USB bootloader"}, {"id": "ft232h", "label": "FT232H adapter"}]},
-                {"id": "memory", "label": "Memory", "values": [
-                    {"id": "flash", "label": "Flash"}, {"id": "ram", "label": "RAM"}]}
-            ],
+        let mut variants: Variants = serde_json::from_value(json!({
             "configurations": [
-                {"when": {"connection": "dfu", "memory": "flash"}, "programmer": "dfu-util",
+                {"when": {"connection": "bootloader", "memory": "flash"}, "programmer": "dfu-util",
                  "args": "-D ${BITSTREAM}", "usb": {"vid": "1209", "pid": "5af0"}, "tested": true},
                 {"when": {"connection": "ft232h", "memory": "flash"}, "programmer": "openfpgaloader",
                  "args": "-c ft232 -f ${BITSTREAM}", "usb": {"vid": "0403", "pid": "6014"}, "tested": true},
@@ -268,6 +279,21 @@ mod tests {
             ]
         }))
         .unwrap();
+        variants.derive_dimensions();
+        // The dimensions come from the configurations, in the standard order,
+        // with the engine's labels.
+        let dims: Vec<Vec<&str>> = variants
+            .dimensions
+            .iter()
+            .map(|d| d.values.iter().map(|v| v.label.as_str()).collect())
+            .collect();
+        assert_eq!(
+            dims,
+            [
+                vec!["USB bootloader", "FT232H adapter"],
+                vec!["Flash", "RAM"]
+            ]
+        );
         variants.validate().unwrap();
         // RAM alone picks the only configuration with it.
         let c = variants.select(&variant(json!({"memory": "ram"}))).unwrap();
@@ -275,23 +301,27 @@ mod tests {
         assert_eq!(c.labels(&variants.dimensions), ["FT232H adapter", "RAM"]);
         // A combination that isn't listed doesn't exist.
         let e = variants
-            .select(&variant(json!({"connection": "dfu", "memory": "ram"})))
+            .select(&variant(
+                json!({"connection": "bootloader", "memory": "ram"}),
+            ))
             .unwrap_err();
         assert!(e.contains("no configuration"), "{e}");
         // The catalog's rules.
         let mut bad = variants.clone();
         bad.configurations[1].when.remove("memory");
-        assert!(bad.validate().unwrap_err().contains("every dimension"));
-        let mut bad = variants.clone();
-        bad.configurations[2].when = bad.configurations[1].when.clone();
-        assert!(bad.validate().is_err());
-        let mut bad = variants.clone();
-        bad.configurations.pop();
         assert!(
             bad.validate()
                 .unwrap_err()
-                .contains("no configuration uses ram")
+                .contains("connection and a memory")
         );
+        let mut bad = variants.clone();
+        bad.configurations[1]
+            .when
+            .insert("memory".into(), "eeprom".into());
+        assert!(bad.validate().unwrap_err().contains("flash, ram"));
+        let mut bad = variants.clone();
+        bad.configurations[2].when = bad.configurations[1].when.clone();
+        assert!(bad.validate().is_err());
         let mut bad = variants;
         bad.configurations.clear();
         assert!(bad.validate().is_err());
@@ -301,6 +331,7 @@ mod tests {
         let mut v = json!({
             "description": "My board",
             "variants": {"configurations": [{
+                "when": {"connection": "usb", "memory": "flash"},
                 "programmer": "openfpgaloader",
                 "args": "-b ice40_generic --vid ${VID} --pid ${PID} ${BITSTREAM}",
                 "usb": {"vid": "0403", "pid": "6010"},

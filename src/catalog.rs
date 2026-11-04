@@ -34,14 +34,19 @@ pub struct BoardDefinition {
 
 /// A board's choices (dimensions) and the combinations that exist
 /// (configurations). They differ only in how the board is programmed: every
-/// configuration has the same FPGA and pins, so the same project works.
+/// configuration has the same FPGA and pin file, so the same project works.
+/// Every board has the two standard dimensions, connection and memory
+/// (`STANDARD_DIMENSIONS`), whose values and their meanings the engine
+/// defines; hosts decide how to show them (e.g. a choice only where a
+/// dimension has more than one value).
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Variants {
-    /// The kinds of choice the board offers, in the order to show them, such
-    /// as connection and memory. Omitted or empty for a board with
-    /// one configuration.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    /// The standard dimensions, connection then memory, each with the values
+    /// the board's configurations use, with labels and help from the
+    /// engine. Derived from the configurations: ignored in inputs and not
+    /// written in the catalog file.
+    #[serde(default)]
     pub dimensions: Vec<Dimension>,
     /// The combinations that exist, each with how to program the board. The
     /// first is the board's default. Combinations that aren't listed don't
@@ -384,62 +389,122 @@ impl Configuration {
     }
 }
 
+/// A standard value: its ID, its label for people and a short explanation.
+pub type StandardValue = (&'static str, &'static str, &'static str);
+
+/// How the computer reaches the board.
+pub const CONNECTIONS: &[StandardValue] = &[
+    (
+        "usb",
+        "USB",
+        "The board's own USB port, through the programmer chip on the board.",
+    ),
+    (
+        "bootloader",
+        "USB bootloader",
+        "The board's own USB port, with the board in its bootloader mode.",
+    ),
+    (
+        "ft2232h",
+        "FT2232H adapter",
+        "A USB adapter with an FTDI FT2232H chip, connected to the board's JTAG pins.",
+    ),
+    (
+        "ft232h",
+        "FT232H adapter",
+        "A USB adapter with an FTDI FT232H chip, connected to the board's JTAG pins.",
+    ),
+    (
+        "cmsis-dap",
+        "CMSIS-DAP adapter",
+        "A CMSIS-DAP (DAPLink) USB adapter, connected to the board's JTAG pins.",
+    ),
+    (
+        "usb-blaster",
+        "USB-Blaster",
+        "An Altera USB-Blaster or compatible adapter, connected to the board's JTAG pins.",
+    ),
+    (
+        "unspecified",
+        "USB",
+        "Programmed through USB; see the board's documentation for how to connect it.",
+    ),
+];
+
+/// Where the design goes.
+pub const MEMORIES: &[StandardValue] = &[
+    ("flash", "Flash", "Kept when the board is powered off."),
+    (
+        "ram",
+        "RAM",
+        "Faster to upload; lost when the board is powered off.",
+    ),
+];
+
+/// The standard dimensions, in order: ID, label and values.
+pub const STANDARD_DIMENSIONS: &[(&str, &str, &[StandardValue])] = &[
+    ("connection", "Connection", CONNECTIONS),
+    ("memory", "Memory", MEMORIES),
+];
+
 impl Variants {
-    /// Checks the dimensions and configurations: every configuration gives
-    /// one declared value for every dimension, no two give the same values,
-    /// every value is used, and there is at least one configuration.
+    /// Fills `dimensions` from the configurations: each standard dimension,
+    /// with the values the configurations use, in the standard order.
+    pub fn derive_dimensions(&mut self) {
+        self.dimensions = STANDARD_DIMENSIONS
+            .iter()
+            .map(|(id, label, values)| Dimension {
+                id: id.to_string(),
+                label: label.to_string(),
+                values: values
+                    .iter()
+                    .filter(|(v, _, _)| {
+                        self.configurations
+                            .iter()
+                            .any(|c| c.when.get(*id).map(String::as_str) == Some(*v))
+                    })
+                    .map(|(v, l, h)| DimensionValue {
+                        id: v.to_string(),
+                        label: l.to_string(),
+                        help: Some(h.to_string()),
+                    })
+                    .collect(),
+            })
+            .collect();
+    }
+
+    /// Checks the configurations: each gives a standard value for every
+    /// standard dimension and no other, no two give the same values, and
+    /// there is at least one.
     pub fn validate(&self) -> Result<(), String> {
-        let mut dim_ids = std::collections::BTreeSet::new();
-        for d in &self.dimensions {
-            if !is_catalog_id(&d.id) || !dim_ids.insert(d.id.as_str()) {
-                return Err(format!("bad or repeated dimension {:?}", d.id));
-            }
-            if d.label.trim().is_empty() || d.values.is_empty() {
-                return Err(format!("dimension {} needs a label and values", d.id));
-            }
-            let mut values = std::collections::BTreeSet::new();
-            for v in &d.values {
-                if !is_catalog_id(&v.id) || !values.insert(v.id.as_str()) {
-                    return Err(format!(
-                        "dimension {}: bad or repeated value {:?}",
-                        d.id, v.id
-                    ));
-                }
-                if v.label.trim().is_empty() {
-                    return Err(format!("dimension {}: value {} needs a label", d.id, v.id));
-                }
-            }
-        }
         if self.configurations.is_empty() {
             return Err("no configurations".into());
         }
         let mut seen = std::collections::BTreeSet::new();
         for c in &self.configurations {
             let ctx = |e: String| format!("configuration {:?}: {e}", c.when);
-            let keys: std::collections::BTreeSet<&str> =
-                c.when.keys().map(String::as_str).collect();
-            if keys != dim_ids {
-                return Err(ctx("needs exactly one value for every dimension".into()));
+            if c.when.len() != STANDARD_DIMENSIONS.len() {
+                return Err(ctx("needs exactly a connection and a memory value".into()));
             }
-            for d in &self.dimensions {
-                if !d.values.iter().any(|v| v.id == c.when[&d.id]) {
-                    return Err(ctx(format!("{} isn't a value of {}", c.when[&d.id], d.id)));
+            for (id, _, values) in STANDARD_DIMENSIONS {
+                let Some(v) = c.when.get(*id) else {
+                    return Err(ctx(format!("needs a {id} value")));
+                };
+                if !values.iter().any(|(x, _, _)| x == v) {
+                    return Err(ctx(format!(
+                        "{v:?} isn't a {id} value. Known: {}",
+                        values
+                            .iter()
+                            .map(|(x, _, _)| *x)
+                            .collect::<Vec<_>>()
+                            .join(", ")
+                    )));
                 }
             }
             if !seen.insert(&c.when) {
                 return Err(ctx("is listed twice".into()));
             }
             c.validate_programming().map_err(ctx)?;
-        }
-        for d in &self.dimensions {
-            for v in &d.values {
-                if !self.configurations.iter().any(|c| c.when[&d.id] == v.id) {
-                    return Err(format!(
-                        "dimension {}: no configuration uses {}",
-                        d.id, v.id
-                    ));
-                }
-            }
         }
         Ok(())
     }
@@ -507,8 +572,11 @@ impl BoardDefinition {
 
 impl Catalog {
     pub fn parse(boards_json: &str, fpgas_json: &str) -> Result<Catalog, String> {
-        let boards: BoardsFile =
+        let mut boards: BoardsFile =
             serde_json::from_str(boards_json).map_err(|e| format!("boards: {e}"))?;
+        for b in boards.boards.values_mut() {
+            b.variants.derive_dimensions();
+        }
         let fpgas: FpgasFile =
             serde_json::from_str(fpgas_json).map_err(|e| format!("fpgas: {e}"))?;
         let catalog = Catalog {
@@ -710,7 +778,18 @@ mod tests {
         assert_eq!(v.programmer, "openfpgaloader");
         assert_eq!(v.usb.vid, "0403");
         assert_eq!(v.usb.pid, "6010");
-        assert!(alhambra.variants.dimensions.is_empty());
+        // Every board has both standard dimensions, here with one value each.
+        assert_eq!(
+            alhambra
+                .variants
+                .dimensions
+                .iter()
+                .map(|d| (d.id.as_str(), d.values.len()))
+                .collect::<Vec<_>>(),
+            [("connection", 1), ("memory", 1)]
+        );
+        assert_eq!(v.when["connection"], "usb");
+        assert_eq!(v.when["memory"], "flash");
         assert_eq!(c.fpgas["ice40hx4k-tq144-8k"].package(), "tq144:4k");
         let configurations = || c.boards.values().flat_map(|b| &b.variants.configurations);
         assert_eq!(c.boards.len(), 84);
@@ -727,35 +806,65 @@ mod tests {
                 "no board uses {p}"
             );
         }
-        // Boards with variants: connections and memories. Sizes are separate
+        // Boards with a choice: connections and memories. Sizes are separate
         // boards, since the pins may differ.
-        let dims = |id: &str| -> Vec<(String, usize)> {
+        let dims = |id: &str| -> Vec<usize> {
             c.boards[id]
                 .variants
                 .dimensions
                 .iter()
-                .map(|d| (d.id.clone(), d.values.len()))
+                .map(|d| d.values.len())
                 .collect()
         };
-        for (id, dim, n) in [
-            ("icesugar-pro", "memory", 2),
-            ("colorlight-i5-v7-0", "memory", 2),
-            ("colorlight-5a-75e-v71", "connection", 3),
-            ("colorlight-i9-v7-2", "connection", 4),
-            ("fleafpga-ohm", "connection", 3),
+        for (id, choices) in [
+            ("icesugar-pro", [1, 2]),
+            ("colorlight-i5-v7-0", [1, 2]),
+            ("colorlight-5a-75e-v71", [3, 1]),
+            ("colorlight-i9-v7-2", [4, 1]),
+            ("fleafpga-ohm", [3, 1]),
+            // The bootloader writes flash, the adapters RAM.
+            ("butterstick-r10-2g-85k", [3, 2]),
         ] {
-            assert_eq!(dims(id), [(dim.to_string(), n)], "{id}");
+            assert_eq!(dims(id), choices, "{id}");
         }
-        // Two dimensions: the bootloader writes flash, the cables RAM.
-        assert_eq!(
-            dims("butterstick-r10-2g-85k"),
-            [("connection".to_string(), 3), ("memory".to_string(), 2)]
-        );
-        let with_dimensions = c
+        let with_choices = c
             .boards
             .values()
-            .filter(|b| !b.variants.dimensions.is_empty());
-        assert_eq!(with_dimensions.count(), 6);
+            .filter(|b| b.variants.dimensions.iter().any(|d| d.values.len() > 1));
+        assert_eq!(with_choices.count(), 6);
+        // Where the design goes follows from the command: openFPGALoader
+        // writes RAM unless told to write flash (iCE40 always flash).
+        let memory = |id: &str| c.boards[id].variants.configurations[0].when["memory"].clone();
+        assert_eq!(memory("arty-a7-35t"), "ram");
+        assert_eq!(memory("sipeed-tang-nano-9k"), "flash");
+        assert_eq!(memory("sipeed-tang-nano"), "ram");
+        assert_eq!(memory("ulx3s-12f"), "ram");
+        assert_eq!(memory("icestick"), "flash");
+        for b in c.boards.values() {
+            for v in &b.variants.configurations {
+                let flag = v.args.split(' ').any(|w| w == "-f" || w == "--write-flash");
+                if v.programmer == "openfpgaloader"
+                    && c.fpgas[&b.fpga_id].architecture != Architecture::Ice40
+                {
+                    assert_eq!(v.when["memory"] == "flash", flag, "{}", b.description);
+                }
+            }
+        }
+        // An unspecified connection says why, for maintainers.
+        for (id, b) in &c.boards {
+            for v in &b.variants.configurations {
+                if v.when["connection"] == "unspecified" {
+                    assert!(v.maintainer_notes.is_some(), "{id}");
+                }
+            }
+        }
+        // Labels and help come from the engine.
+        let ft = &c.boards["butterstick-r10-2g-85k"].variants.dimensions[0].values[2];
+        assert_eq!(
+            (ft.id.as_str(), ft.label.as_str()),
+            ("ft232h", "FT232H adapter")
+        );
+        assert!(ft.help.as_deref().unwrap().contains("JTAG pins"));
         // Boards moved to another programmer are marked untested, with a note.
         for id in ["ulx3s-12f", "ulx3s-85f", "odt-icyblue-feather"] {
             for v in &c.boards[id].variants.configurations {
@@ -819,8 +928,13 @@ mod tests {
         first(&mut b).usb.serial_regex = Some("(".into());
         assert!(b.validate().is_err());
         // A value without a dimension.
-        let mut b = ok;
+        let mut b = ok.clone();
         first(&mut b).when.insert("size".into(), "1k".into());
         assert!(b.validate().is_err());
+        let mut b = ok;
+        first(&mut b)
+            .when
+            .insert("connection".into(), "serial".into());
+        assert!(b.validate().unwrap_err().contains("unspecified"));
     }
 }

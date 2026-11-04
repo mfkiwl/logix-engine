@@ -229,7 +229,10 @@ async fn builds_an_ecp5_design() {
         &std::fs::read(src.join("_build/default/build-record.json")).unwrap(),
     )
     .unwrap();
-    assert_eq!(record["board"]["variant"], json!({"memory": "ram"}));
+    assert_eq!(
+        record["board"]["variant"],
+        json!({"connection": "usb", "memory": "ram"})
+    );
     assert_eq!(record["board"]["name"], "Icesugar Pro (RAM)");
     assert!(build_it(&state, &src, ram).await.unwrap().up_to_date);
     let err = build_it(
@@ -540,6 +543,7 @@ async fn a_full_board_definition_works() {
             "nextpnr_device": "hx8k", "nextpnr_package": "tq144:4k"
         },
         "variants": {"configurations": [{
+            "when": {"connection": "usb", "memory": "flash"},
             "programmer": "iceprog", "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {"vid": "0403", "pid": "6010"}, "tested": false
         }]}

@@ -28,10 +28,10 @@ The Type columns in this document use these logical types. Each maps to a JSON t
 | catalog ID | string | Lowercase letters, digits and hyphens |
 | board specification | string or object | A catalog ID, or a full board definition |
 | board definition | object | A board entry in the catalog format: its `description`, its FPGA as `fpga_id`, and its `variants` |
-| variants | object | A board's choices and how to program it with each: `dimensions`, a list of the kinds of choice the board offers in the order to show them, such as connection and memory (omitted for a board with no choices), and `configurations`, the combinations that exist, the first being the board's default. A dimension has an `id` (such as `memory`), a `label` for people (such as "Memory") and its `values`, each with an `id` (such as `ram`), a `label` (such as "RAM") and optional `help` text. Every configuration gives one declared value for every dimension, no two give the same values, every value is used, and combinations that aren't listed don't exist. Configurations differ only in how the board is programmed: they all have the board's FPGA and the same pin file (every LED, button and clock on the same pin), so the same project works with each. Versions of a board with any signal on a different pin are different boards. A board sold in several FPGA sizes is one board per size |
+| variants | object | A board's choices and how to program it with each: `configurations`, the combinations that exist, the first being the board's default, and, in `get_catalog` results, `dimensions`. Every board has the two standard dimensions, `connection` then `memory`, with values the engine defines: connection `usb` (the board's own USB port, through the programmer chip on the board), `bootloader` (its USB port in bootloader mode), the external JTAG adapters `ft2232h`, `ft232h`, `cmsis-dap` and `usb-blaster`, or `unspecified` (not known; shown as "USB"); memory `flash` (kept at power-off) or `ram` (lost at power-off). `dimensions` lists each with the values the board's configurations use, in the engine's order: a dimension has an `id`, a `label` for people (such as "Memory") and its `values`, each with an `id` (such as `ram`), a `label` (such as "RAM") and `help` text; it is derived by the engine, so inputs may leave it out (it is ignored). A dimension with one value is a fact about the board rather than a choice. Every configuration gives a known value for both dimensions, no two give the same values, and combinations that aren't listed don't exist. Configurations differ only in how the board is programmed: they all have the board's FPGA and the same pin file (every LED, button and clock on the same pin), so the same project works with each. Versions of a board with any signal on a different pin are different boards. A board sold in several FPGA sizes is one board per size |
 | variant | object | A choice of configuration: values of the board's dimensions by dimension ID, such as `{"connection": "ft232h", "memory": "ram"}`. The first configuration with these values is used, and omitted dimensions match any value, so `{}` means the board's default configuration. An unknown dimension or value, or values no configuration has, are a request error that lists what exists |
 | FPGA definition | object | An FPGA entry in the catalog format: its `architecture` (`ice40`, `ecp5`, `gowin` or `xilinx`), `part_number`, `size`, and the toolchain parameters: `nextpnr_device` for every architecture; `nextpnr_package` for iCE40 and ECP5; `nextpnr_speed`, the speed grade, for ECP5 only; for Gowin only, `packer_device` (the device `gowin_pack` uses) and, when needed, `nextpnr_family` and `yosys_family`; and for Xilinx only, `yosys_arch` (such as `xc7`) and `prjxray_family` (the Project X-Ray database folder, such as `artix7`). A field that doesn't belong to the architecture is a request error |
-| configuration | object | One combination of a board's dimension values (`when`, by dimension ID; omitted for a board without dimensions) and how to program the board with it. It names the programmer to run, such as `openfpgaloader`, and gives the full argument template for it, with variables such as `${VID}`, `${PID}`, `${BUS}`, `${DEV}`, `${SERIAL}` and `${BITSTREAM}`, and the USB filter that finds the device: `vid`, `pid`, an optional `product_regex`, a regular expression the device's product name must match, for boards that share USB IDs, and an optional `serial_regex`, a regular expression the device's serial number must match, for boards that share USB IDs and product names but whose serial numbers tell them apart. The engine maps the programmer name to its executable and the package that provides it, so there are no separate programmer definitions. The engine supports the programmers `openfpgaloader`, `iceprog`, `dfu-util` and `icesprog`, all from the toolchain package. Catalog configurations also have `tested` and optional `user_notes` (see [Catalog contents](#get_catalog-tool)); in requests, `tested` is required and `user_notes` ignored |
+| configuration | object | One combination of a board's dimension values (`when`: a `connection` and a `memory` value) and how to program the board with it. It names the programmer to run, such as `openfpgaloader`, and gives the full argument template for it, with variables such as `${VID}`, `${PID}`, `${BUS}`, `${DEV}`, `${SERIAL}` and `${BITSTREAM}`, and the USB filter that finds the device: `vid`, `pid`, an optional `product_regex`, a regular expression the device's product name must match, for boards that share USB IDs, and an optional `serial_regex`, a regular expression the device's serial number must match, for boards that share USB IDs and product names but whose serial numbers tell them apart. The engine maps the programmer name to its executable and the package that provides it, so there are no separate programmer definitions. The engine supports the programmers `openfpgaloader`, `iceprog`, `dfu-util` and `icesprog`, all from the toolchain package. Catalog configurations also have `tested` and optional `user_notes` (see [Catalog contents](#get_catalog-tool)); in requests, `tested` is required and `user_notes` ignored |
 | catalog query | object | Selects entries from one catalog section. It has `fetch`, a boolean that defaults to false, and `ids`, an optional list of catalog IDs. When `fetch` is true, the section is returned with only the listed IDs, or with all its entries when `ids` is omitted. An ID that isn't in the section is a request error |
 | date tag | string | `yyyy-mm-dd` |
 | USB ID | string | A 16-bit USB vendor or product ID, written as exactly four lowercase hexadecimal digits, such as `1d50`. Inputs are matched without regard to case |
@@ -782,8 +782,15 @@ Output:
       "description": "Alhambra II",
       "fpga_id": "ice40hx4k-tq144-8k",
       "variants": {
+        "dimensions": [
+          { "id": "connection", "label": "Connection",
+            "values": [ { "id": "usb", "label": "USB", "help": "The board's own USB port, through the programmer chip on the board." } ] },
+          { "id": "memory", "label": "Memory",
+            "values": [ { "id": "flash", "label": "Flash", "help": "Kept when the board is powered off." } ] }
+        ],
         "configurations": [
           {
+            "when": { "connection": "usb", "memory": "flash" },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -b ice40_generic --vid ${VID} --pid ${PID} --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": { "vid": "0403", "pid": "6010", "product_regex": "^Alhambra II.*" },
@@ -797,7 +804,7 @@ Output:
 }
 ```
 
-A board with choices, such as the iCESugar-Pro, which can be programmed to flash or to RAM (arguments and USB filters shortened):
+A board with a choice, such as the iCESugar-Pro, which can be programmed to flash or to RAM (dimensions' help, arguments and USB filters shortened):
 
 ```json
 {
@@ -805,19 +812,19 @@ A board with choices, such as the iCESugar-Pro, which can be programmed to flash
   "fpga_id": "lfe5u-25f-6bg256c",
   "variants": {
     "dimensions": [
+      { "id": "connection", "label": "Connection", "values": [ { "id": "usb", "label": "USB", "help": "..." } ] },
       { "id": "memory", "label": "Memory",
-        "values": [ { "id": "flash", "label": "Flash", "help": "Kept when the board is powered off." },
-                    { "id": "ram", "label": "RAM", "help": "Faster to upload; lost when the board is powered off." } ] }
+        "values": [ { "id": "flash", "label": "Flash", "help": "..." }, { "id": "ram", "label": "RAM", "help": "..." } ] }
     ],
     "configurations": [
-      { "when": { "memory": "flash" }, "programmer": "openfpgaloader", "args": "...", "usb": { "vid": "1d50", "pid": "602b", "serial_regex": "^0710" }, "tested": true },
-      { "when": { "memory": "ram" }, "programmer": "openfpgaloader", "args": "...", "usb": { "vid": "1d50", "pid": "602b", "serial_regex": "^0710" }, "tested": true }
+      { "when": { "connection": "usb", "memory": "flash" }, "programmer": "openfpgaloader", "args": "...", "usb": { "vid": "1d50", "pid": "602b" }, "tested": true },
+      { "when": { "connection": "usb", "memory": "ram" }, "programmer": "openfpgaloader", "args": "...", "usb": { "vid": "1d50", "pid": "602b" }, "tested": true }
     ]
   }
 }
 ```
 
-**Catalog contents.** The catalog is data in the engine's repo, `catalog/boards.json` and `catalog/fpgas.json`, first imported from Apio's definitions. It has every iCE40, ECP5, Gowin and Xilinx FPGA (Xilinx FPGAs come from Apio's openxc7 package), and 84 boards: 31 iCE40, 22 ECP5, 8 Gowin and 23 Xilinx, with 95 configurations in all, programmed with `openfpgaloader`, `iceprog`, `dfu-util` or `icesprog`. Six boards have dimensions: connection (ColorLight 5A-75E V7.1 and i9 v7.2, FleaFPGA Ohm), memory (iCESugar-Pro, ColorLight i5), or both (ButterStick r1.0: its USB bootloader writes flash, its cables RAM). Every configuration has a USB filter, whatever its architecture, as in Apio. A few of Apio's boards have none, mostly boards programmed through a cable named with openFPGALoader's `-c` option, such as `-c ft2232`. The import gives those the cable's default USB IDs in openFPGALoader, so the engine can still find the device.
+**Catalog contents.** The catalog is data in the engine's repo, `catalog/boards.json` and `catalog/fpgas.json`, first imported from Apio's definitions. It has every iCE40, ECP5, Gowin and Xilinx FPGA (Xilinx FPGAs come from Apio's openxc7 package), and 84 boards: 31 iCE40, 22 ECP5, 8 Gowin and 23 Xilinx, with 95 configurations in all, programmed with `openfpgaloader`, `iceprog`, `dfu-util` or `icesprog`. Six boards have a choice: connection (ColorLight 5A-75E V7.1 and i9 v7.2, FleaFPGA Ohm), memory (iCESugar-Pro, ColorLight i5), or both (ButterStick r1.0: its USB bootloader writes flash, its adapters RAM). The others have one value of each, which still tells where an upload goes: 50 configurations write RAM, including every Xilinx board. Every configuration has a USB filter, whatever its architecture, as in Apio. A few of Apio's boards have none, mostly boards programmed through a cable named with openFPGALoader's `-c` option, such as `-c ft2232`. The import gives those the cable's default USB IDs in openFPGALoader, so the engine can still find the device.
 
 **Trust and notes.** Each catalog configuration has `tested`: true when its programming is known to work, because it was tried on the board or is used unchanged by a tool that people rely on; false when it hasn't been tried on hardware, such as a board moved to a different programmer. Optional `user_notes` give warnings and missing information for its users, such as a USB filter that also matches other boards, or a step needed before programming. The catalog file also keeps `maintainer_notes`, where each configuration's settings come from and why they changed, which `get_catalog` doesn't return. A USB filter can't always tell one board model from another: boards that use the same USB chip and report the same names look alike to the engine. Hosts can show both fields where users pick a board.
 

@@ -568,7 +568,7 @@
         },
         "Variants": {
           "additionalProperties": false,
-          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). They differ only in how the board is programmed: every\nconfiguration has the same FPGA and pins, so the same project works.",
+          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). They differ only in how the board is programmed: every\nconfiguration has the same FPGA and pin file, so the same project works.\nEvery board has the two standard dimensions, connection and memory\n(`STANDARD_DIMENSIONS`), whose values and their meanings the engine\ndefines; hosts decide how to show them (e.g. a choice only where a\ndimension has more than one value).",
           "properties": {
             "configurations": {
               "description": "The combinations that exist, each with how to program the board. The\nfirst is the board's default. Combinations that aren't listed don't\nexist.",
@@ -579,7 +579,8 @@
               "type": "array"
             },
             "dimensions": {
-              "description": "The kinds of choice the board offers, in the order to show them, such\nas connection and memory. Omitted or empty for a board with\none configuration.",
+              "default": [],
+              "description": "The standard dimensions, connection then memory, each with the values\nthe board's configurations use, with labels and help from the\nengine. Derived from the configurations: ignored in inputs and not\nwritten in the catalog file.",
               "items": {
                 "$ref": "#/$defs/Dimension"
               },
@@ -919,7 +920,7 @@
         },
         "Variants": {
           "additionalProperties": false,
-          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). They differ only in how the board is programmed: every\nconfiguration has the same FPGA and pins, so the same project works.",
+          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). They differ only in how the board is programmed: every\nconfiguration has the same FPGA and pin file, so the same project works.\nEvery board has the two standard dimensions, connection and memory\n(`STANDARD_DIMENSIONS`), whose values and their meanings the engine\ndefines; hosts decide how to show them (e.g. a choice only where a\ndimension has more than one value).",
           "properties": {
             "configurations": {
               "description": "The combinations that exist, each with how to program the board. The\nfirst is the board's default. Combinations that aren't listed don't\nexist.",
@@ -930,7 +931,8 @@
               "type": "array"
             },
             "dimensions": {
-              "description": "The kinds of choice the board offers, in the order to show them, such\nas connection and memory. Omitted or empty for a board with\none configuration.",
+              "default": [],
+              "description": "The standard dimensions, connection then memory, each with the values\nthe board's configurations use, with labels and help from the\nengine. Derived from the configurations: ignored in inputs and not\nwritten in the catalog file.",
               "items": {
                 "$ref": "#/$defs/Dimension"
               },
@@ -1451,7 +1453,7 @@
         },
         "Variants": {
           "additionalProperties": false,
-          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). They differ only in how the board is programmed: every\nconfiguration has the same FPGA and pins, so the same project works.",
+          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). They differ only in how the board is programmed: every\nconfiguration has the same FPGA and pin file, so the same project works.\nEvery board has the two standard dimensions, connection and memory\n(`STANDARD_DIMENSIONS`), whose values and their meanings the engine\ndefines; hosts decide how to show them (e.g. a choice only where a\ndimension has more than one value).",
           "properties": {
             "configurations": {
               "description": "The combinations that exist, each with how to program the board. The\nfirst is the board's default. Combinations that aren't listed don't\nexist.",
@@ -1462,7 +1464,8 @@
               "type": "array"
             },
             "dimensions": {
-              "description": "The kinds of choice the board offers, in the order to show them, such\nas connection and memory. Omitted or empty for a board with\none configuration.",
+              "default": [],
+              "description": "The standard dimensions, connection then memory, each with the values\nthe board's configurations use, with labels and help from the\nengine. Derived from the configurations: ignored in inputs and not\nwritten in the catalog file.",
               "items": {
                 "$ref": "#/$defs/Dimension"
               },
@@ -2076,7 +2079,7 @@
         },
         "Variants": {
           "additionalProperties": false,
-          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). They differ only in how the board is programmed: every\nconfiguration has the same FPGA and pins, so the same project works.",
+          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). They differ only in how the board is programmed: every\nconfiguration has the same FPGA and pin file, so the same project works.\nEvery board has the two standard dimensions, connection and memory\n(`STANDARD_DIMENSIONS`), whose values and their meanings the engine\ndefines; hosts decide how to show them (e.g. a choice only where a\ndimension has more than one value).",
           "properties": {
             "configurations": {
               "description": "The combinations that exist, each with how to program the board. The\nfirst is the board's default. Combinations that aren't listed don't\nexist.",
@@ -2087,7 +2090,8 @@
               "type": "array"
             },
             "dimensions": {
-              "description": "The kinds of choice the board offers, in the order to show them, such\nas connection and memory. Omitted or empty for a board with\none configuration.",
+              "default": [],
+              "description": "The standard dimensions, connection then memory, each with the values\nthe board's configurations use, with labels and help from the\nengine. Derived from the configurations: ignored in inputs and not\nwritten in the catalog file.",
               "items": {
                 "$ref": "#/$defs/Dimension"
               },
@@ -3143,7 +3147,7 @@
         },
         "Variants": {
           "additionalProperties": false,
-          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). They differ only in how the board is programmed: every\nconfiguration has the same FPGA and pins, so the same project works.",
+          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). They differ only in how the board is programmed: every\nconfiguration has the same FPGA and pin file, so the same project works.\nEvery board has the two standard dimensions, connection and memory\n(`STANDARD_DIMENSIONS`), whose values and their meanings the engine\ndefines; hosts decide how to show them (e.g. a choice only where a\ndimension has more than one value).",
           "properties": {
             "configurations": {
               "description": "The combinations that exist, each with how to program the board. The\nfirst is the board's default. Combinations that aren't listed don't\nexist.",
@@ -3154,7 +3158,8 @@
               "type": "array"
             },
             "dimensions": {
-              "description": "The kinds of choice the board offers, in the order to show them, such\nas connection and memory. Omitted or empty for a board with\none configuration.",
+              "default": [],
+              "description": "The standard dimensions, connection then memory, each with the values\nthe board's configurations use, with labels and help from the\nengine. Derived from the configurations: ignored in inputs and not\nwritten in the catalog file.",
               "items": {
                 "$ref": "#/$defs/Dimension"
               },
@@ -3753,7 +3758,7 @@
         },
         "Variants": {
           "additionalProperties": false,
-          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). They differ only in how the board is programmed: every\nconfiguration has the same FPGA and pins, so the same project works.",
+          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). They differ only in how the board is programmed: every\nconfiguration has the same FPGA and pin file, so the same project works.\nEvery board has the two standard dimensions, connection and memory\n(`STANDARD_DIMENSIONS`), whose values and their meanings the engine\ndefines; hosts decide how to show them (e.g. a choice only where a\ndimension has more than one value).",
           "properties": {
             "configurations": {
               "description": "The combinations that exist, each with how to program the board. The\nfirst is the board's default. Combinations that aren't listed don't\nexist.",
@@ -3764,7 +3769,8 @@
               "type": "array"
             },
             "dimensions": {
-              "description": "The kinds of choice the board offers, in the order to show them, such\nas connection and memory. Omitted or empty for a board with\none configuration.",
+              "default": [],
+              "description": "The standard dimensions, connection then memory, each with the values\nthe board's configurations use, with labels and help from the\nengine. Derived from the configurations: ignored in inputs and not\nwritten in the catalog file.",
               "items": {
                 "$ref": "#/$defs/Dimension"
               },
