@@ -147,7 +147,7 @@ The engine must support all of Apio's current functionality, so that Apio can be
 | Simulation and testing | Running testbenches and producing waveform files. When a local frontend asks, launching a packaged waveform viewer, such as GTKWave, fully detached so it outlives the session. The request is refused for remote frontends, which view waveforms on their own |
 | Lint and format | Checking and formatting HDL source, as Apio does with Verilator and Verible |
 | Reports and graphs | Resource utilization and timing reports, and design graphs in SVG, PNG and PDF |
-| Catalog | All of Apio's boards and FPGAs, with each board's programming variants. A project's custom definitions are sent by the host in requests, as described in [Custom definitions](#custom-definitions) |
+| Catalog | All of Apio's boards and FPGAs, with each board's variants. A project's custom definitions are sent by the host in requests, as described in [Custom definitions](#custom-definitions) |
 | Devices and drivers | Listing USB devices, and installing or removing the drivers boards need, such as FTDI drivers on Windows |
 | Packages | Installing, updating, listing and repairing toolchain packages for each platform |
 | Examples | Not an engine feature. An example is a project, and the project model belongs to the frontend: the engine has none (see [Project model](#project-model)). Each frontend defines its own project model and source format, such as IceStudio's block diagrams, and provides examples in it. Apio keeps its example projects on its own side |
@@ -296,7 +296,7 @@ Messages never assume a particular host. For example, the engine says that a pac
 
 ## Boards and variants
 
-**Decided, not implemented yet.** Today each board has one programming variant, and boards that differ only by a cable, by flash or RAM, or by FPGA size are separate catalog entries (such as `icesugar-pro` and `icesugar-pro-ram`). They become one board with variants. Since neither the engine nor Logix IDE has been released, the change doesn't keep the old IDs or fields.
+Apio lists boards that differ only by a cable, by flash or RAM, or by FPGA size as separate boards (such as `icesugar-pro` and `icesugar-pro-ram`). The engine makes each one board with variants (since neither the engine nor Logix IDE had been released, the old IDs weren't kept). The format is in the [tool API](tool-api.md) (variants, configuration).
 
 - **A board is a name.** The board's name is how users select it. Two boards with different names are different boards, unrelated even when their hardware is identical, such as Alchitry Au and Au+, or ColorLight i5 and i9. Variants exist only within one name.
 - **What a variant may change.** Anything about the build and programming, including the FPGA, as long as the same project, its sources and pin file, works unchanged with every variant. So all of a board's variants use the same FPGA family and package. A mode that needs a different design, such as other pins or logic the design must include, is a separate board with its own name.
@@ -304,10 +304,10 @@ Messages never assume a particular host. For example, the engine says that a pac
 - **Configurations.** The `variants` section also lists the configurations that exist. Each gives one value for every dimension (`when`) and everything needed to program the board that way: the programmer, its argument template and USB filter, and optionally an `fpga_id` that replaces the board's. Combinations that aren't listed don't exist, so there are no compatibility rules. A configuration also has `tested`, optional `user_notes` and optional `maintainer_notes` (required when `tested` is false), as boards have today.
 - **Defaults and names.** The first configuration is the board's default. Configurations have no names or descriptions of their own: hosts show them by their values' labels, such as "ButterStick r1.0, FT232H cable, RAM".
 - **Catalog checks.** A test checks every board: each configuration gives one declared value for every dimension, no two configurations have the same values, every declared value is used, and there is at least one configuration.
-- **Requests.** Tools that take a board also take an optional `variant`, its dimension values, such as `{"size": "100t", "memory": "ram"}`. Without one, the engine uses the default configuration. Values that match no configuration are a request error that lists the configurations that exist.
+- **Requests.** Tools that take a board also take an optional `variant`, its dimension values, such as `{"size": "100t", "memory": "ram"}`. The first configuration with those values is used, and omitted dimensions match any value, so without one the engine uses the default configuration. Values that match no configuration are a request error that lists what exists.
 - **Builds.** The build record keeps the variant. A different variant always means a full rebuild, like a different board, even when the choice can't affect the bitstream, such as flash or RAM: simple and always correct, and variants change rarely. `program_board` programs with the variant in the build record, so the upload always matches the build. Device matching (`list_devices`, the "not found" messages) uses the chosen configuration's USB filter and names it.
-- **Wrong size.** Programmers read the FPGA's ID before writing, so a size that doesn't match the connected board should give a plain error naming both sizes.
-- **Today's catalog.** Boards that merge: iCESugar-Pro and ColorLight i5 (memory: flash, RAM); ColorLight 5A-75E V7.1, ColorLight i9 v7.2 and FleaFPGA Ohm (cable); ButterStick r1.0 (cable: USB bootloader, FT2232H, FT232H); Arty A7 (size: 35T, 100T), ULX3S (12F, 25F, 45F, 85F), OrangeCrab r0.2 (25F, 85F) and ECP5-Mini (12, 25). Everything else keeps one configuration.
+- **Wrong size** (not done yet). Programmers read the FPGA's ID before writing, so a size that doesn't match the connected board should give a plain error naming both sizes.
+- **The catalog.** 78 boards, 95 configurations. Boards with dimensions: iCESugar-Pro and ColorLight i5 (memory: flash, RAM); ColorLight 5A-75E V7.1, ColorLight i9 v7.2 and FleaFPGA Ohm (connection: their cables); ButterStick r1.0 (connection: USB bootloader, FT2232H or FT232H cable); Arty A7 (size: 35T, 100T), ULX3S (12K, 25K, 45K, 85K), OrangeCrab r0.2 (25K, 85K) and ECP5-Mini (12K, 25K). Every other board has one configuration.
 - **Examples.** Examples belong to frontends and to a board, so they are the same for every variant. A frontend may mark examples that need a larger size.
 
 ## Device selection
@@ -316,12 +316,12 @@ Program board must find the right board when one or several devices are connecte
 
 For now, the engine supports only USB devices, not boards programmed over a serial port. This leaves out 11 Apio boards, most of them legacy: TinyFPGA, BlackIce, Olimex iCE40 EVB and Devantech boards. It is an exception to full Apio compatibility.
 
-- **Board filters.** Each programming variant of a board defines a USB filter: vendor ID, product ID and a regular expression for the product name.
-- **Programming variants.** Each board defines one or more named programming variants, such as flash and sram, or different cables, such as FT232 and FT2232, and marks one as its default (to be replaced by dimensions and configurations: see [Boards and variants](#boards-and-variants)). Each variant names the programmer to run, such as openFPGALoader, and gives its full argument template and the USB filter that finds the device. There are no separate programmer definitions, since in Apio the board already supplies almost all of the command. The template uses variables that the engine fills in from the selected device: vendor ID, product ID, bus, device number and serial number, and always the bitstream file.
+- **Board filters.** Each configuration of a board defines a USB filter: vendor ID, product ID and a regular expression for the product name.
+- **Configurations.** Each board defines one or more configurations, the combinations of its variants' values, such as flash or RAM, a particular cable or an FPGA size; the first is its default (see [Boards and variants](#boards-and-variants)). Each configuration names the programmer to run, such as openFPGALoader, and gives its full argument template and the USB filter that finds the device. There are no separate programmer definitions, since in Apio the board already supplies almost all of the command. The template uses variables that the engine fills in from the selected device: vendor ID, product ID, bus, device number and serial number, and always the bitstream file.
 - **Narrowing in the request.** A request can add a serial number to narrow the match.
 - **Exactly one match.** The engine programs only when exactly one device matches. If none or several match, it returns a setup error that lists the candidate devices as data, so a host can let the user pick one and retry with its serial number.
 - **Device scan.** An operation lists the connected USB devices, with vendor ID, product ID, product name and serial number.
-- **Custom programmer command.** A request can carry a custom command template that replaces the default variant's, as Apio's `programmer-cmd` setting does.
+- **Custom programmer command.** A request can carry a custom command template that replaces the configuration's, as Apio's `programmer-cmd` setting does.
 - **Linux permissions.** The engine provides the udev rules that give users access to the devices. When a device is found but cannot be opened, the engine reports a setup error saying that permissions are missing.
 
 ## Custom definitions
@@ -331,7 +331,7 @@ The engine's catalog is read-only and fixed for each engine version. Custom boar
 - **Reading the catalog.** Hosts can read the full catalog through an engine request.
 - **Merging is up to the host.** A host combines the catalog with its own local definitions, using its own rules. For example, Apio replaces catalog entries with project entries of the same ID and adds new ones.
 - **ID or full definition.** Each request either names a catalog ID, such as a board ID, or carries the full definition to use. Hosts without custom definitions just send IDs.
-- **Self-contained requests.** The engine never looks up or merges definitions from files. A request alone determines which board, FPGA and programming variant are used.
+- **Self-contained requests.** The engine never looks up or merges definitions from files. A request alone determines which board, FPGA and configuration are used.
 - **Errors.** The host reports problems in its own definition files, with file and line. The engine reports an invalid definition in a request as a request error.
 - **Stable format.** The definition format is part of the tool API and follows the rule that it never breaks.
 - **Catalog fixes.** A fix to the catalog needs an engine release. Until then, a host can send a corrected definition in its requests.
@@ -389,7 +389,7 @@ Milestone 1 tested the interface with an AI coding agent as the host, before any
 | First start | `apio api get-system`, which installs the packages | `install_packages`, with progress |
 | Stop | Cancelling the running Apio command | Cancellation of every tool |
 
-**Boards dropped from Milestone 2 (decided 2026-11-03).** The catalog has 95 of Apio's 109 boards. The 14 others are dropped because their programmers are legacy or inactive, or not in the packages the engine uses. None of the programmers the engine supports can program them:
+**Boards dropped from Milestone 2 (decided 2026-11-03).** The catalog covers 95 of Apio's 109 boards (as 78 boards, some with variants). The 14 others are dropped because their programmers are legacy or inactive, or not in the packages the engine uses. None of the programmers the engine supports can program them:
 
 | Programmer | Boards | Reason |
 | --- | --- | --- |

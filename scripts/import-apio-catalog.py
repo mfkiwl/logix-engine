@@ -20,14 +20,16 @@ What's imported:
   yosys-family, the Project X-Ray database folder).
 - The iCE40, ECP5, Gowin and Xilinx boards whose programmer the engine supports:
   openfpgaloader, iceprog, dfu (named dfu-util in the engine) and icesprog.
-  Each gets one programming variant, "flash", with Apio's full command
+  Each gets no dimensions and one configuration with Apio's full command
   arguments, and tested true. Apio's ${BIN_FILE} becomes ${BITSTREAM}, added at the
   end when Apio leaves it out. An openFPGALoader board without a USB filter
   in Apio, such as one programmed with an external cable, gets the default
   USB IDs of the cable its -c option names (CABLE_USB_IDS), so the engine
   can find the device.
 
-Local edits to restore after an import: boards moved to another programmer
+Local edits to restore after an import: the boards merged into one board with
+dimensions (FPGA size, connection or memory; see docs/requirements.md, Boards
+and variants), unique descriptions, boards moved to another programmer
 (the ULX3S boards to openFPGALoader, odt-icyblue-feather to iceprog, both
 with tested false), serial_regex filters (the iCESugar boards), user_notes and maintainer_notes.
 """
@@ -154,9 +156,9 @@ def main():
         boards[bid] = {
             "description": b["description"],
             "fpga_id": b["fpga-id"],
-            "default_variant": "flash",
-            "variants": {"flash": {"programmer": PROGRAMMERS[pid], "args": args.strip(), "usb": usb}},
-            "tested": True,
+            "variants": {"configurations": [
+                {"programmer": PROGRAMMERS[pid], "args": args.strip(), "usb": usb, "tested": True}
+            ]},
         }
 
     root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "catalog")

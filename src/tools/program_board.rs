@@ -105,9 +105,7 @@ pub async fn run_with(
         ));
     }
     let board = &record.board;
-    let variant = board.variants.get(&board.default_variant).ok_or_else(|| {
-        ToolError::request("The build's board has no default programming variant.")
-    })?;
+    let variant = &board.configuration;
     let custom = input.programmer_command.as_deref();
 
     let needed = state.packages.needing_install(&[TOOLCHAIN])?;
@@ -131,15 +129,10 @@ pub async fn run_with(
         &connected,
         &variant.usb,
         input.serial_number.as_deref(),
-        &board.description,
+        &board.name,
     )?;
     if custom.is_none() {
-        program::check_alone(
-            &variant.programmer,
-            &connected,
-            &variant.usb,
-            &board.description,
-        )?;
+        program::check_alone(&variant.programmer, &connected, &variant.usb, &board.name)?;
     }
     let (program, args) =
         program::command(variant, custom, &device, &bitstream, &bin, input.verbose)?;
@@ -191,7 +184,7 @@ pub async fn run_with(
         }),
         Ok(r) => Err(program::failure(
             &program.file_name().unwrap_or_default().to_string_lossy(),
-            &board.description,
+            &board.name,
             &r.output,
             &r.status.to_string(),
         )),

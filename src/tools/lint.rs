@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use super::build::{check_defines, check_source_file, check_source_folder, check_top_module};
 use super::{Call, EngineTool};
-use crate::board::{self, BoardSpec};
+use crate::board::{self, BoardSpec, VariantInput};
 use crate::errors::{Diagnostic, ToolError};
 use crate::sim::Sources;
 use crate::sim::lint::{self, LintRequest};
@@ -41,6 +41,13 @@ pub struct LintInput {
     /// models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE
     /// for Xilinx.
     pub board: BoardSpec,
+    /// The board's variant, such as {"size": "85k"} or {"memory": "ram"}:
+    /// values of the board's dimensions, which get_catalog lists with the
+    /// configurations that exist. The first configuration with these values
+    /// is used; omitted dimensions match any value. Omitted means the
+    /// board's first configuration.
+    #[serde(default)]
+    pub variant: VariantInput,
     /// Name of the top-level module, such as main. When omitted, Verilator
     /// checks every module that no other module uses.
     #[serde(default)]
@@ -97,13 +104,14 @@ pub struct LintOutput {
 /// listed only once.
 pub fn check_sources(
     board: &BoardSpec,
+    variant: &VariantInput,
     source_folder: &str,
     source_files: Vec<String>,
     testbench_files: Vec<String>,
     defines: BTreeMap<String, String>,
     verbose: bool,
 ) -> Result<Sources, ToolError> {
-    let board = board::resolve(board)?;
+    let board = board::resolve(board, variant)?;
     check_defines(&defines)?;
     let src = check_source_folder(source_folder)?;
     if source_files.is_empty() {
@@ -140,6 +148,7 @@ pub fn check(input: LintInput) -> Result<LintRequest, ToolError> {
     Ok(LintRequest {
         sources: check_sources(
             &input.board,
+            &input.variant,
             &input.source_folder,
             input.source_files,
             input.testbench_files,

@@ -4,1588 +4,1826 @@
     "alchitry-au": {
       "description": "Alchitry Au (Xilinx, Artix7)",
       "fpga_id": "xc7a35tftg256-1",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify --board alchitry_au ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board alchitry_au ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "alchitry-au-plus": {
       "description": "Alchitry Au+ (Xilinx, Artix7)",
       "fpga_id": "xc7a100tftg256-1",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify --board alchitry_au_plus ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board alchitry_au_plus ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "alchitry-cu": {
       "description": "Alchitry Cu Development Board",
       "fpga_id": "ice40hx8k-cb132",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010",
-            "product_regex": "^Alchitry Cu"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010",
+              "product_regex": "^Alchitry Cu"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "alhambra-ii": {
       "description": "Alhambra II",
       "fpga_id": "ice40hx4k-tq144-8k",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -b ice40_generic --vid ${VID} --pid ${PID} --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010",
-            "product_regex": "^Alhambra II.*"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -b ice40_generic --vid ${VID} --pid ${PID} --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010",
+              "product_regex": "^Alhambra II.*"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "alinx-ax7035": {
       "description": "Alinx ARTIX-7 AX7035",
       "fpga_id": "xc7a35tfgg484-2",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -f -c ft232 --fpga-part xc7a35t ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6014",
-            "product_regex": "Digilent USB Device"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -f -c ft232 --fpga-part xc7a35t ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6014",
+              "product_regex": "Digilent USB Device"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "arice1": {
       "description": "ARiCE v1",
       "fpga_id": "ice40up5k-sg48",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6014",
-            "product_regex": "^Single RS232-HS"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6014",
+              "product_regex": "^Single RS232-HS"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
-    "arty-a7-100t": {
-      "description": "Arty A7-100T (Xilinx, Artix7)",
-      "fpga_id": "xc7a100tcsg324-1",
-      "default_variant": "flash",
-      "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify --board arty_a7_100t ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
-          }
-        }
-      },
-      "tested": true
-    },
-    "arty-a7-35t": {
-      "description": "Arty A7-35T (Xilinx, Artix7)",
+    "arty-a7": {
+      "description": "Arty A7 (Xilinx, Artix7)",
       "fpga_id": "xc7a35tcsg324-1",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify --board arty_a7_35t ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "dimensions": [
+          {
+            "id": "size",
+            "label": "FPGA size",
+            "values": [
+              {
+                "id": "35t",
+                "label": "35T"
+              },
+              {
+                "id": "100t",
+                "label": "100T"
+              }
+            ]
           }
-        }
-      },
-      "tested": true
+        ],
+        "configurations": [
+          {
+            "when": {
+              "size": "35t"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board arty_a7_35t ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
+          },
+          {
+            "when": {
+              "size": "100t"
+            },
+            "fpga_id": "xc7a100tcsg324-1",
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board arty_a7_100t ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
+          }
+        ]
+      }
     },
     "arty-s7-25": {
       "description": "Arty S7-25 (Xilinx, Spartan7)",
       "fpga_id": "xc7s25csga324-1",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify --board arty_s7_25 ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board arty_s7_25 ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "arty-s7-50": {
       "description": "Arty S7-50 (Xilinx, Spartan7)",
       "fpga_id": "xc7s50csga324-1",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify --board arty_s7_50 ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board arty_s7_50 ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "azukar2": {
       "description": "AZUKAR v2",
       "fpga_id": "ice40hx4k-tq144-8k",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010",
-            "product_regex": "^--.. Azukar FPGA ..--"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010",
+              "product_regex": "^--.. Azukar FPGA ..--"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "basys3": {
       "description": "Basys3 (Xilinx, Artix7)",
       "fpga_id": "xc7a35tcpg236-1",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify --board basys3 ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010",
-            "product_regex": "^Digilent USB Device*"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board basys3 ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010",
+              "product_regex": "^Digilent USB Device*"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "brs-100-gw1nr9": {
       "description": "BrisbaneSilicon 9k",
       "fpga_id": "gw1nr-lv9qn88pc6-i5",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -b brs-100-gw1nr9 -f ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -b brs-100-gw1nr9 -f ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "butterstick-r10-2g-85k": {
-      "description": "butterstick r1.0 DFU",
+      "description": "butterstick r1.0",
       "fpga_id": "lfe5um5g-85f-8bg381c",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "dfu-util",
-          "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM} --reset",
-          "usb": {
-            "vid": "1209",
-            "pid": "5af1",
-            "product_regex": "^butterstick (dfu v1.1)"
+        "dimensions": [
+          {
+            "id": "connection",
+            "label": "Connection",
+            "values": [
+              {
+                "id": "dfu",
+                "label": "USB bootloader"
+              },
+              {
+                "id": "ft2232h",
+                "label": "FT2232H cable"
+              },
+              {
+                "id": "ft232h",
+                "label": "FT232H cable"
+              }
+            ]
           }
-        }
-      },
-      "tested": true,
-      "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
-    },
-    "butterstick-r10-2g-85k-ft2232h": {
-      "description": "butterstick r1.0 FT2232H",
-      "fpga_id": "lfe5um5g-85f-8bg381c",
-      "default_variant": "flash",
-      "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        ],
+        "configurations": [
+          {
+            "when": {
+              "connection": "dfu"
+            },
+            "programmer": "dfu-util",
+            "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM} --reset",
+            "usb": {
+              "vid": "1209",
+              "pid": "5af1",
+              "product_regex": "^butterstick (dfu v1.1)"
+            },
+            "tested": true,
+            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+          },
+          {
+            "when": {
+              "connection": "ft2232h"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
+          },
+          {
+            "when": {
+              "connection": "ft232h"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6014"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
-    },
-    "butterstick-r10-2g-85k-ft232h": {
-      "description": "butterstick r1.0 FT232H",
-      "fpga_id": "lfe5um5g-85f-8bg381c",
-      "default_variant": "flash",
-      "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6014"
-          }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "cmod-a7-35t": {
       "description": "Cmod A7-35T (Xilinx, Artix7)",
       "fpga_id": "xc7a35tcpg236-1",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify --board cmoda7_35t ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board cmoda7_35t ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "colorlight-5a-75b-v61": {
       "description": "ColorLight-5A-75B-V61",
       "fpga_id": "lfe5u-25f-6bg381c",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "colorlight-5a-75b-v7": {
       "description": "ColorLight-5A-75B-V7",
       "fpga_id": "lfe5u-25f-6bg256c",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "colorlight-5a-75b-v8": {
       "description": "ColorLight-5A-75B-V8",
       "fpga_id": "lfe5u-25f-6bg256c",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "colorlight-5a-75e-v6": {
       "description": "ColorLight-5A-75E-V6",
       "fpga_id": "lfe5u-25f-6bg256c",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
-    "colorlight-5a-75e-v71-ft2232h": {
-      "description": "ColorLight-5A-75E-V71 (FT2232H)",
+    "colorlight-5a-75e-v71": {
+      "description": "ColorLight-5A-75E-V71",
       "fpga_id": "lfe5u-25f-6bg256c",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "dimensions": [
+          {
+            "id": "connection",
+            "label": "Connection",
+            "values": [
+              {
+                "id": "ft2232h",
+                "label": "FT2232H cable"
+              },
+              {
+                "id": "ft232h",
+                "label": "FT232H cable"
+              },
+              {
+                "id": "usb-blaster",
+                "label": "USB-Blaster cable"
+              }
+            ]
           }
-        }
-      },
-      "tested": true
-    },
-    "colorlight-5a-75e-v71-ft232h": {
-      "description": "ColorLight-5A-75E-V71 (FT232H)",
-      "fpga_id": "lfe5u-25f-6bg256c",
-      "default_variant": "flash",
-      "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6014"
+        ],
+        "configurations": [
+          {
+            "when": {
+              "connection": "ft2232h"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
+          },
+          {
+            "when": {
+              "connection": "ft232h"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6014"
+            },
+            "tested": true
+          },
+          {
+            "when": {
+              "connection": "usb-blaster"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c usb-blaster -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "09fb",
+              "pid": "6001"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
-    },
-    "colorlight-5a-75e-v71-usb-blaster": {
-      "description": "ColorLight-5A-75E-V71 (USB-Blaster)",
-      "fpga_id": "lfe5u-25f-6bg256c",
-      "default_variant": "flash",
-      "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c usb-blaster -v --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "09fb",
-            "pid": "6001"
-          }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "colorlight-i5-v7-0": {
       "description": "ColorLight-i5",
       "fpga_id": "lfe5u-25f-6bg381c",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c cmsisdap --vid 0x${VID} --pid 0x${PID} --write-flash --unprotect-flash --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "0d28",
-            "pid": "0204",
-            "product_regex": "^DAPLink CMSIS-DAP|^CMSIS-DAP-v1-MuseLab"
+        "dimensions": [
+          {
+            "id": "memory",
+            "label": "Memory",
+            "values": [
+              {
+                "id": "flash",
+                "label": "Flash",
+                "help": "Kept when the board is powered off."
+              },
+              {
+                "id": "ram",
+                "label": "RAM",
+                "help": "Faster to upload; lost when the board is powered off."
+              }
+            ]
           }
-        }
-      },
-      "tested": true
-    },
-    "colorlight-i5-v7-0-ram": {
-      "description": "ColorLight-i5 (RAM)",
-      "fpga_id": "lfe5u-25f-6bg381c",
-      "default_variant": "flash",
-      "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c cmsisdap --vid 0x${VID} --pid 0x${PID} --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "0d28",
-            "pid": "0204",
-            "product_regex": "^DAPLink CMSIS-DAP|^CMSIS-DAP-v1-MuseLab"
+        ],
+        "configurations": [
+          {
+            "when": {
+              "memory": "flash"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c cmsisdap --vid 0x${VID} --pid 0x${PID} --write-flash --unprotect-flash --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0d28",
+              "pid": "0204",
+              "product_regex": "^DAPLink CMSIS-DAP|^CMSIS-DAP-v1-MuseLab"
+            },
+            "tested": true
+          },
+          {
+            "when": {
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c cmsisdap --vid 0x${VID} --pid 0x${PID} --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0d28",
+              "pid": "0204",
+              "product_regex": "^DAPLink CMSIS-DAP|^CMSIS-DAP-v1-MuseLab"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
-    "colorlight-i9-v7-2-cmsis-dap": {
-      "description": "ColorLight-i9 v7.2 (CMSIS-DAP)",
+    "colorlight-i9-v7-2": {
+      "description": "ColorLight-i9 v7.2",
       "fpga_id": "lfe5u-45f-6bg381c",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c cmsisdap -v --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "0d28",
-            "pid": "0204"
+        "dimensions": [
+          {
+            "id": "connection",
+            "label": "Connection",
+            "values": [
+              {
+                "id": "cmsis-dap",
+                "label": "CMSIS-DAP cable"
+              },
+              {
+                "id": "ft2232h",
+                "label": "FT2232H cable"
+              },
+              {
+                "id": "ft232h",
+                "label": "FT232H cable"
+              },
+              {
+                "id": "usb-blaster",
+                "label": "USB-Blaster cable"
+              }
+            ]
           }
-        }
-      },
-      "tested": true
-    },
-    "colorlight-i9-v7-2-ft2232h": {
-      "description": "ColorLight-i9 v7.2 (FT2232H)",
-      "fpga_id": "lfe5u-45f-6bg381c",
-      "default_variant": "flash",
-      "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        ],
+        "configurations": [
+          {
+            "when": {
+              "connection": "cmsis-dap"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c cmsisdap -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0d28",
+              "pid": "0204"
+            },
+            "tested": true
+          },
+          {
+            "when": {
+              "connection": "ft2232h"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
+          },
+          {
+            "when": {
+              "connection": "ft232h"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6014"
+            },
+            "tested": true
+          },
+          {
+            "when": {
+              "connection": "usb-blaster"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c usb-blaster -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "09fb",
+              "pid": "6001"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
-    },
-    "colorlight-i9-v7-2-ft232h": {
-      "description": "ColorLight-i9 v7.2 (FT232H)",
-      "fpga_id": "lfe5u-45f-6bg381c",
-      "default_variant": "flash",
-      "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6014"
-          }
-        }
-      },
-      "tested": true
-    },
-    "colorlight-i9-v7-2-usb-blaster": {
-      "description": "ColorLight-i9 v7.2 (USB-Blaster)",
-      "fpga_id": "lfe5u-45f-6bg381c",
-      "default_variant": "flash",
-      "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c usb-blaster -v --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "09fb",
-            "pid": "6001"
-          }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "colorlight-i9plus": {
       "description": "Colorlight i9+ (Xilinx, Artix7)",
       "fpga_id": "xc7a50tfgg484-1",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify --board colorlight-i9+ -c cmsisdap ${BITSTREAM}",
-          "usb": {
-            "vid": "0d28",
-            "pid": "0204"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board colorlight-i9+ -c cmsisdap ${BITSTREAM}",
+            "usb": {
+              "vid": "0d28",
+              "pid": "0204"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "ecp5-evaluation-board": {
       "description": "ECP5-Evaluation-Board",
       "fpga_id": "lfe5um5g-85f-8bg381c",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
-    "ecp5-mini-12": {
-      "description": "ECP5-Mini-12",
+    "ecp5-mini": {
+      "description": "ECP5-Mini",
       "fpga_id": "lfe5u-12f-6bg256c",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "dimensions": [
+          {
+            "id": "size",
+            "label": "FPGA size",
+            "values": [
+              {
+                "id": "12k",
+                "label": "12K"
+              },
+              {
+                "id": "25k",
+                "label": "25K"
+              }
+            ]
           }
-        }
-      },
-      "tested": true
-    },
-    "ecp5-mini-25": {
-      "description": "ECP5-Mini-25",
-      "fpga_id": "lfe5u-25f-6bg256c",
-      "default_variant": "flash",
-      "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        ],
+        "configurations": [
+          {
+            "when": {
+              "size": "12k"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
+          },
+          {
+            "when": {
+              "size": "25k"
+            },
+            "fpga_id": "lfe5u-25f-6bg256c",
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "edu-ciaa-fpga": {
       "description": "EDU-CIAA-FPGA",
       "fpga_id": "ice40hx4k-tq144-8k",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010",
-            "product_regex": "^Dual RS232-HS"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010",
+              "product_regex": "^Dual RS232-HS"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "epm11": {
       "description": "BrisbaneSilicon EPM11",
       "fpga_id": "gw1nr-lv9qn88pc6-i5",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -b epm11 -f ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -b epm11 -f ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
-    "fleafpga-ohm-ft2232h": {
-      "description": "FleaFPGA-Ohm_(FT2232H)",
+    "fleafpga-ohm": {
+      "description": "FleaFPGA-Ohm",
       "fpga_id": "lfe5u-25f-6bg381c",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "dimensions": [
+          {
+            "id": "connection",
+            "label": "Connection",
+            "values": [
+              {
+                "id": "ft2232h",
+                "label": "FT2232H cable"
+              },
+              {
+                "id": "ft232h",
+                "label": "FT232H cable"
+              },
+              {
+                "id": "usb-blaster",
+                "label": "USB-Blaster cable"
+              }
+            ]
           }
-        }
-      },
-      "tested": true
-    },
-    "fleafpga-ohm-ft232h": {
-      "description": "FleaFPGA-Ohm_(FT232H)",
-      "fpga_id": "lfe5u-25f-6bg381c",
-      "default_variant": "flash",
-      "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6014"
+        ],
+        "configurations": [
+          {
+            "when": {
+              "connection": "ft2232h"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
+          },
+          {
+            "when": {
+              "connection": "ft232h"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6014"
+            },
+            "tested": true
+          },
+          {
+            "when": {
+              "connection": "usb-blaster"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c usb-blaster -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "09fb",
+              "pid": "6001"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
-    },
-    "fleafpga-ohm-usb-blaster": {
-      "description": "FleaFPGA-Ohm_(USB-Blaster)",
-      "fpga_id": "lfe5u-25f-6bg381c",
-      "default_variant": "flash",
-      "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c usb-blaster -v --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "09fb",
-            "pid": "6001"
-          }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "fomu": {
       "description": "Fomu",
       "fpga_id": "ice40up5k-uwg30",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "dfu-util",
-          "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
-          "usb": {
-            "vid": "1209",
-            "pid": "5bf0",
-            "product_regex": "^Fomu Hacker running DFU Bootloader v1.8.8"
+        "configurations": [
+          {
+            "programmer": "dfu-util",
+            "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
+            "usb": {
+              "vid": "1209",
+              "pid": "5bf0",
+              "product_regex": "^Fomu Hacker running DFU Bootloader v1.8.8"
+            },
+            "tested": true,
+            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
           }
-        }
-      },
-      "tested": true,
-      "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+        ]
+      }
     },
     "fpga101": {
       "description": "FPGA 101 - Workshop Badge",
       "fpga_id": "ice40up5k-sg48",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6014",
-            "product_regex": "^Single RS232-HS"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6014",
+              "product_regex": "^Single RS232-HS"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "go-board": {
       "description": "The Go Board",
       "fpga_id": "ice40hx1k-vq100",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010",
-            "product_regex": "^Dual RS232-HS"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010",
+              "product_regex": "^Dual RS232-HS"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "ice40-hx8k": {
       "description": "iCE40-HX8K Breakout Board",
       "fpga_id": "ice40hx8k-ct256",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010",
-            "product_regex": "^(Dual RS232-HS)|(Lattice FTUSB Interface Cable)"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010",
+              "product_regex": "^(Dual RS232-HS)|(Lattice FTUSB Interface Cable)"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "ice40-up5k": {
       "description": "iCE40 UltraPlus Breakout",
       "fpga_id": "ice40up5k-sg48",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010",
-            "product_regex": "^(USB <-> Serial Converter)|(Lattice iCE40UP5K Breakout)"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010",
+              "product_regex": "^(USB <-> Serial Converter)|(Lattice iCE40UP5K Breakout)"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "icebreaker": {
       "description": "iCEBreaker",
       "fpga_id": "ice40up5k-sg48",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010",
-            "product_regex": "^(Dual RS232-HS)|(iCEBreaker.*)"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010",
+              "product_regex": "^(Dual RS232-HS)|(iCEBreaker.*)"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "icebreaker-bitsy0": {
       "description": "iCEBreaker bitsy v0",
       "fpga_id": "ice40up5k-sg48",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "dfu-util",
-          "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
-          "usb": {
-            "vid": "1d50",
-            "pid": "6146",
-            "product_regex": "^iCEBreaker bitsy v0.*"
+        "configurations": [
+          {
+            "programmer": "dfu-util",
+            "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
+            "usb": {
+              "vid": "1d50",
+              "pid": "6146",
+              "product_regex": "^iCEBreaker bitsy v0.*"
+            },
+            "tested": true,
+            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
           }
-        }
-      },
-      "tested": true,
-      "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+        ]
+      }
     },
     "icebreaker-bitsy1": {
       "description": "iCEBreaker bitsy v1",
       "fpga_id": "ice40up5k-sg48",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "dfu-util",
-          "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
-          "usb": {
-            "vid": "1d50",
-            "pid": "6146",
-            "product_regex": "^iCEBreaker bitsy1.*"
+        "configurations": [
+          {
+            "programmer": "dfu-util",
+            "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
+            "usb": {
+              "vid": "1d50",
+              "pid": "6146",
+              "product_regex": "^iCEBreaker bitsy1.*"
+            },
+            "tested": true,
+            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
           }
-        }
-      },
-      "tested": true,
-      "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+        ]
+      }
     },
     "icenode": {
       "description": "ICENode",
       "fpga_id": "ice40up5k-sg48",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "icepi-zero": {
       "description": "Icepi Zero",
       "fpga_id": "lfe5u-25f-6bg256c",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c ft231X --pins=7:3:5:6 -v --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6015"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft231X --pins=7:3:5:6 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6015"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "icestick": {
       "description": "iCEstick Eval Kit",
       "fpga_id": "ice40hx1k-tq144",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010",
-            "product_regex": "^(Dual RS232-HS)|(Lattice FTUSB Interface Cable)"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010",
+              "product_regex": "^(Dual RS232-HS)|(Lattice FTUSB Interface Cable)"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "icesugar-1-5": {
       "description": "iCESugar v1.5",
       "fpga_id": "ice40up5k-sg48",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "icesprog",
-          "args": "${BITSTREAM}",
-          "usb": {
-            "vid": "1d50",
-            "pid": "602b",
-            "serial_regex": "^0700"
+        "configurations": [
+          {
+            "programmer": "icesprog",
+            "args": "${BITSTREAM}",
+            "usb": {
+              "vid": "1d50",
+              "pid": "602b",
+              "serial_regex": "^0700"
+            },
+            "tested": true,
+            "user_notes": "Connect only this iCESugar when programming: its programmer can't tell iCESugar boards apart, so the engine refuses when another board with the same USB IDs, such as an iCESugar-Pro, is connected.",
+            "maintainer_notes": "iCESugar boards share USB IDs and product name. The serial number's first 4 characters are the board ID, as icesprog's source reads it: 0700 iCESugar, 0710 iCESugar-Pro, 0720 iCESugar-nano. 0700 also seen in a real iCESugar v1.5's USB log."
           }
-        }
-      },
-      "tested": true,
-      "user_notes": "Connect only this iCESugar when programming: its programmer can't tell iCESugar boards apart, so the engine refuses when another board with the same USB IDs, such as an iCESugar-Pro, is connected.",
-      "maintainer_notes": "iCESugar boards share USB IDs and product name. The serial number's first 4 characters are the board ID, as icesprog's source reads it: 0700 iCESugar, 0710 iCESugar-Pro, 0720 iCESugar-nano. 0700 also seen in a real iCESugar v1.5's USB log."
+        ]
+      }
     },
     "icesugar-nano": {
       "description": "iCESugar-nano",
       "fpga_id": "ice40lp1k-cm36",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "icesprog",
-          "args": "${BITSTREAM}",
-          "usb": {
-            "vid": "1d50",
-            "pid": "602b",
-            "serial_regex": "^0720"
+        "configurations": [
+          {
+            "programmer": "icesprog",
+            "args": "${BITSTREAM}",
+            "usb": {
+              "vid": "1d50",
+              "pid": "602b",
+              "serial_regex": "^0720"
+            },
+            "tested": true,
+            "user_notes": "Connect only this iCESugar when programming: its programmer can't tell iCESugar boards apart, so the engine refuses when another board with the same USB IDs, such as an iCESugar-Pro, is connected.",
+            "maintainer_notes": "iCESugar boards share USB IDs and product name. The serial number's first 4 characters are the board ID, as icesprog's source reads it: 0700 iCESugar, 0710 iCESugar-Pro, 0720 iCESugar-nano. 0720 comes from icesprog's source only; no log from a real nano found."
           }
-        }
-      },
-      "tested": true,
-      "user_notes": "Connect only this iCESugar when programming: its programmer can't tell iCESugar boards apart, so the engine refuses when another board with the same USB IDs, such as an iCESugar-Pro, is connected.",
-      "maintainer_notes": "iCESugar boards share USB IDs and product name. The serial number's first 4 characters are the board ID, as icesprog's source reads it: 0700 iCESugar, 0710 iCESugar-Pro, 0720 iCESugar-nano. 0720 comes from icesprog's source only; no log from a real nano found."
+        ]
+      }
     },
     "icesugar-pro": {
       "description": "Icesugar Pro",
       "fpga_id": "lfe5u-25f-6bg256c",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c cmsisdap --vid 0x${VID} --pid 0x${PID} --write-flash --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "1d50",
-            "pid": "602b",
-            "product_regex": "^DAPLink CMSIS-DAP|^CMSIS-DAP-v1-MuseLab",
-            "serial_regex": "^0710"
+        "dimensions": [
+          {
+            "id": "memory",
+            "label": "Memory",
+            "values": [
+              {
+                "id": "flash",
+                "label": "Flash",
+                "help": "Kept when the board is powered off."
+              },
+              {
+                "id": "ram",
+                "label": "RAM",
+                "help": "Faster to upload; lost when the board is powered off."
+              }
+            ]
           }
-        }
-      },
-      "tested": true,
-      "maintainer_notes": "iCESugar boards share USB IDs and product name. The serial number's first 4 characters are the board ID, as icesprog's source reads it: 0700 iCESugar, 0710 iCESugar-Pro, 0720 iCESugar-nano. 0710 checked on a real iCESugar-Pro."
-    },
-    "icesugar-pro-ram": {
-      "description": "Icesugar Pro (RAM)",
-      "fpga_id": "lfe5u-25f-6bg256c",
-      "default_variant": "flash",
-      "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c cmsisdap --vid 0x${VID} --pid 0x${PID} --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "1d50",
-            "pid": "602b",
-            "product_regex": "^DAPLink CMSIS-DAP|^CMSIS-DAP-v1-MuseLab",
-            "serial_regex": "^0710"
+        ],
+        "configurations": [
+          {
+            "when": {
+              "memory": "flash"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c cmsisdap --vid 0x${VID} --pid 0x${PID} --write-flash --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "1d50",
+              "pid": "602b",
+              "product_regex": "^DAPLink CMSIS-DAP|^CMSIS-DAP-v1-MuseLab",
+              "serial_regex": "^0710"
+            },
+            "tested": true,
+            "maintainer_notes": "iCESugar boards share USB IDs and product name. The serial number's first 4 characters are the board ID, as icesprog's source reads it: 0700 iCESugar, 0710 iCESugar-Pro, 0720 iCESugar-nano. 0710 checked on a real iCESugar-Pro."
+          },
+          {
+            "when": {
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c cmsisdap --vid 0x${VID} --pid 0x${PID} --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "1d50",
+              "pid": "602b",
+              "product_regex": "^DAPLink CMSIS-DAP|^CMSIS-DAP-v1-MuseLab",
+              "serial_regex": "^0710"
+            },
+            "tested": true,
+            "maintainer_notes": "iCESugar boards share USB IDs and product name. The serial number's first 4 characters are the board ID, as icesprog's source reads it: 0700 iCESugar, 0710 iCESugar-Pro, 0720 iCESugar-nano. 0710 checked on a real iCESugar-Pro."
           }
-        }
-      },
-      "tested": true,
-      "maintainer_notes": "iCESugar boards share USB IDs and product name. The serial number's first 4 characters are the board ID, as icesprog's source reads it: 0700 iCESugar, 0710 iCESugar-Pro, 0720 iCESugar-nano. 0710 checked on a real iCESugar-Pro."
+        ]
+      }
     },
     "icezum": {
       "description": "Icezum Alhambra",
       "fpga_id": "ice40hx1k-tq144",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010",
-            "product_regex": "^IceZUM Alhambra.*"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010",
+              "product_regex": "^IceZUM Alhambra.*"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "kefir": {
       "description": "Kéfir I iCE40-HX4K",
       "fpga_id": "ice40hx4k-tq144-8k",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} -I B ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010",
-            "product_regex": "^Milk JTAG:u"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} -I B ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010",
+              "product_regex": "^Milk JTAG:u"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "microphase-a7-lite": {
       "description": "MicroPhase A7-Lite (Xilinx, Artix7)",
       "fpga_id": "xc7a200tfbg484-3",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c ft232 --fpga-part xc7a200tfbg484 ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6014"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft232 --fpga-part xc7a200tfbg484 ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6014"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "mimas-a7": {
       "description": "Mimas A7 (Xilinx, Artix7)",
       "fpga_id": "xc7a50tfgg484-1",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify --board mimas_a7 ${BITSTREAM}",
-          "usb": {
-            "vid": "2a19",
-            "pid": "1009"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board mimas_a7 ${BITSTREAM}",
+            "usb": {
+              "vid": "2a19",
+              "pid": "1009"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "mimas-ecp5-mini": {
       "description": "Mimas ECP5 Mini",
       "fpga_id": "lfe5u-45f-6bg256c",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "nexys-a7-100t": {
       "description": "Nexys A7-100T / Nexys 4 DDR (Xilinx, Artix7)",
       "fpga_id": "xc7a100tcsg324-1",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify --board nexys_a7_100 ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board nexys_a7_100 ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "nexys-a7-50t": {
       "description": "Nexys A7-50T (Xilinx, Artix7)",
       "fpga_id": "xc7a50tcsg324-1",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify --board nexys_a7_50 ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board nexys_a7_50 ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "odt-icyblue-feather": {
       "description": "ODT_IcyBlue_Feather",
       "fpga_id": "ice5lp4k-sg48",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6014"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6014"
+            },
+            "tested": false,
+            "user_notes": "Its USB filter matches any device with an FTDI FT232H chip.",
+            "maintainer_notes": "Programmed with iceprog through its FTDI FT232H chip, as the board maker's examples do (github.com/skerr92/ice5lp4k_examples). It was defined with icesprog, which can only reach MuseLab's iCELink, not an FTDI chip. Not tried on hardware."
           }
-        }
-      },
-      "tested": false,
-      "user_notes": "Its USB filter matches any device with an FTDI FT232H chip.",
-      "maintainer_notes": "Programmed with iceprog through its FTDI FT232H chip, as the board maker's examples do (github.com/skerr92/ice5lp4k_examples). It was defined with icesprog, which can only reach MuseLab's iCELink, not an FTDI chip. Not tried on hardware."
+        ]
+      }
     },
     "ok-ice40pro": {
       "description": "OK-iCE40Pro",
       "fpga_id": "ice40up5k-sg48",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010",
-            "product_regex": "^Dual RS232-HS"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010",
+              "product_regex": "^Dual RS232-HS"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
-    "orangecrab-r02-25f": {
-      "description": "OrangeCrab r0.2 25K",
+    "orangecrab-r02": {
+      "description": "OrangeCrab r0.2",
       "fpga_id": "lfe5u-25f-6mg285c",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "dfu-util",
-          "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
-          "usb": {
-            "vid": "1209",
-            "pid": "5af0",
-            "product_regex": "^OrangeCrab r0.2 DFU bootloader"
+        "dimensions": [
+          {
+            "id": "size",
+            "label": "FPGA size",
+            "values": [
+              {
+                "id": "25k",
+                "label": "25K"
+              },
+              {
+                "id": "85k",
+                "label": "85K"
+              }
+            ]
           }
-        }
-      },
-      "tested": true,
-      "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the other OrangeCrab r0.2 size (25K or 85K), so the engine can't tell which one is connected."
-    },
-    "orangecrab-r02-85f": {
-      "description": "OrangeCrab r0.2 85K",
-      "fpga_id": "lfe5u-85f-6mg285c",
-      "default_variant": "flash",
-      "variants": {
-        "flash": {
-          "programmer": "dfu-util",
-          "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
-          "usb": {
-            "vid": "1209",
-            "pid": "5af0",
-            "product_regex": "^OrangeCrab r0.2 DFU bootloader"
+        ],
+        "configurations": [
+          {
+            "when": {
+              "size": "25k"
+            },
+            "programmer": "dfu-util",
+            "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
+            "usb": {
+              "vid": "1209",
+              "pid": "5af0",
+              "product_regex": "^OrangeCrab r0.2 DFU bootloader"
+            },
+            "tested": true,
+            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+          },
+          {
+            "when": {
+              "size": "85k"
+            },
+            "fpga_id": "lfe5u-85f-6mg285c",
+            "programmer": "dfu-util",
+            "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
+            "usb": {
+              "vid": "1209",
+              "pid": "5af0",
+              "product_regex": "^OrangeCrab r0.2 DFU bootloader"
+            },
+            "tested": true,
+            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
           }
-        }
-      },
-      "tested": true,
-      "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the other OrangeCrab r0.2 size (25K or 85K), so the engine can't tell which one is connected."
+        ]
+      }
     },
     "pico-ice": {
       "description": "pico-ice",
       "fpga_id": "ice40up5k-sg48",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "dfu-util",
-          "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM} --reset",
-          "usb": {
-            "vid": "1209",
-            "pid": "b1c0",
-            "product_regex": "^DFU flash"
+        "configurations": [
+          {
+            "programmer": "dfu-util",
+            "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM} --reset",
+            "usb": {
+              "vid": "1209",
+              "pid": "b1c0",
+              "product_regex": "^DFU flash"
+            },
+            "tested": true,
+            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
           }
-        }
-      },
-      "tested": true,
-      "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+        ]
+      }
     },
     "pynq-z1": {
       "description": "Pynq-Z1 (Xilinx, Zynq7 PL)",
       "fpga_id": "xc7z020clg400-1",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify --board pynq_z1 ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board pynq_z1 ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "pynq-z2": {
       "description": "Pynq-Z2 (Xilinx, Zynq7 PL)",
       "fpga_id": "xc7z020clg400-1",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify --board pynq_z2 ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board pynq_z2 ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "qmtech-xc7a100t-ft2232h": {
       "description": "QMTECH XC7A100T core board (Xilinx, Artix7)",
       "fpga_id": "xc7a100tfgg676-1",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c ft2232 --fpga-part xc7a100tfgg676 ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 --fpga-part xc7a100tfgg676 ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "sipeed-tang-nano": {
       "description": "Sipeed Tang Nano",
       "fpga_id": "gw1n-lv1qn48c6-i5",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -b tangnano ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -b tangnano ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "sipeed-tang-nano-1k": {
       "description": "Sipeed Tang Nano 1k",
       "fpga_id": "gw1nz-lv1qn48c6-i5",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -b tangnano1k -f ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -b tangnano1k -f ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "sipeed-tang-nano-20k": {
       "description": "Sipeed Tang Nano 20k",
       "fpga_id": "gw2ar-lv18qn88c8-i7",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -b tangnano20k -f ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -b tangnano20k -f ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "sipeed-tang-nano-4k": {
       "description": "Sipeed Tang Nano 4k",
       "fpga_id": "gw1nsr-lv4cqn48pc7-i6",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -b tangnano4k -f ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -b tangnano4k -f ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "sipeed-tang-nano-9k": {
       "description": "Sipeed Tang Nano 9k",
       "fpga_id": "gw1nr-lv9qn88pc6-i5",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -b tangnano9k -f ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -b tangnano9k -f ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "sipeed-tang-primer-20k": {
       "description": "Sipeed Tang Primer 20k",
       "fpga_id": "gw2a-lv18pg256c8-i7",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -b tangprimer20k -f ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -b tangprimer20k -f ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "soan-papdi": {
       "description": "Soan-Papdi",
       "fpga_id": "ice40up5k-sg48",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "dfu-util",
-          "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
-          "usb": {
-            "vid": "1d50",
-            "pid": "6146",
-            "product_regex": "^Soan Papdi.*"
+        "configurations": [
+          {
+            "programmer": "dfu-util",
+            "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
+            "usb": {
+              "vid": "1d50",
+              "pid": "6146",
+              "product_regex": "^Soan Papdi.*"
+            },
+            "tested": true,
+            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the Soan-Papdi-Mini."
           }
-        }
-      },
-      "tested": true,
-      "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the Soan-Papdi-Mini."
+        ]
+      }
     },
     "soan-papdi-mini": {
       "description": "Soan-Papdi-Mini",
       "fpga_id": "ice40up5k-sg48",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "dfu-util",
-          "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
-          "usb": {
-            "vid": "1d50",
-            "pid": "6146",
-            "product_regex": "^Soan Papdi Mini.*"
+        "configurations": [
+          {
+            "programmer": "dfu-util",
+            "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM}",
+            "usb": {
+              "vid": "1d50",
+              "pid": "6146",
+              "product_regex": "^Soan Papdi Mini.*"
+            },
+            "tested": true,
+            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
           }
-        }
-      },
-      "tested": true,
-      "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+        ]
+      }
     },
     "thetamachines-eth4k": {
       "description": "Theta Machines ETH4K",
       "fpga_id": "ice40hx4k-tq144-8k",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010",
-            "product_regex": "^ETH4K"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010",
+              "product_regex": "^ETH4K"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
-    "ulx3s-12f": {
-      "description": "ULX3S 12K",
+    "ulx3s": {
+      "description": "ULX3S",
       "fpga_id": "lfe5u-12f-6bg381c",
-      "default_variant": "sram",
       "variants": {
-        "sram": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6015"
+        "dimensions": [
+          {
+            "id": "size",
+            "label": "FPGA size",
+            "values": [
+              {
+                "id": "12k",
+                "label": "12K"
+              },
+              {
+                "id": "25k",
+                "label": "25K"
+              },
+              {
+                "id": "45k",
+                "label": "45K"
+              },
+              {
+                "id": "85k",
+                "label": "85K"
+              }
+            ]
           }
-        }
-      },
-      "tested": false,
-      "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches every ULX3S size and any device with an FTDI FT231X chip.",
-      "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware."
-    },
-    "ulx3s-25f": {
-      "description": "ULX3S 25K",
-      "fpga_id": "lfe5u-25f-6bg381c",
-      "default_variant": "sram",
-      "variants": {
-        "sram": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6015"
+        ],
+        "configurations": [
+          {
+            "when": {
+              "size": "12k"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6015"
+            },
+            "tested": false,
+            "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches any device with an FTDI FT231X chip.",
+            "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware."
+          },
+          {
+            "when": {
+              "size": "25k"
+            },
+            "fpga_id": "lfe5u-25f-6bg381c",
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6015"
+            },
+            "tested": false,
+            "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches any device with an FTDI FT231X chip.",
+            "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware."
+          },
+          {
+            "when": {
+              "size": "45k"
+            },
+            "fpga_id": "lfe5u-45f-6bg381c",
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6015"
+            },
+            "tested": false,
+            "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches any device with an FTDI FT231X chip.",
+            "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware."
+          },
+          {
+            "when": {
+              "size": "85k"
+            },
+            "fpga_id": "lfe5u-85f-6bg381c",
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6015"
+            },
+            "tested": false,
+            "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches any device with an FTDI FT231X chip.",
+            "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware."
           }
-        }
-      },
-      "tested": false,
-      "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches every ULX3S size and any device with an FTDI FT231X chip.",
-      "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware."
-    },
-    "ulx3s-45f": {
-      "description": "ULX3S 45K",
-      "fpga_id": "lfe5u-45f-6bg381c",
-      "default_variant": "sram",
-      "variants": {
-        "sram": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6015"
-          }
-        }
-      },
-      "tested": false,
-      "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches every ULX3S size and any device with an FTDI FT231X chip.",
-      "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware."
-    },
-    "ulx3s-85f": {
-      "description": "ULX3S 85K",
-      "fpga_id": "lfe5u-85f-6bg381c",
-      "default_variant": "sram",
-      "variants": {
-        "sram": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6015"
-          }
-        }
-      },
-      "tested": false,
-      "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches every ULX3S size and any device with an FTDI FT231X chip.",
-      "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware."
+        ]
+      }
     },
     "upduino": {
       "description": "UPDuino v1.0",
       "fpga_id": "ice40up5k-sg48",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6014",
-            "product_regex": "^Single RS232-HS"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6014",
+              "product_regex": "^Single RS232-HS"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "upduino2": {
       "description": "UPDuino v2.0",
       "fpga_id": "ice40up5k-sg48",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6014",
-            "product_regex": "^Single RS232-HS"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6014",
+              "product_regex": "^Single RS232-HS"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "upduino21": {
       "description": "UPduino v2.1",
       "fpga_id": "ice40up5k-sg48",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6014",
-            "product_regex": "^(Single RS232-HS)|(UPduino v2.*)"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6014",
+              "product_regex": "^(Single RS232-HS)|(UPduino v2.*)"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "upduino3": {
       "description": "UPduino v3.0",
       "fpga_id": "ice40up5k-sg48",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6014",
-            "product_regex": "^UPduino v3\\.0"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6014",
+              "product_regex": "^UPduino v3\\.0"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "upduino31": {
       "description": "UPduino v3.1",
       "fpga_id": "ice40up5k-sg48",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6014",
-            "product_regex": "^UPduino v3\\.1"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6014",
+              "product_regex": "^UPduino v3\\.1"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "versa": {
       "description": "ECP5 Versa",
       "fpga_id": "lfe5um-45f-6bg381c",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010",
-            "product_regex": "^(USB <-> Serial Converter)|(Lattice ECP5 Versa Board)"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010",
+              "product_regex": "^(USB <-> Serial Converter)|(Lattice ECP5 Versa Board)"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "vsdsquadron-fm": {
       "description": "VSDSquadron FPGA Mini",
       "fpga_id": "ice40up5k-sg48",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "iceprog",
-          "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6014",
-            "product_regex": "^.*Single RS232.*"
+        "configurations": [
+          {
+            "programmer": "iceprog",
+            "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6014",
+              "product_regex": "^.*Single RS232.*"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "zedboard": {
       "description": "ZedBoard (Xilinx, Zynq7 PL)",
       "fpga_id": "xc7z020clg484-1",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify --board zedboard ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6014"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board zedboard ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6014"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "zxtres": {
       "description": "ZXTRES (Xilinx, Artix7)",
       "fpga_id": "xc7a35tfgg484-2",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c usb-blaster ${BITSTREAM}",
-          "usb": {
-            "vid": "09fb",
-            "pid": "6001"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c usb-blaster ${BITSTREAM}",
+            "usb": {
+              "vid": "09fb",
+              "pid": "6001"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "zxtres-plus": {
       "description": "ZXTRES+ (Xilinx, Artix7)",
       "fpga_id": "xc7a100tfgg484-2",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c usb-blaster ${BITSTREAM}",
-          "usb": {
-            "vid": "09fb",
-            "pid": "6001"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c usb-blaster ${BITSTREAM}",
+            "usb": {
+              "vid": "09fb",
+              "pid": "6001"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "zxtres-plus-plus": {
       "description": "ZXTRES++ (Xilinx, Artix7)",
       "fpga_id": "xc7a200tfbg484-2",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -c usb-blaster ${BITSTREAM}",
-          "usb": {
-            "vid": "09fb",
-            "pid": "6001"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c usb-blaster ${BITSTREAM}",
+            "usb": {
+              "vid": "09fb",
+              "pid": "6001"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "zybo-z7-10": {
       "description": "Zybo Z7-10 (Xilinx, Zynq7 PL)",
       "fpga_id": "xc7z010clg400-1",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify --board zybo_z7_10 ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board zybo_z7_10 ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     },
     "zybo-z7-20": {
       "description": "Zybo Z7-20 (Xilinx, Zynq7 PL)",
       "fpga_id": "xc7z020clg400-1",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify --board zybo_z7_20 ${BITSTREAM}",
-          "usb": {
-            "vid": "0403",
-            "pid": "6010"
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board zybo_z7_20 ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
-        }
-      },
-      "tested": true
+        ]
+      }
     }
   }
 }

@@ -4,7 +4,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::EngineTool;
-use crate::board::{self, BoardSpec};
+use crate::board::{self, BoardSpec, VariantInput};
 use crate::devices::{self, Device};
 use crate::errors::ToolError;
 use crate::state::EngineState;
@@ -31,6 +31,13 @@ pub struct ListDevicesInput {
     /// When given, each device reports whether it matches this board.
     #[serde(default)]
     pub board: Option<BoardSpec>,
+    /// The board's variant, such as {"size": "85k"} or {"memory": "ram"}:
+    /// values of the board's dimensions, which get_catalog lists with the
+    /// configurations that exist. The first configuration with these values
+    /// is used; omitted dimensions match any value. Omitted means the
+    /// board's first configuration. Its USB filter is the one matched.
+    #[serde(default)]
+    pub variant: VariantInput,
 }
 
 /// The connected devices.
@@ -48,8 +55,8 @@ pub fn run_with(
 ) -> Result<ListDevicesOutput, ToolError> {
     let filter = match &input.board {
         Some(spec) => {
-            let b = board::resolve(spec)?;
-            Some(b.variants[&b.default_variant].usb.clone())
+            let b = board::resolve(spec, &input.variant)?;
+            Some(b.configuration.usb)
         }
         None => None,
     };
@@ -64,4 +71,51 @@ pub fn run_with(
 
 pub fn run(_state: &EngineState, input: ListDevicesInput) -> Result<ListDevicesOutput, ToolError> {
     run_with(input, devices::scan)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::devices::DeviceKind;
+    use serde_json::json;
+
+    fn usb(vid: &str, pid: &str) -> Device {
+        Device {
+            kind: DeviceKind::Usb,
+            vid: vid.into(),
+            pid: pid.into(),
+            manufacturer: None,
+            product: None,
+            serial_number: None,
+            bus: 1,
+            device: 2,
+            matches_board: None,
+        }
+    }
+
+    #[test]
+    fn the_variant_chooses_the_usb_filter() {
+        let scan = || Ok(vec![usb("0403", "6010"), usb("0403", "6014")]);
+        let matches = |input: serde_json::Value| -> Vec<Option<bool>> {
+            let input: ListDevicesInput = serde_json::from_value(input).unwrap();
+            run_with(input, scan)
+                .unwrap()
+                .devices
+                .iter()
+                .map(|d| d.matches_board)
+                .collect()
+        };
+        assert_eq!(matches(json!({})), [None, None]);
+        let board = json!("butterstick-r10-2g-85k");
+        // The default is the USB bootloader, which isn't connected.
+        assert_eq!(matches(json!({"board": board})), [Some(false), Some(false)]);
+        assert_eq!(
+            matches(json!({"board": board, "variant": {"connection": "ft232h"}})),
+            [Some(false), Some(true)]
+        );
+        let input: ListDevicesInput =
+            serde_json::from_value(json!({"board": board, "variant": {"connection": "jtag"}}))
+                .unwrap();
+        assert!(run_with(input, scan).is_err());
+    }
 }

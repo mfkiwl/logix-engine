@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use super::build::check_build_folder;
 use super::lint::check_sources;
 use super::{Call, EngineTool};
-use crate::board::BoardSpec;
+use crate::board::{BoardSpec, VariantInput};
 use crate::errors::{Category, Diagnostic, Severity, ToolError};
 use crate::paths;
 use crate::progress::Phases;
@@ -52,6 +52,13 @@ pub struct SimulateInput {
     /// models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE
     /// for Xilinx.
     pub board: BoardSpec,
+    /// The board's variant, such as {"size": "85k"} or {"memory": "ram"}:
+    /// values of the board's dimensions, which get_catalog lists with the
+    /// configurations that exist. The first configuration with these values
+    /// is used; omitted dimensions match any value. Omitted means the
+    /// board's first configuration.
+    #[serde(default)]
+    pub variant: VariantInput,
     /// The folder with the design files, as an absolute path. The testbench
     /// runs in it, so it reads data files, such as with $readmemh, relative
     /// to it.
@@ -181,6 +188,7 @@ pub async fn run(
     let tb = input.testbench_file.clone();
     let sources = check_sources(
         &input.board,
+        &input.variant,
         &input.source_folder,
         input.source_files,
         vec![tb.clone()],

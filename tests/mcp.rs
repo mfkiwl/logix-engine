@@ -271,7 +271,7 @@ async fn get_catalog_returns_the_requested_entries() {
     assert_eq!(alhambra["description"], "Alhambra II");
     assert_eq!(alhambra["fpga_id"], "ice40hx4k-tq144-8k");
     assert_eq!(
-        alhambra["variants"]["flash"]["usb"]["product_regex"],
+        alhambra["variants"]["configurations"][0]["usb"]["product_regex"],
         "^Alhambra II.*"
     );
     assert_eq!(out["fpgas"].as_object().unwrap().len(), 532);

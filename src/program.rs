@@ -8,7 +8,7 @@ use std::sync::OnceLock;
 
 use regex::Regex;
 
-use crate::catalog::{self, ProgrammingVariant};
+use crate::catalog::{self, Configuration};
 use crate::devices::Device;
 use crate::errors::{ActionCode, Category, ToolError};
 
@@ -100,7 +100,7 @@ pub fn verbose_flag(programmer: &str) -> Option<&'static str> {
 }
 
 pub fn command(
-    variant: &ProgrammingVariant,
+    variant: &Configuration,
     custom: Option<&str>,
     device: &Device,
     bitstream: &Path,
@@ -285,7 +285,7 @@ mod tests {
         let c = catalog::builtin();
         let d = device("0403", "6010", Some("Alhambra II"), None, 9);
         let bin = Path::new("/pkg/bin");
-        let v = &c.boards["alhambra-ii"].variants["flash"];
+        let v = &c.boards["alhambra-ii"].variants.configurations[0];
         let (prog, args) = command(v, None, &d, Path::new("/b/hardware.bin"), bin, false).unwrap();
         assert_eq!(prog, Path::new("/pkg/bin/openFPGALoader"));
         let args: Vec<String> = args.into_iter().map(|a| a.into_string().unwrap()).collect();
@@ -295,7 +295,7 @@ mod tests {
         );
         let (_, args) = command(v, None, &d, Path::new("/b/hardware.bin"), bin, true).unwrap();
         assert_eq!(args[0], "--verbose");
-        let v = &c.boards["icestick"].variants["flash"];
+        let v = &c.boards["icestick"].variants.configurations[0];
         let (prog, args) = command(v, None, &d, Path::new("/b/hardware.bin"), bin, false).unwrap();
         assert_eq!(prog, Path::new("/pkg/bin/iceprog"));
         assert_eq!(args.len(), 3); // -d d:1/9 /b/hardware.bin
@@ -306,7 +306,9 @@ mod tests {
         let tmp = tempfile::tempdir().unwrap();
         std::fs::write(tmp.path().join("iceprog"), "").unwrap();
         let d = device("0403", "6010", None, None, 2);
-        let v = &catalog::builtin().boards["alhambra-ii"].variants["flash"];
+        let v = &catalog::builtin().boards["alhambra-ii"]
+            .variants
+            .configurations[0];
         let b = Path::new("/b/hardware.bin");
         let (p, a) = command(v, Some("iceprog -S ${BITSTREAM}"), &d, b, tmp.path(), false).unwrap();
         assert_eq!(p, tmp.path().join("iceprog"));

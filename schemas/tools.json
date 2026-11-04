@@ -331,46 +331,133 @@
         },
         "BoardDefinition": {
           "additionalProperties": false,
-          "description": "A board: its FPGA and how to program it.",
+          "description": "A board: its FPGA and its variants. A board is a name: two boards with\ndifferent names are unrelated, even when their hardware is identical.",
           "properties": {
-            "default_variant": {
-              "description": "The name of the programming variant used by default, such as flash.",
-              "type": "string"
-            },
             "description": {
               "description": "The board's name for people, such as \"Alhambra II\".",
               "type": "string"
             },
             "fpga_id": {
-              "description": "The board's FPGA, as a catalog ID of the fpgas section, such as\nice40hx4k-tq144-8k.",
+              "description": "The board's FPGA, as a catalog ID of the fpgas section, such as\nice40hx4k-tq144-8k. A configuration may use another size of it.",
               "pattern": "^[a-z0-9-]+$",
               "type": "string"
             },
-            "tested": {
-              "description": "Whether programming this board is known to work: tested on the board,\nor used unchanged in a tool that relies on it. False for boards whose\nprogramming hasn't been tried on hardware, such as ones moved to a\ndifferent programmer.",
-              "type": "boolean"
-            },
-            "user_notes": {
-              "description": "Warnings and missing information for the board's users, such as a\nUSB filter that also matches other boards or a step needed before\nprogramming.",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
             "variants": {
-              "additionalProperties": {
-                "$ref": "#/$defs/ProgrammingVariant"
-              },
-              "description": "The ways to program the board, by variant name.",
-              "type": "object"
+              "$ref": "#/$defs/Variants",
+              "description": "The board's choices, such as its FPGA size, the cable or the memory to\nprogram, and how to program it with each combination that exists."
             }
           },
           "required": [
             "description",
             "fpga_id",
-            "default_variant",
-            "variants",
+            "variants"
+          ],
+          "type": "object"
+        },
+        "Configuration": {
+          "additionalProperties": false,
+          "description": "One combination of the board's dimension values, and how to program the\nboard with it.",
+          "properties": {
+            "args": {
+              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
+              "type": "string"
+            },
+            "fpga_id": {
+              "description": "The FPGA, when it isn't the board's, such as a larger size. It has\nthe board FPGA's architecture and package, so the same constraint\nfile works.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "programmer": {
+              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
+              "type": "string"
+            },
+            "tested": {
+              "description": "Whether programming this way is known to work: tested on the board,\nor used unchanged in a tool that relies on it. False for ways that\nhaven't been tried on hardware, such as a board moved to a different\nprogrammer.",
+              "type": "boolean"
+            },
+            "usb": {
+              "$ref": "#/$defs/UsbFilter",
+              "description": "The USB filter that finds the board's device."
+            },
+            "user_notes": {
+              "description": "Warnings and missing information for users, such as a USB filter that\nalso matches other boards or a step needed before programming.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "when": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "The value of every dimension, by dimension ID, such as\n{\"size\": \"85k\"}. Omitted or empty for a board without dimensions.",
+              "type": "object"
+            }
+          },
+          "required": [
+            "programmer",
+            "args",
+            "usb",
             "tested"
+          ],
+          "type": "object"
+        },
+        "Dimension": {
+          "additionalProperties": false,
+          "description": "One kind of choice, such as the FPGA size.",
+          "properties": {
+            "id": {
+              "description": "The dimension's ID, used in configurations and variant inputs, such as\nsize, connection or memory.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
+            "label": {
+              "description": "The dimension's name for people, such as \"FPGA size\".",
+              "type": "string"
+            },
+            "values": {
+              "description": "The possible values, in the order to show them.",
+              "items": {
+                "$ref": "#/$defs/DimensionValue"
+              },
+              "minItems": 1,
+              "type": "array"
+            }
+          },
+          "required": [
+            "id",
+            "label",
+            "values"
+          ],
+          "type": "object"
+        },
+        "DimensionValue": {
+          "additionalProperties": false,
+          "description": "One value of a dimension, such as RAM.",
+          "properties": {
+            "help": {
+              "description": "A short explanation for people, such as \"Faster to upload; lost when\nthe board is powered off.\"",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "id": {
+              "description": "The value's ID, such as ram.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
+            "label": {
+              "description": "The value's name for people, such as \"RAM\".",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "label"
           ],
           "type": "object"
         },
@@ -452,30 +539,6 @@
           ],
           "type": "object"
         },
-        "ProgrammingVariant": {
-          "additionalProperties": false,
-          "description": "One way to program a board, such as to flash with a particular cable.",
-          "properties": {
-            "args": {
-              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
-              "type": "string"
-            },
-            "programmer": {
-              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
-              "type": "string"
-            },
-            "usb": {
-              "$ref": "#/$defs/UsbFilter",
-              "description": "The USB filter that finds the board's device."
-            }
-          },
-          "required": [
-            "programmer",
-            "args",
-            "usb"
-          ],
-          "type": "object"
-        },
         "UsbFilter": {
           "additionalProperties": false,
           "description": "Which USB devices are this board.",
@@ -508,6 +571,31 @@
           "required": [
             "vid",
             "pid"
+          ],
+          "type": "object"
+        },
+        "Variants": {
+          "additionalProperties": false,
+          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). Every configuration works with the same project: the\nsame sources and constraint file.",
+          "properties": {
+            "configurations": {
+              "description": "The combinations that exist, each with how to program the board. The\nfirst is the board's default. Combinations that aren't listed don't\nexist.",
+              "items": {
+                "$ref": "#/$defs/Configuration"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            "dimensions": {
+              "description": "The kinds of choice the board offers, in the order to show them, such\nas size, connection and memory. Omitted or empty for a board with\none configuration.",
+              "items": {
+                "$ref": "#/$defs/Dimension"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "configurations"
           ],
           "type": "object"
         }
@@ -578,10 +666,6 @@
           "additionalProperties": false,
           "description": "A board definition in a request. Like a catalog entry, except that the\nFPGA can be given either as fpga_id or as a full fpga definition.",
           "properties": {
-            "default_variant": {
-              "description": "The name of the programming variant used by default.",
-              "type": "string"
-            },
             "description": {
               "description": "The board's name for people.",
               "type": "string"
@@ -605,16 +689,12 @@
               ]
             },
             "variants": {
-              "additionalProperties": {
-                "$ref": "#/$defs/ProgrammingVariant"
-              },
-              "description": "The ways to program the board, by variant name.",
-              "type": "object"
+              "$ref": "#/$defs/Variants",
+              "description": "The board's choices and how to program it with each, as in the\ncatalog. A configuration's fpga_id must be a catalog ID."
             }
           },
           "required": [
             "description",
-            "default_variant",
             "variants"
           ],
           "type": "object"
@@ -632,6 +712,113 @@
             }
           ],
           "description": "A board: a catalog ID, or a full definition."
+        },
+        "Configuration": {
+          "additionalProperties": false,
+          "description": "One combination of the board's dimension values, and how to program the\nboard with it.",
+          "properties": {
+            "args": {
+              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
+              "type": "string"
+            },
+            "fpga_id": {
+              "description": "The FPGA, when it isn't the board's, such as a larger size. It has\nthe board FPGA's architecture and package, so the same constraint\nfile works.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "programmer": {
+              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
+              "type": "string"
+            },
+            "tested": {
+              "description": "Whether programming this way is known to work: tested on the board,\nor used unchanged in a tool that relies on it. False for ways that\nhaven't been tried on hardware, such as a board moved to a different\nprogrammer.",
+              "type": "boolean"
+            },
+            "usb": {
+              "$ref": "#/$defs/UsbFilter",
+              "description": "The USB filter that finds the board's device."
+            },
+            "user_notes": {
+              "description": "Warnings and missing information for users, such as a USB filter that\nalso matches other boards or a step needed before programming.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "when": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "The value of every dimension, by dimension ID, such as\n{\"size\": \"85k\"}. Omitted or empty for a board without dimensions.",
+              "type": "object"
+            }
+          },
+          "required": [
+            "programmer",
+            "args",
+            "usb",
+            "tested"
+          ],
+          "type": "object"
+        },
+        "Dimension": {
+          "additionalProperties": false,
+          "description": "One kind of choice, such as the FPGA size.",
+          "properties": {
+            "id": {
+              "description": "The dimension's ID, used in configurations and variant inputs, such as\nsize, connection or memory.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
+            "label": {
+              "description": "The dimension's name for people, such as \"FPGA size\".",
+              "type": "string"
+            },
+            "values": {
+              "description": "The possible values, in the order to show them.",
+              "items": {
+                "$ref": "#/$defs/DimensionValue"
+              },
+              "minItems": 1,
+              "type": "array"
+            }
+          },
+          "required": [
+            "id",
+            "label",
+            "values"
+          ],
+          "type": "object"
+        },
+        "DimensionValue": {
+          "additionalProperties": false,
+          "description": "One value of a dimension, such as RAM.",
+          "properties": {
+            "help": {
+              "description": "A short explanation for people, such as \"Faster to upload; lost when\nthe board is powered off.\"",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "id": {
+              "description": "The value's ID, such as ram.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
+            "label": {
+              "description": "The value's name for people, such as \"RAM\".",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "label"
+          ],
+          "type": "object"
         },
         "FpgaDefinition": {
           "additionalProperties": false,
@@ -711,30 +898,6 @@
           ],
           "type": "object"
         },
-        "ProgrammingVariant": {
-          "additionalProperties": false,
-          "description": "One way to program a board, such as to flash with a particular cable.",
-          "properties": {
-            "args": {
-              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
-              "type": "string"
-            },
-            "programmer": {
-              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
-              "type": "string"
-            },
-            "usb": {
-              "$ref": "#/$defs/UsbFilter",
-              "description": "The USB filter that finds the board's device."
-            }
-          },
-          "required": [
-            "programmer",
-            "args",
-            "usb"
-          ],
-          "type": "object"
-        },
         "UsbFilter": {
           "additionalProperties": false,
           "description": "Which USB devices are this board.",
@@ -767,6 +930,31 @@
           "required": [
             "vid",
             "pid"
+          ],
+          "type": "object"
+        },
+        "Variants": {
+          "additionalProperties": false,
+          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). Every configuration works with the same project: the\nsame sources and constraint file.",
+          "properties": {
+            "configurations": {
+              "description": "The combinations that exist, each with how to program the board. The\nfirst is the board's default. Combinations that aren't listed don't\nexist.",
+              "items": {
+                "$ref": "#/$defs/Configuration"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            "dimensions": {
+              "description": "The kinds of choice the board offers, in the order to show them, such\nas size, connection and memory. Omitted or empty for a board with\none configuration.",
+              "items": {
+                "$ref": "#/$defs/Dimension"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "configurations"
           ],
           "type": "object"
         }
@@ -819,6 +1007,14 @@
             "string",
             "null"
           ]
+        },
+        "variant": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "The board's variant, such as {\"size\": \"85k\"} or {\"memory\": \"ram\"}:\nvalues of the board's dimensions, which get_catalog lists with the\nconfigurations that exist. The first configuration with these values\nis used; omitted dimensions match any value. Omitted means the\nboard's first configuration.",
+          "type": "object"
         },
         "verbose": {
           "default": false,
@@ -1010,10 +1206,6 @@
           "additionalProperties": false,
           "description": "A board definition in a request. Like a catalog entry, except that the\nFPGA can be given either as fpga_id or as a full fpga definition.",
           "properties": {
-            "default_variant": {
-              "description": "The name of the programming variant used by default.",
-              "type": "string"
-            },
             "description": {
               "description": "The board's name for people.",
               "type": "string"
@@ -1037,16 +1229,12 @@
               ]
             },
             "variants": {
-              "additionalProperties": {
-                "$ref": "#/$defs/ProgrammingVariant"
-              },
-              "description": "The ways to program the board, by variant name.",
-              "type": "object"
+              "$ref": "#/$defs/Variants",
+              "description": "The board's choices and how to program it with each, as in the\ncatalog. A configuration's fpga_id must be a catalog ID."
             }
           },
           "required": [
             "description",
-            "default_variant",
             "variants"
           ],
           "type": "object"
@@ -1064,6 +1252,113 @@
             }
           ],
           "description": "A board: a catalog ID, or a full definition."
+        },
+        "Configuration": {
+          "additionalProperties": false,
+          "description": "One combination of the board's dimension values, and how to program the\nboard with it.",
+          "properties": {
+            "args": {
+              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
+              "type": "string"
+            },
+            "fpga_id": {
+              "description": "The FPGA, when it isn't the board's, such as a larger size. It has\nthe board FPGA's architecture and package, so the same constraint\nfile works.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "programmer": {
+              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
+              "type": "string"
+            },
+            "tested": {
+              "description": "Whether programming this way is known to work: tested on the board,\nor used unchanged in a tool that relies on it. False for ways that\nhaven't been tried on hardware, such as a board moved to a different\nprogrammer.",
+              "type": "boolean"
+            },
+            "usb": {
+              "$ref": "#/$defs/UsbFilter",
+              "description": "The USB filter that finds the board's device."
+            },
+            "user_notes": {
+              "description": "Warnings and missing information for users, such as a USB filter that\nalso matches other boards or a step needed before programming.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "when": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "The value of every dimension, by dimension ID, such as\n{\"size\": \"85k\"}. Omitted or empty for a board without dimensions.",
+              "type": "object"
+            }
+          },
+          "required": [
+            "programmer",
+            "args",
+            "usb",
+            "tested"
+          ],
+          "type": "object"
+        },
+        "Dimension": {
+          "additionalProperties": false,
+          "description": "One kind of choice, such as the FPGA size.",
+          "properties": {
+            "id": {
+              "description": "The dimension's ID, used in configurations and variant inputs, such as\nsize, connection or memory.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
+            "label": {
+              "description": "The dimension's name for people, such as \"FPGA size\".",
+              "type": "string"
+            },
+            "values": {
+              "description": "The possible values, in the order to show them.",
+              "items": {
+                "$ref": "#/$defs/DimensionValue"
+              },
+              "minItems": 1,
+              "type": "array"
+            }
+          },
+          "required": [
+            "id",
+            "label",
+            "values"
+          ],
+          "type": "object"
+        },
+        "DimensionValue": {
+          "additionalProperties": false,
+          "description": "One value of a dimension, such as RAM.",
+          "properties": {
+            "help": {
+              "description": "A short explanation for people, such as \"Faster to upload; lost when\nthe board is powered off.\"",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "id": {
+              "description": "The value's ID, such as ram.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
+            "label": {
+              "description": "The value's name for people, such as \"RAM\".",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "label"
+          ],
+          "type": "object"
         },
         "FpgaDefinition": {
           "additionalProperties": false,
@@ -1143,30 +1438,6 @@
           ],
           "type": "object"
         },
-        "ProgrammingVariant": {
-          "additionalProperties": false,
-          "description": "One way to program a board, such as to flash with a particular cable.",
-          "properties": {
-            "args": {
-              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
-              "type": "string"
-            },
-            "programmer": {
-              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
-              "type": "string"
-            },
-            "usb": {
-              "$ref": "#/$defs/UsbFilter",
-              "description": "The USB filter that finds the board's device."
-            }
-          },
-          "required": [
-            "programmer",
-            "args",
-            "usb"
-          ],
-          "type": "object"
-        },
         "UsbFilter": {
           "additionalProperties": false,
           "description": "Which USB devices are this board.",
@@ -1199,6 +1470,31 @@
           "required": [
             "vid",
             "pid"
+          ],
+          "type": "object"
+        },
+        "Variants": {
+          "additionalProperties": false,
+          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). Every configuration works with the same project: the\nsame sources and constraint file.",
+          "properties": {
+            "configurations": {
+              "description": "The combinations that exist, each with how to program the board. The\nfirst is the board's default. Combinations that aren't listed don't\nexist.",
+              "items": {
+                "$ref": "#/$defs/Configuration"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            "dimensions": {
+              "description": "The kinds of choice the board offers, in the order to show them, such\nas size, connection and memory. Omitted or empty for a board with\none configuration.",
+              "items": {
+                "$ref": "#/$defs/Dimension"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "configurations"
           ],
           "type": "object"
         }
@@ -1262,6 +1558,14 @@
           "description": "Stop each testbench after this many seconds of real time, such as one\nstuck in a loop. A testbench stopped this way fails. Defaults to 600;\n0 means no limit.",
           "minimum": 0,
           "type": "integer"
+        },
+        "variant": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "The board's variant, such as {\"size\": \"85k\"} or {\"memory\": \"ram\"}:\nvalues of the board's dimensions, which get_catalog lists with the\nconfigurations that exist. The first configuration with these values\nis used; omitted dimensions match any value. Omitted means the\nboard's first configuration.",
+          "type": "object"
         },
         "verbose": {
           "default": false,
@@ -1535,10 +1839,6 @@
           "additionalProperties": false,
           "description": "A board definition in a request. Like a catalog entry, except that the\nFPGA can be given either as fpga_id or as a full fpga definition.",
           "properties": {
-            "default_variant": {
-              "description": "The name of the programming variant used by default.",
-              "type": "string"
-            },
             "description": {
               "description": "The board's name for people.",
               "type": "string"
@@ -1562,16 +1862,12 @@
               ]
             },
             "variants": {
-              "additionalProperties": {
-                "$ref": "#/$defs/ProgrammingVariant"
-              },
-              "description": "The ways to program the board, by variant name.",
-              "type": "object"
+              "$ref": "#/$defs/Variants",
+              "description": "The board's choices and how to program it with each, as in the\ncatalog. A configuration's fpga_id must be a catalog ID."
             }
           },
           "required": [
             "description",
-            "default_variant",
             "variants"
           ],
           "type": "object"
@@ -1589,6 +1885,113 @@
             }
           ],
           "description": "A board: a catalog ID, or a full definition."
+        },
+        "Configuration": {
+          "additionalProperties": false,
+          "description": "One combination of the board's dimension values, and how to program the\nboard with it.",
+          "properties": {
+            "args": {
+              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
+              "type": "string"
+            },
+            "fpga_id": {
+              "description": "The FPGA, when it isn't the board's, such as a larger size. It has\nthe board FPGA's architecture and package, so the same constraint\nfile works.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "programmer": {
+              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
+              "type": "string"
+            },
+            "tested": {
+              "description": "Whether programming this way is known to work: tested on the board,\nor used unchanged in a tool that relies on it. False for ways that\nhaven't been tried on hardware, such as a board moved to a different\nprogrammer.",
+              "type": "boolean"
+            },
+            "usb": {
+              "$ref": "#/$defs/UsbFilter",
+              "description": "The USB filter that finds the board's device."
+            },
+            "user_notes": {
+              "description": "Warnings and missing information for users, such as a USB filter that\nalso matches other boards or a step needed before programming.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "when": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "The value of every dimension, by dimension ID, such as\n{\"size\": \"85k\"}. Omitted or empty for a board without dimensions.",
+              "type": "object"
+            }
+          },
+          "required": [
+            "programmer",
+            "args",
+            "usb",
+            "tested"
+          ],
+          "type": "object"
+        },
+        "Dimension": {
+          "additionalProperties": false,
+          "description": "One kind of choice, such as the FPGA size.",
+          "properties": {
+            "id": {
+              "description": "The dimension's ID, used in configurations and variant inputs, such as\nsize, connection or memory.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
+            "label": {
+              "description": "The dimension's name for people, such as \"FPGA size\".",
+              "type": "string"
+            },
+            "values": {
+              "description": "The possible values, in the order to show them.",
+              "items": {
+                "$ref": "#/$defs/DimensionValue"
+              },
+              "minItems": 1,
+              "type": "array"
+            }
+          },
+          "required": [
+            "id",
+            "label",
+            "values"
+          ],
+          "type": "object"
+        },
+        "DimensionValue": {
+          "additionalProperties": false,
+          "description": "One value of a dimension, such as RAM.",
+          "properties": {
+            "help": {
+              "description": "A short explanation for people, such as \"Faster to upload; lost when\nthe board is powered off.\"",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "id": {
+              "description": "The value's ID, such as ram.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
+            "label": {
+              "description": "The value's name for people, such as \"RAM\".",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "label"
+          ],
+          "type": "object"
         },
         "FpgaDefinition": {
           "additionalProperties": false,
@@ -1668,30 +2071,6 @@
           ],
           "type": "object"
         },
-        "ProgrammingVariant": {
-          "additionalProperties": false,
-          "description": "One way to program a board, such as to flash with a particular cable.",
-          "properties": {
-            "args": {
-              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
-              "type": "string"
-            },
-            "programmer": {
-              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
-              "type": "string"
-            },
-            "usb": {
-              "$ref": "#/$defs/UsbFilter",
-              "description": "The USB filter that finds the board's device."
-            }
-          },
-          "required": [
-            "programmer",
-            "args",
-            "usb"
-          ],
-          "type": "object"
-        },
         "UsbFilter": {
           "additionalProperties": false,
           "description": "Which USB devices are this board.",
@@ -1724,6 +2103,31 @@
           "required": [
             "vid",
             "pid"
+          ],
+          "type": "object"
+        },
+        "Variants": {
+          "additionalProperties": false,
+          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). Every configuration works with the same project: the\nsame sources and constraint file.",
+          "properties": {
+            "configurations": {
+              "description": "The combinations that exist, each with how to program the board. The\nfirst is the board's default. Combinations that aren't listed don't\nexist.",
+              "items": {
+                "$ref": "#/$defs/Configuration"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            "dimensions": {
+              "description": "The kinds of choice the board offers, in the order to show them, such\nas size, connection and memory. Omitted or empty for a board with\none configuration.",
+              "items": {
+                "$ref": "#/$defs/Dimension"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "configurations"
           ],
           "type": "object"
         }
@@ -1794,6 +2198,14 @@
             "integer",
             "null"
           ]
+        },
+        "variant": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "The board's variant, such as {\"size\": \"85k\"} or {\"memory\": \"ram\"}:\nvalues of the board's dimensions, which get_catalog lists with the\nconfigurations that exist. The first configuration with these values\nis used; omitted dimensions match any value. Omitted means the\nboard's first configuration.",
+          "type": "object"
         },
         "verbose": {
           "default": false,
@@ -2502,10 +2914,6 @@
           "additionalProperties": false,
           "description": "A board definition in a request. Like a catalog entry, except that the\nFPGA can be given either as fpga_id or as a full fpga definition.",
           "properties": {
-            "default_variant": {
-              "description": "The name of the programming variant used by default.",
-              "type": "string"
-            },
             "description": {
               "description": "The board's name for people.",
               "type": "string"
@@ -2529,16 +2937,12 @@
               ]
             },
             "variants": {
-              "additionalProperties": {
-                "$ref": "#/$defs/ProgrammingVariant"
-              },
-              "description": "The ways to program the board, by variant name.",
-              "type": "object"
+              "$ref": "#/$defs/Variants",
+              "description": "The board's choices and how to program it with each, as in the\ncatalog. A configuration's fpga_id must be a catalog ID."
             }
           },
           "required": [
             "description",
-            "default_variant",
             "variants"
           ],
           "type": "object"
@@ -2556,6 +2960,113 @@
             }
           ],
           "description": "A board: a catalog ID, or a full definition."
+        },
+        "Configuration": {
+          "additionalProperties": false,
+          "description": "One combination of the board's dimension values, and how to program the\nboard with it.",
+          "properties": {
+            "args": {
+              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
+              "type": "string"
+            },
+            "fpga_id": {
+              "description": "The FPGA, when it isn't the board's, such as a larger size. It has\nthe board FPGA's architecture and package, so the same constraint\nfile works.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "programmer": {
+              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
+              "type": "string"
+            },
+            "tested": {
+              "description": "Whether programming this way is known to work: tested on the board,\nor used unchanged in a tool that relies on it. False for ways that\nhaven't been tried on hardware, such as a board moved to a different\nprogrammer.",
+              "type": "boolean"
+            },
+            "usb": {
+              "$ref": "#/$defs/UsbFilter",
+              "description": "The USB filter that finds the board's device."
+            },
+            "user_notes": {
+              "description": "Warnings and missing information for users, such as a USB filter that\nalso matches other boards or a step needed before programming.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "when": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "The value of every dimension, by dimension ID, such as\n{\"size\": \"85k\"}. Omitted or empty for a board without dimensions.",
+              "type": "object"
+            }
+          },
+          "required": [
+            "programmer",
+            "args",
+            "usb",
+            "tested"
+          ],
+          "type": "object"
+        },
+        "Dimension": {
+          "additionalProperties": false,
+          "description": "One kind of choice, such as the FPGA size.",
+          "properties": {
+            "id": {
+              "description": "The dimension's ID, used in configurations and variant inputs, such as\nsize, connection or memory.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
+            "label": {
+              "description": "The dimension's name for people, such as \"FPGA size\".",
+              "type": "string"
+            },
+            "values": {
+              "description": "The possible values, in the order to show them.",
+              "items": {
+                "$ref": "#/$defs/DimensionValue"
+              },
+              "minItems": 1,
+              "type": "array"
+            }
+          },
+          "required": [
+            "id",
+            "label",
+            "values"
+          ],
+          "type": "object"
+        },
+        "DimensionValue": {
+          "additionalProperties": false,
+          "description": "One value of a dimension, such as RAM.",
+          "properties": {
+            "help": {
+              "description": "A short explanation for people, such as \"Faster to upload; lost when\nthe board is powered off.\"",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "id": {
+              "description": "The value's ID, such as ram.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
+            "label": {
+              "description": "The value's name for people, such as \"RAM\".",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "label"
+          ],
+          "type": "object"
         },
         "FpgaDefinition": {
           "additionalProperties": false,
@@ -2635,30 +3146,6 @@
           ],
           "type": "object"
         },
-        "ProgrammingVariant": {
-          "additionalProperties": false,
-          "description": "One way to program a board, such as to flash with a particular cable.",
-          "properties": {
-            "args": {
-              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
-              "type": "string"
-            },
-            "programmer": {
-              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
-              "type": "string"
-            },
-            "usb": {
-              "$ref": "#/$defs/UsbFilter",
-              "description": "The USB filter that finds the board's device."
-            }
-          },
-          "required": [
-            "programmer",
-            "args",
-            "usb"
-          ],
-          "type": "object"
-        },
         "UsbFilter": {
           "additionalProperties": false,
           "description": "Which USB devices are this board.",
@@ -2691,6 +3178,31 @@
           "required": [
             "vid",
             "pid"
+          ],
+          "type": "object"
+        },
+        "Variants": {
+          "additionalProperties": false,
+          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). Every configuration works with the same project: the\nsame sources and constraint file.",
+          "properties": {
+            "configurations": {
+              "description": "The combinations that exist, each with how to program the board. The\nfirst is the board's default. Combinations that aren't listed don't\nexist.",
+              "items": {
+                "$ref": "#/$defs/Configuration"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            "dimensions": {
+              "description": "The kinds of choice the board offers, in the order to show them, such\nas size, connection and memory. Omitted or empty for a board with\none configuration.",
+              "items": {
+                "$ref": "#/$defs/Dimension"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "configurations"
           ],
           "type": "object"
         }
@@ -2734,6 +3246,14 @@
         "top_module": {
           "description": "Name of the top-level module, such as main.",
           "type": "string"
+        },
+        "variant": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "The board's variant, such as {\"size\": \"85k\"} or {\"memory\": \"ram\"}:\nvalues of the board's dimensions, which get_catalog lists with the\nconfigurations that exist. The first configuration with these values\nis used; omitted dimensions match any value. Omitted means the\nboard's first configuration.",
+          "type": "object"
         },
         "verbose": {
           "default": false,
@@ -3012,10 +3532,6 @@
           "additionalProperties": false,
           "description": "A board definition in a request. Like a catalog entry, except that the\nFPGA can be given either as fpga_id or as a full fpga definition.",
           "properties": {
-            "default_variant": {
-              "description": "The name of the programming variant used by default.",
-              "type": "string"
-            },
             "description": {
               "description": "The board's name for people.",
               "type": "string"
@@ -3039,16 +3555,12 @@
               ]
             },
             "variants": {
-              "additionalProperties": {
-                "$ref": "#/$defs/ProgrammingVariant"
-              },
-              "description": "The ways to program the board, by variant name.",
-              "type": "object"
+              "$ref": "#/$defs/Variants",
+              "description": "The board's choices and how to program it with each, as in the\ncatalog. A configuration's fpga_id must be a catalog ID."
             }
           },
           "required": [
             "description",
-            "default_variant",
             "variants"
           ],
           "type": "object"
@@ -3066,6 +3578,113 @@
             }
           ],
           "description": "A board: a catalog ID, or a full definition."
+        },
+        "Configuration": {
+          "additionalProperties": false,
+          "description": "One combination of the board's dimension values, and how to program the\nboard with it.",
+          "properties": {
+            "args": {
+              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
+              "type": "string"
+            },
+            "fpga_id": {
+              "description": "The FPGA, when it isn't the board's, such as a larger size. It has\nthe board FPGA's architecture and package, so the same constraint\nfile works.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "programmer": {
+              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
+              "type": "string"
+            },
+            "tested": {
+              "description": "Whether programming this way is known to work: tested on the board,\nor used unchanged in a tool that relies on it. False for ways that\nhaven't been tried on hardware, such as a board moved to a different\nprogrammer.",
+              "type": "boolean"
+            },
+            "usb": {
+              "$ref": "#/$defs/UsbFilter",
+              "description": "The USB filter that finds the board's device."
+            },
+            "user_notes": {
+              "description": "Warnings and missing information for users, such as a USB filter that\nalso matches other boards or a step needed before programming.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "when": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "The value of every dimension, by dimension ID, such as\n{\"size\": \"85k\"}. Omitted or empty for a board without dimensions.",
+              "type": "object"
+            }
+          },
+          "required": [
+            "programmer",
+            "args",
+            "usb",
+            "tested"
+          ],
+          "type": "object"
+        },
+        "Dimension": {
+          "additionalProperties": false,
+          "description": "One kind of choice, such as the FPGA size.",
+          "properties": {
+            "id": {
+              "description": "The dimension's ID, used in configurations and variant inputs, such as\nsize, connection or memory.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
+            "label": {
+              "description": "The dimension's name for people, such as \"FPGA size\".",
+              "type": "string"
+            },
+            "values": {
+              "description": "The possible values, in the order to show them.",
+              "items": {
+                "$ref": "#/$defs/DimensionValue"
+              },
+              "minItems": 1,
+              "type": "array"
+            }
+          },
+          "required": [
+            "id",
+            "label",
+            "values"
+          ],
+          "type": "object"
+        },
+        "DimensionValue": {
+          "additionalProperties": false,
+          "description": "One value of a dimension, such as RAM.",
+          "properties": {
+            "help": {
+              "description": "A short explanation for people, such as \"Faster to upload; lost when\nthe board is powered off.\"",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "id": {
+              "description": "The value's ID, such as ram.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
+            "label": {
+              "description": "The value's name for people, such as \"RAM\".",
+              "type": "string"
+            }
+          },
+          "required": [
+            "id",
+            "label"
+          ],
+          "type": "object"
         },
         "FpgaDefinition": {
           "additionalProperties": false,
@@ -3145,30 +3764,6 @@
           ],
           "type": "object"
         },
-        "ProgrammingVariant": {
-          "additionalProperties": false,
-          "description": "One way to program a board, such as to flash with a particular cable.",
-          "properties": {
-            "args": {
-              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
-              "type": "string"
-            },
-            "programmer": {
-              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
-              "type": "string"
-            },
-            "usb": {
-              "$ref": "#/$defs/UsbFilter",
-              "description": "The USB filter that finds the board's device."
-            }
-          },
-          "required": [
-            "programmer",
-            "args",
-            "usb"
-          ],
-          "type": "object"
-        },
         "UsbFilter": {
           "additionalProperties": false,
           "description": "Which USB devices are this board.",
@@ -3203,6 +3798,31 @@
             "pid"
           ],
           "type": "object"
+        },
+        "Variants": {
+          "additionalProperties": false,
+          "description": "A board's choices (dimensions) and the combinations that exist\n(configurations). Every configuration works with the same project: the\nsame sources and constraint file.",
+          "properties": {
+            "configurations": {
+              "description": "The combinations that exist, each with how to program the board. The\nfirst is the board's default. Combinations that aren't listed don't\nexist.",
+              "items": {
+                "$ref": "#/$defs/Configuration"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            "dimensions": {
+              "description": "The kinds of choice the board offers, in the order to show them, such\nas size, connection and memory. Omitted or empty for a board with\none configuration.",
+              "items": {
+                "$ref": "#/$defs/Dimension"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "configurations"
+          ],
+          "type": "object"
         }
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3220,6 +3840,14 @@
           ],
           "default": null,
           "description": "A board, as a catalog ID such as alhambra-ii or a full definition.\nWhen given, each device reports whether it matches this board."
+        },
+        "variant": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "The board's variant, such as {\"size\": \"85k\"} or {\"memory\": \"ram\"}:\nvalues of the board's dimensions, which get_catalog lists with the\nconfigurations that exist. The first configuration with these values\nis used; omitted dimensions match any value. Omitted means the\nboard's first configuration. Its USB filter is the one matched.",
+          "type": "object"
         }
       },
       "title": "ListDevicesInput",

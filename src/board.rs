@@ -8,7 +8,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Deserializer, Serialize};
 use sha2::{Digest, Sha256};
 
-use crate::catalog::{self, BoardDefinition, FpgaDefinition, ProgrammingVariant};
+use crate::catalog::{self, Configuration, FpgaDefinition, Variants};
 use crate::errors::ToolError;
 
 /// A board: a catalog ID, or a full definition.
@@ -35,11 +35,16 @@ pub struct BoardInputDefinition {
     /// The board's FPGA as a full definition. Give either fpga_id or fpga.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub fpga: Option<FpgaDefinition>,
-    /// The name of the programming variant used by default.
-    pub default_variant: String,
-    /// The ways to program the board, by variant name.
-    pub variants: BTreeMap<String, ProgrammingVariant>,
+    /// The board's choices and how to program it with each, as in the
+    /// catalog. A configuration's fpga_id must be a catalog ID.
+    pub variants: Variants,
 }
+
+/// A board's variant: a value for some or all of its dimensions, by
+/// dimension ID, such as {"size": "85k", "memory": "ram"}. The first
+/// configuration with these values is used; omitted dimensions match any
+/// value, so an empty variant means the board's default configuration.
+pub type VariantInput = BTreeMap<String, String>;
 
 // A clearer error than serde's "did not match any variant".
 impl<'de> Deserialize<'de> for BoardSpec {
@@ -64,11 +69,18 @@ pub struct ResolvedBoard {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub board_id: Option<String>,
     pub description: String,
+    /// The board's name with its variant, for messages, such as
+    /// "ULX3S (85K)".
+    pub name: String,
+    /// The chosen configuration's values, by dimension ID. Empty for a board
+    /// without dimensions.
+    pub variant: BTreeMap<String, String>,
+    /// The FPGA's catalog ID, when it is one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub fpga_id: Option<String>,
     pub fpga: FpgaDefinition,
-    pub default_variant: String,
-    pub variants: BTreeMap<String, ProgrammingVariant>,
+    /// How to program the board with the chosen configuration.
+    pub configuration: Configuration,
 }
 
 impl ResolvedBoard {
@@ -88,9 +100,27 @@ fn fpga_by_id(id: &str) -> Result<FpgaDefinition, ToolError> {
     })
 }
 
-/// Resolves a board input against the catalog. Unknown IDs and bad
-/// definitions are request errors.
-pub fn resolve(spec: &BoardSpec) -> Result<ResolvedBoard, ToolError> {
+/// Picks the configuration for a variant, and names the board with it.
+fn configure(
+    description: &str,
+    variants: &Variants,
+    variant: &VariantInput,
+) -> Result<(Configuration, String), ToolError> {
+    let c = variants
+        .select(variant)
+        .map_err(|e| ToolError::request(format!("variant: {e}.")))?;
+    let labels = c.labels(&variants.dimensions);
+    let name = if labels.is_empty() {
+        description.to_string()
+    } else {
+        format!("{description} ({})", labels.join(", "))
+    };
+    Ok((c.clone(), name))
+}
+
+/// Resolves a board input and its variant against the catalog. Unknown IDs,
+/// bad definitions and variants the board doesn't have are request errors.
+pub fn resolve(spec: &BoardSpec, variant: &VariantInput) -> Result<ResolvedBoard, ToolError> {
     match spec {
         BoardSpec::Id(id) => {
             let b = catalog::builtin().boards.get(id).ok_or_else(|| {
@@ -98,13 +128,19 @@ pub fn resolve(spec: &BoardSpec) -> Result<ResolvedBoard, ToolError> {
                     "{id:?} isn't a board in the catalog. Use get_catalog to list the boards, or give a full board definition."
                 ))
             })?;
+            let (configuration, name) = configure(&b.description, &b.variants, variant)?;
+            let fpga_id = configuration
+                .fpga_id
+                .clone()
+                .unwrap_or_else(|| b.fpga_id.clone());
             Ok(ResolvedBoard {
                 board_id: Some(id.clone()),
                 description: b.description.clone(),
-                fpga_id: Some(b.fpga_id.clone()),
-                fpga: fpga_by_id(&b.fpga_id)?,
-                default_variant: b.default_variant.clone(),
-                variants: b.variants.clone(),
+                name,
+                variant: configuration.when.clone(),
+                fpga: fpga_by_id(&fpga_id)?,
+                fpga_id: Some(fpga_id),
+                configuration,
             })
         }
         BoardSpec::Definition(d) => {
@@ -122,26 +158,28 @@ pub fn resolve(spec: &BoardSpec) -> Result<ResolvedBoard, ToolError> {
                     ));
                 }
             };
-            // Reuse the catalog's checks for variants.
-            let as_catalog = BoardDefinition {
-                description: d.description.clone(),
-                fpga_id: fpga_id.clone().unwrap_or_else(|| "custom".into()),
-                default_variant: d.default_variant.clone(),
-                variants: d.variants.clone(),
-                tested: false,
-                user_notes: None,
-                maintainer_notes: None,
-            };
-            as_catalog
+            d.variants
                 .validate()
                 .map_err(|e| ToolError::request(format!("Invalid board definition: {e}.")))?;
+            let (configuration, name) = configure(&d.description, &d.variants, variant)?;
+            let (fpga_id, fpga) = match &configuration.fpga_id {
+                None => (fpga_id, fpga),
+                Some(other) => {
+                    let f = fpga_by_id(other)?;
+                    catalog::check_same_pins(&fpga, &f).map_err(|e| {
+                        ToolError::request(format!("Invalid board definition: {other}: {e}."))
+                    })?;
+                    (Some(other.clone()), f)
+                }
+            };
             Ok(ResolvedBoard {
                 board_id: None,
                 description: d.description.clone(),
+                name,
+                variant: configuration.when.clone(),
                 fpga_id,
                 fpga,
-                default_variant: d.default_variant.clone(),
-                variants: d.variants.clone(),
+                configuration,
             })
         }
     }
@@ -156,24 +194,108 @@ mod tests {
         serde_json::from_value(v).map_err(|e| e.to_string())
     }
 
+    fn variant(v: serde_json::Value) -> VariantInput {
+        serde_json::from_value(v).unwrap()
+    }
+
+    fn id(s: &str) -> BoardSpec {
+        BoardSpec::Id(s.into())
+    }
+
     #[test]
     fn catalog_id() {
-        let b = resolve(&parse(json!("alhambra-ii")).unwrap()).unwrap();
+        let b = resolve(&parse(json!("alhambra-ii")).unwrap(), &VariantInput::new()).unwrap();
         assert_eq!(b.board_id.as_deref(), Some("alhambra-ii"));
         assert_eq!(b.fpga.nextpnr_device, "hx8k");
-        let err = resolve(&parse(json!("nope")).unwrap()).unwrap_err();
+        assert_eq!(b.name, "Alhambra II");
+        assert!(b.variant.is_empty());
+        let err = resolve(&parse(json!("nope")).unwrap(), &VariantInput::new()).unwrap_err();
         assert!(err.message.contains("get_catalog"), "{}", err.message);
+    }
+
+    #[test]
+    fn variants_pick_a_configuration() {
+        // The default is the first configuration.
+        let small = resolve(&id("ulx3s"), &VariantInput::new()).unwrap();
+        assert_eq!(small.variant, variant(json!({"size": "12k"})));
+        assert_eq!(small.fpga_id.as_deref(), Some("lfe5u-12f-6bg381c"));
+        assert_eq!(small.name, "ULX3S (12K)");
+        // A size changes the FPGA, and the checksum, so the build starts over.
+        let big = resolve(&id("ulx3s"), &variant(json!({"size": "85k"}))).unwrap();
+        assert_eq!(big.fpga_id.as_deref(), Some("lfe5u-85f-6bg381c"));
+        assert_eq!(big.fpga.nextpnr_device, "85k");
+        assert_ne!(small.checksum(), big.checksum());
+        // Memory changes only the programming, and still the checksum.
+        let flash = resolve(&id("icesugar-pro"), &VariantInput::new()).unwrap();
+        let ram = resolve(&id("icesugar-pro"), &variant(json!({"memory": "ram"}))).unwrap();
+        assert_eq!(flash.fpga, ram.fpga);
+        assert_ne!(flash.configuration.args, ram.configuration.args);
+        assert_ne!(flash.checksum(), ram.checksum());
+        assert_eq!(ram.name, "Icesugar Pro (RAM)");
+        // Errors name what exists.
+        let e = |b: &str, v| resolve(&id(b), &variant(v)).unwrap_err().message;
+        assert!(e("ulx3s", json!({"size": "99k"})).contains("12k, 25k, 45k, 85k"));
+        assert!(e("ulx3s", json!({"memory": "ram"})).contains("dimensions: size"));
+        assert!(e("alhambra-ii", json!({"size": "1k"})).contains("no variants"));
+    }
+
+    #[test]
+    fn partial_variants_and_missing_combinations() {
+        let variants: Variants = serde_json::from_value(json!({
+            "dimensions": [
+                {"id": "connection", "label": "Connection", "values": [
+                    {"id": "dfu", "label": "USB bootloader"}, {"id": "ft232h", "label": "FT232H cable"}]},
+                {"id": "memory", "label": "Memory", "values": [
+                    {"id": "flash", "label": "Flash"}, {"id": "ram", "label": "RAM"}]}
+            ],
+            "configurations": [
+                {"when": {"connection": "dfu", "memory": "flash"}, "programmer": "dfu-util",
+                 "args": "-D ${BITSTREAM}", "usb": {"vid": "1209", "pid": "5af0"}, "tested": true},
+                {"when": {"connection": "ft232h", "memory": "flash"}, "programmer": "openfpgaloader",
+                 "args": "-c ft232 -f ${BITSTREAM}", "usb": {"vid": "0403", "pid": "6014"}, "tested": true},
+                {"when": {"connection": "ft232h", "memory": "ram"}, "programmer": "openfpgaloader",
+                 "args": "-c ft232 ${BITSTREAM}", "usb": {"vid": "0403", "pid": "6014"}, "tested": true}
+            ]
+        }))
+        .unwrap();
+        variants.validate().unwrap();
+        // RAM alone picks the only configuration with it.
+        let c = variants.select(&variant(json!({"memory": "ram"}))).unwrap();
+        assert_eq!(c.args, "-c ft232 ${BITSTREAM}");
+        assert_eq!(c.labels(&variants.dimensions), ["FT232H cable", "RAM"]);
+        // A combination that isn't listed doesn't exist.
+        let e = variants
+            .select(&variant(json!({"connection": "dfu", "memory": "ram"})))
+            .unwrap_err();
+        assert!(e.contains("no configuration"), "{e}");
+        // The catalog's rules.
+        let mut bad = variants.clone();
+        bad.configurations[1].when.remove("memory");
+        assert!(bad.validate().unwrap_err().contains("every dimension"));
+        let mut bad = variants.clone();
+        bad.configurations[2].when = bad.configurations[1].when.clone();
+        assert!(bad.validate().is_err());
+        let mut bad = variants.clone();
+        bad.configurations.pop();
+        assert!(
+            bad.validate()
+                .unwrap_err()
+                .contains("no configuration uses ram")
+        );
+        let mut bad = variants;
+        bad.configurations.clear();
+        assert!(bad.validate().is_err());
     }
 
     fn custom(fpga: serde_json::Value) -> serde_json::Value {
         let mut v = json!({
             "description": "My board",
-            "default_variant": "flash",
-            "variants": {"flash": {
+            "variants": {"configurations": [{
                 "programmer": "openfpgaloader",
                 "args": "-b ice40_generic --vid ${VID} --pid ${PID} ${BITSTREAM}",
-                "usb": {"vid": "0403", "pid": "6010"}
-            }}
+                "usb": {"vid": "0403", "pid": "6010"},
+                "tested": false
+            }]}
         });
         for (k, val) in fpga.as_object().unwrap() {
             v[k] = val.clone();
@@ -183,7 +305,12 @@ mod tests {
 
     #[test]
     fn full_definitions() {
-        let by_id = resolve(&parse(custom(json!({"fpga_id": "ice40up5k-sg48"}))).unwrap()).unwrap();
+        let none = VariantInput::new();
+        let by_id = resolve(
+            &parse(custom(json!({"fpga_id": "ice40up5k-sg48"}))).unwrap(),
+            &none,
+        )
+        .unwrap();
         assert_eq!(by_id.fpga.nextpnr_device, "up5k");
         let inline = resolve(
             &parse(custom(json!({"fpga": {
@@ -191,16 +318,22 @@ mod tests {
                 "nextpnr_device": "hx1k", "nextpnr_package": "tq144"
             }})))
             .unwrap(),
+            &none,
         )
         .unwrap();
         assert_eq!(inline.fpga.package(), "tq144");
         assert_ne!(by_id.checksum(), inline.checksum());
         // Neither or both.
-        assert!(resolve(&parse(custom(json!({}))).unwrap()).is_err());
-        // A bad variant.
+        assert!(resolve(&parse(custom(json!({}))).unwrap(), &none).is_err());
+        // A bad configuration.
         let mut bad = custom(json!({"fpga_id": "ice40up5k-sg48"}));
-        bad["variants"]["flash"]["programmer"] = json!("tinyprog");
-        assert!(resolve(&parse(bad).unwrap()).is_err());
+        bad["variants"]["configurations"][0]["programmer"] = json!("tinyprog");
+        assert!(resolve(&parse(bad).unwrap(), &none).is_err());
+        // A configuration's FPGA needs the same pins as the board's.
+        let mut other = custom(json!({"fpga_id": "ice40up5k-sg48"}));
+        other["variants"]["configurations"][0]["fpga_id"] = json!("ice40hx4k-tq144-8k");
+        let e = resolve(&parse(other).unwrap(), &none).unwrap_err().message;
+        assert!(e.contains("package"), "{e}");
     }
 
     #[test]

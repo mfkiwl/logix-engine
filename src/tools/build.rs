@@ -9,7 +9,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::{Call, EngineTool};
-use crate::board::{self, BoardSpec};
+use crate::board::{self, BoardSpec, VariantInput};
 use crate::build::{self, BuildRequest, parse::ResourceUsage};
 use crate::errors::{Diagnostic, ToolError};
 use crate::paths;
@@ -41,6 +41,13 @@ pub struct BuildInput {
     /// The target board: a catalog ID such as alhambra-ii (get_catalog lists
     /// them), or a full board definition.
     pub board: BoardSpec,
+    /// The board's variant, such as {"size": "85k"} or {"memory": "ram"}:
+    /// values of the board's dimensions, which get_catalog lists with the
+    /// configurations that exist. The first configuration with these values
+    /// is used; omitted dimensions match any value. Omitted means the
+    /// board's first configuration.
+    #[serde(default)]
+    pub variant: VariantInput,
     /// Name of the top-level module, such as main.
     pub top_module: String,
     /// The folder with the design files, as an absolute path.
@@ -190,7 +197,7 @@ pub fn check_build_folder(build_folder: &str, src: &Path) -> Result<PathBuf, Too
 
 /// Checks the request and turns it into a BuildRequest.
 pub fn check(input: BuildInput) -> Result<BuildRequest, ToolError> {
-    let board = board::resolve(&input.board)?;
+    let board = board::resolve(&input.board, &input.variant)?;
     check_top_module(&input.top_module)?;
     check_defines(&input.defines)?;
     let src = check_source_folder(&input.source_folder)?;
@@ -238,7 +245,7 @@ mod tests {
     use crate::board::BoardSpec;
 
     fn board(id: &str) -> board::ResolvedBoard {
-        board::resolve(&BoardSpec::Id(id.to_string())).unwrap()
+        board::resolve(&BoardSpec::Id(id.to_string()), &Default::default()).unwrap()
     }
 
     #[test]
@@ -257,7 +264,7 @@ mod tests {
         );
         assert!(check_constraint_extension(&board("icesugar-pro"), "main.lpf").is_ok());
         assert!(check_constraint_extension(&board("sipeed-tang-nano-9k"), "main.cst").is_ok());
-        assert!(check_constraint_extension(&board("arty-a7-35t"), "main.xdc").is_ok());
-        assert!(check_constraint_extension(&board("arty-a7-35t"), "main.pcf").is_err());
+        assert!(check_constraint_extension(&board("arty-a7"), "main.xdc").is_ok());
+        assert!(check_constraint_extension(&board("arty-a7"), "main.pcf").is_err());
     }
 }

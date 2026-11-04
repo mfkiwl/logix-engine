@@ -27,9 +27,11 @@ The Type columns in this document use these logical types. Each maps to a JSON t
 | build folder path | string | An absolute path that satisfies the path keyword rules |
 | catalog ID | string | Lowercase letters, digits and hyphens |
 | board specification | string or object | A catalog ID, or a full board definition |
-| board definition | object | A board entry in the catalog format: its `description`, its FPGA as `fpga_id`, a map of programming variants keyed by variant name (`variants`), and the name of its default variant (`default_variant`). Catalog entries also have `tested` and optional `user_notes` (see [Catalog contents](#get_catalog-tool)); board definitions in requests don't take them |
+| board definition | object | A board entry in the catalog format: its `description`, its FPGA as `fpga_id`, and its `variants` |
+| variants | object | A board's choices and how to program it with each: `dimensions`, a list of the kinds of choice the board offers in the order to show them, such as FPGA size, connection and memory (omitted for a board with no choices), and `configurations`, the combinations that exist, the first being the board's default. A dimension has an `id` (such as `size`), a `label` for people (such as "FPGA size") and its `values`, each with an `id` (such as `85k`), a `label` (such as "85K") and optional `help` text. Every configuration gives one declared value for every dimension, no two give the same values, every value is used, and combinations that aren't listed don't exist. Every configuration works with the same project: the same sources and constraint file |
+| variant | object | A choice of configuration: values of the board's dimensions by dimension ID, such as `{"size": "85k", "memory": "ram"}`. The first configuration with these values is used, and omitted dimensions match any value, so `{}` means the board's default configuration. An unknown dimension or value, or values no configuration has, are a request error that lists what exists |
 | FPGA definition | object | An FPGA entry in the catalog format: its `architecture` (`ice40`, `ecp5`, `gowin` or `xilinx`), `part_number`, `size`, and the toolchain parameters: `nextpnr_device` for every architecture; `nextpnr_package` for iCE40 and ECP5; `nextpnr_speed`, the speed grade, for ECP5 only; for Gowin only, `packer_device` (the device `gowin_pack` uses) and, when needed, `nextpnr_family` and `yosys_family`; and for Xilinx only, `yosys_arch` (such as `xc7`) and `prjxray_family` (the Project X-Ray database folder, such as `artix7`). A field that doesn't belong to the architecture is a request error |
-| programming variant | object | One way to program a board, such as flash or sram, or a particular cable, such as FT232 or FT2232. It names the programmer to run, such as `openfpgaloader`, and gives the full argument template for it, with variables such as `${VID}`, `${PID}`, `${BUS}`, `${DEV}`, `${SERIAL}` and `${BITSTREAM}`, and the USB filter that finds the device: `vid`, `pid`, an optional `product_regex`, a regular expression the device's product name must match, for boards that share USB IDs, and an optional `serial_regex`, a regular expression the device's serial number must match, for boards that share USB IDs and product names but whose serial numbers tell them apart. The engine maps the programmer name to its executable and the package that provides it, so there are no separate programmer definitions. The engine supports the programmers `openfpgaloader`, `iceprog`, `dfu-util` and `icesprog`, all from the toolchain package |
+| configuration | object | One combination of a board's dimension values (`when`, by dimension ID; omitted for a board without dimensions) and how to program the board with it. It can give its own `fpga_id`, such as a larger size of the board's FPGA, with the same architecture and package so the same constraint file works. It names the programmer to run, such as `openfpgaloader`, and gives the full argument template for it, with variables such as `${VID}`, `${PID}`, `${BUS}`, `${DEV}`, `${SERIAL}` and `${BITSTREAM}`, and the USB filter that finds the device: `vid`, `pid`, an optional `product_regex`, a regular expression the device's product name must match, for boards that share USB IDs, and an optional `serial_regex`, a regular expression the device's serial number must match, for boards that share USB IDs and product names but whose serial numbers tell them apart. The engine maps the programmer name to its executable and the package that provides it, so there are no separate programmer definitions. The engine supports the programmers `openfpgaloader`, `iceprog`, `dfu-util` and `icesprog`, all from the toolchain package. Catalog configurations also have `tested` and optional `user_notes` (see [Catalog contents](#get_catalog-tool)); in requests, `tested` is required and `user_notes` ignored |
 | catalog query | object | Selects entries from one catalog section. It has `fetch`, a boolean that defaults to false, and `ids`, an optional list of catalog IDs. When `fetch` is true, the section is returned with only the listed IDs, or with all its entries when `ids` is omitted. An ID that isn't in the section is a request error |
 | date tag | string | `yyyy-mm-dd` |
 | USB ID | string | A 16-bit USB vendor or product ID, written as exactly four lowercase hexadecimal digits, such as `1d50`. Inputs are matched without regard to case |
@@ -56,7 +58,9 @@ Operations that work on a design take these fields. Paths are absolute unless no
 
 ### Board specification
 
-The `board` field is either a catalog ID, such as `"icestick"`, or a full definition object in the catalog format. A full definition can name its FPGA by catalog ID or include its full definition. Its programming variants are always written out in full.
+The `board` field is either a catalog ID, such as `"icestick"`, or a full definition object in the catalog format. A full definition can name its FPGA by catalog ID or include its full definition. Its configurations are always written out in full, and a configuration's `fpga_id` must be a catalog ID.
+
+Tools that take a board also take an optional `variant`, which picks one of the board's configurations. The build record keeps the chosen configuration, and a different variant always means a full rebuild, like a different board, even when the choice can't change the bitstream, such as flash or RAM. `program_board` programs with the configuration in the build record, so the upload always matches the build.
 
 ### Results and errors
 
@@ -190,6 +194,7 @@ It runs Verilator with Apio's options, so it reports the same problems: `--lint-
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `board` | board specification | Yes | The target board. It selects the FPGA's primitive models |
+| `variant` | variant | No | The board's configuration. Omitted means its first |
 | `top_module` | text | No | Name of the top-level module. When omitted, Verilator checks every module that no other module uses |
 | `source_folder`, `source_files` | See folder fields in [Table 2](#folders) | Yes | The design files |
 | `testbench_files` | list of relative paths | No | Testbenches to check too, relative to the source folder. Defaults to none. A file may be listed only once in `source_files` and `testbench_files` together |
@@ -253,6 +258,7 @@ It uses Apio's commands: `iverilog -g2012 -o <build folder>/<testbench>.out`, th
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `board` | board specification | Yes | The target board. It selects the FPGA's primitive models |
+| `variant` | variant | No | The board's configuration. Omitted means its first |
 | `source_folder`, `source_files`, `build_folder` | See folder fields in [Table 2](#folders) | Yes | The design files, without testbenches |
 | `testbench_files` | list of relative paths | Yes | The testbenches to run, in order, relative to the source folder. At least one. A file may be listed only once in `source_files` and `testbench_files` together |
 | `defines` | map of text | No | Macro definitions, as in the [build tool](#build-tool). `APIO_SIM` is always defined as `0` |
@@ -342,6 +348,7 @@ This is the one case where the engine creates or deletes a file in the source fo
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `board` | board specification | Yes | The target board. It selects the FPGA's primitive models |
+| `variant` | variant | No | The board's configuration. Omitted means its first |
 | `source_folder`, `source_files`, `build_folder` | See folder fields in [Table 2](#folders) | Yes | The design files, without testbenches |
 | `testbench_file` | relative path | Yes | The testbench to simulate, relative to the source folder |
 | `layout_file` | relative path | No | The GTKWave layout file, relative to the source folder, ending in `.gtkw`. Its folder must exist; the file may not. When omitted, the layout goes into the build folder |
@@ -578,6 +585,7 @@ It runs the same commands as Apio, so the bitstreams match Apio's for the same p
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `board` | board specification | Yes | The target board |
+| `variant` | variant | No | The board's configuration. Omitted means its first |
 | `top_module` | text | Yes | Name of the top-level module |
 | `source_folder`, `source_files`, `constraint_file`, `build_folder` | See folder fields in [Table 2](#folders) | Yes | The constraint file is required |
 | `defines` | map of text | No | Verilog and SystemVerilog macro definitions, from name to value, such as `{ "USE_PLL": "", "WIDTH": "8" }`. Names follow Verilog identifier rules, and a bad name is a request error. An empty value defines the macro with no text, for use with `` `ifdef ``. The engine always passes each value explicitly, so every tool sees the same text, and passes them in name order, so the same request always gives the same tool commands. `SYNTHESIZE` is always defined, as in Apio |
@@ -648,13 +656,13 @@ Output:
 
 ## program_board tool
 
-Programs a bitstream into the board it was built for. The `program_board` tool takes no board input. It reads the board spec from the build record in the build folder, so the board always matches the build. The engine finds exactly one matching device, as described in the [device selection](requirements.md#device-selection) requirements, fills in the argument template of the board's default programming variant and runs it.
+Programs a bitstream into the board it was built for. The `program_board` tool takes no board input. It reads the board spec from the build record in the build folder, so the board always matches the build. The engine finds exactly one matching device, as described in the [device selection](requirements.md#device-selection) requirements, fills in the argument template of the build's configuration and runs it.
 
 **Note:** unlike `apio upload`, the `program_board` tool doesn't build. It programs the bitstream that is already in the build folder. A host that wants to build and program the board in one step calls `build` first, and calls `program_board` only if the build succeeded.
 
-**How it runs:** the engine reads the board from the build record, finds the one matching device, fills in the variant's argument template, splitting it into words first so paths with spaces stay whole, and runs the programmer in the build folder. Progress has the phases "Finding device", "Writing flash" and "Verifying", with percentages read from the programmer's output. With `programmer_command` the phases are "Finding device" and "Programming", without percentages. A programmer that fails because the device is missing or can't be opened gives a setup error with `connect_board` or `fix_device_permissions`; other failures are tool failures with the programmer's output in `details`. The build record's board checksum is checked first, so a damaged record is a request error.
+**How it runs:** the engine reads the board from the build record, finds the one matching device, fills in the configuration's argument template, splitting it into words first so paths with spaces stay whole, and runs the programmer in the build folder. Progress has the phases "Finding device", "Writing flash" and "Verifying", with percentages read from the programmer's output. With `programmer_command` the phases are "Finding device" and "Programming", without percentages. A programmer that fails because the device is missing or can't be opened gives a setup error with `connect_board` or `fix_device_permissions`; other failures are tool failures with the programmer's output in `details`. The build record's board checksum is checked first, so a damaged record is a request error.
 
-**Flash or SRAM:** the board's default programming variant decides whether the bitstream goes to flash, where it stays after power-off, or to SRAM, where it is lost at power-off. The tool has no input yet for choosing another variant.
+**Flash or RAM:** the build's configuration decides whether the bitstream goes to flash, where it stays after power-off, or to RAM, where it is lost at power-off. Boards that offer both have a `memory` dimension; the variant is chosen when building.
 
 **Table 9.** program_board tool inputs
 
@@ -662,7 +670,7 @@ Programs a bitstream into the board it was built for. The `program_board` tool t
 | --- | --- | --- | --- |
 | `build_folder` | build folder path | Yes | The build folder of a successful build. It holds the bitstream and the build record |
 | `serial_number` | text | No | Narrows the match to the device with this serial number |
-| `programmer_command` | text | No | A custom command template that replaces the default variant's whole command, like Apio's `programmer_cmd`. Its first word is a program from the toolchain package, such as `openFPGALoader`, or an absolute path. It uses the same variables as argument templates and must use `${BITSTREAM}` |
+| `programmer_command` | text | No | A custom command template that replaces the configuration's whole command, like Apio's `programmer_cmd`. Its first word is a program from the toolchain package, such as `openFPGALoader`, or an absolute path. It uses the same variables as argument templates and must use `${BITSTREAM}` |
 | `verbose` | boolean | No | Let the programmer print more detail. Not applied to a `programmer_command`. Defaults to false |
 
 **Table 10.** program_board tool outputs
@@ -693,13 +701,14 @@ Programs a bitstream into the board it was built for. The `program_board` tool t
 
 ## list_devices tool
 
-Lists the connected USB devices, optionally marking the ones that match the USB filter of a board's default programming variant. The engine reads USB devices with libusb, built into the engine, the same library the programmers use, so the bus and device numbers mean the same to both. Devices are sorted by vendor ID, product ID, bus and device number. A device matches a filter when its USB IDs are equal and, when the filter has `product_regex`, its product name contains a match for it. Names that can't be read, such as for a device that can't be opened, are left out.
+Lists the connected USB devices, optionally marking the ones that match the USB filter of a board's configuration. The engine reads USB devices with libusb, built into the engine, the same library the programmers use, so the bus and device numbers mean the same to both. Devices are sorted by vendor ID, product ID, bus and device number. A device matches a filter when its USB IDs are equal and, when the filter has `product_regex`, its product name contains a match for it. Names that can't be read, such as for a device that can't be opened, are left out.
 
 **Table 11.** list_devices tool inputs
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `board` | board specification | No | When given, each device reports whether it matches the USB filter of this board's default variant |
+| `board` | board specification | No | When given, each device reports whether it matches the USB filter of this board's configuration |
+| `variant` | variant | No | The board's configuration whose USB filter is matched. Omitted means its first |
 
 **Table 12.** list_devices tool outputs
 
@@ -772,24 +781,45 @@ Output:
     "alhambra-ii": {
       "description": "Alhambra II",
       "fpga_id": "ice40hx4k-tq144-8k",
-      "default_variant": "flash",
       "variants": {
-        "flash": {
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -b ice40_generic --vid ${VID} --pid ${PID} --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
-          "usb": { "vid": "0403", "pid": "6010", "product_regex": "^Alhambra II.*" }
-        }
-      },
-      "tested": true
+        "configurations": [
+          {
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -b ice40_generic --vid ${VID} --pid ${PID} --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+            "usb": { "vid": "0403", "pid": "6010", "product_regex": "^Alhambra II.*" },
+            "tested": true
+          }
+        ]
+      }
     }
   },
   "fpgas": {}
 }
 ```
 
-**Catalog contents.** The catalog is data in the engine's repo, `catalog/boards.json` and `catalog/fpgas.json`, first imported from Apio's definitions. It has every iCE40, ECP5, Gowin and Xilinx FPGA (Xilinx FPGAs come from Apio's openxc7 package), and 95 boards: 31 iCE40, 33 ECP5, 8 Gowin and 23 Xilinx, programmed with `openfpgaloader`, `iceprog`, `dfu-util` or `icesprog`. Every board variant has a USB filter, whatever its architecture, as in Apio. A few of Apio's boards have none, mostly boards programmed through a cable named with openFPGALoader's `-c` option, such as `-c ft2232`. The import gives those the cable's default USB IDs in openFPGALoader, so the engine can still find the device.
+A board with choices, such as the ULX3S, which comes in four FPGA sizes (configurations shortened):
 
-**Trust and notes.** Each catalog board has `tested`: true when its programming is known to work, because it was tried on the board or is used unchanged by a tool that people rely on; false when it hasn't been tried on hardware, such as a board moved to a different programmer. Optional `user_notes` give warnings and missing information for the board's users, such as a USB filter that also matches other boards, or a step needed before programming. The catalog file also keeps `maintainer_notes`, where each definition's settings come from and why they changed, which `get_catalog` doesn't return. A USB filter can't always tell one board model from another: boards that use the same USB chip and report the same names look alike to the engine. Hosts can show both fields where users pick a board.
+```json
+{
+  "description": "ULX3S",
+  "fpga_id": "lfe5u-12f-6bg381c",
+  "variants": {
+    "dimensions": [
+      { "id": "size", "label": "FPGA size",
+        "values": [ { "id": "12k", "label": "12K" }, { "id": "25k", "label": "25K" },
+                    { "id": "45k", "label": "45K" }, { "id": "85k", "label": "85K" } ] }
+    ],
+    "configurations": [
+      { "when": { "size": "12k" }, "programmer": "openfpgaloader", "args": "...", "usb": { "vid": "0403", "pid": "6015" }, "tested": false },
+      { "when": { "size": "25k" }, "fpga_id": "lfe5u-25f-6bg381c", "programmer": "openfpgaloader", "args": "...", "usb": { "vid": "0403", "pid": "6015" }, "tested": false }
+    ]
+  }
+}
+```
+
+**Catalog contents.** The catalog is data in the engine's repo, `catalog/boards.json` and `catalog/fpgas.json`, first imported from Apio's definitions. It has every iCE40, ECP5, Gowin and Xilinx FPGA (Xilinx FPGAs come from Apio's openxc7 package), and 78 boards: 31 iCE40, 17 ECP5, 8 Gowin and 22 Xilinx, with 95 configurations in all, programmed with `openfpgaloader`, `iceprog`, `dfu-util` or `icesprog`. Ten boards have dimensions: FPGA size (Arty A7, ULX3S, OrangeCrab r0.2, ECP5-Mini), connection (ColorLight 5A-75E V7.1 and i9 v7.2, FleaFPGA Ohm, ButterStick r1.0) or memory (iCESugar-Pro, ColorLight i5). Every configuration has a USB filter, whatever its architecture, as in Apio. A few of Apio's boards have none, mostly boards programmed through a cable named with openFPGALoader's `-c` option, such as `-c ft2232`. The import gives those the cable's default USB IDs in openFPGALoader, so the engine can still find the device.
+
+**Trust and notes.** Each catalog configuration has `tested`: true when its programming is known to work, because it was tried on the board or is used unchanged by a tool that people rely on; false when it hasn't been tried on hardware, such as a board moved to a different programmer. Optional `user_notes` give warnings and missing information for its users, such as a USB filter that also matches other boards, or a step needed before programming. The catalog file also keeps `maintainer_notes`, where each configuration's settings come from and why they changed, which `get_catalog` doesn't return. A USB filter can't always tell one board model from another: boards that use the same USB chip and report the same names look alike to the engine. Hosts can show both fields where users pick a board.
 
 ## get_engine_info tool
 
@@ -925,4 +955,3 @@ Output:
 - **Extra tool arguments for build.** Apio lets users pass extra options to the synthesis and place-and-route tools, so the build tool likely needs something similar. One option is to define abstract build phases, such as synthesis, place and route, and bitstream, offer portable options such as a target frequency and a seed, and add extra arguments per phase as an explicit escape hatch, passed unchanged to whatever tool runs that phase. The build output would then report which tool and version ran each phase.
 - **Include folders for build.** Some projects keep header files in a separate folder. An optional `include_folders` input, a list of relative paths under `source_folder`, would let the host name extra places to look up included files.
 - **Separating simulation from viewing.** Today `simulate` writes the waveform and also opens GTKWave. Longer term, `simulate` could only write the waveform and return the top-level signals, with opening a viewer as an optional step or its own tool. GTKWave layouts would then be one viewer's concern, and other viewers, such as Surfer or a waveform view inside an IDE, would fit the same way. It only adds fields and tools, so it breaks nothing.
-- **Choosing a programming variant** (decided: replaced by a `variant` input with dimension values on every tool that takes a board; see requirements.md, Boards and variants). Boards already define several named programming variants, such as flash and sram, or different cables, such as FT232 and FT2232, each with its own argument template and USB filter. For now, `program_board` and `list_devices` always use the default variant. Later, an optional input could name another variant, and asking for one the board doesn't have would be a request error. Adding it later doesn't break existing hosts.
