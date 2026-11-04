@@ -743,10 +743,14 @@ mod tests {
             ("colorlight-5a-75e-v71", "connection", 3),
             ("colorlight-i9-v7-2", "connection", 4),
             ("fleafpga-ohm", "connection", 3),
-            ("butterstick-r10-2g-85k", "connection", 3),
         ] {
             assert_eq!(dims(id), [(dim.to_string(), n)], "{id}");
         }
+        // Two dimensions: the bootloader writes flash, the cables RAM.
+        assert_eq!(
+            dims("butterstick-r10-2g-85k"),
+            [("connection".to_string(), 3), ("memory".to_string(), 2)]
+        );
         let with_dimensions = c
             .boards
             .values()

@@ -203,8 +203,28 @@ mod tests {
     fn variants_pick_a_configuration() {
         // The default is the first configuration.
         let dfu = resolve(&id("butterstick-r10-2g-85k"), &VariantInput::new()).unwrap();
-        assert_eq!(dfu.variant, variant(json!({"connection": "dfu"})));
-        assert_eq!(dfu.name, "butterstick r1.0 (USB bootloader)");
+        assert_eq!(
+            dfu.variant,
+            variant(json!({"connection": "dfu", "memory": "flash"}))
+        );
+        assert_eq!(dfu.name, "butterstick r1.0 (USB bootloader, Flash)");
+        // RAM alone picks the first cable, the first configuration with it.
+        let ram = resolve(
+            &id("butterstick-r10-2g-85k"),
+            &variant(json!({"memory": "ram"})),
+        )
+        .unwrap();
+        assert_eq!(
+            ram.variant,
+            variant(json!({"connection": "ft2232h", "memory": "ram"}))
+        );
+        // The bootloader can't write RAM.
+        let e = resolve(
+            &id("butterstick-r10-2g-85k"),
+            &variant(json!({"connection": "dfu", "memory": "ram"})),
+        )
+        .unwrap_err();
+        assert!(e.message.contains("no configuration"), "{}", e.message);
         let cable = resolve(
             &id("butterstick-r10-2g-85k"),
             &variant(json!({"connection": "ft232h"})),

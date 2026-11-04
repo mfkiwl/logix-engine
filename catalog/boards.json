@@ -250,12 +250,29 @@
                 "label": "FT232H cable"
               }
             ]
+          },
+          {
+            "id": "memory",
+            "label": "Memory",
+            "values": [
+              {
+                "id": "flash",
+                "label": "Flash",
+                "help": "Kept when the board is powered off."
+              },
+              {
+                "id": "ram",
+                "label": "RAM",
+                "help": "Faster to upload; lost when the board is powered off."
+              }
+            ]
           }
         ],
         "configurations": [
           {
             "when": {
-              "connection": "dfu"
+              "connection": "dfu",
+              "memory": "flash"
             },
             "programmer": "dfu-util",
             "args": "-d ${VID}:${PID} -a 0 -D ${BITSTREAM} --reset",
@@ -269,7 +286,8 @@
           },
           {
             "when": {
-              "connection": "ft2232h"
+              "connection": "ft2232h",
+              "memory": "ram"
             },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
@@ -281,7 +299,8 @@
           },
           {
             "when": {
-              "connection": "ft232h"
+              "connection": "ft232h",
+              "memory": "ram"
             },
             "programmer": "openfpgaloader",
             "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
