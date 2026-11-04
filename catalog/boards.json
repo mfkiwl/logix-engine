@@ -285,7 +285,7 @@
               "product_regex": "^butterstick (dfu v1.1)"
             },
             "tested": true,
-            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+            "user_notes": "Programming through the USB bootloader needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
           },
           {
             "when": {
@@ -788,7 +788,7 @@
               "product_regex": "^Fomu Hacker running DFU Bootloader v1.8.8"
             },
             "tested": true,
-            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+            "user_notes": "Programming through the USB bootloader needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
           }
         ]
       }
@@ -897,7 +897,7 @@
               "product_regex": "^iCEBreaker bitsy v0.*"
             },
             "tested": true,
-            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+            "user_notes": "Programming through the USB bootloader needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
           }
         ]
       }
@@ -916,7 +916,7 @@
               "product_regex": "^iCEBreaker bitsy1.*"
             },
             "tested": true,
-            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+            "user_notes": "Programming through the USB bootloader needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
           }
         ]
       }
@@ -1241,7 +1241,7 @@
               "product_regex": "^OrangeCrab r0.2 DFU bootloader"
             },
             "tested": true,
-            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the other OrangeCrab r0.2 size (25K or 85K), so the engine can't tell which one is connected."
+            "user_notes": "Programming through the USB bootloader needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the other OrangeCrab r0.2 size (25K or 85K), so the engine can't tell which one is connected."
           }
         ]
       }
@@ -1260,7 +1260,7 @@
               "product_regex": "^OrangeCrab r0.2 DFU bootloader"
             },
             "tested": true,
-            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the other OrangeCrab r0.2 size (25K or 85K), so the engine can't tell which one is connected."
+            "user_notes": "Programming through the USB bootloader needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the other OrangeCrab r0.2 size (25K or 85K), so the engine can't tell which one is connected."
           }
         ]
       }
@@ -1279,7 +1279,7 @@
               "product_regex": "^DFU flash"
             },
             "tested": true,
-            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+            "user_notes": "Programming through the USB bootloader needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
           }
         ]
       }
@@ -1451,7 +1451,7 @@
               "product_regex": "^Soan Papdi.*"
             },
             "tested": true,
-            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the Soan-Papdi-Mini."
+            "user_notes": "Programming through the USB bootloader needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the Soan-Papdi-Mini."
           }
         ]
       }
@@ -1470,7 +1470,7 @@
               "product_regex": "^Soan Papdi Mini.*"
             },
             "tested": true,
-            "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+            "user_notes": "Programming through the USB bootloader needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
           }
         ]
       }
