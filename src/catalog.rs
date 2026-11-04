@@ -368,7 +368,7 @@ impl Configuration {
     }
 
     /// The configuration's values as people read them, such as
-    /// "FT232H cable, RAM", in the dimensions' order. Empty without
+    /// "FT232H adapter, RAM", in the dimensions' order. Empty without
     /// dimensions.
     pub fn labels(&self, dimensions: &[Dimension]) -> Vec<String> {
         dimensions

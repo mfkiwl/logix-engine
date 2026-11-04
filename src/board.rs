@@ -254,7 +254,7 @@ mod tests {
         let variants: Variants = serde_json::from_value(json!({
             "dimensions": [
                 {"id": "connection", "label": "Connection", "values": [
-                    {"id": "dfu", "label": "USB bootloader"}, {"id": "ft232h", "label": "FT232H cable"}]},
+                    {"id": "dfu", "label": "USB bootloader"}, {"id": "ft232h", "label": "FT232H adapter"}]},
                 {"id": "memory", "label": "Memory", "values": [
                     {"id": "flash", "label": "Flash"}, {"id": "ram", "label": "RAM"}]}
             ],
@@ -272,7 +272,7 @@ mod tests {
         // RAM alone picks the only configuration with it.
         let c = variants.select(&variant(json!({"memory": "ram"}))).unwrap();
         assert_eq!(c.args, "-c ft232 ${BITSTREAM}");
-        assert_eq!(c.labels(&variants.dimensions), ["FT232H cable", "RAM"]);
+        assert_eq!(c.labels(&variants.dimensions), ["FT232H adapter", "RAM"]);
         // A combination that isn't listed doesn't exist.
         let e = variants
             .select(&variant(json!({"connection": "dfu", "memory": "ram"})))

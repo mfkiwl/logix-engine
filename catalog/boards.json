@@ -239,15 +239,18 @@
             "values": [
               {
                 "id": "dfu",
-                "label": "USB bootloader"
+                "label": "USB bootloader",
+                "help": "The board's own USB port, with the board in its bootloader mode."
               },
               {
                 "id": "ft2232h",
-                "label": "FT2232H cable"
+                "label": "FT2232H adapter",
+                "help": "A USB adapter with an FTDI FT2232H chip, connected to the board's JTAG pins."
               },
               {
                 "id": "ft232h",
-                "label": "FT232H cable"
+                "label": "FT232H adapter",
+                "help": "A USB adapter with an FTDI FT232H chip, connected to the board's JTAG pins."
               }
             ]
           },
@@ -409,15 +412,18 @@
             "values": [
               {
                 "id": "ft2232h",
-                "label": "FT2232H cable"
+                "label": "FT2232H adapter",
+                "help": "A USB adapter with an FTDI FT2232H chip, connected to the board's JTAG pins."
               },
               {
                 "id": "ft232h",
-                "label": "FT232H cable"
+                "label": "FT232H adapter",
+                "help": "A USB adapter with an FTDI FT232H chip, connected to the board's JTAG pins."
               },
               {
                 "id": "usb-blaster",
-                "label": "USB-Blaster cable"
+                "label": "USB-Blaster",
+                "help": "An Altera USB-Blaster or compatible adapter, connected to the board's JTAG pins."
               }
             ]
           }
@@ -525,19 +531,23 @@
             "values": [
               {
                 "id": "cmsis-dap",
-                "label": "CMSIS-DAP cable"
+                "label": "CMSIS-DAP adapter",
+                "help": "A CMSIS-DAP (DAPLink) USB adapter, connected to the board's JTAG pins."
               },
               {
                 "id": "ft2232h",
-                "label": "FT2232H cable"
+                "label": "FT2232H adapter",
+                "help": "A USB adapter with an FTDI FT2232H chip, connected to the board's JTAG pins."
               },
               {
                 "id": "ft232h",
-                "label": "FT232H cable"
+                "label": "FT232H adapter",
+                "help": "A USB adapter with an FTDI FT232H chip, connected to the board's JTAG pins."
               },
               {
                 "id": "usb-blaster",
-                "label": "USB-Blaster cable"
+                "label": "USB-Blaster",
+                "help": "An Altera USB-Blaster or compatible adapter, connected to the board's JTAG pins."
               }
             ]
           }
@@ -708,15 +718,18 @@
             "values": [
               {
                 "id": "ft2232h",
-                "label": "FT2232H cable"
+                "label": "FT2232H adapter",
+                "help": "A USB adapter with an FTDI FT2232H chip, connected to the board's JTAG pins."
               },
               {
                 "id": "ft232h",
-                "label": "FT232H cable"
+                "label": "FT232H adapter",
+                "help": "A USB adapter with an FTDI FT232H chip, connected to the board's JTAG pins."
               },
               {
                 "id": "usb-blaster",
-                "label": "USB-Blaster cable"
+                "label": "USB-Blaster",
+                "help": "An Altera USB-Blaster or compatible adapter, connected to the board's JTAG pins."
               }
             ]
           }
