@@ -736,6 +736,33 @@ mod tests {
     }
 
     #[test]
+    fn ftdi_commands_name_the_chosen_device() {
+        // openFPGALoader's FTDI drivers open the device by bus and address
+        // when told, so every such command names the device the engine
+        // chose; otherwise openFPGALoader would open the first one with the
+        // USB IDs, and the engine would refuse when several are connected.
+        // (Numato's 2a19 cables are FTDI chips too. USB-Blaster and
+        // CMSIS-DAP can't be told, so they keep that refusal.)
+        let mut checked = 0;
+        for (name, b) in &builtin().boards {
+            for c in &b.variants.configurations {
+                if c.programmer == "openfpgaloader"
+                    && ["0403", "2a19"].contains(&c.usb.vid.as_str())
+                {
+                    assert!(
+                        c.args.contains("--busdev-num ${BUS}:${DEV}"),
+                        "{name} {:?}: {}",
+                        c.when,
+                        c.args
+                    );
+                    checked += 1;
+                }
+            }
+        }
+        assert!(checked > 70, "{checked}");
+    }
+
+    #[test]
     fn builtin_catalog_has_every_architectures_boards() {
         let c = builtin();
         let count = |a: Architecture| {

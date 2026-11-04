@@ -12,13 +12,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board alchitry_au --write-flash ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board alchitry_au --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": false,
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a35tftg256, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a35tftg256, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -26,12 +26,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board alchitry_au ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board alchitry_au --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -47,13 +48,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board alchitry_au_plus --write-flash ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board alchitry_au_plus --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": false,
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a100tftg256, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a100tftg256, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -61,12 +62,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board alchitry_au_plus ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board alchitry_au_plus --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -126,13 +128,14 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -f -c ft232 --fpga-part xc7a35t ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -f -c ft232 --fpga-part xc7a35t --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6014",
               "product_regex": "^Digilent USB Device"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -170,13 +173,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board arty_a7_100t --write-flash ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board arty_a7_100t --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": false,
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a100tcsg324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a100tcsg324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -184,12 +187,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board arty_a7_100t ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board arty_a7_100t --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -205,14 +209,14 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board arty_a7_35t --write-flash ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board arty_a7_35t --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010",
               "product_regex": "^Digilent USB Device"
             },
             "tested": false,
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a35tcsg324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. USB filter: product_regex from a real Arty A7-35T (FTDI 0403:6010, product \"Digilent USB Device\", manufacturer \"Digilent\"), as the Basys3's; it lets hosts suggest the Arty for that device. Other Digilent boards likely report the same name but weren't checked, so they keep the chip ids only."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a35tcsg324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. USB filter: product_regex from a real Arty A7-35T (FTDI 0403:6010, product \"Digilent USB Device\", manufacturer \"Digilent\"), as the Basys3's; it lets hosts suggest the Arty for that device. Other Digilent boards likely report the same name but weren't checked, so they keep the chip ids only. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -220,14 +224,14 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board arty_a7_35t ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board arty_a7_35t --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010",
               "product_regex": "^Digilent USB Device"
             },
             "tested": true,
-            "maintainer_notes": "USB filter: product_regex from a real Arty A7-35T (FTDI 0403:6010, product \"Digilent USB Device\", manufacturer \"Digilent\"), as the Basys3's; it lets hosts suggest the Arty for that device. Other Digilent boards likely report the same name but weren't checked, so they keep the chip ids only."
+            "maintainer_notes": "USB filter: product_regex from a real Arty A7-35T (FTDI 0403:6010, product \"Digilent USB Device\", manufacturer \"Digilent\"), as the Basys3's; it lets hosts suggest the Arty for that device. Other Digilent boards likely report the same name but weren't checked, so they keep the chip ids only. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -243,13 +247,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board arty_s7_25 --write-flash ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board arty_s7_25 --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": false,
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7s25csga324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7s25csga324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -257,12 +261,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board arty_s7_25 ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board arty_s7_25 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -278,13 +283,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board arty_s7_50 --write-flash ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board arty_s7_50 --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": false,
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7s50csga324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7s50csga324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -292,12 +297,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board arty_s7_50 ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board arty_s7_50 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -335,14 +341,14 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board basys3 --write-flash ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board basys3 --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010",
               "product_regex": "^Digilent USB Device"
             },
             "tested": false,
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a35tcpg236, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a35tcpg236, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -350,13 +356,14 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board basys3 ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board basys3 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010",
               "product_regex": "^Digilent USB Device"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -372,12 +379,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -b brs-100-gw1nr9 -f ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -b brs-100-gw1nr9 -f --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -408,12 +416,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -421,12 +430,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6014"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -442,13 +452,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board cmoda7_35t --write-flash ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board cmoda7_35t --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": false,
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a35tcpg236, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a35tcpg236, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -456,12 +466,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board cmoda7_35t ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board cmoda7_35t --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -477,14 +488,14 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --unprotect-flash --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --unprotect-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": false,
             "user_notes": "Writing the flash replaces the firmware the board came with.",
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -492,12 +503,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -513,14 +525,14 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --unprotect-flash --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --unprotect-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": false,
             "user_notes": "Writing the flash replaces the firmware the board came with.",
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -528,12 +540,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -549,14 +562,14 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --unprotect-flash --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --unprotect-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": false,
             "user_notes": "Writing the flash replaces the firmware the board came with.",
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -564,12 +577,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -585,14 +599,14 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --unprotect-flash --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --unprotect-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": false,
             "user_notes": "Writing the flash replaces the firmware the board came with.",
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -600,12 +614,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -621,14 +636,14 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --unprotect-flash --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --unprotect-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": false,
             "user_notes": "Writing the flash replaces the firmware the board came with.",
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -636,14 +651,14 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft232 -v --write-flash --unprotect-flash --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft232 -v --write-flash --unprotect-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6014"
             },
             "tested": false,
             "user_notes": "Writing the flash replaces the firmware the board came with.",
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -666,12 +681,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -679,12 +695,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6014"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -764,14 +781,14 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --unprotect-flash --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --unprotect-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": false,
             "user_notes": "Writing the flash replaces the firmware the board came with.",
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -779,14 +796,14 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft232 -v --write-flash --unprotect-flash --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft232 -v --write-flash --unprotect-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6014"
             },
             "tested": false,
             "user_notes": "Writing the flash replaces the firmware the board came with.",
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -822,12 +839,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -835,12 +853,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6014"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -904,13 +923,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": false,
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -918,12 +937,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -939,13 +959,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": false,
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -953,12 +973,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -974,13 +995,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": false,
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -988,12 +1009,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -1031,12 +1053,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -b epm11 -f ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -b epm11 -f --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -1052,13 +1075,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": false,
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -1066,13 +1089,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft232 -v --write-flash --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft232 -v --write-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6014"
             },
             "tested": false,
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -1094,12 +1117,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -1107,12 +1131,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6014"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -1342,13 +1367,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft231X --pins=7:3:5:6 -v --write-flash --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft231X --pins=7:3:5:6 -v --write-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6015"
             },
             "tested": false,
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -1356,12 +1381,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft231X --pins=7:3:5:6 -v --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft231X --pins=7:3:5:6 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6015"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -1531,13 +1557,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft232 --fpga-part xc7a200tfbg484 --write-flash ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft232 --fpga-part xc7a200tfbg484 --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6014"
             },
             "tested": false,
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a200tfbg484, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Programmed through an FT232 (openFPGALoader -c ft232); not found in the board's documentation whether the chip is on the board or an external adapter."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a200tfbg484, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Programmed through an FT232 (openFPGALoader -c ft232); not found in the board's documentation whether the chip is on the board or an external adapter. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -1545,13 +1571,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft232 --fpga-part xc7a200tfbg484 ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft232 --fpga-part xc7a200tfbg484 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6014"
             },
             "tested": true,
-            "maintainer_notes": "Programmed through an FT232 (openFPGALoader -c ft232); not found in the board's documentation whether the chip is on the board or an external adapter."
+            "maintainer_notes": "Programmed through an FT232 (openFPGALoader -c ft232); not found in the board's documentation whether the chip is on the board or an external adapter. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -1567,13 +1593,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board mimas_a7 --write-flash ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board mimas_a7 --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "2a19",
               "pid": "1009"
             },
             "tested": false,
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a50tfgg484, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a50tfgg484, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -1581,12 +1607,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board mimas_a7 ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board mimas_a7 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "2a19",
               "pid": "1009"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -1602,13 +1629,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": false,
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Programmed through an FT2232 (openFPGALoader -c ft2232); not found in the board's documentation whether the chip is on the board or an external adapter."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Programmed through an FT2232 (openFPGALoader -c ft2232); not found in the board's documentation whether the chip is on the board or an external adapter. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -1616,13 +1643,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": true,
-            "maintainer_notes": "Programmed through an FT2232 (openFPGALoader -c ft2232); not found in the board's documentation whether the chip is on the board or an external adapter."
+            "maintainer_notes": "Programmed through an FT2232 (openFPGALoader -c ft2232); not found in the board's documentation whether the chip is on the board or an external adapter. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -1638,13 +1665,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board nexys_a7_100 --write-flash ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board nexys_a7_100 --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": false,
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a100tcsg324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a100tcsg324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -1652,12 +1679,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board nexys_a7_100 ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board nexys_a7_100 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -1673,13 +1701,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board nexys_a7_50 --write-flash ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board nexys_a7_50 --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": false,
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a50tcsg324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a50tcsg324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -1687,12 +1715,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board nexys_a7_50 ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board nexys_a7_50 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -1822,12 +1851,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board pynq_z1 ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board pynq_z1 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -1843,12 +1873,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board pynq_z2 ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board pynq_z2 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -1864,12 +1895,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 --fpga-part xc7a100tfgg676 ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -c ft2232 --fpga-part xc7a100tfgg676 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -1885,13 +1917,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -b tangnano --write-flash ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -b tangnano --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
             "tested": false,
-            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash, which writes the GW1N's internal flash. Not tried on hardware."
+            "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash, which writes the GW1N's internal flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           },
           {
             "when": {
@@ -1899,12 +1931,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -b tangnano ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -b tangnano --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -1920,12 +1953,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -b tangnano1k -f ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -b tangnano1k -f --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -1941,12 +1975,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -b tangnano20k -f ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -b tangnano20k -f --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -1962,12 +1997,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -b tangnano4k -f ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -b tangnano4k -f --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -1983,12 +2019,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -b tangnano9k -f ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -b tangnano9k -f --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -2004,12 +2041,13 @@
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -b tangprimer20k -f ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify -b tangprimer20k -f --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -2339,12 +2377,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board zedboard ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board zedboard --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6014"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -2465,12 +2504,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board zybo_z7_10 ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board zybo_z7_10 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
@@ -2486,12 +2526,13 @@
               "memory": "ram"
             },
             "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board zybo_z7_20 ${BITSTREAM}",
+            "args": "--force-terminal-mode --verify --board zybo_z7_20 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
             "usb": {
               "vid": "0403",
               "pid": "6010"
             },
-            "tested": true
+            "tested": true,
+            "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
           }
         ]
       }
