@@ -195,6 +195,7 @@ Hosts interact with the engine in the following ways.
 | Progress and logs | During long operations, the engine reports progress, output and errors as they happen. In particular, the output of the tools it runs reaches the host line by line while the tools run, so a host can show a live log, such as in Logix IDE's console, instead of a dump at the end of each operation |
 | Shared files | The host owns the source files and the engine reads them. The engine writes generated artifacts, such as bitstreams, reports and waveforms, to the build folder the host specifies |
 | Deployment | The host's deployment includes the engine, so users install only the host |
+| Local engine (a recommendation for hosts) | By default a host runs only the GitHub package of the engine release it pins. For Logix developers, users they guide, and manual and automated testing of Logix components, Open Logix's frontends follow one convention to run another engine binary, such as one built from a local clone: the environment variable `LOGIX_DEV_ENGINE_BINARY`, the path to a `logix-engine` executable, honored in every build, with its own engine folder, shown for the whole session, and an error for a value that isn't an executable file. The engine doesn't read it; the full rule is in the website repo's `CLAUDE.md` (shared Open Logix rules) |
 
 ## Interaction with the file system
 
