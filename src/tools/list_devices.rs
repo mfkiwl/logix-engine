@@ -1,11 +1,14 @@
 //! The list_devices tool (docs/tool-api.md, Tables 11 to 13).
 
+use std::collections::BTreeMap;
+
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::EngineTool;
-use crate::board::{self, BoardSpec, VariantInput};
-use crate::devices::{self, Device};
+use crate::board::BoardInputDefinition;
+use crate::catalog;
+use crate::devices::{self, Candidate, Device, UnreachableDevice};
 use crate::errors::ToolError;
 use crate::state::EngineState;
 
@@ -14,59 +17,100 @@ pub struct ListDevices;
 impl EngineTool for ListDevices {
     const NAME: &'static str = "list_devices";
     const DESCRIPTION: &'static str = "Lists the USB devices connected to this computer, with \
-        their USB IDs, names and serial numbers. Given a board, each device also says whether it \
-        matches that board, which shows whether the board is connected and whether several \
-        are. Use it before program_board, or to find a board's serial number when several \
-        boards of the same kind are connected.";
+        their USB IDs, names and serial numbers, and for each the boards it may be: catalog \
+        boards, and the request's custom_boards, each with a confidence (named: the device's \
+        name matched the board's; chip: only its USB chip did) and the variants it fits. \
+        program_board needs the id of one of these devices: pick the device whose boards \
+        include the build's board. Devices that need a driver or permissions first are listed \
+        apart, under unreachable, with the fix.";
     const READ_ONLY: bool = true;
     type Input = ListDevicesInput;
     type Output = ListDevicesOutput;
 }
 
-/// Optionally, a board to match the devices against.
+/// Optionally, the host's own boards to match the devices against, besides
+/// the catalog's.
 #[derive(Debug, Default, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ListDevicesInput {
-    /// A board, as a catalog ID such as alhambra-ii or a full definition.
-    /// When given, each device reports whether it matches this board.
+    /// The host's own board definitions, by board ID (lowercase letters,
+    /// digits and hyphens), in the same format as the board field of other
+    /// tools. Devices are matched against them as well as the catalog's
+    /// boards; matches name them with custom true. Omitted means none.
     #[serde(default)]
-    pub board: Option<BoardSpec>,
-    /// The board's variant, such as {"size": "85k"} or {"memory": "ram"}:
-    /// values of the board's dimensions, which get_catalog lists with the
-    /// configurations that exist. The first configuration with these values
-    /// is used; omitted dimensions match any value. Omitted means the
-    /// board's first configuration. Its USB filter is the one matched.
-    #[serde(default)]
-    pub variant: VariantInput,
+    pub custom_boards: BTreeMap<String, BoardInputDefinition>,
 }
 
 /// The connected devices.
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ListDevicesOutput {
-    /// The connected USB devices, sorted by vendor ID, product ID, bus and
-    /// device number.
+    /// The connected USB devices the engine can open, sorted by vendor ID,
+    /// product ID, bus and device number.
     pub devices: Vec<Device>,
+    /// Devices the engine sees but can't open, so it can't program them or
+    /// read their names, and whose USB IDs fit a board: each with the fix,
+    /// such as permissions or a driver. Other devices it can't open are left
+    /// out.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub unreachable: Vec<UnreachableDevice>,
 }
 
 pub fn run_with(
     input: ListDevicesInput,
     scan: impl FnOnce() -> Result<Vec<Device>, ToolError>,
 ) -> Result<ListDevicesOutput, ToolError> {
-    let filter = match &input.board {
-        Some(spec) => {
-            let b = board::resolve(spec, &input.variant)?;
-            Some(b.configuration.usb)
+    let mut custom = Vec::new();
+    for (id, b) in &input.custom_boards {
+        if !catalog::is_catalog_id(id) {
+            return Err(ToolError::request(format!(
+                "custom_boards: {id:?} isn't a board ID: use lowercase letters, digits and hyphens."
+            )));
         }
-        None => None,
+        b.variants.validate().map_err(|e| {
+            ToolError::request(format!(
+                "custom_boards: {id}: invalid board definition: {e}."
+            ))
+        })?;
+        custom.push((id, b));
+    }
+    let mut boards: Vec<Candidate> = catalog::builtin()
+        .boards
+        .iter()
+        .map(|(id, b)| Candidate {
+            id,
+            custom: false,
+            variants: &b.variants,
+        })
+        .collect();
+    boards.extend(custom.iter().map(|(id, b)| Candidate {
+        id,
+        custom: true,
+        variants: &b.variants,
+    }));
+
+    let mut out = ListDevicesOutput {
+        devices: Vec::new(),
+        unreachable: Vec::new(),
     };
-    let mut list = scan()?;
-    if let Some(f) = &filter {
-        for d in &mut list {
-            d.matches_board = Some(devices::matches(d, f));
+    for mut d in scan()? {
+        let matches = devices::board_matches(&d, &boards);
+        if d.reachable {
+            d.boards = matches;
+            out.devices.push(d);
+        } else if !matches.is_empty() {
+            out.unreachable.push(UnreachableDevice {
+                kind: d.kind,
+                vid: d.vid,
+                pid: d.pid,
+                bus: d.bus,
+                device: d.device,
+                boards: matches,
+                action: devices::unreachable_action(),
+            });
         }
     }
-    Ok(ListDevicesOutput { devices: list })
+    Ok(out)
 }
 
 pub fn run(_state: &EngineState, input: ListDevicesInput) -> Result<ListDevicesOutput, ToolError> {
@@ -76,46 +120,120 @@ pub fn run(_state: &EngineState, input: ListDevicesInput) -> Result<ListDevicesO
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::devices::DeviceKind;
+    use crate::devices::Confidence;
+    use crate::devices::tests::device;
     use serde_json::json;
 
-    fn usb(vid: &str, pid: &str) -> Device {
-        Device {
-            kind: DeviceKind::Usb,
-            vid: vid.into(),
-            pid: pid.into(),
-            manufacturer: None,
-            product: None,
-            serial_number: None,
-            bus: 1,
-            device: 2,
-            matches_board: None,
-        }
+    fn list(
+        input: serde_json::Value,
+        devices: Vec<Device>,
+    ) -> Result<ListDevicesOutput, ToolError> {
+        let input: ListDevicesInput = serde_json::from_value(input).unwrap();
+        run_with(input, move || Ok(devices))
     }
 
     #[test]
-    fn the_variant_chooses_the_usb_filter() {
-        let scan = || Ok(vec![usb("0403", "6010"), usb("0403", "6014")]);
-        let matches = |input: serde_json::Value| -> Vec<Option<bool>> {
-            let input: ListDevicesInput = serde_json::from_value(input).unwrap();
-            run_with(input, scan)
-                .unwrap()
-                .devices
-                .iter()
-                .map(|d| d.matches_board)
-                .collect()
-        };
-        assert_eq!(matches(json!({})), [None, None]);
-        let board = json!("butterstick-r10-2g-85k");
-        // The default is the USB bootloader, which isn't connected.
-        assert_eq!(matches(json!({"board": board})), [Some(false), Some(false)]);
+    fn devices_come_with_the_boards_they_may_be() {
+        let out = list(
+            json!({}),
+            vec![
+                device(
+                    "1209",
+                    "5af0",
+                    Some("OrangeCrab r0.2 DFU bootloader"),
+                    None,
+                    2,
+                ),
+                device("0403", "6014", Some("Single RS232-HS"), None, 3),
+                device("1234", "5678", Some("A mouse"), None, 4),
+            ],
+        )
+        .unwrap();
+        let first = |i: usize| out.devices[i].boards.first().cloned();
+        let bootloader = first(0).unwrap();
+        // Two boards share the OrangeCrab bootloader's name: both named.
+        assert_eq!(bootloader.board, "orangecrab-r02-25f");
+        assert_eq!(bootloader.confidence, Confidence::Named);
+        assert_eq!(out.devices[0].boards[1].board, "orangecrab-r02-85f");
         assert_eq!(
-            matches(json!({"board": board, "variant": {"connection": "ft232h"}})),
-            [Some(false), Some(true)]
+            bootloader.variants,
+            [BTreeMap::from([
+                ("connection".to_string(), "bootloader".to_string()),
+                ("memory".to_string(), "flash".to_string())
+            ])]
         );
-        let input: ListDevicesInput =
-            serde_json::from_value(json!({"board": board, "variant": {"connection": "jtag"}}))
-                .unwrap();
-        assert!(run_with(input, scan).is_err());
+        // The FT232H adapter: the ButterStick's adapter variants, among others.
+        let adapter = &out.devices[1].boards;
+        let butterstick = adapter
+            .iter()
+            .find(|m| m.board == "butterstick-r10-2g-85k")
+            .unwrap();
+        assert_eq!(butterstick.confidence, Confidence::Chip);
+        assert_eq!(butterstick.variants[0]["connection"], "ft232h");
+        assert!(out.devices[2].boards.is_empty());
+        assert!(out.unreachable.is_empty());
+    }
+
+    #[test]
+    fn custom_boards_are_matched_too() {
+        let custom = json!({"custom_boards": {"alhambra-ii": {
+            "description": "My Alhambra",
+            "fpga_id": "ice40hx4k-tq144-8k",
+            "variants": {"configurations": [{
+                "when": {"connection": "usb", "memory": "flash"},
+                "programmer": "iceprog",
+                "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+                "usb": {"vid": "0403", "pid": "6010", "product_regex": "^Alhambra"},
+                "tested": true
+            }]}
+        }}});
+        let out = list(
+            custom,
+            vec![device("0403", "6010", Some("Alhambra II"), None, 3)],
+        )
+        .unwrap();
+        let named: Vec<_> = out.devices[0]
+            .boards
+            .iter()
+            .filter(|m| m.confidence == Confidence::Named)
+            .map(|m| (m.board.as_str(), m.custom))
+            .collect();
+        assert_eq!(named, [("alhambra-ii", false), ("alhambra-ii", true)]);
+
+        let bad = list(
+            json!({"custom_boards": {"Bad ID": {
+                "description": "x", "fpga_id": "x", "variants": {"configurations": []}
+            }}}),
+            vec![],
+        );
+        assert_eq!(bad.unwrap_err().category, crate::errors::Category::Request);
+        let bad = list(
+            json!({"custom_boards": {"mine": {
+                "description": "x", "fpga_id": "x", "variants": {"configurations": []}
+            }}}),
+            vec![],
+        );
+        assert!(bad.unwrap_err().message.contains("mine"));
+    }
+
+    #[test]
+    fn devices_that_cant_be_opened_are_listed_apart_when_they_may_be_boards() {
+        let mut ftdi = device("0403", "6010", None, None, 3);
+        ftdi.reachable = false;
+        let mut mouse = device("1234", "5678", None, None, 4);
+        mouse.reachable = false;
+        let out = list(json!({}), vec![ftdi, mouse]).unwrap();
+        assert!(out.devices.is_empty());
+        assert_eq!(out.unreachable.len(), 1);
+        let u = &out.unreachable[0];
+        assert_eq!((u.vid.as_str(), u.pid.as_str()), ("0403", "6010"));
+        assert!(u.boards.iter().any(|m| m.board == "alhambra-ii"));
+        assert!(u.boards.iter().all(|m| m.confidence == Confidence::Chip));
+        assert_eq!(u.action, devices::unreachable_action());
+        let v = serde_json::to_value(&out).unwrap();
+        assert!(
+            v["unreachable"][0].get("id").is_none(),
+            "can't be programmed"
+        );
     }
 }

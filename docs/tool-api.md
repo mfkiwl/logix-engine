@@ -95,7 +95,6 @@ On success, a tool returns its output object as structured content. On failure, 
 | --- | --- |
 | `install_packages` | Required packages are missing or broken and weren't installed automatically, because auto-install is off or the install failed |
 | `connect_board` | No matching board is connected |
-| `select_device` | Several devices match; pick one and retry with its serial number |
 | `fix_device_permissions` | A device was found but cannot be opened |
 | `install_drivers` | A driver required by the board is missing |
 | `disconnect_devices` | Other connected devices have the board's USB IDs and its programmer can't tell them apart; disconnect them and retry |
@@ -656,11 +655,11 @@ Output:
 
 ## program_board tool
 
-Programs a bitstream into the board it was built for. The `program_board` tool takes no board input. It reads the board spec from the build record in the build folder, so the board always matches the build. The engine finds exactly one matching device, as described in the [device selection](requirements.md#device-selection) requirements, fills in the argument template of the build's configuration and runs it.
+Programs a bitstream into the board it was built for, on the device the host chose. The `program_board` tool takes no board input. It reads the board spec from the build record in the build folder, so the board always matches the build. The host names the device with an `id` from [`list_devices`](#list_devices-tool), usually one whose `boards` include the build's board, asking the user when several do; the engine checks it, as described in the [device selection](requirements.md#device-selection) requirements, fills in the argument template of the build's configuration and runs it. It never chooses a device itself.
 
 **Note:** unlike `apio upload`, the `program_board` tool doesn't build. It programs the bitstream that is already in the build folder. A host that wants to build and program the board in one step calls `build` first, and calls `program_board` only if the build succeeded.
 
-**How it runs:** the engine reads the board from the build record, finds the one matching device, fills in the configuration's argument template, splitting it into words first so paths with spaces stay whole, and runs the programmer in the build folder. Progress has the phases "Finding device", "Writing flash" (or "Writing RAM") and "Verifying", with percentages read from the programmer's output. With `programmer_command` the phases are "Finding device" and "Programming", without percentages. A programmer that fails because the device is missing or can't be opened gives a setup error with `connect_board` or `fix_device_permissions`; other failures are tool failures with the programmer's output in `details`. The build record's board checksum is checked first, so a damaged record is a request error.
+**How it runs:** the engine reads the board from the build record, finds the chosen device and checks it (still connected on the same USB port with the same USB IDs and serial number; matching the build configuration's USB filter; and, when the command doesn't name the device by bus and device number or by a serial number only it has, no other connected device with its USB IDs, since the programmer would open the first one), fills in the configuration's argument template, splitting it into words first so paths with spaces stay whole, and runs the programmer in the build folder. Progress has the phases "Finding device", "Writing flash" (or "Writing RAM") and "Verifying", with percentages read from the programmer's output. With `programmer_command` the phases are "Finding device" and "Programming", without percentages. A programmer that fails because the device is missing or can't be opened gives a setup error with `connect_board` or `fix_device_permissions`; other failures are tool failures with the programmer's output in `details`. The build record's board checksum is checked first, so a damaged record is a request error.
 
 **Flash or RAM:** the build's configuration decides whether the bitstream goes to flash, where it stays after power-off, or to RAM, where it is lost at power-off (its `memory` value; boards that offer both have a choice, made when building). The write phase is "Writing flash" or "Writing RAM".
 
@@ -671,7 +670,7 @@ Programs a bitstream into the board it was built for. The `program_board` tool t
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `build_folder` | build folder path | Yes | The build folder of a successful build. It holds the bitstream and the build record |
-| `serial_number` | text | No | Narrows the match to the device with this serial number |
+| `device` | text | Yes | The device to program: the `id` of a device from `list_devices`. It is opaque and short-lived: it stays valid while the device stays on the same USB port |
 | `programmer_command` | text | No | A custom command template that replaces the configuration's whole command, like Apio's `programmer_cmd`. Its first word is a program from the toolchain package, such as `openFPGALoader`, or an absolute path. It uses the same variables as argument templates and must use `${BITSTREAM}` |
 | `verbose` | boolean | No | Let the programmer print more detail. Not applied to a `programmer_command`. Defaults to false |
 
@@ -683,53 +682,46 @@ Programs a bitstream into the board it was built for. The `program_board` tool t
 | `programmer` | catalog ID | The programmer that was used, such as `openfpgaloader`, or `custom` when `programmer_command` was given |
 | `commands` | list of commands | The programs this call ran, in order, so they can be run again without the engine. See [Commands](#commands) |
 
-**Errors:** setup errors with `connect_board` when no device matches (for a dfu-util board, also when it isn't in its bootloader mode), `select_device` when several match, `disconnect_devices` when the programmer can't tell the board from other connected devices, `fix_device_permissions` or `install_drivers`. icesprog opens the first device with the board's USB IDs, so the engine runs it only when no other device with those IDs is connected; dfu-util refuses by itself when several devices match. With `select_device`, `data.candidates` lists the matching devices so the host can let the user pick one and retry. A request error when the build folder has no build record. Other request errors, tool failures, engine errors and cancellation.
-
-**Example of a `select_device` error**
-
-```json
-{
-  "category": "setup",
-  "message": "Found 2 matching devices.",
-  "action": { "code": "select_device", "description": "Choose one device and retry with its serial number." },
-  "data": {
-    "candidates": [
-      { "kind": "usb", "vid": "0403", "pid": "6010", "product": "Dual RS232-HS", "serial_number": "FT4ABCD1" },
-      { "kind": "usb", "vid": "0403", "pid": "6010", "product": "Dual RS232-HS", "serial_number": "FT4ABCD2" }
-    ]
-  }
-}
-```
+**Errors:** setup errors with `connect_board` when the chosen device isn't connected anymore or another device is on its port (list the devices again), or when the programmer doesn't find it (for a dfu-util board, also when it isn't in its bootloader mode); `disconnect_devices` when the command can't name the device and other connected devices have its USB IDs (icesprog, dfu-util with `-d ${VID}:${PID}`, openFPGALoader with only `--board` or `-c`), or when the programmer itself can't tell them apart; `fix_device_permissions` or `install_drivers` when the device can't be opened. Request errors when `device` isn't a device ID, when the device doesn't match the board's USB filter, or when the build folder has no build record. Other request errors, tool failures, engine errors and cancellation.
 
 ## list_devices tool
 
-Lists the connected USB devices, optionally marking the ones that match the USB filter of a board's configuration. The engine reads USB devices with libusb, built into the engine, the same library the programmers use, so the bus and device numbers mean the same to both. Devices are sorted by vendor ID, product ID, bus and device number. A device matches a filter when its USB IDs are equal and, when the filter has `product_regex`, its product name contains a match for it. Names that can't be read, such as for a device that can't be opened, are left out.
+Lists the connected USB devices, each with an `id` for `program_board` and the boards it may be. The engine reads USB devices with libusb, built into the engine, the same library the programmers use, so the bus and device numbers mean the same to both. Devices are sorted by vendor ID, product ID, bus and device number.
+
+**Matching.** A device matches a configuration's USB filter when its USB IDs are equal and, when the filter has `product_regex` or `serial_regex`, its product name or serial number contains a match for it. The engine matches every device against every catalog board and the request's `custom_boards` on each call, so a host's own boards count as soon as it sends them. Each device lists the boards it matches, best first: `named` ones, then `chip` ones, each by board ID, catalog boards before custom ones. A custom board may have a catalog board's ID; both are listed, the custom one with `custom: true`, and the host decides which it means.
+
+**Confidence.** `named`: the device's product name or serial number matched the board's pattern, so the device says it is that kind of board (several boards can share one name, such as the two OrangeCrab sizes). `chip`: only the USB IDs matched, so the device is some device with that USB chip; a common FTDI chip matches dozens of boards and adapters. No match proves which board is connected: boards the catalog doesn't know can report the same names.
+
+**Unreachable devices.** A device the engine sees but can't open, because of missing permissions or a missing driver, can't be programmed and its names can't be read, so it isn't in `devices`. When its USB IDs fit a board, it is listed in `unreachable` with those boards (always `chip`, since names are unknown) and the action that makes it usable: `install_drivers` on Windows, `fix_device_permissions` elsewhere. Other devices the engine can't open are left out.
+
+**Device IDs.** An `id` names the device on this computer for a short time: it is made from where the device is plugged in and what it is, so it stays valid while the device stays on the same USB port, even when it is plugged in again, and survives an engine restart. IDs differ between platforms and computers. Hosts must treat them as opaque, never parse or build them, and list the devices again before asking the user to choose.
 
 **Table 11.** list_devices tool inputs
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `board` | board specification | No | When given, each device reports whether it matches the USB filter of this board's configuration |
-| `variant` | variant | No | The board's configuration whose USB filter is matched. Omitted means its first |
+| `custom_boards` | map of board definitions | No | The host's own boards, by board ID, in the catalog format (the FPGA as `fpga_id` or `fpga`), matched as well as the catalog's. Omitted means none |
 
 **Table 12.** list_devices tool outputs
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `devices` | list of devices | The connected devices. See device fields in Table 13 |
+| `devices` | list of devices | The connected devices the engine can open. See device fields in Table 13 |
+| `unreachable` | list of objects | Optional. Devices that can't be opened and whose USB IDs fit a board: `kind`, `vid`, `pid`, `bus`, `device`, `boards` (as in Table 13) and `action`, the fix (see [Table 5](#results-and-errors)) |
 
 **Table 13.** Device fields
 
 | Device field | Type | Description |
 | --- | --- | --- |
+| `id` | text | The device's ID, for `program_board`'s `device`. Opaque and short-lived |
 | `kind` | enum | Always `usb` for now. Other kinds may be added later |
 | `vid`, `pid` | USB ID | USB vendor and product IDs |
 | `manufacturer`, `product` | text | Names reported by the device, when available |
 | `serial_number` | text | Serial number, when available |
-| `bus`, `device` | integer | USB bus and device number, for USB devices |
-| `matches_board` | boolean | Whether the device matches the given board, when one was given |
+| `bus`, `device` | integer | USB bus and device number, for USB devices. The device number changes when the device is plugged in again |
+| `boards` | list of objects | Optional, omitted when empty. The boards the device may be, best first, each with `board` (its ID), `custom` (true for a board from `custom_boards`, omitted otherwise), `confidence` (`named` or `chip`) and `variants` (the board's variants this device fits, as dimension values, in the board's order) |
 
-**Errors:** setup errors with `install_drivers` or `fix_device_permissions` when devices cannot be scanned. Engine errors.
+**Errors:** setup errors with `install_drivers` or `fix_device_permissions` when devices cannot be scanned. Request errors for an invalid custom board. Engine errors.
 
 **Example**
 
@@ -737,9 +729,14 @@ Lists the connected USB devices, optionally marking the ones that match the USB 
 {
   "devices": [
     {
+      "id": "usb:1-1:0403:6010:FTATANKC",
       "kind": "usb", "vid": "0403", "pid": "6010",
-      "manufacturer": "Lattice", "product": "Lattice FTUSB Interface Cable",
-      "serial_number": "FT4ABCD1", "bus": 1, "device": 7, "matches_board": true
+      "manufacturer": "AlhambraBits", "product": "Alhambra II v1.0A",
+      "serial_number": "FTATANKC", "bus": 1, "device": 7,
+      "boards": [
+        { "board": "alhambra-ii", "confidence": "named", "variants": [{ "connection": "usb", "memory": "flash" }] },
+        { "board": "alchitry-au", "confidence": "chip", "variants": [{ "connection": "usb", "memory": "flash" }, { "connection": "usb", "memory": "ram" }] }
+      ]
     }
   ]
 }

@@ -3465,7 +3465,7 @@
   },
   {
     "name": "list_devices",
-    "description": "Lists the USB devices connected to this computer, with their USB IDs, names and serial numbers. Given a board, each device also says whether it matches that board, which shows whether the board is connected and whether several are. Use it before program_board, or to find a board's serial number when several boards of the same kind are connected.",
+    "description": "Lists the USB devices connected to this computer, with their USB IDs, names and serial numbers, and for each the boards it may be: catalog boards, and the request's custom_boards, each with a confidence (named: the device's name matched the board's; chip: only its USB chip did) and the variants it fits. program_board needs the id of one of these devices: pick the device whose boards include the build's board. Devices that need a driver or permissions first are listed apart, under unreachable, with the fix.",
     "inputSchema": {
       "$defs": {
         "Architecture": {
@@ -3529,20 +3529,6 @@
             "variants"
           ],
           "type": "object"
-        },
-        "BoardSpec": {
-          "anyOf": [
-            {
-              "description": "A board's catalog ID, such as alhambra-ii. get_catalog lists them.",
-              "pattern": "^[a-z0-9-]+$",
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/BoardInputDefinition",
-              "description": "A full board definition, for boards that aren't in the catalog."
-            }
-          ],
-          "description": "A board: a catalog ID, or a full definition."
         },
         "Configuration": {
           "additionalProperties": false,
@@ -3785,26 +3771,14 @@
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
-      "description": "Optionally, a board to match the devices against.",
+      "description": "Optionally, the host's own boards to match the devices against, besides\nthe catalog's.",
       "properties": {
-        "board": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/BoardSpec"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "default": null,
-          "description": "A board, as a catalog ID such as alhambra-ii or a full definition.\nWhen given, each device reports whether it matches this board."
-        },
-        "variant": {
+        "custom_boards": {
           "additionalProperties": {
-            "type": "string"
+            "$ref": "#/$defs/BoardInputDefinition"
           },
           "default": {},
-          "description": "The board's variant, such as {\"size\": \"85k\"} or {\"memory\": \"ram\"}:\nvalues of the board's dimensions, which get_catalog lists with the\nconfigurations that exist. The first configuration with these values\nis used; omitted dimensions match any value. Omitted means the\nboard's first configuration. Its USB filter is the one matched.",
+          "description": "The host's own board definitions, by board ID (lowercase letters,\ndigits and hyphens), in the same format as the board field of other\ntools. Devices are matched against them as well as the catalog's\nboards; matches name them with custom true. Omitted means none.",
           "type": "object"
         }
       },
@@ -3813,10 +3787,112 @@
     },
     "outputSchema": {
       "$defs": {
+        "Action": {
+          "description": "A suggested action, with a code for the host and a description for people.",
+          "properties": {
+            "code": {
+              "$ref": "#/$defs/ActionCode"
+            },
+            "description": {
+              "description": "The suggested action, in words.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "code",
+            "description"
+          ],
+          "type": "object"
+        },
+        "ActionCode": {
+          "description": "A fix the host can offer the user.",
+          "oneOf": [
+            {
+              "const": "install_packages",
+              "description": "Required packages are missing or broken and weren't installed\nautomatically, because auto-install is off or the install failed.",
+              "type": "string"
+            },
+            {
+              "const": "connect_board",
+              "description": "No matching board is connected.",
+              "type": "string"
+            },
+            {
+              "const": "fix_device_permissions",
+              "description": "A device was found but cannot be opened.",
+              "type": "string"
+            },
+            {
+              "const": "install_drivers",
+              "description": "A driver required by the board is missing.",
+              "type": "string"
+            },
+            {
+              "const": "disconnect_devices",
+              "description": "Other connected devices have the board's USB IDs, and the board's\nprogrammer can't tell them apart. Disconnect them and retry.",
+              "type": "string"
+            }
+          ]
+        },
+        "BoardMatch": {
+          "additionalProperties": false,
+          "description": "A board a device may be.",
+          "properties": {
+            "board": {
+              "description": "The board's ID: a catalog ID, or a key of the request's\ncustom_boards when custom is true.",
+              "type": "string"
+            },
+            "confidence": {
+              "$ref": "#/$defs/Confidence",
+              "description": "How sure the match is. named: the device's product name or serial\nnumber matched the board's pattern, so the device says it is this\nkind of board (several boards can still share one name). chip: only\nthe USB IDs matched, so it is any device with this USB chip, often\nmany boards and adapters."
+            },
+            "custom": {
+              "description": "True when the board is one of the request's custom_boards rather\nthan the catalog's. A custom board can have a catalog board's ID; the\nhost decides which one it means.",
+              "type": "boolean"
+            },
+            "variants": {
+              "description": "The board's variants this device fits, as dimension values, such as\n{\"connection\": \"usb\", \"memory\": \"flash\"}, in the board's order.",
+              "items": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "board",
+            "confidence",
+            "variants"
+          ],
+          "type": "object"
+        },
+        "Confidence": {
+          "oneOf": [
+            {
+              "const": "named",
+              "description": "The device's name or serial number matched the board's pattern.",
+              "type": "string"
+            },
+            {
+              "const": "chip",
+              "description": "Only the USB IDs matched.",
+              "type": "string"
+            }
+          ]
+        },
         "Device": {
           "additionalProperties": false,
-          "description": "A connected device.",
+          "description": "A connected device that the engine can open.",
           "properties": {
+            "boards": {
+              "description": "The boards whose USB filters this device matches, best first. Empty\nfor a device that is no known board.",
+              "items": {
+                "$ref": "#/$defs/BoardMatch"
+              },
+              "type": "array"
+            },
             "bus": {
               "description": "USB bus number.",
               "maximum": 255,
@@ -3824,10 +3900,14 @@
               "type": "integer"
             },
             "device": {
-              "description": "USB device number on its bus.",
+              "description": "USB device number on its bus. It changes when the device is plugged\nin again.",
               "maximum": 255,
               "minimum": 0,
               "type": "integer"
+            },
+            "id": {
+              "description": "The device's ID, to pass to program_board. Opaque: don't parse it.\nIt names the device on this computer for a short time: it stays\nvalid while the device stays on the same USB port, so list the\ndevices again before asking the user to choose.",
+              "type": "string"
             },
             "kind": {
               "$ref": "#/$defs/DeviceKind",
@@ -3837,13 +3917,6 @@
               "description": "The manufacturer name the device reports, when available.",
               "type": [
                 "string",
-                "null"
-              ]
-            },
-            "matches_board": {
-              "description": "Whether the device matches the given board. Present only when a board\nwas given.",
-              "type": [
-                "boolean",
                 "null"
               ]
             },
@@ -3871,6 +3944,7 @@
             }
           },
           "required": [
+            "id",
             "kind",
             "vid",
             "pid",
@@ -3887,6 +3961,57 @@
               "type": "string"
             }
           ]
+        },
+        "UnreachableDevice": {
+          "additionalProperties": false,
+          "description": "A device the engine sees but can't open, so it can't read its names or\nprogram it: it needs a driver or permissions first. Listed only when its\nUSB IDs fit a board.",
+          "properties": {
+            "action": {
+              "$ref": "#/$defs/Action",
+              "description": "What makes the device usable, such as fix_device_permissions."
+            },
+            "boards": {
+              "description": "The boards whose USB IDs it has. Their confidence is always chip,\nsince its names can't be read.",
+              "items": {
+                "$ref": "#/$defs/BoardMatch"
+              },
+              "type": "array"
+            },
+            "bus": {
+              "description": "USB bus number.",
+              "maximum": 255,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "device": {
+              "description": "USB device number on its bus.",
+              "maximum": 255,
+              "minimum": 0,
+              "type": "integer"
+            },
+            "kind": {
+              "$ref": "#/$defs/DeviceKind",
+              "description": "The kind of device: usb."
+            },
+            "pid": {
+              "description": "USB product ID, four lowercase hex digits.",
+              "type": "string"
+            },
+            "vid": {
+              "description": "USB vendor ID, four lowercase hex digits.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "vid",
+            "pid",
+            "bus",
+            "device",
+            "boards",
+            "action"
+          ],
+          "type": "object"
         }
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3894,9 +4019,16 @@
       "description": "The connected devices.",
       "properties": {
         "devices": {
-          "description": "The connected USB devices, sorted by vendor ID, product ID, bus and\ndevice number.",
+          "description": "The connected USB devices the engine can open, sorted by vendor ID,\nproduct ID, bus and device number.",
           "items": {
             "$ref": "#/$defs/Device"
+          },
+          "type": "array"
+        },
+        "unreachable": {
+          "description": "Devices the engine sees but can't open, so it can't program them or\nread their names, and whose USB IDs fit a board: each with the fix,\nsuch as permissions or a driver. Other devices it can't open are left\nout.",
+          "items": {
+            "$ref": "#/$defs/UnreachableDevice"
           },
           "type": "array"
         }
@@ -3915,27 +4047,23 @@
   },
   {
     "name": "program_board",
-    "description": "Programs the bitstream of a successful build into the board it was built for. It doesn't build: call build first, and program_board only if the build succeeded. The board comes from the build, so it takes only the build folder. It finds the connected board by USB; if none is connected it returns a setup error with connect_board, and if several are, a setup error with select_device that lists them, so retry with one's serial_number. Most boards are programmed to flash, so the design stays after power-off.",
+    "description": "Programs the bitstream of a successful build into the board it was built for. It doesn't build: call build first, and program_board only if the build succeeded. The board comes from the build, so it takes the build folder and the device to program: the id of a device from list_devices whose boards include the build's board (ask the user when several do). A device that isn't connected anymore is a setup error with connect_board; list the devices again. Most boards are programmed to flash, so the design stays after power-off.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
-      "description": "Which build to program, and optionally which device.",
+      "description": "Which build to program, and into which device.",
       "properties": {
         "build_folder": {
           "description": "The build folder of a successful build, as an absolute path.",
           "type": "string"
         },
+        "device": {
+          "description": "The device to program: the id of a device from list_devices, such as\none whose boards include the build's board. It must still be\nconnected and match the board's USB filter.",
+          "type": "string"
+        },
         "programmer_command": {
           "default": null,
           "description": "A custom programmer command that replaces the board's default one,\nlike Apio's programmer_cmd. Its first word is a program from the\ntoolchain package, such as openFPGALoader, or an absolute path. It may\nuse ${VID}, ${PID}, ${BUS}, ${DEV}, ${SERIAL} and must use\n${BITSTREAM}.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "serial_number": {
-          "default": null,
-          "description": "Program only the device with this serial number, when several\nmatching boards are connected.",
           "type": [
             "string",
             "null"
@@ -3948,13 +4076,48 @@
         }
       },
       "required": [
-        "build_folder"
+        "build_folder",
+        "device"
       ],
       "title": "ProgramBoardInput",
       "type": "object"
     },
     "outputSchema": {
       "$defs": {
+        "BoardMatch": {
+          "additionalProperties": false,
+          "description": "A board a device may be.",
+          "properties": {
+            "board": {
+              "description": "The board's ID: a catalog ID, or a key of the request's\ncustom_boards when custom is true.",
+              "type": "string"
+            },
+            "confidence": {
+              "$ref": "#/$defs/Confidence",
+              "description": "How sure the match is. named: the device's product name or serial\nnumber matched the board's pattern, so the device says it is this\nkind of board (several boards can still share one name). chip: only\nthe USB IDs matched, so it is any device with this USB chip, often\nmany boards and adapters."
+            },
+            "custom": {
+              "description": "True when the board is one of the request's custom_boards rather\nthan the catalog's. A custom board can have a catalog board's ID; the\nhost decides which one it means.",
+              "type": "boolean"
+            },
+            "variants": {
+              "description": "The board's variants this device fits, as dimension values, such as\n{\"connection\": \"usb\", \"memory\": \"flash\"}, in the board's order.",
+              "items": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "board",
+            "confidence",
+            "variants"
+          ],
+          "type": "object"
+        },
         "CommandRecord": {
           "additionalProperties": false,
           "description": "One program the engine ran, with what it takes to run it again.",
@@ -3994,10 +4157,31 @@
           ],
           "type": "object"
         },
+        "Confidence": {
+          "oneOf": [
+            {
+              "const": "named",
+              "description": "The device's name or serial number matched the board's pattern.",
+              "type": "string"
+            },
+            {
+              "const": "chip",
+              "description": "Only the USB IDs matched.",
+              "type": "string"
+            }
+          ]
+        },
         "Device": {
           "additionalProperties": false,
-          "description": "A connected device.",
+          "description": "A connected device that the engine can open.",
           "properties": {
+            "boards": {
+              "description": "The boards whose USB filters this device matches, best first. Empty\nfor a device that is no known board.",
+              "items": {
+                "$ref": "#/$defs/BoardMatch"
+              },
+              "type": "array"
+            },
             "bus": {
               "description": "USB bus number.",
               "maximum": 255,
@@ -4005,10 +4189,14 @@
               "type": "integer"
             },
             "device": {
-              "description": "USB device number on its bus.",
+              "description": "USB device number on its bus. It changes when the device is plugged\nin again.",
               "maximum": 255,
               "minimum": 0,
               "type": "integer"
+            },
+            "id": {
+              "description": "The device's ID, to pass to program_board. Opaque: don't parse it.\nIt names the device on this computer for a short time: it stays\nvalid while the device stays on the same USB port, so list the\ndevices again before asking the user to choose.",
+              "type": "string"
             },
             "kind": {
               "$ref": "#/$defs/DeviceKind",
@@ -4018,13 +4206,6 @@
               "description": "The manufacturer name the device reports, when available.",
               "type": [
                 "string",
-                "null"
-              ]
-            },
-            "matches_board": {
-              "description": "Whether the device matches the given board. Present only when a board\nwas given.",
-              "type": [
-                "boolean",
                 "null"
               ]
             },
@@ -4052,6 +4233,7 @@
             }
           },
           "required": [
+            "id",
             "kind",
             "vid",
             "pid",

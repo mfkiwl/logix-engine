@@ -23,33 +23,56 @@ pub fn programmer_executable(programmer: &str) -> Option<&'static str> {
     }
 }
 
-/// icesprog can't be told which device to use: it opens the first device
-/// with its USB IDs. So it runs only when the board is the only connected
-/// device with those IDs, and doesn't write to another board instead, such
-/// as an iCESugar-Pro when an iCESugar-nano was asked for.
+/// Whether a programming command tells the programmer which device to open:
+/// by bus and device number, or by a serial number that no other connected
+/// device with the same USB IDs has.
+pub fn names_the_device(template: &str, devices: &[Device], device: &Device) -> bool {
+    if template.contains("${BUS}") && template.contains("${DEV}") {
+        return true;
+    }
+    template.contains("${SERIAL}")
+        && device.serial_number.is_some()
+        && !devices.iter().any(|d| {
+            d.location != device.location
+                && d.vid == device.vid
+                && d.pid == device.pid
+                && d.serial_number == device.serial_number
+        })
+}
+
+/// A command that doesn't name the device makes the programmer open the
+/// first device with its USB IDs (icesprog, dfu-util with -d VID:PID, and
+/// openFPGALoader with --board or -c alone). That could be another board, so
+/// the engine runs it only when no other connected device, opened or not,
+/// has the chosen device's USB IDs.
 pub fn check_alone(
-    programmer: &str,
+    template: &str,
     devices: &[Device],
-    filter: &catalog::UsbFilter,
+    device: &Device,
     board_name: &str,
 ) -> Result<(), ToolError> {
-    if programmer != "icesprog" {
+    if names_the_device(template, devices, device) {
         return Ok(());
     }
-    let same = devices
+    let others = devices
         .iter()
-        .filter(|d| crate::devices::same_ids(d, filter))
+        .filter(|d| d.location != device.location && d.vid == device.vid && d.pid == device.pid)
         .count();
-    if same <= 1 {
+    if others == 0 {
         return Ok(());
     }
+    let devices_word = if others == 1 {
+        "device has"
+    } else {
+        "devices have"
+    };
     Err(ToolError::setup(format!(
-        "{same} connected devices have the {board_name}'s USB IDs {}:{}, and icesprog can't tell them apart.",
-        filter.vid, filter.pid
+        "{others} other connected {devices_word} the {board_name}'s USB IDs {}:{}, and its programming command can't tell them apart.",
+        device.vid, device.pid
     ))
     .with_action(
         ActionCode::DisconnectDevices,
-        format!("Disconnect the other boards, leaving only the {board_name}, then retry."),
+        format!("Disconnect the other devices, leaving only the {board_name}, then retry."),
     ))
 }
 
@@ -426,22 +449,43 @@ mod tests {
     }
 
     #[test]
-    fn icesprog_runs_only_alone() {
-        let filter = catalog::UsbFilter {
-            vid: "1d50".into(),
-            pid: "602b".into(),
-            product_regex: None,
-            serial_regex: Some("^0720".into()),
-        };
+    fn commands_that_dont_name_the_device_run_only_alone() {
         let nano = device("1d50", "602b", Some("DAPLink CMSIS-DAP"), Some("0720"), 3);
         let pro = device("1d50", "602b", Some("DAPLink CMSIS-DAP"), Some("0710"), 4);
         let other = device("0403", "6010", None, None, 5);
         let both = [nano.clone(), pro, other.clone()];
-        assert!(check_alone("icesprog", &[nano, other], &filter, "iCESugar-nano").is_ok());
-        let e = check_alone("icesprog", &both, &filter, "iCESugar-nano").unwrap_err();
+        let icesprog = "-w ${BITSTREAM}";
+        assert!(
+            check_alone(
+                icesprog,
+                &[nano.clone(), other.clone()],
+                &nano,
+                "iCESugar-nano"
+            )
+            .is_ok()
+        );
+        let e = check_alone(icesprog, &both, &nano, "iCESugar-nano").unwrap_err();
         assert_eq!(e.action.unwrap().code, ActionCode::DisconnectDevices);
-        assert!(e.message.starts_with("2 connected devices"));
-        assert!(check_alone("dfu-util", &both, &filter, "x").is_ok());
+        assert!(
+            e.message.starts_with("1 other connected device has"),
+            "{}",
+            e.message
+        );
+
+        // Bus and device number, or a serial number only this device has.
+        assert!(check_alone("--busdev-num ${BUS}:${DEV} ${BITSTREAM}", &both, &nano, "x").is_ok());
+        assert!(check_alone("-s ${SERIAL} ${BITSTREAM}", &both, &nano, "x").is_ok());
+        let twin = device("1d50", "602b", Some("DAPLink CMSIS-DAP"), Some("0720"), 6);
+        assert!(
+            check_alone(
+                "-s ${SERIAL} ${BITSTREAM}",
+                &[nano.clone(), twin],
+                &nano,
+                "x"
+            )
+            .is_err()
+        );
+        assert!(check_alone("-d ${VID}:${PID} -D ${BITSTREAM}", &both, &nano, "x").is_err());
     }
 
     #[test]

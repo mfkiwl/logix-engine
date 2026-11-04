@@ -69,8 +69,6 @@ pub enum ActionCode {
     InstallPackages,
     /// No matching board is connected.
     ConnectBoard,
-    /// Several devices match. Pick one and retry with its serial number.
-    SelectDevice,
     /// A device was found but cannot be opened.
     FixDevicePermissions,
     /// A driver required by the board is missing.
@@ -157,21 +155,21 @@ mod tests {
 
     #[test]
     fn serializes_with_the_documented_field_names() {
-        let mut err = ToolError::new(Category::Setup, "Found 2 matching devices.");
+        let mut err = ToolError::new(Category::Setup, "No Alhambra II is connected.");
         err.action = Some(Action {
-            code: ActionCode::SelectDevice,
-            description: "Choose one device and retry with its serial number.".into(),
+            code: ActionCode::ConnectBoard,
+            description: "Connect the Alhambra II by USB, then retry.".into(),
         });
         assert_eq!(
             serde_json::to_value(&err).unwrap(),
             json!({
                 "category": "setup",
-                "message": "Found 2 matching devices.",
+                "message": "No Alhambra II is connected.",
                 "details": "",
                 "diagnostics": [],
                 "action": {
-                    "code": "select_device",
-                    "description": "Choose one device and retry with its serial number."
+                    "code": "connect_board",
+                    "description": "Connect the Alhambra II by USB, then retry."
                 }
             })
         );
@@ -200,7 +198,6 @@ mod tests {
         let codes: Vec<_> = [
             ActionCode::InstallPackages,
             ActionCode::ConnectBoard,
-            ActionCode::SelectDevice,
             ActionCode::FixDevicePermissions,
             ActionCode::InstallDrivers,
             ActionCode::DisconnectDevices,
@@ -213,7 +210,6 @@ mod tests {
             json!([
                 "install_packages",
                 "connect_board",
-                "select_device",
                 "fix_device_permissions",
                 "install_drivers",
                 "disconnect_devices"

@@ -21,27 +21,27 @@ impl EngineTool for ProgramBoard {
     const NAME: &'static str = "program_board";
     const DESCRIPTION: &'static str = "Programs the bitstream of a successful build into the \
         board it was built for. It doesn't build: call build first, and program_board only if \
-        the build succeeded. The board comes from the build, so it takes only the build folder. \
-        It finds the connected board by USB; if none is connected it returns a setup error with \
-        connect_board, and if several are, a setup error with select_device that lists them, \
-        so retry with one's serial_number. Most boards are programmed to flash, so the design \
-        stays after power-off.";
+        the build succeeded. The board comes from the build, so it takes the build folder and \
+        the device to program: the id of a device from list_devices whose boards include the \
+        build's board (ask the user when several do). A device that isn't connected anymore is a \
+        setup error with connect_board; list the devices again. Most boards are programmed to \
+        flash, so the design stays after power-off.";
     const READ_ONLY: bool = false;
     const OPEN_WORLD: bool = true;
     type Input = ProgramBoardInput;
     type Output = ProgramBoardOutput;
 }
 
-/// Which build to program, and optionally which device.
+/// Which build to program, and into which device.
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ProgramBoardInput {
     /// The build folder of a successful build, as an absolute path.
     pub build_folder: String,
-    /// Program only the device with this serial number, when several
-    /// matching boards are connected.
-    #[serde(default)]
-    pub serial_number: Option<String>,
+    /// The device to program: the id of a device from list_devices, such as
+    /// one whose boards include the build's board. It must still be
+    /// connected and match the board's USB filter.
+    pub device: String,
     /// A custom programmer command that replaces the board's default one,
     /// like Apio's programmer_cmd. Its first word is a program from the
     /// toolchain package, such as openFPGALoader, or an absolute path. It may
@@ -97,13 +97,6 @@ pub async fn run_with(
             bitstream.display()
         )));
     }
-    if let Some(s) = &input.serial_number
-        && (s.is_empty() || s.chars().any(char::is_control))
-    {
-        return Err(ToolError::request(
-            "serial_number must be a non-empty single line.",
-        ));
-    }
     let board = &record.board;
     let variant = &board.configuration;
     let custom = input.programmer_command.as_deref();
@@ -135,15 +128,20 @@ pub async fn run_with(
     }
     phases.start("Finding device");
     let connected = scan()?;
-    let device = devices::select(
+    let device = devices::find(&connected, &input.device, &board.name)?;
+    if !devices::matches(&device, &variant.usb) {
+        return Err(ToolError::request(format!(
+            "device: {} isn't a {}: it doesn't match the board's USB filter. Choose a device whose boards in list_devices include the build's board.",
+            device_name(&device),
+            board.name
+        )));
+    }
+    program::check_alone(
+        custom.unwrap_or(&variant.args),
         &connected,
-        &variant.usb,
-        input.serial_number.as_deref(),
+        &device,
         &board.name,
     )?;
-    if custom.is_none() {
-        program::check_alone(&variant.programmer, &connected, &variant.usb, &board.name)?;
-    }
     let (program, args) =
         program::command(variant, custom, &device, &bitstream, &bin, input.verbose)?;
     let programmer = match custom {
@@ -223,4 +221,10 @@ pub async fn run(
     call: &Call,
 ) -> Result<ProgramBoardOutput, ToolError> {
     run_with(state, input, call, devices::scan).await
+}
+
+/// A device for messages, such as "Dual RS232-HS (0403:6010)".
+fn device_name(d: &Device) -> String {
+    let name = d.product.as_deref().unwrap_or("The device");
+    format!("{name} ({}:{})", d.vid, d.pid)
 }

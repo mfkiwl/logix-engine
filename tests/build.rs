@@ -626,22 +626,22 @@ async fn clean_build_removes_apio_style_env_folders() {
 // ----- list_devices and program_board, with fake device lists. Programming
 // real boards is checked by hand on hardware.
 
-use logix_engine::devices::{Device, DeviceKind};
+use logix_engine::devices::{Confidence, Device};
 use logix_engine::errors::ActionCode;
 use logix_engine::tools::{list_devices, program_board};
 
 fn usb(product: &str, serial: Option<&str>, dev: u8) -> Device {
-    Device {
-        kind: DeviceKind::Usb,
-        vid: "0403".into(),
-        pid: "6010".into(),
-        manufacturer: None,
-        product: Some(product.into()),
-        serial_number: serial.map(Into::into),
-        bus: 250,
-        device: dev,
-        matches_board: None,
-    }
+    Device::usb(
+        "0403".into(),
+        "6010".into(),
+        None,
+        Some(product.into()),
+        serial.map(Into::into),
+        250,
+        dev,
+        format!("250-{dev}"),
+        true,
+    )
 }
 
 fn program_input(build_folder: &Path, extra: Value) -> program_board::ProgramBoardInput {
@@ -653,28 +653,25 @@ fn program_input(build_folder: &Path, extra: Value) -> program_board::ProgramBoa
 }
 
 #[test]
-fn list_devices_marks_the_matching_boards() {
+fn list_devices_names_the_boards_each_device_may_be() {
     let devices = vec![
         usb("Alhambra II", Some("A1"), 3),
         usb("Dual RS232-HS", None, 4),
     ];
-    let input: list_devices::ListDevicesInput =
-        serde_json::from_value(json!({"board": "alhambra-ii"})).unwrap();
-    let out = list_devices::run_with(input, || Ok(devices.clone())).unwrap();
-    let flags: Vec<_> = out.devices.iter().map(|d| d.matches_board).collect();
-    assert_eq!(flags, vec![Some(true), Some(false)]);
-
     let out = list_devices::run_with(Default::default(), || Ok(devices.clone())).unwrap();
-    assert!(out.devices.iter().all(|d| d.matches_board.is_none()));
-
-    let input: list_devices::ListDevicesInput =
-        serde_json::from_value(json!({"board": "nope"})).unwrap();
+    let best = &out.devices[0].boards[0];
     assert_eq!(
-        list_devices::run_with(input, || Ok(vec![]))
-            .unwrap_err()
-            .category,
-        Category::Request
+        (best.board.as_str(), best.confidence),
+        ("alhambra-ii", Confidence::Named)
     );
+    assert!(
+        out.devices[1]
+            .boards
+            .iter()
+            .all(|m| m.board != "alhambra-ii"),
+        "another product name"
+    );
+    assert_eq!(out.devices[0].id, devices[0].id);
 }
 
 #[tokio::test]
@@ -682,22 +679,22 @@ async fn program_board_needs_a_successful_build() {
     let state = engine().await;
     let (_tmp, src) = project();
     let folder = src.join("_build/default");
-    let err = program_board::run_with(&state, program_input(&folder, json!({})), &call(), || {
-        Ok(vec![])
-    })
-    .await
-    .unwrap_err();
+    let input = program_input(&folder, json!({"device": "usb:250-3:0403:6010:"}));
+    let err = program_board::run_with(&state, input, &call(), || Ok(vec![]))
+        .await
+        .unwrap_err();
     assert_eq!(err.category, Category::Request);
     assert!(err.message.contains("Run build first"), "{}", err.message);
 }
 
 #[tokio::test]
-async fn program_board_finds_exactly_one_device() {
+async fn program_board_checks_the_chosen_device() {
     let state = engine().await;
     let (_tmp, src) = project();
     let folder = src.join("_build/default");
     build_it(&state, &src, json!({})).await.unwrap();
     let alhambra = || usb("Alhambra II v2.0", Some("A1"), 3);
+    let second = || usb("Alhambra II", Some("B2"), 5);
     let other = || usb("Dual RS232-HS", None, 4);
 
     let run = |devices: Vec<Device>, extra: Value| {
@@ -706,26 +703,38 @@ async fn program_board_finds_exactly_one_device() {
         async move { program_board::run_with(&state, input, &call(), move || Ok(devices)).await }
     };
 
-    let err = run(vec![other()], json!({})).await.unwrap_err();
+    // Not connected anymore.
+    let err = run(vec![other()], json!({"device": alhambra().id}))
+        .await
+        .unwrap_err();
     assert_eq!(err.action.unwrap().code, ActionCode::ConnectBoard);
 
+    // Not an ID, and a device that isn't the board.
+    let err = run(vec![alhambra()], json!({"device": "alhambra"}))
+        .await
+        .unwrap_err();
+    assert_eq!(err.category, Category::Request);
+    let err = run(vec![alhambra(), other()], json!({"device": other().id}))
+        .await
+        .unwrap_err();
+    assert_eq!(err.category, Category::Request);
+    assert!(err.message.contains("Dual RS232-HS"), "{}", err.message);
+
+    // A command that doesn't name the device runs only when no other device
+    // has its USB IDs.
     let err = run(
-        vec![alhambra(), usb("Alhambra II", Some("B2"), 5)],
-        json!({}),
+        vec![alhambra(), other()],
+        json!({"device": alhambra().id, "programmer_command": "openFPGALoader ${BITSTREAM}"}),
     )
     .await
     .unwrap_err();
-    assert_eq!(err.action.unwrap().code, ActionCode::SelectDevice);
-    assert_eq!(err.data.unwrap()["candidates"].as_array().unwrap().len(), 2);
+    assert_eq!(err.action.unwrap().code, ActionCode::DisconnectDevices);
 
     // The real openFPGALoader, pointed at a device that isn't there: a
     // setup error with connect_board and the programmer's output.
-    let err = run(
-        vec![alhambra(), usb("Alhambra II", Some("B2"), 5)],
-        json!({"serial_number": "B2"}),
-    )
-    .await
-    .unwrap_err();
+    let err = run(vec![alhambra(), second()], json!({"device": second().id}))
+        .await
+        .unwrap_err();
     assert_eq!(err.category, Category::Setup, "{err:?}");
     assert_eq!(err.action.as_ref().unwrap().code, ActionCode::ConnectBoard);
     assert!(err.details.contains("device not found"), "{err:?}");
@@ -771,7 +780,10 @@ async fn program_board_runs_the_command_with_the_device_and_bitstream() {
     let c = Call::new(rec.clone(), CancellationToken::new());
     let out = program_board::run_with(
         &state,
-        program_input(&folder, json!({"programmer_command": cmd})),
+        program_input(
+            &folder,
+            json!({"programmer_command": cmd, "device": usb("Alhambra II", None, 9).id}),
+        ),
         &c,
         || Ok(vec![usb("Alhambra II", None, 9)]),
     )
@@ -796,7 +808,10 @@ async fn program_board_runs_the_command_with_the_device_and_bitstream() {
     std::fs::write(&script, "#!/bin/sh\necho 'segfault here' >&2\nexit 3\n").unwrap();
     let err = program_board::run_with(
         &state,
-        program_input(&folder, json!({"programmer_command": cmd})),
+        program_input(
+            &folder,
+            json!({"programmer_command": cmd, "device": usb("Alhambra II", None, 9).id}),
+        ),
         &call(),
         || Ok(vec![usb("Alhambra II", None, 9)]),
     )

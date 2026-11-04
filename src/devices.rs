@@ -1,19 +1,29 @@
-//! USB device scanning and matching (docs/requirements.md, "Device
-//! selection"). The engine uses libusb, built in, like the programmers do, so
-//! bus and device numbers mean the same to both.
+//! USB device scanning, device IDs and board matching (docs/requirements.md,
+//! "Device selection"). The engine uses libusb, built in, like the
+//! programmers do, so bus and device numbers mean the same to both.
+//!
+//! Matching runs on every request against the boards it is given (the
+//! catalog and the request's own definitions), never against precomputed
+//! data, since hosts can define boards at any time.
 
+use std::collections::BTreeMap;
 use std::time::Duration;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::catalog::UsbFilter;
-use crate::errors::{ActionCode, ToolError};
+use crate::catalog::{UsbFilter, Variants};
+use crate::errors::{Action, ActionCode, ToolError};
 
-/// A connected device.
+/// A connected device that the engine can open.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Device {
+    /// The device's ID, to pass to program_board. Opaque: don't parse it.
+    /// It names the device on this computer for a short time: it stays
+    /// valid while the device stays on the same USB port, so list the
+    /// devices again before asking the user to choose.
+    pub id: String,
     /// The kind of device: usb.
     pub kind: DeviceKind,
     /// USB vendor ID, four lowercase hex digits.
@@ -31,12 +41,22 @@ pub struct Device {
     pub serial_number: Option<String>,
     /// USB bus number.
     pub bus: u8,
-    /// USB device number on its bus.
+    /// USB device number on its bus. It changes when the device is plugged
+    /// in again.
     pub device: u8,
-    /// Whether the device matches the given board. Present only when a board
-    /// was given.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub matches_board: Option<bool>,
+    /// The boards whose USB filters this device matches, best first. Empty
+    /// for a device that is no known board.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub boards: Vec<BoardMatch>,
+    /// Where the device is plugged in, such as 1-2.3 (bus, then ports).
+    #[serde(skip)]
+    #[schemars(skip)]
+    pub location: String,
+    /// Whether the engine could open the device and read its names. Devices
+    /// it can't open need a driver or permissions first.
+    #[serde(skip)]
+    #[schemars(skip)]
+    pub reachable: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
@@ -46,9 +66,73 @@ pub enum DeviceKind {
     Usb,
 }
 
-/// Lists the connected USB devices, sorted by vendor, product, bus and
-/// device. Names that can't be read, such as when the device can't be
-/// opened, are left out.
+/// A board a device may be.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct BoardMatch {
+    /// The board's ID: a catalog ID, or a key of the request's
+    /// custom_boards when custom is true.
+    pub board: String,
+    /// True when the board is one of the request's custom_boards rather
+    /// than the catalog's. A custom board can have a catalog board's ID; the
+    /// host decides which one it means.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub custom: bool,
+    /// How sure the match is. named: the device's product name or serial
+    /// number matched the board's pattern, so the device says it is this
+    /// kind of board (several boards can still share one name). chip: only
+    /// the USB IDs matched, so it is any device with this USB chip, often
+    /// many boards and adapters.
+    pub confidence: Confidence,
+    /// The board's variants this device fits, as dimension values, such as
+    /// {"connection": "usb", "memory": "flash"}, in the board's order.
+    pub variants: Vec<BTreeMap<String, String>>,
+}
+
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "lowercase")]
+pub enum Confidence {
+    /// The device's name or serial number matched the board's pattern.
+    Named,
+    /// Only the USB IDs matched.
+    Chip,
+}
+
+/// A device the engine sees but can't open, so it can't read its names or
+/// program it: it needs a driver or permissions first. Listed only when its
+/// USB IDs fit a board.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct UnreachableDevice {
+    /// The kind of device: usb.
+    pub kind: DeviceKind,
+    /// USB vendor ID, four lowercase hex digits.
+    pub vid: String,
+    /// USB product ID, four lowercase hex digits.
+    pub pid: String,
+    /// USB bus number.
+    pub bus: u8,
+    /// USB device number on its bus.
+    pub device: u8,
+    /// The boards whose USB IDs it has. Their confidence is always chip,
+    /// since its names can't be read.
+    pub boards: Vec<BoardMatch>,
+    /// What makes the device usable, such as fix_device_permissions.
+    pub action: Action,
+}
+
+/// A board to match devices against: its ID, whether it came from the
+/// request, and its configurations.
+pub struct Candidate<'a> {
+    pub id: &'a str,
+    pub custom: bool,
+    pub variants: &'a Variants,
+}
+
+/// Lists the connected USB devices, the ones the engine can't open
+/// included, sorted by vendor, product, bus and device.
 pub fn scan() -> Result<Vec<Device>, ToolError> {
     let list = rusb::devices().map_err(|e| {
         ToolError::setup(format!("Can't list the USB devices: {e}")).with_action(
@@ -63,7 +147,9 @@ pub fn scan() -> Result<Vec<Device>, ToolError> {
             continue;
         };
         let (mut manufacturer, mut product, mut serial_number) = (None, None, None);
+        let mut reachable = false;
         if let Ok(handle) = d.open() {
+            reachable = true;
             let lang = handle
                 .read_languages(timeout)
                 .ok()
@@ -78,20 +164,69 @@ pub fn scan() -> Result<Vec<Device>, ToolError> {
                 serial_number = clean(handle.read_serial_number_string(lang, &desc, timeout).ok());
             }
         }
-        out.push(Device {
-            kind: DeviceKind::Usb,
-            vid: format!("{:04x}", desc.vendor_id()),
-            pid: format!("{:04x}", desc.product_id()),
+        // The port path stays the same when the device is plugged in again
+        // in the same port; the device number doesn't.
+        let location = match d.port_numbers() {
+            Ok(ports) if !ports.is_empty() => format!(
+                "{}-{}",
+                d.bus_number(),
+                ports
+                    .iter()
+                    .map(u8::to_string)
+                    .collect::<Vec<_>>()
+                    .join(".")
+            ),
+            _ => format!("{}-a{}", d.bus_number(), d.address()),
+        };
+        out.push(Device::usb(
+            format!("{:04x}", desc.vendor_id()),
+            format!("{:04x}", desc.product_id()),
             manufacturer,
             product,
             serial_number,
-            bus: d.bus_number(),
-            device: d.address(),
-            matches_board: None,
-        });
+            d.bus_number(),
+            d.address(),
+            location,
+            reachable,
+        ));
     }
     out.sort_by(|a, b| (&a.vid, &a.pid, a.bus, a.device).cmp(&(&b.vid, &b.pid, b.bus, b.device)));
     Ok(out)
+}
+
+impl Device {
+    /// A USB device, with its ID made from where it is and what it is.
+    #[allow(clippy::too_many_arguments)]
+    pub fn usb(
+        vid: String,
+        pid: String,
+        manufacturer: Option<String>,
+        product: Option<String>,
+        serial_number: Option<String>,
+        bus: u8,
+        device: u8,
+        location: String,
+        reachable: bool,
+    ) -> Device {
+        let id = format!(
+            "usb:{location}:{vid}:{pid}:{}",
+            serial_number.as_deref().unwrap_or("")
+        );
+        Device {
+            id,
+            kind: DeviceKind::Usb,
+            vid,
+            pid,
+            manufacturer,
+            product,
+            serial_number,
+            bus,
+            device,
+            boards: Vec::new(),
+            location,
+            reachable,
+        }
+    }
 }
 
 /// Whether a device has the filter's USB IDs (case doesn't matter).
@@ -115,48 +250,99 @@ pub fn matches(device: &Device, filter: &UsbFilter) -> bool {
         && fits(&filter.serial_regex, &device.serial_number)
 }
 
-/// Picks the one device to program: matching the filter, and the serial
-/// number when given. No match and several matches are setup errors with
-/// connect_board and select_device; the latter lists the candidates.
-pub fn select(
-    devices: &[Device],
-    filter: &UsbFilter,
-    serial_number: Option<&str>,
-    board_name: &str,
-) -> Result<Device, ToolError> {
-    let candidates: Vec<&Device> = devices
-        .iter()
-        .filter(|d| matches(d, filter))
-        .filter(|d| serial_number.is_none_or(|s| d.serial_number.as_deref() == Some(s)))
-        .collect();
-    match candidates.as_slice() {
-        [one] => Ok((*one).clone()),
-        [] => {
-            let what = match serial_number {
-                Some(s) => format!("No {board_name} with serial number {s} is connected."),
-                None => format!("No {board_name} is connected."),
+/// The boards a device may be, best first: named matches, then chip ones,
+/// each by board ID, catalog boards before custom ones. For a device the
+/// engine can't open, only the USB IDs are compared (its names are unknown),
+/// so every match is chip.
+pub fn board_matches(device: &Device, boards: &[Candidate]) -> Vec<BoardMatch> {
+    let mut out = Vec::new();
+    for b in boards {
+        let mut variants = Vec::new();
+        let mut named = true;
+        for c in &b.variants.configurations {
+            let hit = if device.reachable {
+                matches(device, &c.usb)
+            } else {
+                same_ids(device, &c.usb)
             };
-            Err(ToolError::setup(what).with_action(
-                ActionCode::ConnectBoard,
-                format!("Connect the {board_name} by USB, then retry."),
-            ))
+            if hit {
+                variants.push(c.when.clone());
+                let has_pattern = c.usb.product_regex.is_some() || c.usb.serial_regex.is_some();
+                named &= device.reachable && has_pattern;
+            }
         }
-        many => {
-            let mut err = ToolError::setup(format!("Found {} matching devices.", many.len()))
-                .with_action(
-                    ActionCode::SelectDevice,
-                    "Choose one device and retry with its serial number.",
-                );
-            let list: Vec<serde_json::Value> = many
-                .iter()
-                .map(|d| serde_json::to_value(d).unwrap_or_default())
-                .collect();
-            let mut data = serde_json::Map::new();
-            data.insert("candidates".into(), list.into());
-            err.data = Some(data);
-            Err(err)
+        if !variants.is_empty() {
+            out.push(BoardMatch {
+                board: b.id.to_string(),
+                custom: b.custom,
+                confidence: if named {
+                    Confidence::Named
+                } else {
+                    Confidence::Chip
+                },
+                variants,
+            });
         }
     }
+    out.sort_by(|a, b| (a.confidence, a.custom, &a.board).cmp(&(b.confidence, b.custom, &b.board)));
+    out
+}
+
+/// What makes a device the engine can't open usable, on this platform.
+pub fn unreachable_action() -> Action {
+    if cfg!(windows) {
+        Action {
+            code: ActionCode::InstallDrivers,
+            description: "Install the driver this device needs, then list the devices again."
+                .into(),
+        }
+    } else {
+        Action {
+            code: ActionCode::FixDevicePermissions,
+            description: "Allow this user to access the USB device, then list the devices again."
+                .into(),
+        }
+    }
+}
+
+/// Finds the device a device ID names among the connected devices. The ID
+/// must come from list_devices on this computer; the device must still be on
+/// the same port, with the same USB IDs and serial number. Errors: a request
+/// error for an ID that isn't one, a setup error with connect_board when the
+/// device is gone or another one is in its place, and a setup error with
+/// fix_device_permissions (or install_drivers) when it can't be opened.
+pub fn find(devices: &[Device], id: &str, board_name: &str) -> Result<Device, ToolError> {
+    let parts: Option<Vec<&str>> = id
+        .strip_prefix("usb:")
+        .map(|rest| rest.splitn(4, ':').collect());
+    let Some([location, vid, pid, _serial]) = parts.as_deref() else {
+        return Err(ToolError::request(format!(
+            "device: {id:?} isn't a device ID. Use the id of a device from list_devices."
+        )));
+    };
+    let gone = || {
+        ToolError::setup(format!(
+            "The chosen device isn't connected anymore. Is the {board_name} still plugged in?"
+        ))
+        .with_action(
+            ActionCode::ConnectBoard,
+            format!("Connect the {board_name} by USB, list the devices again and choose it."),
+        )
+    };
+    let Some(d) = devices.iter().find(|d| d.location == *location) else {
+        return Err(gone());
+    };
+    if d.vid != *vid || d.pid != *pid || d.id != id {
+        return Err(gone());
+    }
+    if !d.reachable {
+        let action = unreachable_action();
+        return Err(
+            ToolError::setup(format!("The {board_name} was found but can't be opened."))
+                .with_action(action.code, action.description),
+        );
+    }
+    Ok(d.clone())
 }
 
 #[cfg(test)]
@@ -170,17 +356,17 @@ pub mod tests {
         serial: Option<&str>,
         dev: u8,
     ) -> Device {
-        Device {
-            kind: DeviceKind::Usb,
-            vid: vid.into(),
-            pid: pid.into(),
-            manufacturer: None,
-            product: product.map(Into::into),
-            serial_number: serial.map(Into::into),
-            bus: 1,
-            device: dev,
-            matches_board: None,
-        }
+        Device::usb(
+            vid.into(),
+            pid.into(),
+            None,
+            product.map(Into::into),
+            serial.map(Into::into),
+            1,
+            dev,
+            format!("1-{dev}"),
+            true,
+        )
     }
 
     fn filter(re: Option<&str>) -> UsbFilter {
@@ -212,15 +398,6 @@ pub mod tests {
             &device("0403", "6014", Some("Alhambra II"), None, 6),
             &f
         ));
-        assert!(matches(
-            &device("0403", "6010", Some("Alhambra II"), None, 6),
-            &UsbFilter {
-                vid: "0403".into(),
-                pid: "6010".into(),
-                product_regex: None,
-                serial_regex: None,
-            }
-        ));
         // iCESugar boards share IDs and product name; the serial tells them apart.
         let nano_filter = UsbFilter {
             vid: "1d50".into(),
@@ -249,33 +426,94 @@ pub mod tests {
     }
 
     #[test]
-    fn selection() {
-        let f = filter(Some("^Alhambra II"));
+    fn ids_name_where_and_what_the_device_is() {
+        let d = device("0403", "6010", Some("Alhambra II"), Some("A:1"), 3);
+        assert_eq!(d.id, "usb:1-3:0403:6010:A:1");
+        assert_eq!(
+            device("0403", "6010", None, None, 3).id,
+            "usb:1-3:0403:6010:"
+        );
+    }
+
+    #[test]
+    fn finding_a_device_by_id() {
         let a = device("0403", "6010", Some("Alhambra II"), Some("A1"), 3);
         let b = device("0403", "6010", Some("Alhambra II"), Some("B2"), 4);
-        let other = device("0403", "6010", Some("Dual RS232-HS"), None, 5);
+        let list = [a.clone(), b.clone()];
+        assert_eq!(find(&list, &b.id, "Alhambra II").unwrap(), b);
 
-        assert_eq!(
-            select(&[a.clone(), other.clone()], &f, None, "Alhambra II").unwrap(),
-            a
-        );
+        // Plugged in again in the same port: a new device number, same ID.
+        let mut again = a.clone();
+        again.device = 9;
+        assert_eq!(find(&[again.clone()], &a.id, "Alhambra II").unwrap(), again);
 
-        let err = select(std::slice::from_ref(&other), &f, None, "Alhambra II").unwrap_err();
+        // Gone, or another device in its port.
+        let err = find(std::slice::from_ref(&b), &a.id, "Alhambra II").unwrap_err();
         assert_eq!(err.action.unwrap().code, ActionCode::ConnectBoard);
-        assert!(err.message.contains("Alhambra II"));
+        let mut other = device("0403", "6010", Some("Alhambra II"), Some("C3"), 3);
+        other.location = a.location.clone();
+        let err = find(&[other], &a.id, "Alhambra II").unwrap_err();
+        assert_eq!(err.action.unwrap().code, ActionCode::ConnectBoard);
 
-        let err = select(&[a.clone(), b.clone()], &f, None, "Alhambra II").unwrap_err();
-        assert_eq!(err.action.as_ref().unwrap().code, ActionCode::SelectDevice);
-        assert_eq!(err.message, "Found 2 matching devices.");
-        let cands = &err.data.unwrap()["candidates"];
-        assert_eq!(cands[1]["serial_number"], "B2");
+        // Not an ID.
+        for bad in ["", "1-3", "usb:1-3", "usb:1-3:0403"] {
+            let err = find(&list, bad, "Alhambra II").unwrap_err();
+            assert_eq!(err.category, crate::errors::Category::Request, "{bad}");
+        }
 
-        assert_eq!(
-            select(&[a.clone(), b.clone()], &f, Some("B2"), "Alhambra II").unwrap(),
-            b
+        // Can't be opened.
+        let mut locked = a.clone();
+        locked.reachable = false;
+        let err = find(&[locked], &a.id, "Alhambra II").unwrap_err();
+        assert_eq!(err.category, crate::errors::Category::Setup);
+        assert_eq!(err.action.unwrap().code, unreachable_action().code);
+    }
+
+    #[test]
+    fn matching_boards_with_confidence() {
+        let catalog = crate::catalog::builtin();
+        let boards: Vec<Candidate> = catalog
+            .boards
+            .iter()
+            .map(|(id, b)| Candidate {
+                id,
+                custom: false,
+                variants: &b.variants,
+            })
+            .collect();
+        let ids = |m: &[BoardMatch]| m.iter().map(|m| m.board.clone()).collect::<Vec<_>>();
+
+        let alhambra = device("0403", "6010", Some("Alhambra II v1.0A"), Some("FT1"), 3);
+        let m = board_matches(&alhambra, &boards);
+        assert_eq!(m[0].board, "alhambra-ii");
+        assert_eq!(m[0].confidence, Confidence::Named);
+        assert!(m[1..].iter().all(|m| m.confidence == Confidence::Chip));
+        assert!(
+            ids(&m).contains(&"alchitry-au".to_string()),
+            "a generic FTDI filter"
         );
-        let err = select(&[a, b], &f, Some("Z9"), "Alhambra II").unwrap_err();
-        assert!(err.message.contains("Z9"));
+        assert!(!ids(&m).contains(&"icezum".to_string()), "another name");
+
+        // Both iCESugar-Pro variants, and not the other iCESugar boards.
+        let pro = device(
+            "1d50",
+            "602b",
+            Some("DAPLink CMSIS-DAP"),
+            Some("0710000100380027"),
+            7,
+        );
+        let m = board_matches(&pro, &boards);
+        assert_eq!(ids(&m), ["icesugar-pro"]);
+        assert_eq!(m[0].variants.len(), 2);
+
+        // Can't be opened: every board with these USB IDs, as chip.
+        let mut locked = pro.clone();
+        locked.reachable = false;
+        let m = board_matches(&locked, &boards);
+        assert_eq!(ids(&m), ["icesugar-1-5", "icesugar-nano", "icesugar-pro"]);
+        assert!(m.iter().all(|m| m.confidence == Confidence::Chip));
+
+        assert!(board_matches(&device("1234", "5678", None, None, 1), &boards).is_empty());
     }
 
     #[test]
@@ -284,6 +522,7 @@ pub mod tests {
         let devices = scan().unwrap();
         for d in &devices {
             assert_eq!(d.vid.len(), 4);
+            assert!(d.id.starts_with("usb:"));
         }
     }
 }
