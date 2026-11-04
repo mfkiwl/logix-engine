@@ -130,7 +130,7 @@
             "usb": {
               "vid": "0403",
               "pid": "6014",
-              "product_regex": "Digilent USB Device"
+              "product_regex": "^Digilent USB Device"
             },
             "tested": true
           }
@@ -339,7 +339,7 @@
             "usb": {
               "vid": "0403",
               "pid": "6010",
-              "product_regex": "^Digilent USB Device*"
+              "product_regex": "^Digilent USB Device"
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a35tcpg236, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
@@ -354,7 +354,7 @@
             "usb": {
               "vid": "0403",
               "pid": "6010",
-              "product_regex": "^Digilent USB Device*"
+              "product_regex": "^Digilent USB Device"
             },
             "tested": true
           }
