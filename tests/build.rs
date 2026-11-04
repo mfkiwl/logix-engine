@@ -174,7 +174,7 @@ async fn builds_then_is_up_to_date_until_an_input_changes() {
     );
 }
 
-/// An ECP5 build with Apio's commands, for the iCESugar-Pro.
+/// An ECP5 build with the standard commands, for the iCESugar-Pro.
 #[tokio::test]
 async fn builds_an_ecp5_design() {
     let state = engine().await;
@@ -268,7 +268,7 @@ async fn builds_an_ecp5_design() {
     assert!(!src.join("_build/default/hardware.bit").exists());
 }
 
-/// A Gowin build with Apio's commands, for the Tang Nano 9K.
+/// A Gowin build with the standard commands, for the Tang Nano 9K.
 #[tokio::test]
 async fn builds_a_gowin_design() {
     let state = engine().await;
@@ -335,7 +335,7 @@ async fn builds_a_gowin_design() {
     assert!(!src.join("_build/default/hardware.fs").exists());
 }
 
-/// A Xilinx build with Apio's commands, for the Arty A7-35T: yosys from
+/// A Xilinx build with the standard commands, for the Arty A7-35T: yosys from
 /// oss-cad-suite, the rest from openxc7.
 #[tokio::test]
 async fn builds_a_xilinx_design() {
@@ -588,7 +588,7 @@ async fn progress_and_cancel() {
 }
 
 #[tokio::test]
-async fn clean_build_removes_apio_style_env_folders() {
+async fn clean_build_removes_a_folder_of_build_folders() {
     let state = engine().await;
     let (_tmp, src) = project();
     let root = src.join("_build");

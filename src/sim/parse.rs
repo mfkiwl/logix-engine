@@ -155,7 +155,7 @@ fn vvp_line() -> &'static Regex {
     })
 }
 
-/// "*** ASSERTION FAILED at main_tb.v:52: ..." (Apio's older examples) and
+/// "*** ASSERTION FAILED at main_tb.v:52: ..." (older example testbenches) and
 /// "*** ASSERTION FAILED in main_tb (clk_num=400): ..." (a common variant
 /// without a location).
 fn assertion_line() -> &'static Regex {
@@ -168,7 +168,7 @@ fn assertion_line() -> &'static Regex {
     })
 }
 
-/// "ERROR at main_tb.v:52: expected ..." (the EXPECT_EQ macro in Apio's
+/// "ERROR at main_tb.v:52: expected ..." (the EXPECT_EQ macro in
 /// docs).
 fn error_at_line() -> &'static Regex {
     static RE: OnceLock<Regex> = OnceLock::new();
@@ -187,7 +187,7 @@ fn time_line() -> &'static Regex {
 pub enum VvpLine {
     /// A failure from $fatal or $error, followed by its "Time:" line.
     TaggedFailure,
-    /// A failure line from Apio's assertion macros, with nothing after it.
+    /// A failure line from common testbench assertion macros, with nothing after it.
     MacroFailure,
     /// Anything else.
     Other,
@@ -219,7 +219,7 @@ pub struct VvpMessage {
 
 /// Parses a testbench run's output from vvp: the messages of $fatal, $error
 /// and $warning, with the time from the "Time:" line vvp prints after each,
-/// and the failure lines Apio's assertion macros print. Under simulate those
+/// and the failure lines common testbench assertion macros print. Under simulate those
 /// macros skip $fatal (LOGIX_SIM is 1), so their line is the only sign of a
 /// failure. Other lines, such as a testbench's own $display text, are left
 /// out.
@@ -425,7 +425,7 @@ z_tb.v:1: $finish called at 0 (1s)";
         assert_eq!(d.len(), 4, "{d:#?}");
         // Each $fatal, $error and $warning gets the time of its "Time:" line.
         assert_eq!(m[0].ticks, Some(0));
-        assert_eq!(m[2].ticks, None, "Apio's macro lines have no time");
+        assert_eq!(m[2].ticks, None, "these macro lines have no time");
         assert_eq!(d[0].severity, Severity::Warning);
         assert_eq!(d[0].text, "careful");
         assert_eq!(d[1].severity, Severity::Error);
@@ -438,8 +438,8 @@ z_tb.v:1: $finish called at 0 (1s)";
     }
 
     #[test]
-    fn apio_assertion_macro_lines() {
-        // Real lines from the three kinds of Apio assertion macros.
+    fn assertion_macro_lines() {
+        // Real lines from the three kinds of testbench assertion macros.
         let out =
             "*** ASSERTION FAILED in main_tb (clk_num=400): expected (leds == 'h32), actual: 'h31
 End of simulation

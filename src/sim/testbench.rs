@@ -1,11 +1,11 @@
 //! Compiling and running testbenches with Icarus Verilog, for test and
 //! simulate: iverilog compiles the design, the FPGA's primitive models and
 //! one testbench into the build folder, then vvp runs it and writes its
-//! waveform there, with Apio's commands.
+//! waveform there, with the standard commands.
 //!
 //! Build folder files, for a testbench `rtl/uart_tb.v`: `rtl/uart_tb.out`
 //! (the compiled simulation) and `rtl/uart_tb.vcd` (the waveform), the
-//! testbench's path without its extension, as in Apio.
+//! testbench's path without its extension.
 
 use std::ffi::OsString;
 use std::fs;
@@ -62,7 +62,7 @@ pub struct TestbenchRun {
     /// How the run ended.
     pub ending: Ending,
     /// Compile warnings and the testbench's $fatal, $error and $warning
-    /// messages, and the failure lines of Apio's assertion macros.
+    /// messages, and the failure lines of common testbench assertion macros.
     pub diagnostics: Vec<Diagnostic>,
     /// What the testbench printed, shortened to its first and last
     /// MAX_OUTPUT_LINES / 2 lines when longer.
@@ -136,7 +136,7 @@ fn dumpfile_call() -> &'static Regex {
     RE.get_or_init(|| Regex::new(r"\$dumpfile\s*\(").unwrap())
 }
 
-/// Apio's rule: a testbench must not call $dumpfile, since the engine
+/// The rule: a testbench must not call $dumpfile, since the engine
 /// decides where the waveform goes. A design error naming the line.
 pub fn check_no_dumpfile(source_folder: &Path, testbench: &str) -> Result<(), ToolError> {
     let text = fs::read_to_string(source_folder.join(testbench))
@@ -161,7 +161,7 @@ pub fn check_no_dumpfile(source_folder: &Path, testbench: &str) -> Result<(), To
     Err(err)
 }
 
-/// iverilog's arguments, in Apio's order: the output file, the request's
+/// iverilog's arguments, in this order: the output file, the request's
 /// macros, LOGIX_SIM (1 when simulating for a viewer, 0 when testing), the
 /// FPGA's models, then the design files and the testbench.
 pub fn iverilog_args(
@@ -234,7 +234,7 @@ pub fn prepare_build_folder(build_folder: &Path, stem: &str) -> Result<PathBuf, 
 /// line), so a batch run fails fast without the testbench knowing the mode.
 /// The limits in `options` stop runs that don't end. `operation` names the
 /// operation in the cancel message. The tools run in the source folder, so a testbench reads
-/// data files, such as with $readmemh, relative to it, as in Apio.
+/// data files, such as with $readmemh, relative to it.
 #[allow(clippy::too_many_arguments)]
 pub async fn compile_and_run(
     operation: &str,

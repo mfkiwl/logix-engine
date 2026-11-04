@@ -18,8 +18,8 @@ All hosts launch the engine as a child process and use MCP over stdin/stdout. [T
 
 | Host | Examples | Session | MCP usage |
 | --- | --- | --- | --- |
-| Desktop apps and IDE extensions | IceStudio, Logix, Apio VS Code | Ongoing | Calls known tools by name |
-| CLI tools, scripts and CI | Apio, shell scripts, GitHub Actions | One call per command | Calls one known tool by name |
+| Desktop apps and IDE extensions | Logix IDE, Logix VSCode, IceStudio | Ongoing | Calls known tools by name |
+| CLI tools, scripts and CI | Logix CLI, shell scripts, GitHub Actions | One call per command | Calls one known tool by name |
 | HDL programs | Amaranth, LiteX | Ongoing | Calls known tools by name |
 | AI agents | MCP-based agents | Ongoing | Discovers tools and their descriptions, then decides what to call |
 | Network adapter (nice to have) | Serves browser apps and remote labs | Ongoing | Relays tool calls from remote frontends over MCP over HTTP, with auth and file transfer |
@@ -61,7 +61,7 @@ All hosts launch the engine as a child process and use MCP over stdin/stdout. [T
 
 - **Follows the requirements.** MCP for all hosts, a tool API that never breaks, and stateless requests, as the [requirements](requirements.md) require.
 - **Process isolation.** Each tool runs as a subprocess with its own working directory and environment. Cancelling an operation stops its process tree. Stopping asks first (SIGTERM), so a tool can finish writing its files, such as a waveform, and kills what is left after two seconds.
-- **Tool environment.** The engine starts each tool from an empty environment with only `PATH` (the package's `bin` folder, then `/usr/bin:/bin`), `HOME` and `TMPDIR`, so results never depend on the user's shell setup, such as a `PYTHONPATH` that would confuse the packaged Python. On macOS and Linux, oss-cad-suite's `bin` programs are launcher scripts that set each tool's own variables, such as `VERILATOR_ROOT` for Verilator, `PYTHONHOME` for nextpnr and vvp, `OPENFPGALOADER_SOJ_DIR` for openFPGALoader and the GTK settings for GTKWave, so the engine sets nothing else, as Apio's `config.jsonc` does by hand. Later platforms and packages need more: Windows has no launcher scripts, so the engine must set what Apio does there (the packages' `lib` folders on `PATH`, `VERILATOR_ROOT`, `OPENFPGALOADER_SOJ_DIR`), and the ECP5 and Xilinx flows pass Trellis and Project X-Ray database paths in their commands, as Apio's `TRELLIS` and `PRJXRAY_DB_DIR` do. Every result lists the exact commands and environment (see the tool API's Commands section).
+- **Tool environment.** The engine starts each tool from an empty environment with only `PATH` (the package's `bin` folder, then `/usr/bin:/bin`), `HOME` and `TMPDIR`, so results never depend on the user's shell setup, such as a `PYTHONPATH` that would confuse the packaged Python. On macOS and Linux, oss-cad-suite's `bin` programs are launcher scripts that set each tool's own variables, such as `VERILATOR_ROOT` for Verilator, `PYTHONHOME` for nextpnr and vvp, `OPENFPGALOADER_SOJ_DIR` for openFPGALoader and the GTK settings for GTKWave, so the engine sets nothing else. Later platforms and packages need more: Windows has no launcher scripts, so the engine must set what the tools need there (the packages' `lib` folders on `PATH`, `VERILATOR_ROOT`, `OPENFPGALOADER_SOJ_DIR`), and the ECP5 and Xilinx flows pass Trellis and Project X-Ray database paths in their commands. Every result lists the exact commands and environment (see the tool API's Commands section).
 - **Concurrency.** Each instance serves one session. Several instances can run at once and share an engine folder, using file locks during package installs.
 - **Long operations.** Every operation is a plain tool call with progress and cancellation, which is all local hosts need. MCP 2026-07-28 supports both on stdin/stdout: the host requests progress with a progress token and receives progress notifications, and cancels by sending a cancellation notification with the request ID. The MCP Tasks extension is added later for AI agents, whose tool calls may time out, and for the network adapter, where connections can drop. Inside the engine, both use the same operation model.
 
@@ -70,7 +70,7 @@ All hosts launch the engine as a child process and use MCP over stdin/stdout. [T
 How the project tests the engine itself. Testing user designs is an engine feature, covered under [User design testing](requirements.md#user-design-testing) in the requirements.
 
 - **Schema tests:** every tool's inputs and outputs are checked against the published schema.
-- **Golden tests:** the engine's own test designs, Verilog sources with a board ID kept with the engine's tests, are built for each FPGA family and their outputs compared with known-good results. Apio's current Verilog examples are a good starting set.
+- **Golden tests:** the engine's own test designs, Verilog sources with a board ID kept with the engine's tests, are built for each FPGA family and their outputs compared with known-good results.
 - **Platform matrix:** CI runs the full suite on every supported platform and architecture.
 - **Hardware-in-the-loop tests:** check the engine's own board programming and on-board support on real boards. A lab computer on a supported platform runs them nightly, through a hardware test interface that can drive and observe the boards. The interface is still open.
 
@@ -82,9 +82,9 @@ Per-platform binaries are published on GitHub Releases. PyPI and npm packages ma
 
 These examples are illustrative. They follow the [Tool API](tool-api.md) and the [Command line](command-line.md).
 
-### Example 1: Apio calling the engine's build operation (Python)
+### Example 1: a command-line tool calling the engine's build operation (Python)
 
-Apio launches the engine, calls the build tool with explicit folders and a board ID, shows progress, and reads the structured result or error. It uses the official MCP Python SDK.
+A command-line tool, such as Logix CLI, launches the engine, calls the build tool with explicit folders and a board ID, shows progress, and reads the structured result or error. It uses the official MCP Python SDK.
 
 ```python
 import asyncio
@@ -94,7 +94,7 @@ from mcp.client.stdio import stdio_client
 
 # Launch the engine as a child process, passing its engine folder.
 ENGINE = StdioServerParameters(
-    command="logix-engine",                      # engine binary bundled with Apio
+    command="logix-engine",                      # engine binary bundled with the tool
     args=["--engine-folder", os.path.expanduser("~/.myhost/engine")],
 )
 
@@ -135,7 +135,7 @@ async def build():
 asyncio.run(build())
 ```
 
-Apio needs no knowledge of the underlying tools. All folders are explicit in the request, as the stateless rule requires, and errors arrive as data that Apio formats for its own CLI.
+The tool needs no knowledge of the underlying toolchain. All folders are explicit in the request, as the stateless rule requires, and errors arrive as data that the tool formats for its own command line.
 
 ### Example 2: IceStudio calling the build operation (JavaScript)
 
@@ -211,7 +211,7 @@ module.exports = { build };
 
 The engine never sees the block diagram. IceStudio owns the design format and the mapping back to blocks, while the engine does the build from plain files in shared folders.
 
-### Example 3: Apio VS Code extension calling the build operation (JavaScript)
+### Example 3: a VS Code extension calling the build operation (JavaScript)
 
 The extension runs a build with a cancellable VS Code progress notification, and shows design errors in the Problems panel. It uses the official MCP TypeScript SDK, which also works from JavaScript.
 
@@ -222,20 +222,20 @@ const path = require("path");
 const { Client } = require("@modelcontextprotocol/sdk/client/index.js");
 const { StdioClientTransport } = require("@modelcontextprotocol/sdk/client/stdio.js");
 
-const diagnostics = vscode.languages.createDiagnosticCollection("apio");
+const diagnostics = vscode.languages.createDiagnosticCollection("logix");
 
 async function build(projectDir) {
   // Launch the engine as a child process, passing its engine folder.
   const transport = new StdioClientTransport({
-    command: "logix-engine",                       // engine binary bundled with Apio
-    args: ["--engine-folder", path.join(os.homedir(), ".apio", "engine")],
+    command: "logix-engine",                       // engine binary bundled with the extension
+    args: ["--engine-folder", path.join(os.homedir(), ".logix", "engine")],
   });
-  const client = new Client({ name: "apio-vscode", version: "1.0.0" });
+  const client = new Client({ name: "logix-vscode", version: "1.0.0" });
   await client.connect(transport);
 
   try {
     await vscode.window.withProgress(
-      { location: vscode.ProgressLocation.Notification, title: "Apio build", cancellable: true },
+      { location: vscode.ProgressLocation.Notification, title: "Logix build", cancellable: true },
       async (progress, token) => {
         // Cancelling in VS Code cancels the engine operation.
         const abort = new AbortController();

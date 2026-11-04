@@ -20,9 +20,9 @@ Draft requirements for the engine. [Architecture](architecture.md), [Tool API](t
 | Board variant | One way to program a board, such as through its USB port to flash or through an FT232H adapter to RAM: an ID, a value of each standard dimension, and how to program it. A board lists its board variants; requests select one with the `board_variant` field |
 | Toolchain | The open source FPGA tools the engine runs to perform operations, such as synthesis and place-and-route tools |
 | Shared folders | Folders on the host's computer that both the host and the engine use: the engine folder, the source folder and the build folder. The host chooses their locations: the engine folder when it launches an instance, the source and build folders with each request. They may overlap |
-| Source folder | The shared folder that holds the design's sources, such as HDL files, testbenches and constraint files. The host owns it and names it in each request. The engine reads it, and writes to it only when an operation calls for it, such as formatting, or writing a default waveform layout the request names. It may also hold other files, such as a frontend's project files. The host can exclude parts of it from the engine, such as Apio's `_build` folder, even when the build folder is only a subfolder of the excluded part, such as `_build/<env_name>` |
+| Source folder | The shared folder that holds the design's sources, such as HDL files, testbenches and constraint files. The host owns it and names it in each request. The engine reads it, and writes to it only when an operation calls for it, such as formatting, or writing a default waveform layout the request names. It may also hold other files, such as a frontend's project files. The host can exclude parts of it from the engine, such as a `_build` folder, even when the build folder is only a subfolder of the excluded part, such as `_build/<env_name>` |
 | Build folder | The shared folder where the engine writes generated files, such as bitstreams, reports and waveforms, and keeps any state between requests, such as incremental build data. The host names it in each request. Deleting it may slow the next build but never changes its result. It may be inside the source folder or outside it, but is never the source folder itself |
-| Project model | How a frontend organizes a design on disk, such as Apio's `apio.ini` and directory layout. The engine does not impose one |
+| Project model | How a frontend organizes a design on disk, such as a project file and directory layout. The engine does not impose one |
 | MCP | Model Context Protocol, the open standard all hosts use to call engine operations as tools |
 
 ## Goals
@@ -115,9 +115,9 @@ The engine provides the core FPGA operations that frontends build on. The table 
 
 ## Reference hosts
 
-Apio, IceStudio and Logix must each be implementable as a host of the engine, using the engine's operations instead of their own toolchain handling or calls to Apio. These three are the reference hosts that validate the engine's interface. The Apio compatibility section covers what Apio needs. Table 6 lists what IceStudio and Logix need beyond that.
+Logix's own frontends, starting with Logix IDE, and other open source FPGA tools, such as Apio and IceStudio, must each be implementable as a host of the engine, using the engine's operations instead of their own toolchain handling. These reference hosts validate the engine's interface. The Required capabilities section lists what the engine offers them all; Table 6 lists what graphical and IDE hosts need beyond that.
 
-**Table 6.** Requirements from IceStudio and Logix beyond Apio
+**Table 6.** Requirements from graphical and IDE hosts
 
 | Area | The engine must support | Needed by |
 | --- | --- | --- |
@@ -132,30 +132,30 @@ Apio, IceStudio and Logix must each be implementable as a host of the engine, us
 
 **AI agents as hosts.** A generic MCP client, such as an AI coding agent, must be able to act as the host itself, with no frontend. It launches the engine with an engine folder and needs nothing else. It learns the tools from their names, descriptions and input schemas alone, and acts on the structured errors and suggested actions. This means every tool and field needs a clear, self-contained description.
 
-## Apio compatibility
+## Required capabilities
 
-The engine must support all of Apio's current functionality, so that Apio can be reimplemented as a host on top of it. Apio is the baseline: anything Apio supports today, the engine must support, as listed below.
+The engine must support at least the capabilities below, which today's open source FPGA tools offer their users, so that any of them can be built as a host on top of the engine.
 
-**Table 7.** Requirements for reimplementing Apio as a host
+**Table 7.** Required capabilities
 
 | Area | The engine must support |
 | --- | --- |
-| FPGA architectures | Every architecture Apio supports, including Lattice iCE40, Lattice ECP5, Gowin and AMD/Xilinx 7 Series |
+| FPGA architectures | The architectures of the supported boards: Lattice iCE40, Lattice ECP5, Gowin and AMD/Xilinx 7 Series |
 | HDL languages | Verilog and SystemVerilog |
 | Constraint files | Each architecture's native format, such as `.pcf` for iCE40, `.lpf` for ECP5 and `.cst` for Gowin |
-| Build toolchains | Synthesis, place and route, and bitstream generation for each architecture, with the tools Apio uses, such as Yosys, nextpnr, IceStorm, Project Trellis and Apicula |
+| Build toolchains | Synthesis, place and route, and bitstream generation for each architecture, with open source tools such as Yosys, nextpnr, IceStorm, Project Trellis and Apicula |
 | Programmers | The programmers of the supported boards, today openFPGALoader, iceprog, dfu-util and icesprog, including board-specific programmer options. Boards whose programmers are legacy are dropped, with the reason recorded (see Milestone 2) |
 | Simulation and testing | Running testbenches and producing waveform files. When a local frontend asks, launching a packaged waveform viewer, such as GTKWave, fully detached so it outlives the session. The request is refused for remote frontends, which view waveforms on their own |
-| Lint and format | Checking and formatting HDL source, as Apio does with Verilator and Verible |
+| Lint and format | Checking and formatting HDL source, with Verilator and Verible |
 | Reports and graphs | Resource utilization and timing reports, and design graphs in SVG, PNG and PDF |
-| Catalog | All of Apio's boards and FPGAs, with each board's variants. A project's custom definitions are sent by the host in requests, as described in [Custom definitions](#custom-definitions) |
+| Catalog | Boards and FPGAs, with each board's variants. A project's custom definitions are sent by the host in requests, as described in [Custom definitions](#custom-definitions) |
 | Devices and drivers | Listing USB devices, and installing or removing the drivers boards need, such as FTDI drivers on Windows |
 | Packages | Installing, updating, listing and repairing toolchain packages for each platform |
-| Examples | Not an engine feature. An example is a project, and the project model belongs to the frontend: the engine has none (see [Project model](#project-model)). Each frontend defines its own project model and source format, such as IceStudio's block diagrams, and provides examples in it. Apio keeps its example projects on its own side |
+| Examples | Not an engine feature. An example is a project, and the project model belongs to the frontend: the engine has none (see [Project model](#project-model)). Each frontend defines its own project model and source format, such as IceStudio's block diagrams, and provides examples in it. |
 | Raw tool access | Running any packaged tool directly, with the right environment, using the same engine request that returns a tool's command and environment |
-| Machine-readable info | Versions, platform, catalog and package details in structured form, as Apio's `api` command provides |
+| Machine-readable info | Versions, platform, catalog and package details in structured form |
 
-Project-level settings, such as `apio.ini` and its multiple environments, stay in the frontend, as described in the [project model](#project-model). The frontend passes the selected board and options with each request.
+Project-level settings, such as a frontend's project files and environments, stay in the frontend, as described in the [project model](#project-model). The frontend passes the selected board and options with each request.
 
 ## User design testing
 
@@ -165,14 +165,14 @@ The engine helps users test their own designs, from source checks to verificatio
 
 | Test type | What the engine does | Status |
 | --- | --- | --- |
-| Lint | Checks the HDL source for errors and warnings | Required (Apio) |
-| Simulation | Runs a testbench and writes waveform files to the build folder. A local frontend can ask the engine to open them in a waveform viewer | Required (Apio) |
-| Automated testbenches | Runs a set of testbenches without user interaction and reports pass or fail for each | Required (Apio) |
+| Lint | Checks the HDL source for errors and warnings | Required |
+| Simulation | Runs a testbench and writes waveform files to the build folder. A local frontend can ask the engine to open them in a waveform viewer | Required |
+| Automated testbenches | Runs a set of testbenches without user interaction and reports pass or fail for each | Required |
 | On-board verification | Programs a real board, drives its inputs and checks its outputs automatically, then reports pass or fail | Goal. The hardware interface and approach are still open |
 
 ## Testbenches
 
-The engine follows Apio's testbench rules, so a testbench works unchanged with any build folder, such as one per `apio.ini` env.
+The engine applies these testbench rules, so a testbench works unchanged with any build folder.
 
 - **Naming.** A testbench file name ends with `_tb.v` or `_tb.sv`. This is how the engine tells testbenches from design sources and keeps them out of synthesis.
 - **No `$dumpfile`.** A testbench that calls `$dumpfile(...)` is a design error. The engine sets the waveform file's location itself, always inside the build folder. Testbenches still call `$dumpvars` to choose what to record.
@@ -182,7 +182,7 @@ The engine follows Apio's testbench rules, so a testbench works unchanged with a
 
 ## Project model
 
-The engine does not impose a specific project model. Each frontend defines its own, for example Apio with its `apio.ini` file and project directory structure. The frontend translates its project into explicit inputs for each engine operation, such as source files, top module, board and options.
+The engine does not impose a specific project model. Each frontend defines its own, for example Logix IDE with its `logix-ide.toml` file and project folder. The frontend translates its project into explicit inputs for each engine operation, such as source files, top module, board and options.
 
 ## Interaction with the host
 
@@ -210,19 +210,19 @@ The engine works with three shared folders. The engine has no hard-wired disk lo
 | Source folder | Read and write | The design's HDL sources and testbenches, e.g. read for builds and written when formatting |
 | Build folder | Read and write | Generated files such as bitstreams, reports, waveforms and intermediate build files |
 
-Note: the folders may overlap. This allows project models such as Apio's, where the build folder is inside the source folder and the source folder also holds other files such as `apio.ini`. However, the engine does not require this or any other project model.
+Note: the folders may overlap. This allows project models where the build folder is inside the source folder, and the source folder also holds other files, such as a frontend's project file. However, the engine does not require this or any other project model.
 
-**Engine folder location.** Each host keeps its own engine folder inside its own home folder, for example `~/.apio/engine` or `~/.logix/engine`, and passes it at launch. Users deal only with the host and do not need to know about the engine. Hosts do not share engine folders by default. This keeps them independent, which matters because different hosts are likely to be pinned to different engine versions.
+**Engine folder location.** Each host keeps its own engine folder inside its own home folder, for example `~/.logix/engine` or `~/.myhost/engine`, and passes it at launch. Users deal only with the host and do not need to know about the engine. Hosts do not share engine folders by default. This keeps them independent, which matters because different hosts are likely to be pinned to different engine versions.
 
 ## Safe file changes
 
 The engine guards every change it makes on disk, including creating, writing, renaming and deleting files and folders, so that a wrong path never damages the user's files.
 
-- **Path keywords.** Like Apio, the engine checks for keywords in folder paths before changing anything. The last folder name of an engine folder path must contain "engine", such as `~/.apio/engine`. One of the last two folder names of a build folder path must contain "build", such as `_build` or `_build/default`. Checking only the last names keeps a parent folder, such as `/home/builder`, from satisfying the rule by accident. A wrong path from a host, such as the home folder, fails the check, so nothing is changed.
-- **Host naming.** Hosts must name their engine folders and build folders to satisfy the keyword rules. Apio's existing `~/.apio` and `_build/<env>` layout already fits, with the engine folder at `~/.apio/engine`.
-- **Engine-owned folders only.** The engine changes files only inside the engine folder and build folders. The exception is the source folder, where it may rewrite in place the source files named in a request when an operation calls for it, such as formatting. It may also create a generated project file the request names, such as a default GTKWave layout for `simulate`, and replace or delete it later only while it still carries the engine's or Apio's generated-file marker, so files the user saved are never changed. It never renames or deletes any other file in the source folder.
+- **Path keywords.** The engine checks for keywords in folder paths before changing anything. The last folder name of an engine folder path must contain "engine", such as `~/.logix/engine`. One of the last two folder names of a build folder path must contain "build", such as `_build` or `_build/default`. Checking only the last names keeps a parent folder, such as `/home/builder`, from satisfying the rule by accident. A wrong path from a host, such as the home folder, fails the check, so nothing is changed.
+- **Host naming.** Hosts must name their engine folders and build folders to satisfy the keyword rules, such as `~/.logix/engine` and `_build/<name>`.
+- **Engine-owned folders only.** The engine changes files only inside the engine folder and build folders. The exception is the source folder, where it may rewrite in place the source files named in a request when an operation calls for it, such as formatting. It may also create a generated project file the request names, such as a default GTKWave layout for `simulate`, and replace or delete it later only while it still carries the engine's or another tool's generated-file marker, so files the user saved are never changed. It never renames or deletes any other file in the source folder.
 - **Paths stay inside.** Every path is resolved to its real location, following symbolic links, before a change. A path that resolves outside its folder is refused, so a symbolic link cannot lead the engine into the user's other files.
-- **Forbidden locations.** The engine refuses to use the file system root, the user's home folder or the source folder itself as an engine folder or build folder. A build folder inside the source folder stays allowed, as with Apio's `_build` folder.
+- **Forbidden locations.** The engine refuses to use the file system root, the user's home folder or the source folder itself as an engine folder or build folder. A build folder inside the source folder stays allowed, such as a `_build` folder.
 - **Refusal, not a guess.** If any check fails, the engine changes nothing and returns a request error that says which check failed.
 
 ## Concurrency requirements
@@ -266,7 +266,7 @@ The engine, its packages and the catalog all use date versions. The canonical fo
 
 - **Source.** Packages are downloaded only from GitHub releases, identified by owner, repo and release tag. The engine's manifest lists the owner, repo, tag and checksum of each package file for each platform.
 - **Verification.** After downloading a file, the engine checks it against the checksum in the manifest. If it does not match, the engine refuses to install it and reports a setup error.
-- **Automatic install and repair.** Apio already manages its packages automatically for VS Code, Logix and IceStudio, and the engine must do the same. An operation that needs a missing or broken package installs or repairs it first, with progress, so hosts don't manage packages themselves. A launch option turns this off for offline or managed setups. The engine then reports a setup error instead. Since the manifest pins every package, packages change only when the engine version changes.
+- **Automatic install and repair.** An operation that needs a missing or broken package installs or repairs it first, with progress, so hosts don't manage packages themselves. A launch option turns this off for offline or managed setups. The engine then reports a setup error instead. Since the manifest pins every package, packages change only when the engine version changes.
 - **Licenses.** The tools in each package carry their own respective licenses.
 
 ## Error model
@@ -298,7 +298,7 @@ Messages never assume a particular host. For example, the engine says that a pac
 
 ## Boards and board variants
 
-Apio lists boards that differ only by a cable or by flash or RAM as separate boards (such as `icesugar-pro` and `icesugar-pro-ram`). The engine makes each one board with board variants (since neither the engine nor Logix IDE had been released, the old IDs weren't kept). The format is in the [tool API](tool-api.md) (variants, variant).
+A board that can be programmed in several ways, such as through a cable or to flash or RAM, is one board with board variants, not several boards. The format is in the [tool API](tool-api.md) (variants, variant).
 
 - **A board is a name.** The board's name is how users select it. Two boards with different names are different boards, unrelated even when their hardware is identical, such as Alchitry Au and Au+, or ColorLight i5 and i9. Board variants exist only within one name.
 - **Sizes are boards.** A board sold with several FPGA sizes, such as the Arty A7-35T and A7-100T or the ULX3S 12K to 85K, is one board per size: vendors name the sizes, and a larger FPGA in the same package can have pins a smaller one lacks (ECP5 in the 381-ball package has 197 I/O pins on the 12F and 205 on the 85F), so a pin file isn't guaranteed to work on every size.
@@ -315,17 +315,17 @@ Apio lists boards that differ only by a cable or by flash or RAM as separate boa
 - **Requests.** Tools that take a board also take an optional `board_variant`, the ID of one of its board variants, such as `"ft232h-ram"`; without one the engine uses the default. An ID the board doesn't have is a request error that lists its board variants.
 - **Builds.** The build record keeps the board variant. A different board variant always means a full rebuild, like a different board, even when the choice can't affect the bitstream, such as flash or RAM: simple and always correct, and board variants change rarely. `program_board` programs with the board variant in the build record, so the upload always matches the build. `program_board` checks the chosen device against that board variant's USB filter, and its messages name the board.
 - **Wrong size** (not done yet). Programmers read the FPGA's ID before writing, so a board of another size than the one chosen (such as an Arty A7-100T connected while the build is for the 35T) should give a plain error naming both.
-- **The catalog.** 84 boards, 131 board variants. By connection: 76 `usb`, 9 `bootloader`, 42 external adapters, 4 `unspecified` (Mimas ECP5 Mini, MicroPhase A7-Lite, each in flash and RAM); by memory: 81 flash, 50 RAM. Apio's commands upload all Xilinx boards, most ECP5 boards and the Tang Nano to RAM; those boards also have a flash board variant (added 2026-11-04, untested: the RAM command plus `--write-flash`; on Xilinx openFPGALoader first loads its SPI-over-JTAG bridge for the FPGA part, so a command without `--board` names the part with `--fpga-part`; ColorLight boards add `--unprotect-flash`, as the i5's does, and a user note that the flash's factory firmware is replaced), and flash is now their default (see Defaults and names). Still RAM only: the Zynq boards (PYNQ-Z1, PYNQ-Z2, ZedBoard, Zybo Z7; openFPGALoader can't write their flash, which only the processor side reaches), the QMTECH XC7A100T (no bridge bitstream for its xc7a100tfgg676 package in oss-cad-suite) and the ULX3S (an open question: some have a DFU bootloader at the start of the flash, which a JTAG flash write would overwrite, as on the ButterStick). Boards with a choice (32): iCESugar-Pro, ColorLight i5 and the boards above with a flash board variant (memory: flash, RAM); ColorLight 5A-75E V7.1, ColorLight i9 v7.2 and FleaFPGA Ohm (connection: their JTAG adapters, each in flash and RAM); ButterStick r1.0, with two dimensions (connection: USB bootloader, FT2232H or FT232H adapter; memory: the bootloader writes flash and the adapters RAM, as their commands from Apio do; a flash write over an adapter isn't offered, since it could overwrite the bootloader at the start of the flash); every other board has one board variant. The Fomu's memory is flash (its bootloader stores the design there) but whether the design comes back at power-up is to check on hardware.
+- **The catalog.** 84 boards, 131 board variants. By connection: 76 `usb`, 9 `bootloader`, 42 external adapters, 4 `unspecified` (Mimas ECP5 Mini, MicroPhase A7-Lite, each in flash and RAM); by memory: 81 flash, 50 RAM. The original commands of all Xilinx boards, most ECP5 boards and the Tang Nano upload to RAM; those boards also have a flash board variant (added 2026-11-04, untested: the RAM command plus `--write-flash`; on Xilinx openFPGALoader first loads its SPI-over-JTAG bridge for the FPGA part, so a command without `--board` names the part with `--fpga-part`; ColorLight boards add `--unprotect-flash`, as the i5's does, and a user note that the flash's factory firmware is replaced), and flash is now their default (see Defaults and names). Still RAM only: the Zynq boards (PYNQ-Z1, PYNQ-Z2, ZedBoard, Zybo Z7; openFPGALoader can't write their flash, which only the processor side reaches), the QMTECH XC7A100T (no bridge bitstream for its xc7a100tfgg676 package in oss-cad-suite) and the ULX3S (an open question: some have a DFU bootloader at the start of the flash, which a JTAG flash write would overwrite, as on the ButterStick). Boards with a choice (32): iCESugar-Pro, ColorLight i5 and the boards above with a flash board variant (memory: flash, RAM); ColorLight 5A-75E V7.1, ColorLight i9 v7.2 and FleaFPGA Ohm (connection: their JTAG adapters, each in flash and RAM); ButterStick r1.0, with two dimensions (connection: USB bootloader, FT2232H or FT232H adapter; memory: the bootloader writes flash and the adapters RAM, as their original commands do; a flash write over an adapter isn't offered, since it could overwrite the bootloader at the start of the flash); every other board has one board variant. The Fomu's memory is flash (its bootloader stores the design there) but whether the design comes back at power-up is to check on hardware.
 - **Examples.** Examples belong to frontends and to a board, so they are the same for every board variant.
 
 ## Device selection
 
-The engine identifies the connected devices and the boards they may be; the host chooses the device, and the engine checks the choice and programs it. Every frontend gets the same matching and the same behavior, and none needs to know about USB filters. Board filters follow Apio's model, so every Apio board is found as in Apio.
+The engine identifies the connected devices and the boards they may be; the host chooses the device, and the engine checks the choice and programs it. Every frontend gets the same matching and the same behavior, and none needs to know about USB filters.
 
-For now, the engine supports only USB devices, not boards programmed over a serial port. This leaves out 11 Apio boards, most of them legacy: TinyFPGA, BlackIce, Olimex iCE40 EVB and Devantech boards. It is an exception to full Apio compatibility.
+For now, the engine supports only USB devices, not boards programmed over a serial port. This leaves out 11 boards, most of them legacy: TinyFPGA, BlackIce, Olimex iCE40 EVB and Devantech boards.
 
 - **Board filters.** Each board variant of a board defines a USB filter: vendor ID, product ID and a regular expression for the product name.
-- **Board variants.** Each board defines one or more board variants, such as flash or RAM, or a particular adapter; the first is its default (see [Boards and board variants](#boards-and-board-variants)). Each board variant names the programmer to run, such as openFPGALoader, and gives its full argument template and the USB filter that finds the device. There are no separate programmer definitions, since in Apio the board already supplies almost all of the command. The template uses variables that the engine fills in from the selected device: vendor ID, product ID, bus, device number and serial number, and always the bitstream file.
+- **Board variants.** Each board defines one or more board variants, such as flash or RAM, or a particular adapter; the first is its default (see [Boards and board variants](#boards-and-board-variants)). Each board variant names the programmer to run, such as openFPGALoader, and gives its full argument template and the USB filter that finds the device. There are no separate programmer definitions, since the board variant already supplies almost all of the command. The template uses variables that the engine fills in from the selected device: vendor ID, product ID, bus, device number and serial number, and always the bitstream file.
 - **Device scan.** An operation lists the connected USB devices, with vendor ID, product ID, manufacturer, product name and serial number, which are enough for a user to report a device whose filter needs fixing.
 - **Boards per device.** Each listed device names the boards whose filters it matches, best first, and for each the board variants it fits, each with a confidence from 1 to 3. No filter proves which board is connected, since boards the catalog doesn't know can look the same, so these are suggestions, and hosts show them as such.
 - **Confidence.** Hosts only compare it (higher is surer, 3 is always the highest), so the engine may improve its rules without breaking hosts. Each board variant the device fits has its own rating; boards have none of their own, so hosts use the board variant they mean. The rules today, per matching board variant:
@@ -346,7 +346,7 @@ For now, the engine supports only USB devices, not boards programmed over a seri
 The built-in catalog is fixed for each engine version. Hosts extend or override it at runtime with custom definitions, which apply in their requests for building, programming and the other operations. Custom boards and FPGAs belong to the host, like the rest of its project model.
 
 - **Reading the catalog.** Hosts can read the full catalog through an engine request.
-- **Merging is up to the host.** A host combines the catalog with its own local definitions, using its own rules. For example, Apio replaces catalog entries with project entries of the same ID and adds new ones.
+- **Merging is up to the host.** A host combines the catalog with its own local definitions, using its own rules. For example, a host can replace catalog entries with project entries of the same ID and add new ones.
 - **ID or full definition.** Each request either names a catalog ID, such as a board ID, or carries the full definition to use. Hosts without custom definitions just send IDs.
 - **Self-contained requests.** The engine never looks up or merges definitions from files. A request alone determines which board, FPGA and board variant are used.
 - **Errors.** The host reports problems in its own definition files, with file and line. The engine reports an invalid definition in a request as a request error.
@@ -367,46 +367,45 @@ CLI hosts start a new engine instance for every command, so the engine's own ove
 
 The criteria and phases below are initial targets, not fixed commitments. They may be relaxed or changed as the project learns what matters in practice.
 
-**Acceptance criteria.** The engine is ready to replace Apio's own toolchain handling when:
+**Acceptance criteria.** The engine is ready for its first stable release when:
 
-- **Apio parity:** Apio, implemented as a host on the engine, passes Apio's existing test suite, and Apio's commands work.
-- **Same results:** for the golden test designs, the engine produces the same bitstreams as today's Apio with the same package versions. Where the tools are not fully deterministic, utilization and timing results match instead.
+- **Same results:** for the golden test designs, the engine produces the same bitstreams as the standard open source flows with the same package versions. Where the tools are not fully deterministic, utilization and timing results match instead.
 - **Real hardware:** board programming works on a reference board for each supported programmer, tested with the hardware-in-the-loop tests.
 - **AI agent as host:** an AI coding agent, connected to the engine as a generic MCP client with no frontend, builds and programs a reference design on a real board, guided only by the tool descriptions and the engine's errors.
 - **All platforms:** the test suite passes on every supported platform.
 - **Performance:** the targets in the [Performance](#performance) section are met.
 
-Apio's 109 boards split by architecture roughly as iCE40 about 42, ECP5 about 36, Xilinx 7 Series about 23 and Gowin about 9. This suggests the following phases.
+The 109 boards of the original board list split by architecture roughly as iCE40 about 42, ECP5 about 36, Xilinx 7 Series about 23 and Gowin about 9. This suggests the following phases.
 
 **Table 14.** Proposed phases
 
 | Phase | Scope | Done when |
 | --- | --- | --- |
-| Milestone 1. Proof of concept (done 2026-10-29) | A proof of concept of the engine, built on the real design so it evolves into the full engine rather than being thrown away: MCP interface, automatic package install and versioning, read-only catalog, error model, iCE40 only, and seven tools: `get_engine_info`, `install_packages`, `get_catalog`, `build`, `clean_build`, `list_devices` and `program_board`. macOS only, with no Linux or Windows yet. GitHub workflows that build and test the engine. Developer scripts to run, build, clean and test it locally. The underlying tools come from Apio's packages | An AI coding agent, such as Claude Code, is the host, connected to the engine over MCP, with no frontend. From prompts alone, it changes or creates an iCE40 design, builds it and programs it on an Alhambra II board. Met on 2026-10-29 |
-| Milestone 2. Logix IDE on the engine | Everything Logix IDE uses Apio for today, as listed in Table 15: lint, test and simulate with a waveform viewer, format, graph, live tool output, and every board Logix IDE offers today, across iCE40, ECP5, Gowin and Xilinx 7 Series, with the programmers they need. A board is dropped only for a very good reason, recorded in this document with the reason. macOS only, like Logix IDE's releases | Logix IDE's macOS release runs on the engine alone, with no Apio, and keeps every feature in Table 15. Its board selector offers the same boards as before, apart from boards dropped for a recorded reason. Every architecture builds and programs a board, tested on hardware where a board is available |
-| 3. Apio parity | Apio as a host, the remaining boards and programmers as decided in the open questions, Linux and Windows, and the acceptance criteria above | Apio switches to the engine |
-| 4. More hosts | IceStudio as a host, with the requirements in Table 6 | IceStudio runs its core flows on the engine |
+| Milestone 1. Proof of concept (done 2026-10-29) | A proof of concept of the engine, built on the real design so it evolves into the full engine rather than being thrown away: MCP interface, automatic package install and versioning, read-only catalog, error model, iCE40 only, and seven tools: `get_engine_info`, `install_packages`, `get_catalog`, `build`, `clean_build`, `list_devices` and `program_board`. macOS only, with no Linux or Windows yet. GitHub workflows that build and test the engine. Developer scripts to run, build, clean and test it locally. The underlying tools come from existing open source toolchain packages | An AI coding agent, such as Claude Code, is the host, connected to the engine over MCP, with no frontend. From prompts alone, it changes or creates an iCE40 design, builds it and programs it on an Alhambra II board. Met on 2026-10-29 |
+| Milestone 2. Logix IDE on the engine | Everything Logix IDE offered before it moved to the engine, as listed in Table 15: lint, test and simulate with a waveform viewer, format, graph, live tool output, and every board Logix IDE offers today, across iCE40, ECP5, Gowin and Xilinx 7 Series, with the programmers they need. A board is dropped only for a very good reason, recorded in this document with the reason. macOS only, like Logix IDE's releases | Logix IDE's macOS release runs on the engine alone and keeps every feature in Table 15. Its board selector offers the same boards as before, apart from boards dropped for a recorded reason. Every architecture builds and programs a board, tested on hardware where a board is available |
+| 3. More platforms and boards | Linux and Windows, the remaining boards and programmers as decided in the open questions, and the acceptance criteria above | The acceptance criteria are met |
+| 4. More hosts | More Logix frontends, such as Logix CLI and Logix Studio, and other tools as hosts, with the requirements in Table 6 | Each runs its core flows on the engine |
 | Later | Network adapter, on-board verification, possibly VHDL | Decided when they come up |
 
-Milestone 1 tested the interface with an AI coding agent as the host, before any frontend used the engine. Milestone 2 makes Logix IDE the first frontend on the engine, since it is Open Logix's own and needs no outside coordination. Apio follows in phase 3, and IceStudio in phase 4.
+Milestone 1 tested the interface with an AI coding agent as the host, before any frontend used the engine. Milestone 2 makes Logix IDE the first frontend on the engine. Other hosts follow.
 
 **Table 15.** Logix IDE features that Milestone 2 must keep
 
-| Logix IDE feature | What it uses from Apio today | Engine support needed |
-| --- | --- | --- |
-| Board selector | `apio api get-boards`: every Apio board | `get_catalog` with the same boards, apart from boards dropped for a recorded reason |
-| Examples menu | `apio api get-examples`, `apio examples fetch` | None. Examples stay with the host, as in Table 7's Examples row: Logix IDE provides its own |
-| Verify | `apio lint` (Verilator), then `apio build` and `apio report` | A `lint` tool; `build` with its resource and timing results |
-| Upload | `apio upload` | `program_board`, with the programmers of the supported boards |
-| Run Tests | `apio test` (Icarus Verilog), all testbenches or one | A `test` tool following Apio's testbench rules |
-| Simulate | `apio sim --detach`, with GTKWave | A `simulate` tool that writes the waveform and opens a viewer without waiting for it |
-| Auto Format | `apio format` (Verible) | A `format` tool and the package with Verible |
-| Show Diagram | `apio graph --no-viewer` (yosys and Graphviz) | A `graph` tool that writes the diagram as SVG |
-| Console | Apio's output, shown as it runs | Live tool output, line by line, while each operation runs |
-| First start | `apio api get-system`, which installs the packages | `install_packages`, with progress |
-| Stop | Cancelling the running Apio command | Cancellation of every tool |
+| Logix IDE feature | Engine support needed |
+| --- | --- |
+| Board selector | `get_catalog` with the same boards, apart from boards dropped for a recorded reason |
+| Examples menu | None. Examples stay with the host, as in Table 7's Examples row: Logix IDE provides its own |
+| Verify | A `lint` tool; `build` with its resource and timing results |
+| Upload | `program_board`, with the programmers of the supported boards |
+| Run Tests | A `test` tool following the testbench rules |
+| Simulate | A `simulate` tool that writes the waveform and opens a viewer without waiting for it |
+| Auto Format | A `format` tool and the package with Verible |
+| Show Diagram | A `graph` tool that writes the diagram as SVG |
+| Console | Live tool output, line by line, while each operation runs |
+| First start | `install_packages`, with progress |
+| Stop | Cancellation of every tool |
 
-**Boards dropped from Milestone 2 (decided 2026-11-03).** The catalog covers 95 of Apio's 109 boards (as 84 boards, some with board variants). The 14 others are dropped because their programmers are legacy or inactive, or not in the packages the engine uses. None of the programmers the engine supports can program them:
+**Boards dropped from Milestone 2 (decided 2026-11-03).** The catalog covers 95 of the 109 boards of the original board list (as 84 boards, some with board variants). The 14 others are dropped because their programmers are legacy or inactive, or not in the packages the engine uses. None of the programmers the engine supports can program them:
 
 | Programmer | Boards | Reason |
 | --- | --- | --- |
@@ -419,7 +418,7 @@ Milestone 1 tested the interface with an AI coding agent as the host, before any
 | pi-sicle-loader | pi-sicle | Legacy, and works only when running on a Raspberry Pi |
 | apollo | cynthion-r1-4 | Current, but apollo isn't in the toolchain packages. Can be added later as its own package |
 
-Five boards are programmed differently from Apio, so the catalog marks them `tested: false`: the four ULX3S boards use openFPGALoader instead of fujprog, which is legacy, and odt-icyblue-feather uses iceprog, as the board maker's examples do, because Apio's icesprog can't program its FTDI chip. The iCESugar boards get a serial number filter (`serial_regex`), since the iCESugar, iCESugar-Pro and iCESugar-nano share USB IDs and product names.
+Five boards are programmed differently from their original commands, so the catalog marks them `tested: false`: the four ULX3S boards use openFPGALoader instead of fujprog, which is legacy, and odt-icyblue-feather uses iceprog, as the board maker's examples do, because icesprog can't program its FTDI chip. The iCESugar boards get a serial number filter (`serial_regex`), since the iCESugar, iCESugar-Pro and iCESugar-nano share USB IDs and product names.
 
 ## Development methodology
 
@@ -437,19 +436,19 @@ The project relies heavily on AI-generated tests to catch regressions, since hum
 ## Project infrastructure
 
 - **Source.** The engine's code lives in a GitHub repo, with issues and pull requests on GitHub.
-- **Testing.** GitHub Actions workflows run the engine's test suite on every supported platform for every change, as Apio does today.
+- **Testing.** GitHub Actions workflows run the engine's test suite on every supported platform for every change.
 - **Releases.** Workflows build the per-platform engine binaries and publish them as GitHub releases with date tags, like the package repos' daily releases.
 - **Hardware tests.** GitHub-hosted runners cannot reach FPGA boards, so the hardware-in-the-loop tests run separately on a lab computer with boards attached. Whether that computer runs as a self-hosted GitHub runner is still open.
 - **License.** The engine's own code is licensed under Apache-2.0, which is permissive and includes an explicit patent grant. The packaged tools keep their own licenses.
 
 ## Open questions
 
-- Whether to publish the catalog as its own package, so boards can be added without a new engine binary, as Apio does with its definitions package and remote config. For now the catalog lives in the engine repo's `catalog/` folder and is built into the engine.
+- Whether to publish the catalog as its own package, so boards can be added without a new engine binary. For now the catalog lives in the engine repo's `catalog/` folder and is built into the engine.
 - Whether to move more boards to openFPGALoader, which would simplify packages and testing. Its DFU support may cover the dfu-util boards, but each moved board must be tested on hardware.
 - Whether to offer flash on the ULX3S: some boards have a DFU bootloader at the start of the flash, which a JTAG flash write (`-f`) would overwrite. openFPGALoader's `ulx3s_dfu` board writes through that bootloader instead, but only on boards that have it.
 - How to program one particular board when several boards of the same model are connected. Device IDs tell them apart by USB port, and Upload asks which one, but the user may not know which physical board each entry is: identical boards report the same names, and many have no serial number or the same one. Some programmers can't be told which device to open at all (icesprog, dfu-util with `-d VID:PID`, openFPGALoader with USB-Blaster or CMSIS-DAP adapters), so today the engine refuses when another device with the same USB IDs is connected. Ideas to weigh: show where each board is plugged in, in words a user can follow (such as the port or hub); let the user identify a board by unplugging it and watching which entry disappears; pass dfu-util's `--path` (the USB port) or a serial number where the programmer supports it; and let a host remember a name the user gives a board, keyed by its serial number when it has a unique one.
 - What the scope and lifetime of a device ID should be. Today an ID is made from the USB port path, the USB IDs and the serial number, and the API promises only that it is opaque and short-lived. In practice it stays valid when the device is plugged in again in the same port and across engine restarts, but not when it moves to another port, and maybe not after the computer restarts, since bus numbers can change then. Questions: should the API promise any of these, or stay at "list the devices again before choosing"? Should there also be a stable identity a host may store, such as to remember "my second Alhambra", based on a unique serial number where there is one? This ties in with choosing one of several identical boards (above), which goes beyond choosing a board and its board variant.
-- What the ButterStick r1.0 bootloader reports as its product name. Its filter, `^butterstick (dfu v1.1)` from Apio, treats the parentheses as a regular expression group, so it matches "butterstick dfu v1.1" but not "butterstick (dfu v1.1)"; a real board's name decides the fix.
+- What the ButterStick r1.0 bootloader reports as its product name. Its filter, `^butterstick (dfu v1.1)`, treats the parentheses as a regular expression group, so it matches "butterstick dfu v1.1" but not "butterstick (dfu v1.1)"; a real board's name decides the fix.
 - Whether to support Linux arm64 and single-board computers attached to the target board, such as a Raspberry Pi.
 - Which hardware test interface to use for the engine's own hardware tests, and whether the same interface can serve the on-board verification feature for user designs.
 - Whether the network adapter is part of the first release.

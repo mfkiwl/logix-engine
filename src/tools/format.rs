@@ -16,7 +16,7 @@ pub struct Format;
 impl EngineTool for Format {
     const NAME: &'static str = "format";
     const DESCRIPTION: &'static str = "Formats Verilog and SystemVerilog files in place with \
-        Verible's formatter, like apio format. List the files to format (.v, .sv, .vh or \
+        Verible's formatter. List the files to format (.v, .sv, .vh or \
         .svh); the engine doesn't search for them. Formatting changes only layout, never \
         meaning. Each file is rewritten only when its layout changes; files lists each one \
         as formatted, unchanged or failed. A file Verible can't parse, such as one with a \
@@ -43,7 +43,7 @@ pub struct FormatInput {
     pub source_files: Vec<String>,
     /// Extra options for Verible's formatter, each as --name or
     /// --name=value, such as ["--column_limit=80",
-    /// "--indentation_spaces=4"], like Apio's format-verible-options.
+    /// "--indentation_spaces=4"].
     /// Defaults to none, which gives Verible's default style.
     #[serde(default)]
     pub verible_options: Vec<String>,

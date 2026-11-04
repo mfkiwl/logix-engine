@@ -23,7 +23,7 @@ pub struct Simulate;
 impl EngineTool for Simulate {
     const NAME: &'static str = "simulate";
     const DESCRIPTION: &'static str = "Simulates one testbench with Icarus Verilog and opens \
-        its waveform in GTKWave, like apio sim: compiles the design files with the testbench, \
+        its waveform in GTKWave: compiles the design files with the testbench, \
         runs it to write the waveform (.vcd) into the build folder, then starts GTKWave \
         detached and returns without waiting for it. The testbench must call $dumpvars and \
         $finish, and must not call $dumpfile. GTKWave opens the layout file (.gtkw), which \
@@ -71,7 +71,7 @@ pub struct SimulateInput {
     pub testbench_file: String,
     /// Where the compiled testbench and its waveform go, as an absolute path.
     /// One of its last two folder names must contain "build", such as
-    /// /home/u/proj/_build/default. It is created if needed.
+    /// /home/user/proj/_build/default. It is created if needed.
     pub build_folder: String,
     /// The GTKWave layout file (.gtkw), relative to the source folder, such
     /// as main_tb.gtkw. GTKWave opens it and saves the user's changes to it.
@@ -111,7 +111,7 @@ pub struct SimulateInput {
 #[serde(deny_unknown_fields)]
 pub struct SimulateOutput {
     /// True when the testbench reached $finish without $fatal, $error or a
-    /// failure line from Apio's assertion macros (*** ASSERTION FAILED, ERROR
+    /// failure line from common testbench assertion macros (*** ASSERTION FAILED, ERROR
     /// at), which skip $fatal under simulation.
     pub passed: bool,
     /// Compile warnings and the testbench's $fatal, $error and $warning

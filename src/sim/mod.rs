@@ -1,5 +1,5 @@
 //! Lint, test and simulate (docs/tool-api.md): Verilator and Icarus
-//! Verilog, run with the same commands as Apio, on the design and its
+//! Verilog, run with the standard commands, on the design and its
 //! testbenches.
 //!
 //! The tools run in the source folder, so they report files as given. Unlike
@@ -64,7 +64,7 @@ pub struct SimLibrary {
 
 impl SimLibrary {
     /// The models for the board's FPGA, from the toolchain package in
-    /// `package_dir`. The same files and macros Apio uses.
+    /// `package_dir`. The FPGA's model files and macros.
     pub fn for_board(board: &ResolvedBoard, package_dir: &Path) -> SimLibrary {
         match board.fpga.architecture {
             Architecture::Ice40 => {
@@ -85,10 +85,10 @@ impl SimLibrary {
                     files: vec![dir.join("cells_sim.v")],
                     lint_files: vec![dir.join("cells_sim.v"), dir.join("cells_bb.v")],
                     include_dir: dir,
-                    // Per https://github.com/YosysHQ/yosys/issues/5668, as Apio.
+                    // Per https://github.com/YosysHQ/yosys/issues/5668.
                     defines: vec!["-DNO_INCLUDES".into()],
                     lint_defines: vec![],
-                    // Apio's: duplicate modules from the models' includes, a
+                    // duplicate modules from the models' includes, a
                     // width mismatch in a model, and the models' partial pin
                     // lists.
                     verilator_rules_off: vec!["MODDUP", "WIDTHEXPAND", "PINMISSING"],
@@ -98,7 +98,7 @@ impl SimLibrary {
                 let dir = package_dir.join("share/yosys/gowin");
                 let mut lint_files = vec![dir.join("cells_sim.v")];
                 // Black boxes for the primitives without a model, per family,
-                // chosen by the device name as Apio does.
+                // chosen by the device name.
                 let device = board.fpga.nextpnr_device.to_uppercase();
                 for (prefix, family) in [("GW1N", "gw1n"), ("GW2A", "gw2a"), ("GW5A", "gw5a")] {
                     if device.starts_with(prefix) {
@@ -112,7 +112,7 @@ impl SimLibrary {
                     include_dir: dir,
                     defines: vec![],
                     lint_defines: vec![],
-                    // Apio's: timing blocks the models carry, and modules
+                    // timing blocks the models carry, and modules
                     // the black boxes declare again.
                     verilator_rules_off: vec!["SPECIFYIGN", "MODDUP"],
                 }
@@ -127,7 +127,7 @@ impl SimLibrary {
                     include_dir: dir,
                     defines: vec![],
                     lint_defines: vec![],
-                    // Apio's: timing blocks the models carry.
+                    // timing blocks the models carry.
                     verilator_rules_off: vec!["SPECIFYIGN"],
                 }
             }
@@ -137,7 +137,7 @@ impl SimLibrary {
 
 impl SimLibrary {
     /// A Verilator config (.vlt) that turns off warnings in the model files,
-    /// like Apio's hardware.vlt. Without it, Verilator warns about the
+    /// a hardware.vlt. Without it, Verilator warns about the
     /// models' unused primitives when no top module is given.
     pub fn verilator_config(&self) -> String {
         let glob = format!("{}/*", self.include_dir.display()).replace('\\', "\\\\");

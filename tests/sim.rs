@@ -186,7 +186,7 @@ async fn lint_reports_warnings_and_errors_as_its_result() {
     let state = engine().await;
     let (_tmp, src) = project();
 
-    // A width mismatch: a warning, which fails the lint as in Apio.
+    // A width mismatch: a warning, which fails the lint.
     std::fs::write(src.join("main.v"), MAIN.replace(".I3(q[3])", ".I3(q)")).unwrap();
     let out = lint::run(&state, lint_input(&src, json!({})), &call())
         .await
@@ -251,7 +251,7 @@ async fn lint_defines_reach_the_sources() {
     .unwrap();
     assert!(!out.passed);
     assert_eq!(out.diagnostics[0].line, Some(2), "{:#?}", out.diagnostics);
-    // synthesize false lints the simulation side, like apio lint --nosynth.
+    // synthesize false lints the simulation side.
     let out = lint::run(
         &state,
         lint_input(&src, json!({"synthesize": false})),
@@ -560,9 +560,9 @@ async fn simulate_request_errors() {
     }
 }
 
-/// A testbench with Apio's assertion macro: it prints the failure, and calls
+/// A testbench with a common assertion macro: it prints the failure, and calls
 /// $fatal only when LOGIX_SIM is 0, so simulate keeps going.
-const APIO_MACRO_TB: &str = r#"`define EXPECT(signal, value) \
+const ASSERT_MACRO_TB: &str = r#"`define EXPECT(signal, value) \
     if (signal !== (value)) begin \
         $display("*** ASSERTION FAILED in %m (clk_num=%0d): expected (signal == value), actual: 'h%h", 0, (signal)); \
         if (!`LOGIX_SIM) $fatal; \
@@ -584,10 +584,10 @@ endmodule
 "#;
 
 #[tokio::test]
-async fn apio_assertion_macros_fail_both_test_and_simulate() {
+async fn assertion_macros_fail_both_test_and_simulate() {
     let state = engine().await;
     let (_tmp, src) = project();
-    std::fs::write(src.join("main_tb.v"), APIO_MACRO_TB).unwrap();
+    std::fs::write(src.join("main_tb.v"), ASSERT_MACRO_TB).unwrap();
 
     // simulate: the macro skips $fatal, so the run ends cleanly, but the
     // printed failure still fails it.

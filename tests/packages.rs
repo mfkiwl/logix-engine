@@ -112,7 +112,7 @@ fn add_symlink(b: &mut tar::Builder<Vec<u8>>, path: &str, target: &str) {
     b.append_link(&mut h, path, target).unwrap();
 }
 
-/// A good package like Apio's: flat, with a tool, a symlink and a big file
+/// A good package like flat, with a tool, a symlink and a big file
 /// (for progress and cancel tests).
 fn good_package() -> Vec<u8> {
     tgz(|b| {

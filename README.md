@@ -2,14 +2,14 @@
 
 One open engine to build and test FPGA designs and program boards, for any IDE or AI agent.
 
-The engine is a single native executable, written in Rust, that offers FPGA operations as [MCP](https://modelcontextprotocol.io) tools over stdin/stdout. Frontends such as Apio, IceStudio, Logix, IDE extensions, CI scripts and AI coding agents launch it as a child process and call its tools. The engine installs and drives proven open source tools, such as Yosys, nextpnr and openFPGALoader, so each frontend can focus on its own user experience instead of reimplementing the toolchain.
+The engine is a single native executable, written in Rust, that offers FPGA operations as [MCP](https://modelcontextprotocol.io) tools over stdin/stdout. Frontends such as Logix IDE, Logix CLI, IceStudio, IDE extensions, CI scripts and AI coding agents launch it as a child process and call its tools. The engine installs and drives proven open source tools, such as Yosys, nextpnr and openFPGALoader, so each frontend can focus on its own user experience instead of reimplementing the toolchain.
 
 ## Status
 
 In development, macOS on Apple Silicon only.
 
 - **Milestone 1, done:** a proof of concept for iCE40 boards with seven tools: `get_engine_info`, `install_packages`, `get_catalog` (22 iCE40 boards), `build`, `clean_build`, `list_devices` and `program_board`. An AI agent, Claude Code, changed a design, built it and programmed an Alhambra II board through the engine alone.
-- **Milestone 2, next:** Logix IDE running on the engine instead of Apio, keeping every feature it has today: lint, test, simulate, format, graph, live tool output, and the same boards across iCE40, ECP5, Gowin and Xilinx 7 Series. See [Acceptance and phasing](docs/requirements.md#acceptance-and-phasing).
+- **Milestone 2, next:** Logix IDE running on the engine, keeping every feature it has today: lint, test, simulate, format, graph, live tool output, and the same boards across iCE40, ECP5, Gowin and Xilinx 7 Series. See [Acceptance and phasing](docs/requirements.md#acceptance-and-phasing).
 
 Daily development builds are on the [Releases](https://github.com/openlogix/logix-engine/releases) page.
 
@@ -17,7 +17,7 @@ Daily development builds are on the [Releases](https://github.com/openlogix/logi
 
 | Document | What it covers |
 | --- | --- |
-| [Requirements](docs/requirements.md) | Goals and non-goals, supported platforms, Apio compatibility, file safety, versioning, error model, phasing and open questions |
+| [Requirements](docs/requirements.md) | Goals and non-goals, supported platforms, required capabilities, file safety, versioning, error model, phasing and open questions |
 | [Architecture](docs/architecture.md) | The proposed design: components, technology choices, testing, distribution and host code examples |
 | [Tool API (Milestone 1)](docs/tool-api.md) | The MCP tools, their inputs, outputs and errors |
 | [Command line (Milestone 1)](docs/command-line.md) | Launch arguments and logging |

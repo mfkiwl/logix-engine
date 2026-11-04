@@ -121,10 +121,15 @@ mod tests {
         let bin = Path::new("/eng/packages/oss-cad-suite/2026-10-22/bin");
         let args: Vec<OsString> =
             vec!["-p".into(), "synth_ice40 -top main".into(), "it's.v".into()];
-        let r = record(&bin.join("yosys"), &args, Path::new("/home/u/my proj"), bin);
+        let r = record(
+            &bin.join("yosys"),
+            &args,
+            Path::new("/home/user/my proj"),
+            bin,
+        );
         assert_eq!(r.tool, "yosys");
         assert_eq!(r.package.as_deref(), Some("oss-cad-suite 2026-10-22"));
-        assert_eq!(r.cwd, "/home/u/my proj");
+        assert_eq!(r.cwd, "/home/user/my proj");
         assert_eq!(
             r.args,
             [
@@ -136,7 +141,7 @@ mod tests {
         );
         assert_eq!(
             r.shell,
-            "cd '/home/u/my proj' && env -i \
+            "cd '/home/user/my proj' && env -i \
              PATH=/eng/packages/oss-cad-suite/2026-10-22/bin:/usr/bin:/bin \
              HOME=\"$HOME\" TMPDIR=\"$TMPDIR\" \
              /eng/packages/oss-cad-suite/2026-10-22/bin/yosys -p 'synth_ice40 -top main' 'it'\\''s.v'"

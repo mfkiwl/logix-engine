@@ -18,7 +18,7 @@ pub struct Lint;
 impl EngineTool for Lint {
     const NAME: &'static str = "lint";
     const DESCRIPTION: &'static str = "Checks Verilog and SystemVerilog sources for errors and \
-        likely mistakes with Verilator, without building, like apio lint. It is much faster \
+        likely mistakes with Verilator, without building. It is much faster \
         than build and finds problems synthesis accepts, such as width mismatches. List the \
         design files and, optionally, the testbenches; the engine doesn't search for them. The \
         board selects the FPGA's primitive models, so designs that use them lint cleanly. \
@@ -69,7 +69,7 @@ pub struct LintInput {
     pub defines: BTreeMap<String, String>,
     /// Define SYNTHESIZE, so `ifdef SYNTHESIZE picks the code for synthesis,
     /// as in build. False leaves it undefined, to check the simulation code
-    /// instead, like apio lint --nosynth. Defaults to true.
+    /// instead. Defaults to true.
     #[serde(default = "default_true")]
     pub synthesize: bool,
     /// Let Verilator print more detail, shown in the live output and the
@@ -208,7 +208,7 @@ mod tests {
     }
 
     #[test]
-    fn verilator_gets_apios_options_then_the_files() {
+    fn verilator_gets_its_options_then_the_files() {
         let (_tmp, src) = project();
         let req = check(input(
             &src,

@@ -1,5 +1,5 @@
 //! The lint tool's work: Verilator in lint-only mode on the design and its
-//! testbenches, with Apio's options.
+//! testbenches, with these options.
 
 use std::ffi::OsString;
 use std::fs;
@@ -21,7 +21,7 @@ pub struct LintRequest {
     /// The top-level module, when known.
     pub top_module: Option<String>,
     /// Define SYNTHESIZE, so `ifdef SYNTHESIZE picks the synthesis code.
-    /// False lints the simulation code instead, like apio lint --nosynth.
+    /// False lints the simulation code instead.
     pub synthesize: bool,
 }
 
@@ -33,7 +33,7 @@ pub struct LintResult {
     pub diagnostics: Vec<Diagnostic>,
 }
 
-/// Verilator's arguments, in Apio's order: Apio's options and macros, the
+/// Verilator's arguments, in this order: the options and macros, the
 /// top module, the request's macros, the FPGA models, then the files.
 pub fn verilator_args(
     req: &LintRequest,
@@ -70,7 +70,7 @@ pub fn verilator_args(
     args.push(config.into());
     // Without a top module, every module no other module uses is a top, so
     // the models are read as libraries (-v): only the primitives the design
-    // uses are checked. With one, the files are passed as Apio passes them.
+    // uses are checked. With one, they are passed as plain source files.
     for f in &lib.lint_files {
         if req.top_module.is_none() {
             args.push("-v".into());

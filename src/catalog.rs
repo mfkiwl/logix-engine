@@ -1,6 +1,5 @@
 //! The read-only catalog of boards and FPGAs (docs/tool-api.md). It is data,
-//! not code: catalog/boards.json and catalog/fpgas.json, imported from Apio's
-//! definitions by scripts/import-apio-catalog.py and built into the engine.
+//! not code: catalog/boards.json and catalog/fpgas.json, built into the engine.
 //! The catalog format is part of the tool API.
 
 use std::collections::BTreeMap;

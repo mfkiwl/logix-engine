@@ -43,7 +43,7 @@ pub struct ProgramBoardInput {
     /// connected and match the board's USB filter.
     pub device: String,
     /// A custom programmer command that replaces the board's default one,
-    /// like Apio's programmer_cmd. Its first word is a program from the
+    /// for a custom setup. Its first word is a program from the
     /// toolchain package, such as openFPGALoader, or an absolute path. It may
     /// use ${VID}, ${PID}, ${BUS}, ${DEV}, ${SERIAL} and must use
     /// ${BITSTREAM}.

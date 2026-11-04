@@ -19,10 +19,10 @@ pub struct Test;
 
 impl EngineTool for Test {
     const NAME: &'static str = "test";
-    const DESCRIPTION: &'static str = "Runs testbenches with Icarus Verilog, like apio test: \
+    const DESCRIPTION: &'static str = "Runs testbenches with Icarus Verilog: \
         compiles the design files with each testbench, runs it, and reports whether it passed. \
         A testbench fails by calling $fatal or $error, or by printing a failure line from \
-        Apio's assertion macros (*** ASSERTION FAILED or ERROR at file:line); it must end \
+        common testbench assertion macros (*** ASSERTION FAILED or ERROR at file:line); it must end \
         with $finish, and must not \
         call $dumpfile, since the engine sets where its waveform goes (call $dumpvars to \
         write one). Every listed testbench runs, even after one fails; \
@@ -67,7 +67,7 @@ pub struct TestInput {
     pub testbench_files: Vec<String>,
     /// Where the compiled testbenches and their waveforms go, as an absolute
     /// path. One of its last two folder names must contain "build", such as
-    /// /home/u/proj/_build/default. It is created if needed.
+    /// /home/user/proj/_build/default. It is created if needed.
     pub build_folder: String,
     /// Verilog macro definitions, from name to value, such as
     /// {"WIDTH": "8"}. An empty value defines the macro with no text, for
@@ -75,7 +75,7 @@ pub struct TestInput {
     #[serde(default)]
     pub defines: BTreeMap<String, String>,
     /// Stop each testbench at its first failure ($fatal, $error or a
-    /// failure line from Apio's assertion macros), so a failing run ends
+    /// failure line from common testbench assertion macros), so a failing run ends
     /// fast. Its output and waveform then end there. False runs each
     /// testbench to the end, to see every failure. Defaults to true.
     #[serde(default = "default_true")]
@@ -112,7 +112,7 @@ pub struct TestbenchResult {
     /// The testbench, relative to the source folder.
     pub file: String,
     /// True when it ended itself with $finish, without $fatal, $error or a
-    /// failure line from Apio's assertion macros (*** ASSERTION FAILED, ERROR
+    /// failure line from common testbench assertion macros (*** ASSERTION FAILED, ERROR
     /// at).
     pub passed: bool,
     /// Compile warnings and the testbench's $fatal, $error and $warning

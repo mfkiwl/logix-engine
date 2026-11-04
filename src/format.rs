@@ -1,5 +1,5 @@
 //! The format tool's work: Verible's formatter on each file, in place, with
-//! Apio's command (docs/tool-api.md, "format tool").
+//! the standard command (docs/tool-api.md, "format tool").
 
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
@@ -23,7 +23,7 @@ pub const VERIBLE: &str = "verible";
 /// The formatter program in the package's bin folder.
 pub const FORMATTER: &str = "verible-verilog-format";
 
-/// The file types the formatter takes, as Apio's format command: Verilog,
+/// The file types the formatter takes, as formatting takes: Verilog,
 /// SystemVerilog and their include files.
 pub const EXTENSIONS: &[&str] = &[".v", ".sv", ".vh", ".svh"];
 
@@ -90,7 +90,7 @@ pub fn check_option(option: &str) -> Result<(), String> {
     Ok(())
 }
 
-/// The formatter's arguments for one file: Apio's command, the request's
+/// The formatter's arguments for one file: the standard command, the request's
 /// options, then the file.
 pub fn formatter_args(req: &FormatRequest, file: &str) -> Vec<OsString> {
     let mut args: Vec<OsString> = vec!["--nofailsafe_success".into(), "--inplace".into()];
@@ -172,7 +172,7 @@ async fn verible(
     Ok(state.packages.package_dir(&spec).join("bin"))
 }
 
-/// Formats each file in turn, like apio format. A file that fails doesn't
+/// Formats each file in turn. A file that fails doesn't
 /// stop the others.
 pub async fn format(
     state: &EngineState,
@@ -264,7 +264,7 @@ mod tests {
     }
 
     #[test]
-    fn apios_command_then_options_then_the_file() {
+    fn the_command_then_options_then_the_file() {
         let req = FormatRequest {
             source_folder: "/p".into(),
             files: vec!["rtl/a.v".into()],

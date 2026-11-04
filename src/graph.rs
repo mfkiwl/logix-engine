@@ -1,5 +1,5 @@
 //! The graph tool's work: yosys draws the design's top module as a Graphviz
-//! .dot file and Graphviz's dot renders it, with Apio's commands
+//! .dot file and Graphviz's dot renders it, with the standard commands
 //! (docs/tool-api.md, "graph tool").
 
 use std::collections::BTreeMap;
@@ -64,7 +64,7 @@ pub struct GraphResult {
     pub diagnostics: Vec<Diagnostic>,
 }
 
-/// The file names yosys and dot write in the build folder: Apio's names.
+/// The file names yosys and dot write in the build folder: fixed names.
 const STEM: &str = "graph";
 
 /// Quotes a path for a yosys script.
@@ -72,7 +72,7 @@ fn yosys_quote(path: &Path) -> String {
     format!("\"{}\"", path.display())
 }
 
-/// Yosys's arguments: Apio's command, run in the build folder so the .dot
+/// Yosys's arguments: the standard command, run in the build folder so the .dot
 /// file's prefix needs no quoting (yosys keeps quotes in it), with the
 /// design files as absolute paths.
 pub fn yosys_args(req: &GraphRequest) -> Vec<OsString> {
@@ -100,7 +100,7 @@ pub fn yosys_args(req: &GraphRequest) -> Vec<OsString> {
     args
 }
 
-/// dot's arguments: Apio's command.
+/// dot's arguments: the standard command.
 pub fn dot_args(format: GraphFormat) -> Vec<OsString> {
     let ext = format.extension();
     vec![
@@ -151,7 +151,7 @@ fn yosys_error(run: &crate::runner::ToolRun, req: &GraphRequest) -> ToolError {
     err
 }
 
-/// Draws the graph, like apio graph --no-viewer.
+/// Draws the graph.
 pub async fn graph(
     state: &EngineState,
     req: GraphRequest,
@@ -225,7 +225,7 @@ mod tests {
     }
 
     #[test]
-    fn apio_commands() {
+    fn standard_commands() {
         assert_eq!(
             yosys_args(&req()),
             [

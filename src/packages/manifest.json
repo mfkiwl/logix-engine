@@ -3,7 +3,7 @@
     {
       "name": "oss-cad-suite",
       "version": "2026-10-22",
-      "description": "Yosys, nextpnr, icepack, openFPGALoader and other open source FPGA tools, from Apio's packages",
+      "description": "Yosys, nextpnr, icepack, openFPGALoader and other open source FPGA tools",
       "files": {
         "darwin-arm64": {
           "owner": "fpgawars",
@@ -18,7 +18,7 @@
     {
       "name": "openxc7",
       "version": "2026-10-22",
-      "description": "nextpnr-xilinx, Project X-Ray's database and bitstream tools for Xilinx 7 Series FPGAs, from Apio's packages",
+      "description": "nextpnr-xilinx, Project X-Ray's database and bitstream tools for Xilinx 7 Series FPGAs",
       "files": {
         "darwin-arm64": {
           "owner": "fpgawars",
@@ -33,7 +33,7 @@
     {
       "name": "verible",
       "version": "2026-10-22",
-      "description": "Verible's Verilog formatter and other Verilog tools, from Apio's packages",
+      "description": "Verible's Verilog formatter and other Verilog tools",
       "files": {
         "darwin-arm64": {
           "owner": "fpgawars",

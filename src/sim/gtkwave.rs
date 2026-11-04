@@ -2,7 +2,7 @@
 //!
 //! A layout is a project file the user changes by saving from GTKWave, so it
 //! usually lives in the source folder. When it is missing, or is still a
-//! default one the engine or Apio generated, the engine writes a default with
+//! default one the engine or another tool generated, the engine writes a default with
 //! the testbench's top-level signals, so GTKWave doesn't open empty. A layout
 //! the user saved has no marker and is never changed.
 
@@ -16,23 +16,24 @@ use crate::errors::{ActionCode, Category, ToolError};
 
 /// Marks a layout the engine generated.
 pub const MARKER: &str = "THIS FILE WAS GENERATED AUTOMATICALLY BY LOGIX ENGINE";
-/// Marks a layout Apio generated, treated the same way.
-pub const APIO_MARKER: &str = "THIS FILE WAS GENERATED AUTOMATICALLY BY APIO";
+/// Marks a layout another tool generated (its marker line), treated the same
+/// way.
+pub const LEGACY_MARKER: &str = "THIS FILE WAS GENERATED AUTOMATICALLY BY APIO";
 
-/// True if the layout at `path` was generated, by the engine or by Apio, so
+/// True if the layout at `path` was generated, by the engine or another tool, so
 /// it may be replaced. A file that can't be read counts as the user's.
 pub fn is_generated(path: &Path) -> bool {
     let Ok(text) = fs::read(path) else {
         return false;
     };
     let text = String::from_utf8_lossy(&text);
-    text.contains(MARKER) || text.contains(APIO_MARKER)
+    text.contains(MARKER) || text.contains(LEGACY_MARKER)
 }
 
 /// The top-level signals in a VCD file's header, as GTKWave names them: the
 /// scope and the signal name, with the bit range except for integers,
 /// parameters, reals and strings, such as "main_tb.data[7:0]" and
-/// "main_tb.i". Sorted without regard to case, as Apio does.
+/// "main_tb.i". Sorted without regard to case.
 pub fn top_level_signals(vcd: impl BufRead) -> Vec<String> {
     let mut signals = Vec::new();
     let mut depth = 0usize;
@@ -248,7 +249,7 @@ pub fn write_default_if_needed(
 }
 
 /// GTKWave's arguments: the waveform and the layout. For a layout the user
-/// saved, zoom to fit first, as Apio does; a default layout sets its own
+/// saved, zoom to fit first; a default layout sets its own
 /// view, which zoom to fit would replace.
 pub fn gtkwave_args(vcd: &Path, layout: &Path, zoom_to_fit: bool) -> Vec<OsString> {
     let mut args: Vec<OsString> = Vec::new();
@@ -387,8 +388,8 @@ $end
 ";
 
     #[test]
-    fn signals_match_apios_default_layout() {
-        // Apio's create_gtkwave_file gives these for the same VCD.
+    fn signals_match_the_usual_default_layout() {
+        // The usual default layout for the same VCD has these.
         assert_eq!(
             top_level_signals(Cursor::new(VCD)),
             [
@@ -415,9 +416,9 @@ $end
         assert!(text.contains("main_tb.v"));
         assert!(text.ends_with("multi_tb.r\n"), "{text}");
 
-        // A generated one, by the engine or by Apio, is replaced.
+        // A generated one, by the engine or another tool, is replaced.
         assert!(write_default_if_needed(&layout, &vcd, "main_tb.v", None).unwrap());
-        fs::write(&layout, format!("[*] {APIO_MARKER}.\nold\n")).unwrap();
+        fs::write(&layout, format!("[*] {LEGACY_MARKER}.\nold\n")).unwrap();
         assert!(write_default_if_needed(&layout, &vcd, "main_tb.v", None).unwrap());
         assert!(!fs::read_to_string(&layout).unwrap().contains("old"));
 

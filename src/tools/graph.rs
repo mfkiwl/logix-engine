@@ -18,7 +18,7 @@ pub struct Graph;
 impl EngineTool for Graph {
     const NAME: &'static str = "graph";
     const DESCRIPTION: &'static str = "Draws a diagram of a design module, its cells, ports \
-        and the wires between them, like apio graph --no-viewer: yosys reads the design \
+        and the wires between them: yosys reads the design \
         without synthesizing it and Graphviz draws the module. Writes graph.svg (or .pdf or \
         .png) and Graphviz's graph.dot in the build folder, replacing the last ones; \
         graph_file gives its path relative to the build folder. List the design files; the \
@@ -37,7 +37,7 @@ impl EngineTool for Graph {
 #[serde(deny_unknown_fields)]
 pub struct GraphInput {
     /// The module to draw, such as main, the design's top module, or any
-    /// module in the design files, such as uart, like apio graph -t uart.
+    /// module in the design files, such as uart.
     pub top_module: String,
     /// The folder with the design files, as an absolute path.
     pub source_folder: String,

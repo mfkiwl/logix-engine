@@ -1,5 +1,5 @@
-//! The build (docs/tool-api.md, "build tool"), run with the same commands as
-//! Apio, so the bitstreams match: yosys, nextpnr-ice40 and icepack for
+//! The build (docs/tool-api.md, "build tool"), run with each architecture's
+//! standard open source flow: yosys, nextpnr-ice40 and icepack for
 //! iCE40; yosys, nextpnr-ecp5 and ecppack for ECP5; yosys,
 //! nextpnr-himbaechel and gowin_pack for Gowin; yosys, nextpnr-xilinx,
 //! fasm2frames and xc7frames2bit for Xilinx.
@@ -68,7 +68,7 @@ pub fn bitstream_name(arch: Architecture) -> &'static str {
     }
 }
 
-/// yosys's synthesis script (its -p argument), Apio's, writing the
+/// yosys's synthesis script (its -p argument), writing the
 /// netlist to `json`.
 pub fn synth_script(fpga: &FpgaDefinition, top: &str, json: &Path) -> String {
     let json = json.display();
@@ -89,7 +89,7 @@ pub fn synth_script(fpga: &FpgaDefinition, top: &str, json: &Path) -> String {
     }
 }
 
-/// The place-and-route program and its arguments, Apio's, plus the log
+/// The place-and-route program and its arguments, plus the log
 /// file. Run in the build folder.
 pub fn pnr_command(
     fpga: &FpgaDefinition,
@@ -153,7 +153,7 @@ pub fn pnr_command(
     (tool, args)
 }
 
-/// The programs that pack the bitstream, with their arguments, Apio's.
+/// The programs that pack the bitstream, with their arguments, the standard ones.
 /// Run in order in the build folder. `package_dir` is the folder of the
 /// package with the place-and-route tools (see `pnr_package`).
 pub fn pack_commands(

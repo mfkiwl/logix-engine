@@ -621,7 +621,7 @@
   },
   {
     "name": "lint",
-    "description": "Checks Verilog and SystemVerilog sources for errors and likely mistakes with Verilator, without building, like apio lint. It is much faster than build and finds problems synthesis accepts, such as width mismatches. List the design files and, optionally, the testbenches; the engine doesn't search for them. The board selects the FPGA's primitive models, so designs that use them lint cleanly. Problems found are the result, not an error: passed is false and diagnostics lists each problem at file and line, with Verilator's warning code at the end of the text, which a /* verilator lint_off CODE */ comment can silence. The first call may install the toolchain package first, which takes a few minutes. Writes nothing.",
+    "description": "Checks Verilog and SystemVerilog sources for errors and likely mistakes with Verilator, without building. It is much faster than build and finds problems synthesis accepts, such as width mismatches. List the design files and, optionally, the testbenches; the engine doesn't search for them. The board selects the FPGA's primitive models, so designs that use them lint cleanly. Problems found are the result, not an error: passed is false and diagnostics lists each problem at file and line, with Verilator's warning code at the end of the text, which a /* verilator lint_off CODE */ comment can silence. The first call may install the toolchain package first, which takes a few minutes. Writes nothing.",
     "inputSchema": {
       "$defs": {
         "Architecture": {
@@ -907,7 +907,7 @@
         },
         "synthesize": {
           "default": true,
-          "description": "Define SYNTHESIZE, so `ifdef SYNTHESIZE picks the code for synthesis,\nas in build. False leaves it undefined, to check the simulation code\ninstead, like apio lint --nosynth. Defaults to true.",
+          "description": "Define SYNTHESIZE, so `ifdef SYNTHESIZE picks the code for synthesis,\nas in build. False leaves it undefined, to check the simulation code\ninstead. Defaults to true.",
           "type": "boolean"
         },
         "testbench_files": {
@@ -1084,7 +1084,7 @@
   },
   {
     "name": "test",
-    "description": "Runs testbenches with Icarus Verilog, like apio test: compiles the design files with each testbench, runs it, and reports whether it passed. A testbench fails by calling $fatal or $error, or by printing a failure line from Apio's assertion macros (*** ASSERTION FAILED or ERROR at file:line); it must end with $finish, and must not call $dumpfile, since the engine sets where its waveform goes (call $dumpvars to write one). Every listed testbench runs, even after one fails; each stops at its first failure unless stop_at_first_failure is false. A failing testbench is the result, not an error: passed is false, and each testbench's diagnostics and output say why. Compile errors are a design error with diagnostics at file and line. The first call may install the toolchain package first, which takes a few minutes. To look at a testbench's signals in a waveform viewer, use simulate.",
+    "description": "Runs testbenches with Icarus Verilog: compiles the design files with each testbench, runs it, and reports whether it passed. A testbench fails by calling $fatal or $error, or by printing a failure line from common testbench assertion macros (*** ASSERTION FAILED or ERROR at file:line); it must end with $finish, and must not call $dumpfile, since the engine sets where its waveform goes (call $dumpvars to write one). Every listed testbench runs, even after one fails; each stops at its first failure unless stop_at_first_failure is false. A failing testbench is the result, not an error: passed is false, and each testbench's diagnostics and output say why. Compile errors are a design error with diagnostics at file and line. The first call may install the toolchain package first, which takes a few minutes. To look at a testbench's signals in a waveform viewer, use simulate.",
     "inputSchema": {
       "$defs": {
         "Architecture": {
@@ -1349,7 +1349,7 @@
           ]
         },
         "build_folder": {
-          "description": "Where the compiled testbenches and their waveforms go, as an absolute\npath. One of its last two folder names must contain \"build\", such as\n/home/u/proj/_build/default. It is created if needed.",
+          "description": "Where the compiled testbenches and their waveforms go, as an absolute\npath. One of its last two folder names must contain \"build\", such as\n/home/user/proj/_build/default. It is created if needed.",
           "type": "string"
         },
         "defines": {
@@ -1383,7 +1383,7 @@
         },
         "stop_at_first_failure": {
           "default": true,
-          "description": "Stop each testbench at its first failure ($fatal, $error or a\nfailure line from Apio's assertion macros), so a failing run ends\nfast. Its output and waveform then end there. False runs each\ntestbench to the end, to see every failure. Defaults to true.",
+          "description": "Stop each testbench at its first failure ($fatal, $error or a\nfailure line from common testbench assertion macros), so a failing run ends\nfast. Its output and waveform then end there. False runs each\ntestbench to the end, to see every failure. Defaults to true.",
           "type": "boolean"
         },
         "testbench_files": {
@@ -1579,7 +1579,7 @@
               "type": "string"
             },
             "passed": {
-              "description": "True when it ended itself with $finish, without $fatal, $error or a\nfailure line from Apio's assertion macros (*** ASSERTION FAILED, ERROR\nat).",
+              "description": "True when it ended itself with $finish, without $fatal, $error or a\nfailure line from common testbench assertion macros (*** ASSERTION FAILED, ERROR\nat).",
               "type": "boolean"
             },
             "waveform_file": {
@@ -1640,7 +1640,7 @@
   },
   {
     "name": "simulate",
-    "description": "Simulates one testbench with Icarus Verilog and opens its waveform in GTKWave, like apio sim: compiles the design files with the testbench, runs it to write the waveform (.vcd) into the build folder, then starts GTKWave detached and returns without waiting for it. The testbench must call $dumpvars and $finish, and must not call $dumpfile. GTKWave opens the layout file (.gtkw), which holds the signals shown; when it is missing, or is still a default one, the engine writes a default with the testbench's top-level signals, deleted again when GTKWave exits unless the user saved it; a layout the user saved is kept. Set open_viewer to false to only write the waveform, such as when no one is at the screen. A failing testbench runs to the end and is shown, with passed false and GTKWave's marker at the first failure in a default layout. Compile errors are a design error with diagnostics at file and line. To just check whether testbenches pass, use test.",
+    "description": "Simulates one testbench with Icarus Verilog and opens its waveform in GTKWave: compiles the design files with the testbench, runs it to write the waveform (.vcd) into the build folder, then starts GTKWave detached and returns without waiting for it. The testbench must call $dumpvars and $finish, and must not call $dumpfile. GTKWave opens the layout file (.gtkw), which holds the signals shown; when it is missing, or is still a default one, the engine writes a default with the testbench's top-level signals, deleted again when GTKWave exits unless the user saved it; a layout the user saved is kept. Set open_viewer to false to only write the waveform, such as when no one is at the screen. A failing testbench runs to the end and is shown, with passed false and GTKWave's marker at the first failure in a default layout. Compile errors are a design error with diagnostics at file and line. To just check whether testbenches pass, use test.",
     "inputSchema": {
       "$defs": {
         "Architecture": {
@@ -1905,7 +1905,7 @@
           ]
         },
         "build_folder": {
-          "description": "Where the compiled testbench and its waveform go, as an absolute path.\nOne of its last two folder names must contain \"build\", such as\n/home/u/proj/_build/default. It is created if needed.",
+          "description": "Where the compiled testbench and its waveform go, as an absolute path.\nOne of its last two folder names must contain \"build\", such as\n/home/user/proj/_build/default. It is created if needed.",
           "type": "string"
         },
         "defines": {
@@ -2154,7 +2154,7 @@
           "type": "string"
         },
         "passed": {
-          "description": "True when the testbench reached $finish without $fatal, $error or a\nfailure line from Apio's assertion macros (*** ASSERTION FAILED, ERROR\nat), which skip $fatal under simulation.",
+          "description": "True when the testbench reached $finish without $fatal, $error or a\nfailure line from common testbench assertion macros (*** ASSERTION FAILED, ERROR\nat), which skip $fatal under simulation.",
           "type": "boolean"
         },
         "viewer_opened": {
@@ -2189,7 +2189,7 @@
   },
   {
     "name": "format",
-    "description": "Formats Verilog and SystemVerilog files in place with Verible's formatter, like apio format. List the files to format (.v, .sv, .vh or .svh); the engine doesn't search for them. Formatting changes only layout, never meaning. Each file is rewritten only when its layout changes; files lists each one as formatted, unchanged or failed. A file Verible can't parse, such as one with a syntax error, is left unchanged: passed is false and diagnostics gives the error at file and line. That is a result, not an error. Code between // verilog_format: off and // verilog_format: on comments is left as is. The first call may install the Verible package first.",
+    "description": "Formats Verilog and SystemVerilog files in place with Verible's formatter. List the files to format (.v, .sv, .vh or .svh); the engine doesn't search for them. Formatting changes only layout, never meaning. Each file is rewritten only when its layout changes; files lists each one as formatted, unchanged or failed. A file Verible can't parse, such as one with a syntax error, is left unchanged: passed is false and diagnostics gives the error at file and line. That is a result, not an error. Code between // verilog_format: off and // verilog_format: on comments is left as is. The first call may install the Verible package first.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
@@ -2214,7 +2214,7 @@
         },
         "verible_options": {
           "default": [],
-          "description": "Extra options for Verible's formatter, each as --name or\n--name=value, such as [\"--column_limit=80\",\n\"--indentation_spaces=4\"], like Apio's format-verible-options.\nDefaults to none, which gives Verible's default style.",
+          "description": "Extra options for Verible's formatter, each as --name or\n--name=value, such as [\"--column_limit=80\",\n\"--indentation_spaces=4\"].\nDefaults to none, which gives Verible's default style.",
           "items": {
             "type": "string"
           },
@@ -2418,7 +2418,7 @@
   },
   {
     "name": "graph",
-    "description": "Draws a diagram of a design module, its cells, ports and the wires between them, like apio graph --no-viewer: yosys reads the design without synthesizing it and Graphviz draws the module. Writes graph.svg (or .pdf or .png) and Graphviz's graph.dot in the build folder, replacing the last ones; graph_file gives its path relative to the build folder. List the design files; the engine doesn't search for them. Errors in the design, such as a syntax error or a top module that isn't in the files, are design errors with diagnostics at file and line. The first call may install the toolchain package first, which takes a few minutes.",
+    "description": "Draws a diagram of a design module, its cells, ports and the wires between them: yosys reads the design without synthesizing it and Graphviz draws the module. Writes graph.svg (or .pdf or .png) and Graphviz's graph.dot in the build folder, replacing the last ones; graph_file gives its path relative to the build folder. List the design files; the engine doesn't search for them. Errors in the design, such as a syntax error or a top module that isn't in the files, are design errors with diagnostics at file and line. The first call may install the toolchain package first, which takes a few minutes.",
     "inputSchema": {
       "$defs": {
         "GraphFormat": {
@@ -2476,7 +2476,7 @@
           "type": "string"
         },
         "top_module": {
-          "description": "The module to draw, such as main, the design's top module, or any\nmodule in the design files, such as uart, like apio graph -t uart.",
+          "description": "The module to draw, such as main, the design's top module, or any\nmodule in the design files, such as uart.",
           "type": "string"
         },
         "verbose": {
@@ -2903,7 +2903,7 @@
           ]
         },
         "build_folder": {
-          "description": "Where the build writes its files, as an absolute path. One of its last\ntwo folder names must contain \"build\", such as\n/home/u/proj/_build/default. It may be inside the source folder but\ncan't be the source folder itself. It is created if needed.",
+          "description": "Where the build writes its files, as an absolute path. One of its last\ntwo folder names must contain \"build\", such as\n/home/user/proj/_build/default. It may be inside the source folder but\ncan't be the source folder itself. It is created if needed.",
           "type": "string"
         },
         "constraint_file": {
@@ -3135,7 +3135,7 @@
   },
   {
     "name": "clean_build",
-    "description": "Deletes build folders, like apio clean. Given a build folder, such as /home/u/proj/_build/default, it deletes it. Given a folder of build folders, such as /home/u/proj/_build, it deletes each build folder directly inside it, then the folder itself if nothing else is left. It only deletes folders the build tool made, so other files are never removed. A folder that doesn't exist is fine.",
+    "description": "Deletes build folders. Given a build folder, such as /home/user/proj/_build/default, it deletes it. Given a folder of build folders, such as /home/user/proj/_build, it deletes each build folder directly inside it, then the folder itself if nothing else is left. It only deletes folders the build tool made, so other files are never removed. A folder that doesn't exist is fine.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
@@ -3732,7 +3732,7 @@
         },
         "programmer_command": {
           "default": null,
-          "description": "A custom programmer command that replaces the board's default one,\nlike Apio's programmer_cmd. Its first word is a program from the\ntoolchain package, such as openFPGALoader, or an absolute path. It may\nuse ${VID}, ${PID}, ${BUS}, ${DEV}, ${SERIAL} and must use\n${BITSTREAM}.",
+          "description": "A custom programmer command that replaces the board's default one,\nfor a custom setup. Its first word is a program from the\ntoolchain package, such as openFPGALoader, or an absolute path. It may\nuse ${VID}, ${PID}, ${BUS}, ${DEV}, ${SERIAL} and must use\n${BITSTREAM}.",
           "type": [
             "string",
             "null"

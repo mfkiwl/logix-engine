@@ -83,7 +83,7 @@ fn input(src: &Path, extra: Value) -> graph::GraphInput {
 }
 
 #[tokio::test]
-async fn graph_draws_the_design_as_svg_like_apio() {
+async fn graph_draws_the_design_as_svg() {
     let state = engine().await;
     // A space in the path, which yosys's script must quote.
     let (_tmp, src) = design("blinky", "my proj");
@@ -98,7 +98,7 @@ async fn graph_draws_the_design_as_svg_like_apio() {
     assert!(svg.contains("CLK") && svg.contains("LED0"), "{svg}");
     assert!(src.join("_build/graph.dot").is_file());
 
-    // The commands are Apio's, ready to run again.
+    // The commands are ready to run again.
     let tools: Vec<_> = out.commands.iter().map(|c| c.tool.as_str()).collect();
     assert_eq!(tools, ["yosys", "dot"]);
     assert!(out.commands[0].args[2].starts_with("read_verilog -sv \""));
