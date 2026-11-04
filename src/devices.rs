@@ -78,16 +78,29 @@ pub struct BoardMatch {
     /// host decides which one it means.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub custom: bool,
-    /// How sure the engine is that the device is this board, from 1 to 3:
-    /// higher is surer, and 3 is always the highest. Compare it, such as to
-    /// pre-select a device at 3; how the engine rates may improve between
-    /// versions. No rating proves which board is connected, and several
-    /// boards can have the same one.
+    /// How sure the engine is that the device is this board: the highest
+    /// confidence of its variants. From 1 to 3: higher is surer, and 3 is
+    /// always the highest. Compare it, such as to pre-select a device at 3;
+    /// how the engine rates may improve between versions. No rating proves
+    /// which board is connected, and several boards can have the same one.
     #[schemars(range(min = 1, max = 3))]
     pub confidence: u8,
-    /// The board's variants this device fits, as dimension values, such as
-    /// {"connection": "usb", "memory": "flash"}, in the board's order.
-    pub variants: Vec<BTreeMap<String, String>>,
+    /// The board's variants this device fits, in the board's order, each
+    /// with its own confidence.
+    pub variants: Vec<VariantMatch>,
+}
+
+/// A variant of a board that a device fits.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct VariantMatch {
+    /// The variant's dimension values, such as {"connection": "usb",
+    /// "memory": "flash"}, as in the board's configurations.
+    pub when: BTreeMap<String, String>,
+    /// How sure the engine is that the device is the board in this variant,
+    /// from 1 to 3, as for the board.
+    #[schemars(range(min = 1, max = 3))]
+    pub confidence: u8,
 }
 
 /// The highest confidence: the device reports a name or serial number
@@ -290,8 +303,8 @@ pub fn matches(device: &Device, filter: &UsbFilter) -> bool {
 }
 
 /// The boards a device may be, best first: by confidence, then catalog
-/// boards before custom ones, then by board ID. A board's confidence is its
-/// best matching configuration's. For a device the engine can't open, only
+/// boards before custom ones, then by board ID. Each variant has its own
+/// confidence, and the board the best of its variants'. For a device the engine can't open, only
 /// the USB IDs are compared (its names are unknown), so every match is low.
 pub fn board_matches(device: &Device, boards: &[Candidate]) -> Vec<BoardMatch> {
     let mut out = Vec::new();
@@ -305,8 +318,12 @@ pub fn board_matches(device: &Device, boards: &[Candidate]) -> Vec<BoardMatch> {
                 same_ids(device, &c.usb)
             };
             if hit {
-                variants.push(c.when.clone());
-                best = best.max(confidence(device, &c.usb));
+                let confidence = confidence(device, &c.usb);
+                best = best.max(confidence);
+                variants.push(VariantMatch {
+                    when: c.when.clone(),
+                    confidence,
+                });
             }
         }
         if !variants.is_empty() {

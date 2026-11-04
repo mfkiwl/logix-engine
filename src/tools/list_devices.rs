@@ -157,10 +157,13 @@ mod tests {
         assert_eq!(out.devices[0].boards[1].board, "orangecrab-r02-85f");
         assert_eq!(
             bootloader.variants,
-            [BTreeMap::from([
-                ("connection".to_string(), "bootloader".to_string()),
-                ("memory".to_string(), "flash".to_string())
-            ])]
+            [crate::devices::VariantMatch {
+                when: BTreeMap::from([
+                    ("connection".to_string(), "bootloader".to_string()),
+                    ("memory".to_string(), "flash".to_string())
+                ]),
+                confidence: CONFIDENCE_HIGH,
+            }]
         );
         // The FT232H adapter: the ButterStick's adapter variants, among others.
         let adapter = &out.devices[1].boards;
@@ -169,7 +172,8 @@ mod tests {
             .find(|m| m.board == "butterstick-r10-2g-85k")
             .unwrap();
         assert_eq!(butterstick.confidence, CONFIDENCE_LOW);
-        assert_eq!(butterstick.variants[0]["connection"], "ft232h");
+        assert_eq!(butterstick.variants[0].when["connection"], "ft232h");
+        assert_eq!(butterstick.variants[0].confidence, CONFIDENCE_LOW);
         assert!(out.devices[2].boards.is_empty());
         assert!(out.unreachable.is_empty());
     }
@@ -214,6 +218,40 @@ mod tests {
             vec![],
         );
         assert!(bad.unwrap_err().message.contains("mine"));
+    }
+
+    #[test]
+    fn each_variant_has_its_own_confidence() {
+        let config = |memory: &str, usb: serde_json::Value| {
+            json!({
+                "when": {"connection": "usb", "memory": memory},
+                "programmer": "iceprog",
+                "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+                "usb": usb,
+                "tested": true
+            })
+        };
+        let input = json!({"custom_boards": {"mine": {
+            "description": "Mine",
+            "fpga_id": "ice40hx4k-tq144-8k",
+            "variants": {"configurations": [
+                config("flash", json!({"vid": "0403", "pid": "6010", "product_regex": "^Dual RS232-HS"})),
+                config("ram", json!({"vid": "0403", "pid": "6010"})),
+            ]}
+        }}});
+        let out = list(
+            input,
+            vec![device("0403", "6010", Some("Dual RS232-HS"), None, 3)],
+        )
+        .unwrap();
+        let mine = out.devices[0].boards.iter().find(|m| m.custom).unwrap();
+        let rated: Vec<_> = mine
+            .variants
+            .iter()
+            .map(|v| (v.when["memory"].as_str(), v.confidence))
+            .collect();
+        assert_eq!(rated, [("flash", 2), ("ram", CONFIDENCE_LOW)]);
+        assert_eq!(mine.confidence, 2, "the best variant's");
     }
 
     #[test]

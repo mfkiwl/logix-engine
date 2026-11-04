@@ -3843,7 +3843,7 @@
               "type": "string"
             },
             "confidence": {
-              "description": "How sure the engine is that the device is this board, from 1 to 3:\nhigher is surer, and 3 is always the highest. Compare it, such as to\npre-select a device at 3; how the engine rates may improve between\nversions. No rating proves which board is connected, and several\nboards can have the same one.",
+              "description": "How sure the engine is that the device is this board: the highest\nconfidence of its variants. From 1 to 3: higher is surer, and 3 is\nalways the highest. Compare it, such as to pre-select a device at 3;\nhow the engine rates may improve between versions. No rating proves\nwhich board is connected, and several boards can have the same one.",
               "maximum": 3,
               "minimum": 1,
               "type": "integer"
@@ -3853,12 +3853,9 @@
               "type": "boolean"
             },
             "variants": {
-              "description": "The board's variants this device fits, as dimension values, such as\n{\"connection\": \"usb\", \"memory\": \"flash\"}, in the board's order.",
+              "description": "The board's variants this device fits, in the board's order, each\nwith its own confidence.",
               "items": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/VariantMatch"
               },
               "type": "array"
             }
@@ -4000,6 +3997,30 @@
             "action"
           ],
           "type": "object"
+        },
+        "VariantMatch": {
+          "additionalProperties": false,
+          "description": "A variant of a board that a device fits.",
+          "properties": {
+            "confidence": {
+              "description": "How sure the engine is that the device is the board in this variant,\nfrom 1 to 3, as for the board.",
+              "maximum": 3,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "when": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "The variant's dimension values, such as {\"connection\": \"usb\",\n\"memory\": \"flash\"}, as in the board's configurations.",
+              "type": "object"
+            }
+          },
+          "required": [
+            "when",
+            "confidence"
+          ],
+          "type": "object"
         }
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4081,7 +4102,7 @@
               "type": "string"
             },
             "confidence": {
-              "description": "How sure the engine is that the device is this board, from 1 to 3:\nhigher is surer, and 3 is always the highest. Compare it, such as to\npre-select a device at 3; how the engine rates may improve between\nversions. No rating proves which board is connected, and several\nboards can have the same one.",
+              "description": "How sure the engine is that the device is this board: the highest\nconfidence of its variants. From 1 to 3: higher is surer, and 3 is\nalways the highest. Compare it, such as to pre-select a device at 3;\nhow the engine rates may improve between versions. No rating proves\nwhich board is connected, and several boards can have the same one.",
               "maximum": 3,
               "minimum": 1,
               "type": "integer"
@@ -4091,12 +4112,9 @@
               "type": "boolean"
             },
             "variants": {
-              "description": "The board's variants this device fits, as dimension values, such as\n{\"connection\": \"usb\", \"memory\": \"flash\"}, in the board's order.",
+              "description": "The board's variants this device fits, in the board's order, each\nwith its own confidence.",
               "items": {
-                "additionalProperties": {
-                  "type": "string"
-                },
-                "type": "object"
+                "$ref": "#/$defs/VariantMatch"
               },
               "type": "array"
             }
@@ -4226,6 +4244,30 @@
               "type": "string"
             }
           ]
+        },
+        "VariantMatch": {
+          "additionalProperties": false,
+          "description": "A variant of a board that a device fits.",
+          "properties": {
+            "confidence": {
+              "description": "How sure the engine is that the device is the board in this variant,\nfrom 1 to 3, as for the board.",
+              "maximum": 3,
+              "minimum": 1,
+              "type": "integer"
+            },
+            "when": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "description": "The variant's dimension values, such as {\"connection\": \"usb\",\n\"memory\": \"flash\"}, as in the board's configurations.",
+              "type": "object"
+            }
+          },
+          "required": [
+            "when",
+            "confidence"
+          ],
+          "type": "object"
         }
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
