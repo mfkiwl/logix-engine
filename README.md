@@ -39,7 +39,6 @@ Check the setup with `cargo --version`.
 | `scripts/engine-cmd.sh` | Sends one prompt to Claude Code with the engine connected and prints the answer as plain text, such as `scripts/engine-cmd.sh --add-dir ~/proj "Build ~/proj for the Alhambra II"`. `-c` continues the previous conversation. See `--help` |
 | `scripts/serve.sh` | Builds if needed and runs the engine as an MCP server on stdin/stdout, for other MCP clients |
 | `scripts/clean.sh` | Deletes the build output |
-| `scripts/import-apio-catalog.py` | Regenerates the board and FPGA catalog in [catalog/](catalog/) from Apio's definitions in `~/.apio/packages` |
 | `scripts/update-schemas.sh` | Regenerates [schemas/tools.json](schemas/tools.json), the published copy of the tool schemas, after a deliberate change |
 
 To try the engine with Claude Code as the host, run `scripts/run.sh` and type prompts, such as "What version is the Logix engine?". It uses the `claude` command, or the one bundled with the Claude Code VS Code extension. To try it with another MCP client, such as the [MCP Inspector](https://github.com/modelcontextprotocol/inspector), point the client at `scripts/serve.sh`:
