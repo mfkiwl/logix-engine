@@ -793,7 +793,7 @@ mod tests {
         assert_eq!(c.fpgas["ice40hx4k-tq144-8k"].package(), "tq144:4k");
         let configurations = || c.boards.values().flat_map(|b| &b.variants.configurations);
         assert_eq!(c.boards.len(), 84);
-        assert_eq!(configurations().count(), 95);
+        assert_eq!(configurations().count(), 131);
         // Users pick boards by description, so no two boards share one.
         let mut descriptions: Vec<&str> =
             c.boards.values().map(|b| b.description.as_str()).collect();
@@ -808,6 +808,8 @@ mod tests {
         }
         // Boards with a choice: connections and memories. Sizes are separate
         // boards, since the pins may differ.
+        let memory_of =
+            |id: &str, i: usize| c.boards[id].variants.configurations[i].when["memory"].clone();
         let dims = |id: &str| -> Vec<usize> {
             c.boards[id]
                 .variants
@@ -819,19 +821,45 @@ mod tests {
         for (id, choices) in [
             ("icesugar-pro", [1, 2]),
             ("colorlight-i5-v7-0", [1, 2]),
-            ("colorlight-5a-75e-v71", [3, 1]),
-            ("colorlight-i9-v7-2", [4, 1]),
-            ("fleafpga-ohm", [3, 1]),
+            ("colorlight-5a-75e-v71", [3, 2]),
+            ("colorlight-i9-v7-2", [4, 2]),
+            ("fleafpga-ohm", [3, 2]),
+            ("arty-a7-35t", [1, 2]),
+            ("sipeed-tang-nano", [1, 2]),
             // The bootloader writes flash, the adapters RAM.
             ("butterstick-r10-2g-85k", [3, 2]),
+            // Zynq: openFPGALoader can't write their flash.
+            ("pynq-z1", [1, 1]),
+            // The ULX3S may have a bootloader at the start of its flash.
+            ("ulx3s-12f", [1, 1]),
         ] {
             assert_eq!(dims(id), choices, "{id}");
+        }
+        // Flash configurations added to RAM-only boards keep the RAM one as
+        // the default, so a project without a variant uploads as before.
+        assert_eq!(memory_of("arty-a7-35t", 0), "ram");
+        assert_eq!(memory_of("arty-a7-35t", 1), "flash");
+        // Where openFPGALoader can't tell the part (no --board), the flash
+        // command names it, so it loads the right SPI-over-JTAG bridge.
+        for b in c.boards.values() {
+            if c.fpgas[&b.fpga_id].architecture != Architecture::Xilinx {
+                continue;
+            }
+            for v in &b.variants.configurations {
+                if v.when["memory"] == "flash" {
+                    assert!(
+                        v.args.contains("--board ") || v.args.contains("--fpga-part "),
+                        "{}",
+                        b.description
+                    );
+                }
+            }
         }
         let with_choices = c
             .boards
             .values()
             .filter(|b| b.variants.dimensions.iter().any(|d| d.values.len() > 1));
-        assert_eq!(with_choices.count(), 6);
+        assert_eq!(with_choices.count(), 32);
         // Where the design goes follows from the command: openFPGALoader
         // writes RAM unless told to write flash (iCE40 always flash).
         let memory = |id: &str| c.boards[id].variants.configurations[0].when["memory"].clone();
