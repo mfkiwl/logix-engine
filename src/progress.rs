@@ -60,6 +60,9 @@ pub trait OutputSink: Send + Sync {
     fn line(&self, tool: &str, level: OutputLevel, text: &str);
     /// The command line of a tool about to run, before its output.
     fn command(&self, _tool: &str, _text: &str) {}
+    /// A line from the engine itself, such as how the board will be
+    /// programmed.
+    fn message(&self, _text: &str) {}
 }
 
 /// A sink that drops output, for hosts that didn't ask for it.

@@ -99,6 +99,53 @@ pub fn verbose_flag(programmer: &str) -> Option<&'static str> {
     }
 }
 
+/// How the board will be programmed, as the engine says before it starts,
+/// such as "Programming the board's RAM through the FT232H adapter.".
+pub fn plan(c: &Configuration) -> Option<String> {
+    let memory = memory_word(c)?;
+    let connection = c.when.get("connection").map(String::as_str);
+    let through = match connection {
+        Some("usb") => " through its USB port".to_string(),
+        Some("bootloader") => " through its USB bootloader".to_string(),
+        Some("unspecified") | None => " through USB".to_string(),
+        Some(other) => {
+            let label = catalog::CONNECTIONS
+                .iter()
+                .find(|(id, _, _)| *id == other)
+                .map(|(_, label, _)| *label)
+                .unwrap_or(other);
+            format!(" through the {label}")
+        }
+    };
+    Some(format!("Programming the board's {memory}{through}."))
+}
+
+/// What a successful programming means, such as "Programmed the board's
+/// RAM: the design is lost when the board is powered off.".
+pub fn done(c: &Configuration) -> Option<String> {
+    let memory = memory_word(c)?;
+    let stays = if memory == "RAM" { "is lost" } else { "stays" };
+    Some(format!(
+        "Programmed the board's {memory}: the design {stays} when the board is powered off."
+    ))
+}
+
+/// The progress phase while the programmer writes.
+pub fn writing_phase(c: &Configuration) -> &'static str {
+    match memory_word(c) {
+        Some("RAM") => "Writing RAM",
+        _ => "Writing flash",
+    }
+}
+
+fn memory_word(c: &Configuration) -> Option<&'static str> {
+    match c.when.get("memory").map(String::as_str) {
+        Some("flash") => Some("flash"),
+        Some("ram") => Some("RAM"),
+        _ => None,
+    }
+}
+
 pub fn command(
     variant: &Configuration,
     custom: Option<&str>,
@@ -299,6 +346,35 @@ mod tests {
         let (prog, args) = command(v, None, &d, Path::new("/b/hardware.bin"), bin, false).unwrap();
         assert_eq!(prog, Path::new("/pkg/bin/iceprog"));
         assert_eq!(args.len(), 3); // -d d:1/9 /b/hardware.bin
+    }
+
+    #[test]
+    fn says_how_the_board_is_programmed() {
+        let c = catalog::builtin();
+        let alhambra = &c.boards["alhambra-ii"].variants.configurations[0];
+        assert_eq!(
+            plan(alhambra).unwrap(),
+            "Programming the board's flash through its USB port."
+        );
+        assert_eq!(
+            done(alhambra).unwrap(),
+            "Programmed the board's flash: the design stays when the board is powered off."
+        );
+        assert_eq!(writing_phase(alhambra), "Writing flash");
+        let stick = &c.boards["butterstick-r10-2g-85k"].variants.configurations;
+        assert_eq!(
+            plan(&stick[0]).unwrap(),
+            "Programming the board's flash through its USB bootloader."
+        );
+        assert_eq!(
+            plan(&stick[2]).unwrap(),
+            "Programming the board's RAM through the FT232H adapter."
+        );
+        assert_eq!(
+            done(&stick[2]).unwrap(),
+            "Programmed the board's RAM: the design is lost when the board is powered off."
+        );
+        assert_eq!(writing_phase(&stick[2]), "Writing RAM");
     }
 
     #[test]

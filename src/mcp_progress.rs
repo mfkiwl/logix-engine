@@ -125,4 +125,15 @@ impl OutputSink for McpNotifier {
             "text": text,
         })));
     }
+
+    fn message(&self, text: &str) {
+        let Some(id) = &self.output_for else { return };
+        self.send(Note::Output(json!({
+            "request_id": id,
+            "tool": "logix-engine",
+            "kind": "message",
+            "level": OutputLevel::Info,
+            "text": text,
+        })));
+    }
 }

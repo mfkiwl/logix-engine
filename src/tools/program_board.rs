@@ -123,6 +123,16 @@ pub async fn run_with(
         .ok_or_else(|| ToolError::engine(format!("{TOOLCHAIN} isn't in the manifest.")))?;
     let bin = state.packages.package_dir(&spec).join("bin");
 
+    // Say how the board will be programmed (not for a custom command, which
+    // may do anything), and any note for users, such as holding a button.
+    if custom.is_none() {
+        if let Some(plan) = program::plan(variant) {
+            call.output.message(&plan);
+        }
+        if let Some(notes) = &variant.user_notes {
+            call.output.message(&format!("Note: {notes}"));
+        }
+    }
     phases.start("Finding device");
     let connected = scan()?;
     let device = devices::select(
@@ -169,7 +179,7 @@ pub async fn run_with(
     phases.start(if custom.is_some() {
         "Programming"
     } else {
-        "Writing flash"
+        program::writing_phase(variant)
     });
     call.output
         .command(&tool_name, &command_line(&program, &args));
@@ -177,11 +187,18 @@ pub async fn run_with(
         .push(crate::commands::record(&program, &args, &folder, &bin));
     let run = run_tool_with(&program, &args, &folder, &bin, &call.cancel, &on_line).await;
     match run {
-        Ok(r) if r.status.success() => Ok(ProgramBoardOutput {
-            device,
-            programmer,
-            commands: call.commands.take(),
-        }),
+        Ok(r) if r.status.success() => {
+            if custom.is_none()
+                && let Some(done) = program::done(variant)
+            {
+                call.output.message(&done);
+            }
+            Ok(ProgramBoardOutput {
+                device,
+                programmer,
+                commands: call.commands.take(),
+            })
+        }
         Ok(r) => Err(program::failure(
             &program.file_name().unwrap_or_default().to_string_lossy(),
             &board.name,

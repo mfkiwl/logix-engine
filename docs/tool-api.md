@@ -113,8 +113,8 @@ A host that wants to show the tools' output as it happens, such as in a console,
 | Field | Type | Description |
 | --- | --- | --- |
 | `request_id` | number or string | The JSON-RPC ID of the tool call the line belongs to |
-| `tool` | text | The tool that printed it, such as `yosys`, `nextpnr-ice40` or `openFPGALoader` |
-| `kind` | enum | `command` for the command line of a tool about to run, sent before its output, or `output` for a line the tool printed |
+| `tool` | text | The tool that printed it, such as `yosys`, `nextpnr-ice40` or `openFPGALoader`, or `logix-engine` for the engine's own messages |
+| `kind` | enum | `command` for the command line of a tool about to run, sent before its output, `output` for a line the tool printed, or `message` for a line from the engine itself, such as how `program_board` will program the board. Hosts should show unknown kinds like `output` |
 | `level` | enum | `error`, `warning` or `info`, from how the tool marks the line, so hosts can color it |
 | `text` | text | The line as the tool printed it, without terminal codes. A progress bar redrawn with carriage returns gives one line per redraw |
 
@@ -660,9 +660,11 @@ Programs a bitstream into the board it was built for. The `program_board` tool t
 
 **Note:** unlike `apio upload`, the `program_board` tool doesn't build. It programs the bitstream that is already in the build folder. A host that wants to build and program the board in one step calls `build` first, and calls `program_board` only if the build succeeded.
 
-**How it runs:** the engine reads the board from the build record, finds the one matching device, fills in the configuration's argument template, splitting it into words first so paths with spaces stay whole, and runs the programmer in the build folder. Progress has the phases "Finding device", "Writing flash" and "Verifying", with percentages read from the programmer's output. With `programmer_command` the phases are "Finding device" and "Programming", without percentages. A programmer that fails because the device is missing or can't be opened gives a setup error with `connect_board` or `fix_device_permissions`; other failures are tool failures with the programmer's output in `details`. The build record's board checksum is checked first, so a damaged record is a request error.
+**How it runs:** the engine reads the board from the build record, finds the one matching device, fills in the configuration's argument template, splitting it into words first so paths with spaces stay whole, and runs the programmer in the build folder. Progress has the phases "Finding device", "Writing flash" (or "Writing RAM") and "Verifying", with percentages read from the programmer's output. With `programmer_command` the phases are "Finding device" and "Programming", without percentages. A programmer that fails because the device is missing or can't be opened gives a setup error with `connect_board` or `fix_device_permissions`; other failures are tool failures with the programmer's output in `details`. The build record's board checksum is checked first, so a damaged record is a request error.
 
-**Flash or RAM:** the build's configuration decides whether the bitstream goes to flash, where it stays after power-off, or to RAM, where it is lost at power-off. Boards that offer both have a `memory` dimension; the variant is chosen when building.
+**Flash or RAM:** the build's configuration decides whether the bitstream goes to flash, where it stays after power-off, or to RAM, where it is lost at power-off (its `memory` value; boards that offer both have a choice, made when building). The write phase is "Writing flash" or "Writing RAM".
+
+**Messages:** with live output, `program_board` says how it programs the board before it starts, such as "Programming the board's RAM through the FT232H adapter." ("through its USB port" for `usb`, "through its USB bootloader", "through USB" for `unspecified`), then the configuration's `user_notes` as "Note: …", and after success where the design went: "Programmed the board's flash: the design stays when the board is powered off." or "… RAM: the design is lost when the board is powered off.". These are `message` lines; a `programmer_command` gets none, since the engine can't know what it does.
 
 **Table 9.** program_board tool inputs
 
