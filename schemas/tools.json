@@ -953,6 +953,14 @@
           "$ref": "#/$defs/BoardSpec",
           "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE\nfor Xilinx."
         },
+        "board_variant": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "The board variant: values of the board's dimensions, such as\n{\"connection\": \"ft232h\", \"memory\": \"ram\"}, which get_catalog lists\nwith the configurations that exist. The first configuration with\nthese values is used; omitted dimensions match any value. Omitted\nmeans the board's first configuration, its default.",
+          "type": "object"
+        },
         "defines": {
           "additionalProperties": {
             "type": "string"
@@ -993,14 +1001,6 @@
             "string",
             "null"
           ]
-        },
-        "variant": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "default": {},
-          "description": "The board's variant, such as {\"size\": \"85k\"} or {\"memory\": \"ram\"}:\nvalues of the board's dimensions, which get_catalog lists with the\nconfigurations that exist. The first configuration with these values\nis used; omitted dimensions match any value. Omitted means the\nboard's first configuration.",
-          "type": "object"
         },
         "verbose": {
           "default": false,
@@ -1486,6 +1486,14 @@
           "$ref": "#/$defs/BoardSpec",
           "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE\nfor Xilinx."
         },
+        "board_variant": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "The board variant: values of the board's dimensions, such as\n{\"connection\": \"ft232h\", \"memory\": \"ram\"}, which get_catalog lists\nwith the configurations that exist. The first configuration with\nthese values is used; omitted dimensions match any value. Omitted\nmeans the board's first configuration, its default.",
+          "type": "object"
+        },
         "build_folder": {
           "description": "Where the compiled testbenches and their waveforms go, as an absolute\npath. One of its last two folder names must contain \"build\", such as\n/home/u/proj/_build/default. It is created if needed.",
           "type": "string"
@@ -1537,14 +1545,6 @@
           "description": "Stop each testbench after this many seconds of real time, such as one\nstuck in a loop. A testbench stopped this way fails. Defaults to 600;\n0 means no limit.",
           "minimum": 0,
           "type": "integer"
-        },
-        "variant": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "default": {},
-          "description": "The board's variant, such as {\"size\": \"85k\"} or {\"memory\": \"ram\"}:\nvalues of the board's dimensions, which get_catalog lists with the\nconfigurations that exist. The first configuration with these values\nis used; omitted dimensions match any value. Omitted means the\nboard's first configuration.",
-          "type": "object"
         },
         "verbose": {
           "default": false,
@@ -2112,6 +2112,14 @@
           "$ref": "#/$defs/BoardSpec",
           "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE\nfor Xilinx."
         },
+        "board_variant": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "The board variant: values of the board's dimensions, such as\n{\"connection\": \"ft232h\", \"memory\": \"ram\"}, which get_catalog lists\nwith the configurations that exist. The first configuration with\nthese values is used; omitted dimensions match any value. Omitted\nmeans the board's first configuration, its default.",
+          "type": "object"
+        },
         "build_folder": {
           "description": "Where the compiled testbench and its waveform go, as an absolute path.\nOne of its last two folder names must contain \"build\", such as\n/home/u/proj/_build/default. It is created if needed.",
           "type": "string"
@@ -2170,14 +2178,6 @@
             "integer",
             "null"
           ]
-        },
-        "variant": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "default": {},
-          "description": "The board's variant, such as {\"size\": \"85k\"} or {\"memory\": \"ram\"}:\nvalues of the board's dimensions, which get_catalog lists with the\nconfigurations that exist. The first configuration with these values\nis used; omitted dimensions match any value. Omitted means the\nboard's first configuration.",
-          "type": "object"
         },
         "verbose": {
           "default": false,
@@ -3180,6 +3180,14 @@
           "$ref": "#/$defs/BoardSpec",
           "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition."
         },
+        "board_variant": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "default": {},
+          "description": "The board variant: values of the board's dimensions, such as\n{\"connection\": \"ft232h\", \"memory\": \"ram\"}, which get_catalog lists\nwith the configurations that exist. The first configuration with\nthese values is used; omitted dimensions match any value. Omitted\nmeans the board's first configuration, its default.",
+          "type": "object"
+        },
         "build_folder": {
           "description": "Where the build writes its files, as an absolute path. One of its last\ntwo folder names must contain \"build\", such as\n/home/u/proj/_build/default. It may be inside the source folder but\ncan't be the source folder itself. It is created if needed.",
           "type": "string"
@@ -3211,14 +3219,6 @@
         "top_module": {
           "description": "Name of the top-level module, such as main.",
           "type": "string"
-        },
-        "variant": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "default": {},
-          "description": "The board's variant, such as {\"size\": \"85k\"} or {\"memory\": \"ram\"}:\nvalues of the board's dimensions, which get_catalog lists with the\nconfigurations that exist. The first configuration with these values\nis used; omitted dimensions match any value. Omitted means the\nboard's first configuration.",
-          "type": "object"
         },
         "verbose": {
           "default": false,

@@ -95,7 +95,7 @@ from mcp.client.stdio import stdio_client
 # Launch the engine as a child process, passing its engine folder.
 ENGINE = StdioServerParameters(
     command="logix-engine",                      # engine binary bundled with Apio
-    args=["--engine-folder", os.path.expanduser("~/.apio/engine")],
+    args=["--engine-folder", os.path.expanduser("~/.myhost/engine")],
 )
 
 async def on_progress(progress, total, message):
@@ -111,10 +111,10 @@ async def build():
                 {
                     "board": "icestick",                    # catalog ID, or a full definition
                     "top_module": "main",
-                    "source_folder": "/home/u/proj",
+                    "source_folder": "/home/user/proj",
                     "source_files": ["main.v"],
                     "constraint_file": "pinout.pcf",
-                    "build_folder": "/home/u/proj/_build/default",
+                    "build_folder": "/home/user/proj/_build/default",
                 },
                 progress_callback=on_progress,
             )

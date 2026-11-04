@@ -41,13 +41,13 @@ pub struct BuildInput {
     /// The target board: a catalog ID such as alhambra-ii (get_catalog lists
     /// them), or a full board definition.
     pub board: BoardSpec,
-    /// The board's variant, such as {"size": "85k"} or {"memory": "ram"}:
-    /// values of the board's dimensions, which get_catalog lists with the
-    /// configurations that exist. The first configuration with these values
-    /// is used; omitted dimensions match any value. Omitted means the
-    /// board's first configuration.
+    /// The board variant: values of the board's dimensions, such as
+    /// {"connection": "ft232h", "memory": "ram"}, which get_catalog lists
+    /// with the configurations that exist. The first configuration with
+    /// these values is used; omitted dimensions match any value. Omitted
+    /// means the board's first configuration, its default.
     #[serde(default)]
-    pub variant: VariantInput,
+    pub board_variant: VariantInput,
     /// Name of the top-level module, such as main.
     pub top_module: String,
     /// The folder with the design files, as an absolute path.
@@ -197,7 +197,7 @@ pub fn check_build_folder(build_folder: &str, src: &Path) -> Result<PathBuf, Too
 
 /// Checks the request and turns it into a BuildRequest.
 pub fn check(input: BuildInput) -> Result<BuildRequest, ToolError> {
-    let board = board::resolve(&input.board, &input.variant)?;
+    let board = board::resolve(&input.board, &input.board_variant)?;
     check_top_module(&input.top_module)?;
     check_defines(&input.defines)?;
     let src = check_source_folder(&input.source_folder)?;

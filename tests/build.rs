@@ -218,7 +218,7 @@ async fn builds_an_ecp5_design() {
     // Another variant always rebuilds, even one that only changes how the
     // board is programmed; the build record keeps it for program_board.
     let ram = json!({"board": "icesugar-pro", "constraint_file": "main.lpf",
-                     "variant": {"memory": "ram"}});
+                     "board_variant": {"memory": "ram"}});
     assert!(
         !build_it(&state, &src, ram.clone())
             .await
@@ -239,7 +239,7 @@ async fn builds_an_ecp5_design() {
         &state,
         &src,
         json!({"board": "icesugar-pro", "constraint_file": "main.lpf",
-               "variant": {"memory": "eeprom"}}),
+               "board_variant": {"memory": "eeprom"}}),
     )
     .await
     .unwrap_err();

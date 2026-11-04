@@ -15,7 +15,7 @@ A host launches the engine as a child process on the same computer and talks MCP
 Example:
 
 ```
-logix-engine --engine-folder /Users/u/.apio/engine --log-level debug
+logix-engine --engine-folder /Users/user/.myhost/engine --log-level debug
 ```
 
 ## Rules

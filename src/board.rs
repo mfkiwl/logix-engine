@@ -108,7 +108,7 @@ fn configure(
 ) -> Result<(Configuration, String), ToolError> {
     let c = variants
         .select(variant)
-        .map_err(|e| ToolError::request(format!("variant: {e}.")))?;
+        .map_err(|e| ToolError::request(format!("board_variant: {e}.")))?;
     // Only the dimensions the board has a choice in, e.g. "Icesugar Pro
     // (RAM)", not "Alhambra II (USB, Flash)".
     let choices: Vec<_> = variants

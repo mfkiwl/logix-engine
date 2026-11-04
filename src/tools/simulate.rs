@@ -52,13 +52,13 @@ pub struct SimulateInput {
     /// models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE
     /// for Xilinx.
     pub board: BoardSpec,
-    /// The board's variant, such as {"size": "85k"} or {"memory": "ram"}:
-    /// values of the board's dimensions, which get_catalog lists with the
-    /// configurations that exist. The first configuration with these values
-    /// is used; omitted dimensions match any value. Omitted means the
-    /// board's first configuration.
+    /// The board variant: values of the board's dimensions, such as
+    /// {"connection": "ft232h", "memory": "ram"}, which get_catalog lists
+    /// with the configurations that exist. The first configuration with
+    /// these values is used; omitted dimensions match any value. Omitted
+    /// means the board's first configuration, its default.
     #[serde(default)]
-    pub variant: VariantInput,
+    pub board_variant: VariantInput,
     /// The folder with the design files, as an absolute path. The testbench
     /// runs in it, so it reads data files, such as with $readmemh, relative
     /// to it.
@@ -188,7 +188,7 @@ pub async fn run(
     let tb = input.testbench_file.clone();
     let sources = check_sources(
         &input.board,
-        &input.variant,
+        &input.board_variant,
         &input.source_folder,
         input.source_files,
         vec![tb.clone()],

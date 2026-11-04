@@ -1,16 +1,59 @@
 # Tool API
 
-This is the engine's tool API: the seven tools of Milestone 1, and `lint`, `test`, `simulate` and `format` from Milestone 2. It is not frozen yet: the rule that the tool API never breaks applies from the first release. Each tool is an MCP tool. Its inputs are the tool's arguments, and its outputs are the tool's structured content. The exact JSON schemas and tool descriptions are in [schemas/tools.json](../schemas/tools.json).
+The Logix Engine is an MCP server that offers FPGA tools: lint, test, simulate, format, graph, build, program a board, list devices and more. This document describes those tools for the people who use them:
+
+- **AI agent users.** An AI agent connected to the Logix Engine reads the tool names, descriptions and schemas itself and decides which tools to call. You mostly need the concepts: boards and board variants, folders, testbenches, and what results and errors mean.
+- **Application developers.** A hardcoded client, such as the Logix IDE, launches the Logix Engine, calls its tools with JSON arguments over MCP and reads the JSON results. You need the full reference: every input and output field, the errors, and the progress and live output notifications.
+
+In this document, the *host* is the program that talks to the Logix Engine: your application, or your AI agent's MCP client.
+
+This is the engine's tool API: every tool it offers, with its inputs, outputs and errors. The API can still change before the first release. After that, changes only add tools and fields, so existing clients keep working. Each tool is an MCP tool. Its inputs are the tool's arguments, and its outputs are the tool's structured content. The exact JSON schemas and tool descriptions come from the MCP tools/list method, with a published copy in [schemas/tools.json](../schemas/tools.json).
+
+## How an MCP server works
+
+The Logix Engine is a program, `logix-engine`, that a host runs and talks to. It has no window and no network port. Everything goes through the Model Context Protocol (MCP), an open standard for calling a program's functions with JSON.
+
+1. **Launch.** The host starts the Logix Engine as a child process, with command-line arguments such as `--engine-folder` (see Command line). For an AI agent, this launch command is part of the agent app's MCP server settings.
+2. **Channel.** The host writes requests to the engine's standard input and reads responses from its standard output. Each message is one JSON-RPC 2.0 document on a single line.
+3. **Handshake.** The host sends `initialize`, and the two sides agree on an MCP protocol version (the Logix Engine accepts 2026-07-28 and 2025-11-25).
+4. **Discovery.** The host calls `tools/list` and gets every tool's name, description, input schema and output schema. An AI agent reads these to decide what to call; an application can rely on this document instead.
+5. **Calls.** The host calls `tools/call` with a tool's name and its arguments as a JSON object. The response carries the tool's result as JSON in `structuredContent`, or an error object when `isError` is true.
+6. **Notifications.** While a tool runs, the engine can send one-way messages that need no reply: progress, and live tool output when the host asks for it. The host can also send a cancel notification to stop a call.
+7. **Shutdown.** The host closes the engine's standard input or ends the process.
+
+**Methods and tools are two levels.** A *method* is a message type that MCP itself defines, the same for every MCP server: `initialize`, `tools/list`, `tools/call` and a few others. A *tool* is a function this server offers, such as `build` or `lint`. Tools are never called directly: every tool call is a `tools/call` request whose `name` field names the tool. So the Logix Engine has a handful of methods and many tools.
+
+**Versions.** Two versions matter, and the tool API has no separate version of its own:
+
+- **MCP protocol version**, agreed in the `initialize` handshake. It covers the message format, not the Logix tools, and MCP client libraries handle it.
+- **Logix Engine version**, `engine_version` from the `get_engine_info` tool, a date tag (`yyyy-mm-dd`). It also versions the tool API. After the first release, changes only add tools and fields.
+
+To check, a hardcoded client calls `get_engine_info` right after the handshake and checks `engine_version` against the versions it supports, by its own rule, such as a range or a list of tested releases (date tags compare correctly as plain strings). If the version isn't supported, the client calls no other tools and tells the user what it needs (see Start up under Recipes). An AI agent needs no check, since it reads the current tools from `tools/list`.
+
+The host may send several calls without waiting; each response carries the ID of its request. The rest of this document describes each tool.
+
+A call and its response look like this (wrapped for reading; on the wire each is one line):
+
+```json
+{"jsonrpc": "2.0", "id": 7, "method": "tools/call",
+ "params": {"name": "clean_build",
+            "arguments": {"folder": "/home/user/proj/_build"}}}
+
+{"jsonrpc": "2.0", "id": 7,
+ "result": {"structuredContent": {"deleted": ["/home/user/proj/_build/default", "/home/user/proj/_build"]},
+            "isError": false}}
+```
+
+Most languages have an MCP client library that handles the handshake, IDs and message framing, so an application usually only calls tools and reads results.
 
 ## Schemas and validation
 
-- **Export.** The engine returns each tool's name, description, `inputSchema` and `outputSchema`, in JSON Schema, when a host calls the MCP `tools/list` method. MCP clients, including AI agents, read them from there, so no separate schema file is needed.
-- **Source of truth.** The schemas are generated from the engine's own Rust types, so the code, the validation and the exported schemas always agree.
+- **Export.** The Logix Engine returns each tool's name, description, `inputSchema` and `outputSchema`, in JSON Schema, when a host calls the MCP `tools/list` method. MCP clients, including AI agents, read them from there, so no separate schema file is needed.
 - **Input validation.** The engine checks every request against the tool's input schema before doing anything. A request that doesn't match is a request error, returned as a tool error rather than an MCP protocol error. Its message and diagnostics name the field and the problem, so a host or AI agent can fix the call and retry.
 - **Rules beyond the schema.** Some rules can't be written in JSON Schema, such as the path keyword rules, symbolic link checks, whether a file exists, or whether a board ID is in the catalog. The engine checks these right after the schema, and they are also request errors.
 - **Tight schemas.** Where JSON Schema can express a rule, the schema states it, such as a pattern for catalog IDs, USB IDs and define names, and the allowed values of each enum field. This catches more mistakes early and shows the rules to AI agents.
 - **Output.** Each tool's structured content always matches its output schema.
-- **Published copy.** The schemas are exported to [schemas/tools.json](../schemas/tools.json), exactly as `tools/list` returns them. A test fails when the file and the code differ, and `scripts/update-schemas.sh` regenerates it, so schema changes show up in code review and the rule that the tool API never breaks can be checked automatically.
+- **Published copy.** To read the schemas without running the engine, see [schemas/tools.json](../schemas/tools.json) in the logix-engine GitHub repository. It holds the same JSON that `tools/list` returns. It is useful for generating client code or browsing the API. A running engine's `tools/list` is the authoritative answer for that version.
 
 ## Common types
 
@@ -22,16 +65,16 @@ The Type columns in this document use these logical types. Each maps to a JSON t
 
 | Logical type | JSON type | Rules |
 | --- | --- | --- |
-| absolute path | string | A complete path in the host computer's native form. On Windows, either `\` or `/` separators are accepted. It contains no `.` or `..` segments, and no `~`, environment variables or other shorthand: the host expands and normalizes it first. The engine still resolves symbolic links before using it. Case sensitivity follows the platform |
+| absolute path | string | A complete path in the host computer's native form. On Windows, either `\` or `/` separators are accepted. It contains no `.` or `..` segments, and no `~`, environment variables or other shorthand: the host expands and normalizes it first. The Logix Engine still resolves symbolic links before using it. Case sensitivity follows the platform |
 | relative path | string | Relative to the folder named in the field's description. Always uses `/` as the separator on every platform, never starts with `/`, and contains no `.` or `..` segments. An empty string means the folder itself, but only in fields whose description says so. Elsewhere it is a request error |
 | build folder path | string | An absolute path that satisfies the path keyword rules |
 | catalog ID | string | Lowercase letters, digits and hyphens |
 | board specification | string or object | A catalog ID, or a full board definition |
 | board definition | object | A board entry in the catalog format: its `description`, its FPGA as `fpga_id`, and its `variants` |
-| variants | object | A board's choices and how to program it with each: `configurations`, the combinations that exist, the first being the board's default, and, in `get_catalog` results, `dimensions`. Every board has the two standard dimensions, `connection` then `memory`, with values the engine defines: connection `usb` (the board's own USB port, through the programmer chip on the board), `bootloader` (its USB port in bootloader mode), the external JTAG adapters `ft2232h`, `ft232h`, `cmsis-dap` and `usb-blaster`, or `unspecified` (not known; shown as "USB"); memory `flash` (kept at power-off) or `ram` (lost at power-off). `dimensions` lists each with the values the board's configurations use, in the engine's order: a dimension has an `id`, a `label` for people (such as "Memory") and its `values`, each with an `id` (such as `ram`), a `label` (such as "RAM") and `help` text; it is derived by the engine, so inputs may leave it out (it is ignored). A dimension with one value is a fact about the board rather than a choice. Every configuration gives a known value for both dimensions, no two give the same values, and combinations that aren't listed don't exist. Configurations differ only in how the board is programmed: they all have the board's FPGA and the same pin file (every LED, button and clock on the same pin), so the same project works with each. Versions of a board with any signal on a different pin are different boards. A board sold in several FPGA sizes is one board per size |
-| variant | object | A choice of configuration: values of the board's dimensions by dimension ID, such as `{"connection": "ft232h", "memory": "ram"}`. The first configuration with these values is used, and omitted dimensions match any value, so `{}` means the board's default configuration. An unknown dimension or value, or values no configuration has, are a request error that lists what exists |
+| board variants | object | A board's choices and how to program it with each: `configurations`, the combinations that exist, the first being the board's default, and, in `get_catalog` results, `dimensions`. Every board has the two standard dimensions, `connection` then `memory`, with values the engine defines: connection `usb` (the board's own USB port, through the programmer chip on the board), `bootloader` (its USB port in bootloader mode), the external JTAG adapters `ft2232h`, `ft232h`, `cmsis-dap` and `usb-blaster`, or `unspecified` (not known; shown as "USB"); memory `flash` (kept at power-off) or `ram` (lost at power-off). `dimensions` lists each with the values the board's configurations use, in the engine's order: a dimension has an `id`, a `label` for people (such as "Memory") and its `values`, each with an `id` (such as `ram`), a `label` (such as "RAM") and `help` text; it is derived by the engine, so inputs may leave it out (it is ignored). A dimension with one value is a fact about the board rather than a choice. Every configuration gives a known value for both dimensions, no two give the same values, and combinations that aren't listed don't exist. Configurations differ only in how the board is programmed: they all have the board's FPGA and the same pin file (every LED, button and clock on the same pin), so the same project works with each. Versions of a board with any signal on a different pin are different boards. A board sold in several FPGA sizes is one board per size |
+| board variant | object | A choice of configuration: values of the board's dimensions by dimension ID, such as `{"connection": "ft232h", "memory": "ram"}`. The first configuration with these values is used, and omitted dimensions match any value, so `{}` means the board's default configuration. An unknown dimension or value, or values no configuration has, are a request error that lists what exists |
 | FPGA definition | object | An FPGA entry in the catalog format: its `architecture` (`ice40`, `ecp5`, `gowin` or `xilinx`), `part_number`, `size`, and the toolchain parameters: `nextpnr_device` for every architecture; `nextpnr_package` for iCE40 and ECP5; `nextpnr_speed`, the speed grade, for ECP5 only; for Gowin only, `packer_device` (the device `gowin_pack` uses) and, when needed, `nextpnr_family` and `yosys_family`; and for Xilinx only, `yosys_arch` (such as `xc7`) and `prjxray_family` (the Project X-Ray database folder, such as `artix7`). A field that doesn't belong to the architecture is a request error |
-| configuration | object | One combination of a board's dimension values (`when`: a `connection` and a `memory` value) and how to program the board with it. It names the programmer to run, such as `openfpgaloader`, and gives the full argument template for it, with variables such as `${VID}`, `${PID}`, `${BUS}`, `${DEV}`, `${SERIAL}` and `${BITSTREAM}`, and the USB filter that finds the device: `vid`, `pid`, an optional `product_regex`, a regular expression the device's product name must match, for boards that share USB IDs, and an optional `serial_regex`, a regular expression the device's serial number must match, for boards that share USB IDs and product names but whose serial numbers tell them apart. The engine maps the programmer name to its executable and the package that provides it, so there are no separate programmer definitions. The engine supports the programmers `openfpgaloader`, `iceprog`, `dfu-util` and `icesprog`, all from the toolchain package. Catalog configurations also have `tested` and optional `user_notes` (see [Catalog contents](#get_catalog-tool)); in requests, `tested` is required and `user_notes` ignored |
+| configuration | object | One combination of a board's dimension values (`when`: a `connection` and a `memory` value) and how to program the board with it. It names the programmer to run, such as `openfpgaloader`, and gives the full argument template for it, with variables such as `${VID}`, `${PID}`, `${BUS}`, `${DEV}`, `${SERIAL}` and `${BITSTREAM}`, and the USB filter that finds the device: `vid`, `pid`, an optional `product_regex`, a regular expression the device's product name must match, for boards that share USB IDs, and an optional `serial_regex`, a regular expression the device's serial number must match, for boards that share USB IDs and product names but whose serial numbers tell them apart. The engine maps the programmer name to its executable and the package that provides it, so there are no separate programmer definitions. The engine supports the programmers `openfpgaloader`, `iceprog`, `dfu-util` and `icesprog`, all from the toolchain package. Catalog configurations also have `tested` and optional `user_notes` (see Catalog contents under the get_catalog tool); in requests, `tested` is required and `user_notes` ignored |
 | catalog query | object | Selects entries from one catalog section. It has `fetch`, a boolean that defaults to false, and `ids`, an optional list of catalog IDs. When `fetch` is true, the section is returned with only the listed IDs, or with all its entries when `ids` is omitted. An ID that isn't in the section is a request error |
 | date tag | string | `yyyy-mm-dd` |
 | USB ID | string | A 16-bit USB vendor or product ID, written as exactly four lowercase hexadecimal digits, such as `1d50`. Inputs are matched without regard to case |
@@ -41,7 +84,7 @@ The Type columns in this document use these logical types. Each maps to a JSON t
 | enum | string | One of the values listed in the field's description |
 | list of X | array | Items of type X |
 | map of X | object | Keys are catalog IDs or names, and values are of type X |
-| error, diagnostic, action, device, resource, testbench result, command | object | See error fields in [Table 3](#results-and-errors), diagnostic fields in [Table 4](#results-and-errors), action codes in [Table 5](#results-and-errors), device fields in [Table 13](#list_devices-tool), resource fields in [Table 7](#build-tool), testbench result fields in [Table 27](#test-tool), and command fields in [Table 30](#commands) |
+| error, diagnostic, action, device, resource, testbench result, command | object | See error fields in Table 3, diagnostic fields in Table 4, action codes in Table 5, device fields in Table 13 (list_devices), resource fields in Table 7 (build), testbench result fields in Table 27 (test), and command fields in Table 30 (Commands) |
 
 ### Folders
 
@@ -54,13 +97,13 @@ Operations that work on a design take these fields. Paths are absolute unless no
 | `source_folder` | absolute path | Yes | The source folder |
 | `source_files` | list of relative paths | Yes | HDL files to use, relative to the source folder |
 | `constraint_file` | relative path | Depends on the operation | Constraint file, relative to the source folder |
-| `build_folder` | build folder path | Yes | The build folder, as an absolute path. It may or may not be inside the source folder |
+| `build_folder` | build folder path | Yes | The build folder, as an absolute path. It may or may not be inside the source folder, but it can't be the source folder itself |
 
 ### Board specification
 
 The `board` field is either a catalog ID, such as `"icestick"`, or a full definition object in the catalog format. A full definition can name its FPGA by catalog ID or include its full definition. Its configurations are always written out in full,.
 
-Tools that take a board also take an optional `variant`, which picks one of the board's configurations. The build record keeps the chosen configuration, and a different variant always means a full rebuild, like a different board, even when the choice can't change the bitstream, such as flash or RAM. `program_board` programs with the configuration in the build record, so the upload always matches the build.
+Tools that take a board also take an optional `board_variant`, which picks one of the board's configurations. The build record keeps the chosen configuration, and a different board variant always means a full rebuild, like a different board, even when the choice can't change the bitstream, such as flash or RAM. `program_board` programs with the configuration in the build record, so the upload always matches the build.
 
 ### Results and errors
 
@@ -75,7 +118,7 @@ On success, a tool returns its output object as structured content. On failure, 
 | `details` | multiline text | Troubleshooting details, such as tool output |
 | `diagnostics` | list of diagnostics | Problems with file and line, mainly for design errors. See diagnostic fields in Table 4 |
 | `action` | action | Optional suggested action, with an enum code from Table 5 and a text description |
-| `data` | object | Optional extra data, such as candidate devices, or `commands`, the programs a failed call ran, as in [Commands](#commands) |
+| `data` | object | Optional extra data, such as candidate devices, or `commands`, the programs a failed call ran, as in Commands |
 
 **Table 4.** Diagnostic fields
 
@@ -141,9 +184,9 @@ Example:
 {
   "tool": "verilator_bin",
   "package": "oss-cad-suite 2026-10-22",
-  "cwd": "/home/u/proj",
-  "args": ["/home/u/.logix/packages/oss-cad-suite/2026-10-22/bin/verilator_bin", "--lint-only", "--quiet", "main.v"],
-  "shell": "cd /home/u/proj && env -i PATH=/home/u/.logix/packages/oss-cad-suite/2026-10-22/bin:/usr/bin:/bin HOME=\"$HOME\" TMPDIR=\"$TMPDIR\" /home/u/.logix/packages/oss-cad-suite/2026-10-22/bin/verilator_bin --lint-only --quiet main.v"
+  "cwd": "/home/user/proj",
+  "args": ["/home/user/.logix/packages/oss-cad-suite/2026-10-22/bin/verilator_bin", "--lint-only", "--quiet", "main.v"],
+  "shell": "cd /home/user/proj && env -i PATH=/home/user/.logix/packages/oss-cad-suite/2026-10-22/bin:/usr/bin:/bin HOME=\"$HOME\" TMPDIR=\"$TMPDIR\" /home/user/.logix/packages/oss-cad-suite/2026-10-22/bin/verilator_bin --lint-only --quiet main.v"
 }
 ```
 
@@ -162,9 +205,9 @@ Every operation that can take more than a second or two reports progress by phas
 
 ### Packages
 
-Before running, each tool checks that the packages it needs from the manifest are installed and intact. It installs missing packages and repairs broken ones itself. A package is broken when its install record is missing or incomplete, or when one of its tools fails to start. Install progress is sent as the operation's progress notifications, and cancelling the operation cancels the install. A lock in the engine folder stops two instances from installing the same package at once.
+Before running, each tool checks that the packages it needs from the manifest are installed and intact. It installs missing packages and repairs broken ones itself. A package is broken when its install record is missing or incomplete, or when one of its tools fails to start. Install progress is sent as the operation's progress notifications, and cancelling the operation cancels the install. Two Logix Engine instances never install the same package at the same time.
 
-The `--no-auto-install` command-line argument, described in [Command line](command-line.md), turns this off for offline or managed setups. A missing or broken package is then a setup error with `install_packages`, and so is an install that fails, such as when there's no network. To install, the host calls the [install_packages tool](#install_packages-tool), which works whether automatic install is on or off.
+The `--no-auto-install` command-line argument, described in [Command line](command-line.md), turns this off for offline or managed setups. A missing or broken package is then a setup error with `install_packages`, and so is an install that fails, such as when there's no network. To install, the host calls the install_packages tool, which works whether automatic install is on or off.
 
 Install progress is one phase per package, such as "Installing oss-cad-suite". Its percentage covers the download (the first 80%) and then unpacking.
 
@@ -178,13 +221,13 @@ Install progress is one phase per package, such as "Installing oss-cad-suite". I
 | `logs/` | Log files, described in [Command line](command-line.md) |
 | `tmp/` | Small files the engine generates for the tools, such as the Verilator config that turns off warnings in the FPGA models. Safe to delete |
 
-A package is unpacked into a temporary folder and renamed into place only when it is complete, so an interrupted install never looks installed. Every file in a package must unpack inside its folder, or the install fails.
+An interrupted install never leaves a package that looks installed, so the next call installs it again.
 
 ## lint tool
 
 Checks the design and, optionally, its testbenches with Verilator in lint-only mode. It is much faster than a build and finds likely mistakes that synthesis accepts, such as width mismatches. It writes nothing and needs no build folder.
 
-It runs Verilator with these options: `--lint-only --quiet --bbox-unsup --timing -Wno-TIMESCALEMOD -Wno-MULTITOP`, the macros `SYNTHESIZE` (unless `synthesize` is false) and `LOGIX_SIM=0`, the top module when given, the request's macros, and the FPGA's primitive models, such as `cells_sim.v` with `NO_ICE40_DEFAULT_ASSIGNMENTS` for iCE40, `cells_sim.v` and the black boxes in `cells_bb.v` for ECP5, or `cells_sim.v` and the family's black boxes (`cells_xtra_gw1n.v`, `cells_xtra_gw2a.v` or `cells_xtra_gw5a.v`, chosen by the start of `nextpnr_device`) for Gowin, or `cells_sim.v` and the black boxes in `cells_xtra.v` for Xilinx, so designs that use primitives such as `SB_IO`, `EHXPLLL`, `rPLL` or `PLLE2_BASE` lint cleanly. Verilator treats warnings as failures, so `passed` is false when there are warnings too. Warnings in the primitive models aren't the user's to fix, so the engine turns them off with a Verilator config file. When `top_module` is omitted, Verilator takes every module that no other module uses as a top module, so the engine passes the model files as libraries (`-v`): only the primitives the design uses are read. With a top module, they are passed as plain source files.
+The Logix Engine adds the FPGA's primitive models, so designs that use primitives such as `SB_IO`, `EHXPLLL`, `rPLL` or `PLLE2_BASE` lint cleanly, and it turns off warnings inside those models, since they aren't the user's to fix. Verilator treats warnings as failures, so `passed` is false when there are warnings too. `SYNTHESIZE` is defined (unless `synthesize` is false) and `LOGIX_SIM` is `0`. When `top_module` is omitted, every module that no other module uses is checked as a top module. The exact Verilator command is returned in `commands`.
 
 **Problems are the result.** Lint's job is to find problems, so problems in the design are returned in `diagnostics` with `passed` set to false, not as a design error. The other errors in the list below still apply.
 
@@ -193,11 +236,11 @@ It runs Verilator with these options: `--lint-only --quiet --bbox-unsup --timing
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `board` | board specification | Yes | The target board. It selects the FPGA's primitive models |
-| `variant` | variant | No | The board's configuration. Omitted means its first |
+| `board_variant` | board variant | No | The board's configuration. Omitted means its first |
 | `top_module` | text | No | Name of the top-level module. When omitted, Verilator checks every module that no other module uses |
-| `source_folder`, `source_files` | See folder fields in [Table 2](#folders) | Yes | The design files |
+| `source_folder`, `source_files` | See folder fields in Table 2 | Yes | The design files |
 | `testbench_files` | list of relative paths | No | Testbenches to check too, relative to the source folder. Defaults to none. A file may be listed only once in `source_files` and `testbench_files` together |
-| `defines` | map of text | No | Macro definitions, as in the [build tool](#build-tool). `SYNTHESIZE` is defined unless `synthesize` is false, and `LOGIX_SIM` is defined as `0` |
+| `defines` | map of text | No | Macro definitions, as in the build tool. `SYNTHESIZE` is defined unless `synthesize` is false, and `LOGIX_SIM` is defined as `0` |
 | `synthesize` | boolean | No | Define `SYNTHESIZE`, so `` `ifdef SYNTHESIZE `` picks the code for synthesis, as in a build. False leaves it undefined, to check the simulation code instead. Defaults to true |
 | `verbose` | boolean | No | Run Verilator without `--quiet`. Defaults to false |
 
@@ -207,11 +250,11 @@ It runs Verilator with these options: `--lint-only --quiet --bbox-unsup --timing
 | --- | --- | --- |
 | `passed` | boolean | True when Verilator found no errors and no warnings |
 | `diagnostics` | list of diagnostics | The problems found, at file, line and column where known. A Verilator warning code, such as `WIDTHTRUNC`, ends the text in parentheses, since a `/* verilator lint_off WIDTHTRUNC */` comment names it. Problems in the primitive models keep their location in the text |
-| `commands` | list of commands | The programs this call ran, in order, so they can be run again without the engine. See [Commands](#commands) |
+| `commands` | list of commands | The programs this call ran, in order, so they can be run again without the Logix Engine. See Commands |
 
 **Errors:** setup errors with `install_packages`. Request errors, such as an unknown board, a missing file or an included file outside the source folder. Tool failures, when Verilator fails without reporting a problem. Engine errors and cancellation.
 
-**Includes.** The source file rules in [Table 8](#build-tool) apply. Verilator and Icarus Verilog don't look for an included file in the including file's folder as yosys does, so the engine passes the folder of every listed and included file as an include folder. An include is then found in the source folder first, then in those folders.
+**Includes.** The source file rules in Table 8 (build tool) apply. Verilator and Icarus Verilog don't look for an included file in the including file's folder as yosys does, so the engine passes the folder of every listed and included file as an include folder. An include is then found in the source folder first, then in those folders. Hosts never list or include the toolchain's own FPGA files, such as yosys's primitive models and black boxes for each architecture: the Logix Engine adds the right ones for the board's FPGA in lint, test, simulate and build. Source files and includes are only the user's own files.
 
 **Example**
 
@@ -221,7 +264,7 @@ Input:
 {
   "board": "alhambra-ii",
   "top_module": "main",
-  "source_folder": "/home/u/proj",
+  "source_folder": "/home/user/proj",
   "source_files": ["main.v", "uart.v"],
   "testbench_files": ["main_tb.v"]
 }
@@ -244,11 +287,11 @@ Output:
 
 ## test tool
 
-Runs testbenches with Icarus Verilog. For each testbench in order, iverilog compiles the design files, the FPGA's primitive models and the testbench into the build folder, then vvp runs it and writes its waveform there. Every testbench runs, even after one fails. By default the engine stops each testbench at its first failure, so a failing run ends fast; see [Test and simulate modes](#test-and-simulate-modes).
+Runs testbenches with Icarus Verilog. For each testbench in order, iverilog compiles the design files, the FPGA's primitive models and the testbench into the build folder, then vvp runs it and writes its waveform there. Every testbench runs, even after one fails. By default the Logix Engine stops each testbench at its first failure, so a failing run ends fast; see Test and simulate modes.
 
-The commands are `iverilog -g2012 -o <build folder>/<testbench>.out`, the request's macros, `LOGIX_SIM=0`, the FPGA's primitive models, the design files and the testbench, then `vvp -i <testbench>.out -dumpfile=<build folder>/<testbench>.vcd`. The `-i` makes vvp print each line at once instead of when it exits, so the engine sees a failure while the testbench runs. It doesn't change the results. Both run in the source folder, so a testbench reads data files, such as with `$readmemh`, relative to it. `SYNTHESIZE` isn't defined, so designs can tell simulation from synthesis.
+Testbenches run in the source folder, so they read data files, such as with `$readmemh`, relative to it. `LOGIX_SIM` is `0` and `SYNTHESIZE` isn't defined, so designs can tell simulation from synthesis. The Logix Engine sees a failure as soon as the testbench prints it, so it can stop the run right away. The exact iverilog and vvp commands are returned in `commands`.
 
-**Testbench rules:** see [Writing testbenches](#writing-testbenches). A testbench fails by calling `$error` or `$fatal`, or by printing an assertion failure line (see `diagnostics` in Table 27). It must not call `$dumpfile`, which is a design error at that line.
+**Testbench rules:** see Writing testbenches. A testbench fails by calling `$error` or `$fatal`, or by printing an assertion failure line (see `diagnostics` in Table 27). It must not call `$dumpfile`, which is a design error at that line.
 
 **Failures are the result.** A failing testbench is returned in `testbenches` with `passed` set to false, not as an error. Compile errors are a design error, since nothing could run.
 
@@ -257,12 +300,12 @@ The commands are `iverilog -g2012 -o <build folder>/<testbench>.out`, the reques
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `board` | board specification | Yes | The target board. It selects the FPGA's primitive models |
-| `variant` | variant | No | The board's configuration. Omitted means its first |
-| `source_folder`, `source_files`, `build_folder` | See folder fields in [Table 2](#folders) | Yes | The design files, without testbenches |
+| `board_variant` | board variant | No | The board's configuration. Omitted means its first |
+| `source_folder`, `source_files`, `build_folder` | See folder fields in Table 2 | Yes | The design files, without testbenches |
 | `testbench_files` | list of relative paths | Yes | The testbenches to run, in order, relative to the source folder. At least one. A file may be listed only once in `source_files` and `testbench_files` together |
-| `defines` | map of text | No | Macro definitions, as in the [build tool](#build-tool). `LOGIX_SIM` is always defined as `0` |
+| `defines` | map of text | No | Macro definitions, as in the build tool. `LOGIX_SIM` is always defined as `0` |
 | `stop_at_first_failure` | boolean | No | Stop each testbench at its first failure, so a failing run ends fast; its output and waveform then end there. False runs each testbench to the end, to see every failure. Defaults to true |
-| `max_sim_time_ns` | integer | No | Stop each testbench when simulated time reaches this many nanoseconds. Defaults to no limit. See [Runs that don't end](#runs-that-dont-end) |
+| `max_sim_time_ns` | integer | No | Stop each testbench when simulated time reaches this many nanoseconds. Defaults to no limit. See Runs that don't end |
 | `timeout_seconds` | integer | No | Stop each testbench after this many seconds of real time. Defaults to 600; 0 means no limit |
 | `verbose` | boolean | No | Run iverilog with `-v`. Defaults to false |
 
@@ -272,7 +315,7 @@ The commands are `iverilog -g2012 -o <build folder>/<testbench>.out`, the reques
 | --- | --- | --- |
 | `passed` | boolean | True when every testbench passed |
 | `testbenches` | list of testbench results | Each testbench's result, in the order given. See Table 27 |
-| `commands` | list of commands | The programs this call ran, in order, so they can be run again without the engine. See [Commands](#commands) |
+| `commands` | list of commands | The programs this call ran, in order, so they can be run again without the engine. See Commands |
 
 **Table 27.** Testbench result fields
 
@@ -297,10 +340,10 @@ Input:
 ```json
 {
   "board": "alhambra-ii",
-  "source_folder": "/home/u/proj",
+  "source_folder": "/home/user/proj",
   "source_files": ["main.v"],
   "testbench_files": ["main_tb.v"],
-  "build_folder": "/home/u/proj/_build/default"
+  "build_folder": "/home/user/proj/_build/default"
 }
 ```
 
@@ -327,7 +370,7 @@ Output:
 
 ## simulate tool
 
-Simulates one testbench and opens its waveform in GTKWave. It compiles and runs the testbench as the [test tool](#test-tool) does, with the same commands, testbench rules and build folder files, except that `LOGIX_SIM` is defined as `1` and the testbench always runs to the end, so the whole waveform is there to look at. Then it makes sure there is a layout file and starts GTKWave fully detached with the waveform and the layout, and returns without waiting for it. For a layout the user saved, it adds `--rcvar=do_initial_zoom_fit 1` first; a default layout sets its own view, which that would replace. GTKWave keeps running after the operation and after the engine exits.
+Simulates one testbench and opens its waveform in GTKWave. It compiles and runs the testbench as the test tool does, with the same commands, testbench rules and build folder files, except that `LOGIX_SIM` is defined as `1` and the testbench always runs to the end, so the whole waveform is there to look at. Then it makes sure there is a layout file and starts GTKWave fully detached with the waveform and the layout, and returns without waiting for it. For a layout the user saved, it adds `--rcvar=do_initial_zoom_fit 1` first; a default layout sets its own view, which that would replace. GTKWave keeps running after the operation and after the Logix Engine exits.
 
 **Layout files.** A GTKWave layout (`.gtkw`) holds the signals shown and how. It is a project file the user changes by saving from GTKWave, which reads and saves the same path, so the host names it in `layout_file`, usually next to the testbench, such as `main_tb.gtkw`.
 
@@ -347,14 +390,14 @@ This is the one case where the engine creates or deletes a file in the source fo
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `board` | board specification | Yes | The target board. It selects the FPGA's primitive models |
-| `variant` | variant | No | The board's configuration. Omitted means its first |
-| `source_folder`, `source_files`, `build_folder` | See folder fields in [Table 2](#folders) | Yes | The design files, without testbenches |
+| `board_variant` | board variant | No | The board's configuration. Omitted means its first |
+| `source_folder`, `source_files`, `build_folder` | See folder fields in Table 2 | Yes | The design files, without testbenches |
 | `testbench_file` | relative path | Yes | The testbench to simulate, relative to the source folder |
 | `layout_file` | relative path | No | The GTKWave layout file, relative to the source folder, ending in `.gtkw`. Its folder must exist; the file may not. When omitted, the layout goes into the build folder |
 | `open_viewer` | boolean | No | Start GTKWave on the waveform. Defaults to true |
 | `max_sim_time_ns` | integer | No | Stop the testbench when simulated time reaches this many nanoseconds. Defaults to no limit |
 | `timeout_seconds` | integer | No | Stop the testbench after this many seconds of real time. Defaults to no limit |
-| `defines` | map of text | No | Macro definitions, as in the [build tool](#build-tool). `LOGIX_SIM` is always defined as `1` |
+| `defines` | map of text | No | Macro definitions, as in the build tool. `LOGIX_SIM` is always defined as `1` |
 | `verbose` | boolean | No | Run iverilog with `-v`. Defaults to false |
 
 **Table 29.** simulate tool outputs
@@ -362,7 +405,7 @@ This is the one case where the engine creates or deletes a file in the source fo
 | Field | Type | Description |
 | --- | --- | --- |
 | `passed` | boolean | As in the testbench results of the test tool: true when the testbench reached `$finish` without a failure |
-| `diagnostics` | list of diagnostics | As in the testbench results of the test tool, in [Table 27](#test-tool) |
+| `diagnostics` | list of diagnostics | As in the testbench results of the test tool, in Table 27 |
 | `output` | multiline text | What the testbench printed |
 | `failure_count` | integer | How many failures the testbench reported, as in the test tool |
 | `ending` | enum | How the run ended, as in the test tool. Never `first_failure` |
@@ -370,7 +413,7 @@ This is the one case where the engine creates or deletes a file in the source fo
 | `layout_file` | absolute path | The layout file GTKWave opens |
 | `layout_created` | boolean | True if the engine wrote a default layout, false if it kept the user's |
 | `viewer_opened` | boolean | True if GTKWave was started |
-| `commands` | list of commands | The programs this call ran, in order, so they can be run again without the engine. See [Commands](#commands) |
+| `commands` | list of commands | The programs this call ran, in order, so they can be run again without the engine. See Commands |
 
 **Errors:** design errors for compile errors, `$dumpfile` and a testbench without `$dumpvars`. Setup errors with `install_packages`, or when the layout file can't be written. Request errors, such as a missing file, a layout file that isn't `.gtkw` or whose folder doesn't exist, or a build folder that breaks the keyword rules. Tool failures, such as when GTKWave can't start, engine errors and cancellation.
 
@@ -381,10 +424,10 @@ Input:
 ```json
 {
   "board": "alhambra-ii",
-  "source_folder": "/home/u/proj",
+  "source_folder": "/home/user/proj",
   "source_files": ["main.v"],
   "testbench_file": "main_tb.v",
-  "build_folder": "/home/u/proj/_build/default",
+  "build_folder": "/home/user/proj/_build/default",
   "layout_file": "main_tb.gtkw"
 }
 ```
@@ -399,7 +442,7 @@ Output:
   "failure_count": 0,
   "ending": "finished",
   "waveform_file": "main_tb.vcd",
-  "layout_file": "/home/u/proj/main_tb.gtkw",
+  "layout_file": "/home/user/proj/main_tb.gtkw",
   "layout_created": true,
   "viewer_opened": true
 }
@@ -407,9 +450,9 @@ Output:
 
 ## Test and simulate modes
 
-The same testbench serves two purposes: `test` is a batch check that should fail fast, and `simulate` produces a waveform the user can look at to find the problem. The testbench only states what is correct; the engine applies each mode's policy:
+The same testbench serves two purposes: `test` is a batch check that should fail fast, and `simulate` produces a waveform the user can look at to find the problem. The testbench only states what is correct; the Logix Engine applies each mode's policy:
 
-| | `test` | `simulate` |
+|  | `test` | `simulate` |
 | --- | --- | --- |
 | At the first failure | Stops the testbench, unless `stop_at_first_failure` is false | Lets it run to the end |
 | Waveform | Kept, up to the failure | Complete |
@@ -430,12 +473,12 @@ To stop a testbench, the engine asks vvp to exit, which writes out the waveform 
 
 ## Writing testbenches
 
-These are the engine's guidelines for testbenches. The engine defines the macro `LOGIX_SIM`: 0 in `test` and `lint`, 1 in `simulate`. Assertion failure lines count as failures.
+These are the Logix Engine's guidelines for testbenches. The engine defines the macro `LOGIX_SIM`: 0 in `test` and `lint`, 1 in `simulate`. Assertion failure lines count as failures.
 
 1. **Report a failure with `$error`, then keep going.** Put the expected and actual values in the message. The engine reads `$error` with its file, line and simulation time, and decides whether to stop.
 2. **Use `$fatal` only when going on makes no sense,** such as a missing data file. It stops the run in both modes.
-3. **Don't check the mode.** No `` if (!`LOGIX_SIM) $fatal ``: the engine stops `test` at the first failure and lets `simulate` run to the end.
-4. **End with `$finish`.** A testbench that runs out of things to do without it fails, and one that never ends is stopped by a [limit](#runs-that-dont-end) and fails.
+3. **Don't check the mode.** No ``if (!`LOGIX_SIM) $fatal``: the engine stops `test` at the first failure and lets `simulate` run to the end.
+4. **End with `$finish`.** A testbench that runs out of things to do without it fails, and one that never ends is stopped by a limit (Runs that don't end) and fails.
 5. **Call `$dumpvars(0, <testbench module>)` at the start** to write a waveform, and **never call `$dumpfile`**: the engine decides where the waveform goes.
 6. **Read data files relative to the source folder,** such as `$readmemh("data/rom.hex", rom)`. Testbenches run there.
 7. **`SYNTHESIZE` isn't defined in `test` and `simulate`,** so `` `ifdef SYNTHESIZE `` / `` `else `` selects the simulation code.
@@ -469,9 +512,9 @@ A failed check reports, for example, `q is a, expected b` at `counter_tb.v:15` w
 
 ## format tool
 
-Formats Verilog and SystemVerilog files in place with Verible's formatter. Formatting changes only layout, such as indentation, spacing and line breaks, never meaning. The host lists the files; the engine doesn't search for them. To format text that isn't saved yet, such as an editor's buffer, a host writes it to a file in a scratch folder and formats it there, since requests never carry source text.
+Formats Verilog and SystemVerilog files in place with Verible's formatter. Formatting changes only layout, such as indentation, spacing and line breaks, never meaning. The host lists the files; the Logix Engine doesn't search for them. To format text that isn't saved yet, such as an editor's buffer, a host writes it to a file in a scratch folder and formats it there, since requests never carry source text.
 
-Each file is formatted on its own, in order, with `verible-verilog-format --nofailsafe_success --inplace`, the request's options, then the file. Verible rewrites a file only when its layout changes. A file reached through a symbolic link is formatted where it really is, which must be inside the source folder, and the link stays. Code between `// verilog_format: off` and `// verilog_format: on` comments is left as is.
+Each file is formatted on its own, in order, with the request's `verible_options`; the exact commands are returned in `commands`. A file is rewritten only when its layout changes. A file reached through a symbolic link is formatted where it really is, which must be inside the source folder, and the link stays. Code between `// verilog_format: off` and `// verilog_format: on` comments is left as is.
 
 **Problems are the result.** A file Verible can't format, such as one with a syntax error, is left unchanged and listed as `failed`, with the problems in `diagnostics` and `passed` set to false, as in lint. The other files are still formatted. A statement too complex for Verible to lay out within its search limit fails the same way; its diagnostic suggests the option `--max_search_states=2000000` or `verilog_format: off` comments.
 
@@ -491,7 +534,7 @@ Each file is formatted on its own, in order, with `verible-verilog-format --nofa
 | `passed` | boolean | True when every file is formatted now, whether it was rewritten or already formatted |
 | `files` | list of objects | Each file, in the request's order, with its `file` as given and its `status`: `formatted` (rewritten), `unchanged` (already formatted) or `failed` (left unchanged; see `diagnostics`) |
 | `diagnostics` | list of diagnostics | Why files failed, such as syntax errors at file, line and column |
-| `commands` | list of commands | The programs this call ran, one per file. See [Commands](#commands) |
+| `commands` | list of commands | The programs this call ran, one per file. See Commands |
 
 **Errors:** setup errors with `install_packages`, for the `verible` package. Request errors, such as a missing file, a file that isn't Verilog or SystemVerilog, a file outside the source folder or an option that isn't allowed. Tool failures, when Verible fails without reporting a problem, such as for an option it doesn't know. Engine errors and cancellation.
 
@@ -501,7 +544,7 @@ Input:
 
 ```json
 {
-  "source_folder": "/home/u/proj",
+  "source_folder": "/home/user/proj",
   "source_files": ["main.v", "main_tb.v", "uart.v"]
 }
 ```
@@ -529,15 +572,15 @@ Output:
 
 Draws a diagram of one module of the design, its cells, ports and the wires between them. Yosys reads the design without synthesizing it and writes the module as a Graphviz `.dot` file, then Graphviz's `dot` draws it. Both come from the toolchain package. The host shows the file, such as an SVG in a web view.
 
-The commands are `yosys -p "read_verilog -sv <files>; show -format dot -colors 1 -wireshape plaintext -prefix graph <module>" -DSYNTHESIZE <defines> -q`, then `dot -T<format> graph.dot -o graph.<format>`. Both run in the build folder, with the design files as absolute paths, since yosys can't take a quoted output path. FPGA primitives, such as `SB_LUT4`, are drawn as boxes. Each call replaces `graph.dot` and the graph in the build folder, and deletes the old ones first, so a failed call never leaves an old graph looking current.
+The module is drawn as written, without synthesis, with `SYNTHESIZE` defined. FPGA primitives, such as `SB_LUT4`, are drawn as boxes. Each call replaces the graph in the build folder and deletes the old one first, so a failed call never leaves an old graph looking current. The exact yosys and dot commands are returned in `commands`.
 
 **Table 33.** graph tool inputs
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `top_module` | text | Yes | The module to draw, such as the design's top module, or any module in the design files, such as `uart` |
-| `source_folder`, `source_files`, `build_folder` | See folder fields in [Table 2](#folders) | Yes | The design files, without testbenches or included files. Paths with a double quote (`"`) are refused, since yosys reads them from a script |
-| `defines` | map of text | No | Macro definitions, as in the [build tool](#build-tool). `SYNTHESIZE` is always defined |
+| `source_folder`, `source_files`, `build_folder` | See folder fields in Table 2 | Yes | The design files, without testbenches or included files. Paths with a double quote (`"`) are refused, since yosys reads them from a script |
+| `defines` | map of text | No | Macro definitions, as in the build tool. `SYNTHESIZE` is always defined |
 | `format` | enum | No | `svg`, `pdf` or `png`. Defaults to `svg` |
 | `verbose` | boolean | No | Run yosys without `-q`. Defaults to false |
 
@@ -547,7 +590,7 @@ The commands are `yosys -p "read_verilog -sv <files>; show -format dot -colors 1
 | --- | --- | --- |
 | `graph_file` | relative path | The graph, relative to the build folder, such as `graph.svg` |
 | `diagnostics` | list of diagnostics | Yosys warnings while reading the design, at file and line where known. Often empty |
-| `commands` | list of commands | The programs this call ran: yosys, then dot. See [Commands](#commands) |
+| `commands` | list of commands | The programs this call ran: yosys, then dot. See Commands |
 
 **Errors:** design errors, with diagnostics, for errors in the design, such as a syntax error, or a `top_module` that isn't in the files. Setup errors with `install_packages`, for the toolchain package. Request errors, such as a missing file. Tool failures, when yosys or dot fails without reporting a problem. Engine errors and cancellation.
 
@@ -558,9 +601,9 @@ Input:
 ```json
 {
   "top_module": "main",
-  "source_folder": "/home/u/proj",
+  "source_folder": "/home/user/proj",
   "source_files": ["main.v", "uart.v"],
-  "build_folder": "/home/u/proj/_build/default"
+  "build_folder": "/home/user/proj/_build/default"
 }
 ```
 
@@ -577,18 +620,22 @@ Output:
 
 Synthesizes the design, places and routes it, and generates the bitstream in the build folder. A build with no changes since the last one returns quickly with `up_to_date` set.
 
-It runs each architecture's open source flow: for iCE40, yosys (`synth_ice40`), nextpnr-ice40 and icepack; for ECP5, yosys (`synth_ecp5`), nextpnr-ecp5 (with `--timing-allow-fail --force`) and `ecppack --compress`; for Gowin, yosys (`synth_gowin`, with `-family` when the FPGA has a `yosys_family`), nextpnr-himbaechel (with `--vopt family=` when it has a `nextpnr_family`) and `gowin_pack`; for Xilinx 7 Series, yosys (`synth_xilinx -arch`), nextpnr-xilinx, `fasm2frames` and `xc7frames2bit`, with the FPGA's family database from Project X-Ray. The constraint file is in the architecture's format: `.pcf` for iCE40, `.lpf` for ECP5, `.cst` for Gowin, `.xdc` for Xilinx. Its extension must be that one (any case), or the request is refused: the place-and-route tools take the format from their command-line option, not the file name, so a misnamed file (such as PCF text in `pins.lpf` for an iCE40 board) would otherwise build as if it were right, or fail with a puzzling parse error. Xilinx builds need two packages: yosys comes from `oss-cad-suite` and the other tools from `openxc7`. The engine names the frames file as fasm2frames' second argument. The Xilinx bitstream's header holds that file's name and the build date, so two builds of the same design differ only in those bytes.
+Each architecture uses its open source flow: yosys for synthesis, nextpnr for place and route, then the architecture's bitstream tools (icepack for iCE40, ecppack for ECP5, gowin_pack for Gowin, and the Project X-Ray tools for Xilinx 7 Series). The exact commands are returned in `commands`.
+
+The constraint file must be in the architecture's format and have its extension (any case): `.pcf` for iCE40, `.lpf` for ECP5, `.cst` for Gowin, `.xdc` for Xilinx. Any other extension is a request error, since a misnamed file would otherwise build wrongly or fail with a puzzling parse error.
+
+Xilinx builds use two packages, `oss-cad-suite` and `openxc7`. Two Xilinx builds of the same design differ only in the bitstream header, which holds the build date.
 
 **Table 6.** build tool inputs
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `board` | board specification | Yes | The target board |
-| `variant` | variant | No | The board's configuration. Omitted means its first |
+| `board_variant` | board variant | No | The board's configuration. Omitted means its first |
 | `top_module` | text | Yes | Name of the top-level module |
-| `source_folder`, `source_files`, `constraint_file`, `build_folder` | See folder fields in [Table 2](#folders) | Yes | The constraint file is required |
+| `source_folder`, `source_files`, `constraint_file`, `build_folder` | See folder fields in Table 2 | Yes | The constraint file is required |
 | `defines` | map of text | No | Verilog and SystemVerilog macro definitions, from name to value, such as `{ "USE_PLL": "", "WIDTH": "8" }`. Names follow Verilog identifier rules, and a bad name is a request error. An empty value defines the macro with no text, for use with `` `ifdef ``. The engine always passes each value explicitly, so every tool sees the same text, and passes them in name order, so the same request always gives the same tool commands. `SYNTHESIZE` is always defined |
-| `verbose` | boolean | No | Let yosys and nextpnr print more detail, shown in the live output and the logs. Defaults to false. See [Verbose](#live-tool-output) |
+| `verbose` | boolean | No | Let yosys and nextpnr print more detail, shown in the live output and the logs. Defaults to false. See Verbose under Live tool output |
 
 **Table 7.** build tool outputs
 
@@ -598,8 +645,8 @@ It runs each architecture's open source flow: for iCE40, yosys (`synth_ice40`), 
 | `up_to_date` | boolean | True if nothing had to be rebuilt |
 | `resources_usage` | map of resource usage | Resource use, keyed by the toolchain's resource names. For iCE40: `ICESTORM_LC` (logic cells, each a LUT and a flip-flop), `ICESTORM_RAM` (block RAMs), `SB_IO` (I/O pins), `SB_GB` (global buffers), `ICESTORM_PLL` and others. For ECP5: `TRELLIS_COMB` (LUTs), `TRELLIS_FF` (flip-flops), `TRELLIS_IO`, `DP16KD` (block RAMs), `MULT18X18D`, `EHXPLLL` and others. For Gowin: `LUT4`, `DFF` (flip-flops), `ALU` (carry logic), `IOB` (I/O pins), `BSRAM` (block RAMs), `rPLL` and others. For Xilinx: `SLICE_LUTX` (LUTs), `SLICE_FFX` (flip-flops), `CARRY4`, `PAD` (I/O pins), `RAMB18E1` and `RAMB36E1` (block RAMs), `DSP48E1`, `PLLE2_ADV`, `MMCME2_ADV` and others. Each value has integer `used` and `available` fields |
 | `timing` | map of numbers | Maximum frequency in MHz for each clock net, keyed by the clock net name nextpnr reports, rounded to 0.01 MHz |
-| `warnings` | list of diagnostics | Warnings from the tools. See diagnostic fields in [Table 4](#results-and-errors) |
-| `commands` | list of commands | The programs this call ran, in order, so they can be run again without the engine. See [Commands](#commands) |
+| `warnings` | list of diagnostics | Warnings from the tools. See diagnostic fields in Table 4 |
+| `commands` | list of commands | The programs this call ran, in order, so they can be run again without the Logix Engine. See Commands |
 
 **Errors:** design errors, such as syntax errors or unknown pin names. Setup errors with `install_packages`. Request errors, such as an unknown board, a constraint file whose extension isn't the board's FPGA family's format, or a build folder that breaks the keyword rules. Tool failures, engine errors and cancellation. A clock that misses its intended frequency is not an error: the host compares the frequencies in `timing` with its own targets.
 
@@ -615,7 +662,7 @@ It runs each architecture's open source flow: for iCE40, yosys (`synth_ice40`), 
 
 **Build record.** When a build succeeds, the engine writes a build record into the build folder. It holds the full board spec the build used and its checksum. The `program_board` tool reads it to get the board. A build that fails removes the old record, so `program_board` can't program a stale bitstream.
 
-**Build folder files.** The engine creates the build folder if needed, and first writes a marker file, `.logix-build`, which tells the [clean_build tool](#clean_build-tool) the folder is a build folder. A build makes `hardware.json` (synthesized netlist), the placed and routed design (`hardware.asc` for iCE40, `hardware.config` for ECP5, `hardware.pnr.json` for Gowin, `hardware.fasm` for Xilinx), `hardware.pnr` (nextpnr's report), for Xilinx `hardware.frames` (the configuration frames), the bitstream (`hardware.bin` for iCE40, `hardware.bit` for ECP5 and Xilinx, `hardware.fs` for Gowin), the tool logs `synth.log` and `pnr.log`, and the build record `build-record.json`, written last. These names are a fixed engine convention, the same for every build and host. Each build replaces the files the previous build made, such as the bitstream, intermediate files and reports. When a build has to run again, it deletes the previous build's outputs first, so a failed build never leaves an old bitstream that looks current. An up-to-date build keeps them. The engine never deletes files in the build folder that it didn't make, such as files put there by the host or the user.
+**Build folder files.** The engine creates the build folder if needed, and first writes a marker file, `.logix-build`, which tells the clean_build tool the folder is a build folder. A build makes `hardware.json` (synthesized netlist), the placed and routed design (`hardware.asc` for iCE40, `hardware.config` for ECP5, `hardware.pnr.json` for Gowin, `hardware.fasm` for Xilinx), `hardware.pnr` (nextpnr's report), for Xilinx `hardware.frames` (the configuration frames), the bitstream (`hardware.bin` for iCE40, `hardware.bit` for ECP5 and Xilinx, `hardware.fs` for Gowin), the tool logs `synth.log` and `pnr.log`, and the build record `build-record.json`, written last. These names are a fixed engine convention, the same for every build and host. Each build replaces the files the previous build made, such as the bitstream, intermediate files and reports. When a build has to run again, it deletes the previous build's outputs first, so a failed build never leaves an old bitstream that looks current. An up-to-date build keeps them. The engine never deletes files in the build folder that it didn't make, such as files put there by the host or the user.
 
 **Example**
 
@@ -625,10 +672,10 @@ Input:
 {
   "board": "alhambra-ii",
   "top_module": "main",
-  "source_folder": "/home/u/proj",
+  "source_folder": "/home/user/proj",
   "source_files": ["main.v", "uart.v"],
   "constraint_file": "pinout.pcf",
-  "build_folder": "/home/u/proj/_build/default"
+  "build_folder": "/home/user/proj/_build/default"
 }
 ```
 
@@ -655,7 +702,7 @@ Output:
 
 ## program_board tool
 
-Programs a bitstream into the board it was built for, on the device the host chose. The `program_board` tool takes no board input. It reads the board spec from the build record in the build folder, so the board always matches the build. The host names the device with an `id` from [`list_devices`](#list_devices-tool), usually one whose `boards` include the build's board, asking the user when several do; the engine checks it, as described in the [device selection](requirements.md#device-selection) requirements, fills in the argument template of the build's configuration and runs it. It never chooses a device itself.
+Programs a bitstream into the board it was built for, on the device the host chose. The `program_board` tool takes no board input. It reads the board spec from the build record in the build folder, so the board always matches the build. The host names the device with an `id` from `list_devices`, usually one whose `boards` include the build's board, asking the user when several do; the Logix Engine checks it, as described in the [device selection](requirements.md#device-selection) requirements, fills in the argument template of the build's configuration and runs it. It never chooses a device itself.
 
 **Note:** the `program_board` tool doesn't build. It programs the bitstream that is already in the build folder. A host that wants to build and program the board in one step calls `build` first, and calls `program_board` only if the build succeeded.
 
@@ -663,7 +710,7 @@ Programs a bitstream into the board it was built for, on the device the host cho
 
 **Flash or RAM:** the build's configuration decides whether the bitstream goes to flash, where it stays after power-off, or to RAM, where it is lost at power-off (its `memory` value; boards that offer both have a choice, made when building). The write phase is "Writing flash" or "Writing RAM".
 
-**Messages:** with live output, `program_board` says how it programs the board before it starts, naming the board (its description, without the variant), such as "Programming the RAM of the butterstick r1.0 through the FT232H adapter." ("through its USB port" for `usb`, "through its USB bootloader", "through USB" for `unspecified`; an untested configuration adds " (untested)" before the period; the "of" form reads well with any name, including ones ending in parentheses), then the configuration's `user_notes` as "Note: …", and after success where the design went: "Programmed the flash of the Alhambra II: the design stays when the board is powered off." or "… is lost …" for RAM. These are `message` lines; a `programmer_command` gets none, since the engine can't know what it does.
+**Messages:** with live output, `program_board` says how it programs the board before it starts, naming the board (its description, without the board variant), such as "Programming the RAM of the butterstick r1.0 through the FT232H adapter." ("through its USB port" for `usb`, "through its USB bootloader", "through USB" for `unspecified`; an untested configuration adds " (untested)" before the period; the "of" form reads well with any name, including ones ending in parentheses), then the configuration's `user_notes` as "Note: …", and after success where the design went: "Programmed the flash of the Alhambra II: the design stays when the board is powered off." or "… is lost …" for RAM. These are `message` lines; a `programmer_command` gets none, since the engine can't know what it does.
 
 **Table 9.** program_board tool inputs
 
@@ -678,23 +725,23 @@ Programs a bitstream into the board it was built for, on the device the host cho
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `device` | device | The device that was programmed. See device fields in [Table 13](#list_devices-tool) |
+| `device` | device | The device that was programmed. See device fields in Table 13 |
 | `programmer` | catalog ID | The programmer that was used, such as `openfpgaloader`, or `custom` when `programmer_command` was given |
-| `commands` | list of commands | The programs this call ran, in order, so they can be run again without the engine. See [Commands](#commands) |
+| `commands` | list of commands | The programs this call ran, in order, so they can be run again without the engine. See Commands |
 
 **Errors:** setup errors with `connect_board` when the chosen device isn't connected anymore or another device is on its port (list the devices again), or when the programmer doesn't find it (for a dfu-util board, also when it isn't in its bootloader mode); `disconnect_devices` when the command can't name the device and other connected devices have its USB IDs (icesprog, dfu-util with `-d ${VID}:${PID}`, openFPGALoader with only `--board` or `-c`), or when the programmer itself can't tell them apart; `fix_device_permissions` or `install_drivers` when the device can't be opened. Request errors when `device` isn't a device ID, when the device doesn't match the board's USB filter, or when the build folder has no build record. Other request errors, tool failures, engine errors and cancellation.
 
 ## list_devices tool
 
-Lists the connected USB devices, each with an `id` for `program_board` and the boards it may be. The engine reads USB devices with libusb, built into the engine, the same library the programmers use, so the bus and device numbers mean the same to both. Devices are sorted by vendor ID, product ID, bus and device number.
+Lists the connected USB devices, each with an `id` for `program_board` and the boards it may be. The Logix Engine reads USB devices with libusb, built into the engine, the same library the programmers use, so the bus and device numbers mean the same to both. Devices are sorted by vendor ID, product ID, bus and device number.
 
-**Matching.** A device matches a configuration's USB filter when its USB IDs are equal and, when the filter has `product_regex` or `serial_regex`, its product name or serial number contains a match for it. The engine matches every device against every catalog board and the request's `custom_boards` on each call, so a host's own boards count as soon as it sends them. Each device lists the boards it matches, best first: by their best variant's confidence, then catalog boards before custom ones, then by board ID. A custom board may have a catalog board's ID; both are listed, the custom one with `custom: true`, and the host decides which it means.
+**Matching.** A device matches a configuration's USB filter when its USB IDs are equal and, when the filter has `product_regex` or `serial_regex`, its product name or serial number contains a match for it. The engine matches every device against every catalog board and the request's `custom_boards` on each call, so a host's own boards count as soon as it sends them. Each device lists the boards it matches, best first: by their best board variant's confidence, then catalog boards before custom ones, then by board ID. A custom board may have a catalog board's ID; both are listed, the custom one with `custom: true`, and the host decides which it means.
 
-**Confidence.** A number from 1 to 3: how sure the engine is that the device is that board in a variant, given for each variant the device fits, since variants can have different USB filters. Hosts use the rating of the variant they mean, such as the build's or the one the user selected. Higher is surer, and 3 is always the highest. Hosts compare it, such as to pre-select a device at 3 or to show low matches only on request; they don't need to know how it is rated, which may improve between engine versions (the current rules are in the [requirements](requirements.md#device-selection)). Several boards can have the same confidence for one device, such as the two OrangeCrab sizes, and no rating proves which board is connected: boards the catalog doesn't know can report the same names.
+**Confidence.** A number from 1 to 3: how sure the engine is that the device is that board in a board variant, given for each board variant the device fits, since board variants can have different USB filters. Hosts use the rating of the board variant they mean, such as the build's or the one the user selected. Higher is surer, and 3 is always the highest. Hosts compare it, such as to pre-select a device at 3 or to show low matches only on request; they don't need to know how it is rated, which may improve between engine versions (the current rules are in the [requirements](requirements.md#device-selection)). Several boards can have the same confidence for one device, such as the two OrangeCrab sizes, and no rating proves which board is connected: boards the catalog doesn't know can report the same names.
 
-**For a build.** Upload is the common case: with `build_folder`, a host doesn't need the build's board ID or variant. It programs the only device listed, or asks the user when there are several, and when none is listed it says the board isn't connected, mentioning any `unreachable` device as a possible cause.
+**For a build.** Upload is the common case: with `build_folder`, a host doesn't need the build's board ID or board variant. It programs the only device listed, or asks the user when there are several, and when none is listed it says the board isn't connected, mentioning any `unreachable` device as a possible cause.
 
-**Unreachable devices.** A device the engine sees but can't open, because of missing permissions or a missing driver, can't be programmed and its names can't be read, so it isn't in `devices`. When its USB IDs fit a board, it is listed in `unreachable` with those boards (every variant at confidence 1, since names are unknown) and the action that makes it usable: `install_drivers` on Windows, `fix_device_permissions` elsewhere. Other devices the engine can't open are left out.
+**Unreachable devices.** A device the engine sees but can't open, because of missing permissions or a missing driver, can't be programmed and its names can't be read, so it isn't in `devices`. When its USB IDs fit a board, it is listed in `unreachable` with those boards (every board variant at confidence 1, since names are unknown) and the action that makes it usable: `install_drivers` on Windows, `fix_device_permissions` elsewhere. Other devices the engine can't open are left out.
 
 **Device IDs.** An `id` names the device on this computer for a short time: it is made from where the device is plugged in and what it is, so it stays valid while the device stays on the same USB port, even when it is plugged in again, and survives an engine restart. IDs differ between platforms and computers. Hosts must treat them as opaque, never parse or build them, and list the devices again before asking the user to choose.
 
@@ -703,14 +750,14 @@ Lists the connected USB devices, each with an `id` for `program_board` and the b
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `custom_boards` | map of board definitions | No | The host's own boards, by board ID, in the catalog format (the FPGA as `fpga_id` or `fpga`), matched as well as the catalog's. Omitted means none |
-| `build_folder` | build folder path | No | A successful build's folder. When given, only the devices that fit the build's board in its variant are listed, in `devices` and `unreachable`, each with `build_confidence`, best first: the devices `program_board` can program that build into. The board comes from the build record, so it works for custom boards too |
+| `build_folder` | build folder path | No | A successful build's folder. When given, only the devices that fit the build's board in its board variant are listed, in `devices` and `unreachable`, each with `build_confidence`, best first: the devices `program_board` can program that build into. The board comes from the build record, so it works for custom boards too |
 
 **Table 12.** list_devices tool outputs
 
 | Field | Type | Description |
 | --- | --- | --- |
 | `devices` | list of devices | The connected devices the engine can open. See device fields in Table 13 |
-| `unreachable` | list of objects | Optional. Devices that can't be opened and whose USB IDs fit a board: `kind`, `vid`, `pid`, `bus`, `device`, `boards` (as in Table 13), `action`, the fix (see [Table 5](#results-and-errors)), and `build_confidence` with `build_folder` |
+| `unreachable` | list of objects | Optional. Devices that can't be opened and whose USB IDs fit a board: `kind`, `vid`, `pid`, `bus`, `device`, `boards` (as in Table 13), `action`, the fix (see Table 5), and `build_confidence` with `build_folder` |
 
 **Table 13.** Device fields
 
@@ -722,8 +769,8 @@ Lists the connected USB devices, each with an `id` for `program_board` and the b
 | `manufacturer`, `product` | text | Names reported by the device, when available |
 | `serial_number` | text | Serial number, when available |
 | `bus`, `device` | integer | USB bus and device number, for USB devices. The device number changes when the device is plugged in again |
-| `build_confidence` | integer | Only with `build_folder`. How sure the engine is that the device is the build's board in the build's variant, 1 to 3, as for `boards` (1 for an unreachable device) |
-| `boards` | list of objects | Optional, omitted when empty. The boards the device may be, best first, each with `board` (its ID), `custom` (true for a board from `custom_boards`, omitted otherwise) and `variants` (the board's variants this device fits, in the board's order, each with `when`, its dimension values as in the board's configurations, and its own `confidence`) |
+| `build_confidence` | integer | Only with `build_folder`. How sure the engine is that the device is the build's board in the build's board variant, 1 to 3, as for `boards` (1 for an unreachable device) |
+| `boards` | list of objects | Optional, omitted when empty. The boards the device may be, best first, each with `board` (its ID), `custom` (true for a board from `custom_boards`, omitted otherwise) and `variants` (the board variants this device fits, in the board's order, each with `when`, its dimension values as in the board's configurations, and its own `confidence`) |
 
 **Errors:** setup errors with `install_drivers` or `fix_device_permissions` when devices cannot be scanned. Request errors for an invalid custom board, or a build folder without a build record from a successful build. Engine errors.
 
@@ -748,7 +795,7 @@ Lists the connected USB devices, each with an `id` for `program_board` and the b
 
 ## get_catalog tool
 
-Returns the engine's read-only catalog. Hosts use it to list boards and to merge it with their own custom definitions.
+Returns the Logix Engine's read-only catalog. Hosts use it to list boards and to merge it with their own custom definitions.
 
 **Table 14.** get_catalog tool inputs
 
@@ -833,13 +880,13 @@ A board with a choice, such as the iCESugar-Pro, which can be programmed to flas
 
 ## get_engine_info tool
 
-Returns the engine's version, platform and package status. A host calls it when it starts, to check that the engine is new enough and to show what is installed. It is fast and local: it never uses the network and doesn't verify checksums.
+Returns the Logix Engine's version, platform and package status. A host calls it when it starts, to check that the engine is new enough and to show what is installed. It is fast and local: it never uses the network and doesn't verify checksums.
 
 **Table 16.** get_engine_info tool inputs
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| (none) | | | The tool takes no inputs |
+| (none) |  |  | The tool takes no inputs |
 
 **Table 17.** get_engine_info tool outputs
 
@@ -865,12 +912,12 @@ Output:
   "engine_version": "2026-12-01",
   "protocol_versions": ["2026-07-28", "2025-11-25"],
   "platform": "darwin-arm64",
-  "engine_folder": "/Users/u/.myhost/engine",
+  "engine_folder": "/Users/user/.myhost/engine",
   "auto_install": true,
-  "command_line": ["--engine-folder", "/Users/u/.myhost/engine"],
-  "log_file": "/Users/u/.myhost/engine/logs/20261028-4123.log",
+  "command_line": ["--engine-folder", "/Users/user/.myhost/engine"],
+  "log_file": "/Users/user/.myhost/engine/logs/20261028-4123.log",
   "packages": [
-    { "name": "oss-cad-suite", "version": "2026-11-20", "status": "installed", "bin_folder": "/Users/u/.myhost/engine/packages/oss-cad-suite/2026-11-20/bin" },
+    { "name": "oss-cad-suite", "version": "2026-11-20", "status": "installed", "bin_folder": "/Users/user/.myhost/engine/packages/oss-cad-suite/2026-11-20/bin" },
     { "name": "examples", "version": "2026-10-15", "status": "missing" }
   ]
 }
@@ -878,7 +925,7 @@ Output:
 
 ## install_packages tool
 
-Installs or repairs the engine's packages. Packages that are already installed and intact are left alone, unless `force` is set. Other tools install the packages they need on their own, so a host calls this only to install ahead of time, such as before going offline, or to act on the `install_packages` action, such as when automatic install is off. It installs whether or not automatic install is on, since the host asked. It reports progress, one phase per package, and can be cancelled.
+Installs or repairs the Logix Engine's packages. Packages that are already installed and intact are left alone, unless `force` is set. Other tools install the packages they need on their own, so a host calls this only to install ahead of time, such as before going offline, or to act on the `install_packages` action, such as when automatic install is off. It installs whether or not automatic install is on, since the host asked. It reports progress, one phase per package, and can be cancelled.
 
 **Table 18.** install_packages tool inputs
 
@@ -917,10 +964,10 @@ Output:
 
 ## clean_build tool
 
-Deletes build folders. It is given a folder and deletes only build folders, which the engine marks with a `.logix-build` file when it first builds in them:
+Deletes build folders. It is given a folder and deletes only build folders, which the Logix Engine marks with a `.logix-build` file when it first builds in them:
 
-- **A build folder,** such as `/home/u/proj/_build/default`: the tool deletes it with everything in it.
-- **A folder of build folders,** such as `/home/u/proj/_build` with one build folder per board or configuration: the tool deletes each build folder directly inside it, then deletes the folder itself if nothing else is left in it.
+- **A build folder,** such as `/home/user/proj/_build/default`: the tool deletes it with everything in it.
+- **A folder of build folders,** such as `/home/user/proj/_build` with one build folder per board or configuration: the tool deletes each build folder directly inside it, then deletes the folder itself if nothing else is left in it.
 
 It never deletes a folder without the marker or files outside the build folders, so a wrong path from a host can't remove the user's files. The folder must satisfy the build folder path rules. A folder that doesn't exist is not an error: nothing is deleted.
 
@@ -943,7 +990,7 @@ It never deletes a folder without the marker or files outside the build folders,
 Input:
 
 ```json
-{ "folder": "/home/u/proj/_build" }
+{ "folder": "/home/user/proj/_build" }
 ```
 
 Output:
@@ -951,17 +998,72 @@ Output:
 ```json
 {
   "deleted": [
-    "/home/u/proj/_build/default",
-    "/home/u/proj/_build/icezum",
-    "/home/u/proj/_build"
+    "/home/user/proj/_build/default",
+    "/home/user/proj/_build/icezum",
+    "/home/user/proj/_build"
   ]
 }
 ```
 
+## Recipes for frontend developers
+
+The Logix Engine was designed together with the Logix IDE, and its tools map to what a frontend shows: buttons, panels, a console and a device picker. These recipes give the intended flow for common tasks; the tool sections above have the fields. The Logix IDE is only an example here. The Logix Engine doesn't depend on it or on any of its traits: a frontend can be an editor, a graphical or block-based design tool, a command-line tool, a CI job or anything else.
+
+### Start up
+
+1. Launch the Logix Engine with `--engine-folder`, do the MCP handshake, then call `get_engine_info`.
+2. Check that `engine_version` is one your frontend supports, by its own rule, such as a version range or a list of tested releases. If it isn't, call no other tools: tell the user which Logix Engine versions the frontend needs, then stop or fall back as the frontend decides.
+3. Show package status from `packages`. Nothing has to be installed first: tools install what they need on first use. To install ahead of time, such as before going offline, call `install_packages` and show its progress.
+
+### Show whether the board is connected
+
+1. Call `list_devices` every few seconds while the status is on screen, and pause while a task uses the board. The Logix Engine has no device-change notification, so the frontend polls.
+2. Look for the selected board and board variant in each device's `boards`. Show "possibly connected" when a device fits, and "not connected" when none does. No USB match proves which board is plugged in, since different boards can look the same, so the Logix IDE never claims more than "possibly"; a frontend can compare `confidence` to order or highlight matches.
+3. When no device fits but `unreachable` has one, show its `action` instead, such as fixing device permissions. A device seen but not usable is a common reason a board "isn't found".
+4. Device IDs stay the same while a device stays on its USB port, so a selection survives polling and replugging into the same port.
+
+### Upload: build, pick a device, program
+
+1. Call `build`. If it fails, show its diagnostics and stop; `program_board` never builds.
+2. Call `list_devices` with the build folder. It lists only devices that fit the build's board and board variant, so the frontend never needs the board ID here.
+3. One device: use it. Several: ask the user, with any device at `build_confidence` 3 pre-selected. None: say the board isn't connected, and mention any `unreachable` device and its action.
+4. Call `program_board` with the build folder and the chosen device `id`.
+5. On `connect_board` or `disconnect_devices`, list the devices again and let the user retry. Never build or guess a device ID.
+
+### Show progress and a console
+
+- Add a progress token to every long call. Show an overall bar from `progress / total`, the phase message as its label, and the phase's own percentage as `progress mod 100`. A phase without percentages shows a spinner.
+- For a console, add `"logix/output": true` to the call's `_meta` and append each `logix/output` line, styled by `kind` and `level`. Don't parse these lines; the result has the diagnostics.
+- A "copy command" action can use each `commands` entry's `shell` line, so users can rerun a step or report a tool bug without the engine.
+- Cancel with an MCP cancel notification for the call's request ID.
+
+### Show problems in the editor
+
+- Every tool reports problems as diagnostics with `file` relative to the source folder, `line`, `column` and `severity`, so one routine can underline them for lint, test, build and format alike.
+- `lint` is fast and writes nothing, so it suits running on save. Build warnings come in `warnings`.
+- Turn an error's `action` code into a button: `install_packages` calls the install_packages tool, and `connect_board`, `fix_device_permissions`, `install_drivers` and `disconnect_devices` show short instructions.
+
+### Run and debug testbenches
+
+1. "Run tests" calls `test` with every testbench. Each stops at its first failure, so a failing run ends fast, and each result says where and when it failed.
+2. "Debug" on a failing testbench calls `simulate` with a `layout_file` next to the testbench, such as `main_tb.gtkw`. GTKWave opens zoomed in around the first failure.
+3. If the user saves the layout in GTKWave, the Logix Engine keeps it from then on; an unsaved default is deleted when GTKWave closes.
+
+### Pick a board
+
+- Fill a board picker from `get_catalog` with `boards.fetch` true. Show each board's `dimensions` labels and help as the board variant choices, and its `tested` and `user_notes` where the user picks.
+- A user's own boards stay in the frontend: send them as full board definitions in `board`, and in `custom_boards` for `list_devices`.
+
+### Format an unsaved editor buffer
+
+Requests never carry source text. Write the buffer to a file in a scratch folder, call `format` on it, and read the result back into the editor.
+
 ## Open questions
 
-- **Skipping build steps whose inputs didn't change.** Today a build is up to date as a whole, by a checksum of all its inputs, and otherwise reruns synthesis, place and route, and packing. Incremental build tools such as SCons skip steps whose own inputs are unchanged, so a change to only the constraint file skips synthesis. Per-step checksums in the build record would do the same. Most edits change the sources, which rerun every step anyway, so this waits until large designs make pin-only rebuilds slow.
-- **What clean_build may delete.** Today it deletes only folders the engine marked with `.logix-build`, so it leaves old build folders made by other tools alone until the engine builds in them. The alternative is to delete any folder that passes the build folder path checks. That cleans other tools' old folders too, but a wrong path such as `/home/u/builds/myproject` passes those checks, since one of its last two folder names contains "build". A middle way would be to also refuse folders that directly contain design files, such as `.v`, `.sv` or `.pcf` files.
+These are not decided and none of them is in the API today. They are listed so API users can see what may change and comment.
+
+- **Skipping build steps whose inputs didn't change.** Today a build is up to date as a whole, by a checksum of all its inputs, and otherwise reruns synthesis, place and route, and packing. Incremental build tools such as SCons skip steps whose own inputs are unchanged, so a change to only the constraint file skips synthesis. Per-step checksums in the build record would do the same. Each step's checksum must also cover the versions of the tools and packages it runs, and the Logix Engine version, since a new version can produce different output from the same inputs. Most edits change the sources, which rerun every step anyway, so this waits until large designs make pin-only rebuilds slow.
+- **What clean_build may delete.** Today it deletes only folders the Logix Engine marked with `.logix-build`, so it leaves old build folders made by other tools alone until the engine builds in them. The alternative is to delete any folder that passes the build folder path checks. That cleans other tools' old folders too, but a wrong path such as `/home/user/builds/myproject` passes those checks, since one of its last two folder names contains "build". A middle way would be to also refuse folders that directly contain design files, such as `.v`, `.sv` or `.pcf` files.
 - **Extra tool arguments for build.** Other FPGA tools let users pass extra options to the synthesis and place-and-route tools, so the build tool likely needs something similar. One option is to define abstract build phases, such as synthesis, place and route, and bitstream, offer portable options such as a target frequency and a seed, and add extra arguments per phase as an explicit escape hatch, passed unchanged to whatever tool runs that phase. The build output would then report which tool and version ran each phase.
 - **Include folders for build.** Some projects keep header files in a separate folder. An optional `include_folders` input, a list of relative paths under `source_folder`, would let the host name extra places to look up included files.
 - **Separating simulation from viewing.** Today `simulate` writes the waveform and also opens GTKWave. Longer term, `simulate` could only write the waveform and return the top-level signals, with opening a viewer as an optional step or its own tool. GTKWave layouts would then be one viewer's concern, and other viewers, such as Surfer or a waveform view inside an IDE, would fit the same way. It only adds fields and tools, so it breaks nothing.
