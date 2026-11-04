@@ -106,7 +106,7 @@ pub async fn run_with(
         )));
     }
     let board = &record.board;
-    let variant = &board.configuration;
+    let variant = &board.variant;
     let custom = input.programmer_command.as_deref();
 
     let needed = state.packages.needing_install(&[TOOLCHAIN])?;

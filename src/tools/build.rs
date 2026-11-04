@@ -9,7 +9,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::{Call, EngineTool};
-use crate::board::{self, BoardSpec, VariantInput};
+use crate::board::{self, BoardSpec};
 use crate::build::{self, BuildRequest, parse::ResourceUsage};
 use crate::errors::{Diagnostic, ToolError};
 use crate::paths;
@@ -41,13 +41,11 @@ pub struct BuildInput {
     /// The target board: a catalog ID such as alhambra-ii (get_catalog lists
     /// them), or a full board definition.
     pub board: BoardSpec,
-    /// The board variant: values of the board's dimensions, such as
-    /// {"connection": "ft232h", "memory": "ram"}, which get_catalog lists
-    /// with the configurations that exist. The first configuration with
-    /// these values is used; omitted dimensions match any value. Omitted
-    /// means the board's first configuration, its default.
+    /// The board variant: the ID of one of the board's variants, which
+    /// get_catalog lists, such as usb-ram or ft232h-flash. Omitted means
+    /// the board's first variant, its default.
     #[serde(default)]
-    pub board_variant: VariantInput,
+    pub board_variant: Option<String>,
     /// Name of the top-level module, such as main.
     pub top_module: String,
     /// The folder with the design files, as an absolute path.

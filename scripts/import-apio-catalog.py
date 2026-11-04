@@ -119,6 +119,14 @@ def build_info(folder):
         return os.path.basename(folder)
 
 
+def variant(when, programmer, args, usb):
+    """One board variant in the catalog format: its ID (<connection>-<memory>),
+    its connection and memory, and how to program it."""
+    return {"id": f"{when['connection']}-{when['memory']}", "connection": when["connection"],
+            "memory": when["memory"], "programmer": programmer, "args": args, "usb": usb,
+            "tested": True}
+
+
 def main():
     packages = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser("~/.apio/packages")
     definitions = os.path.join(packages, "definitions")
@@ -182,15 +190,13 @@ def main():
         boards[bid] = {
             "description": b["description"],
             "fpga_id": b["fpga-id"],
-            "variants": {"configurations": [
-                {"when": standard_values(PROGRAMMERS[pid], args.strip(),
-                                         fpgas[b["fpga-id"]]["architecture"]),
-                 "programmer": PROGRAMMERS[pid], "args": args.strip(), "usb": usb, "tested": True}
-            ]},
+            "variants": [variant(standard_values(PROGRAMMERS[pid], args.strip(),
+                                                 fpgas[b["fpga-id"]]["architecture"]),
+                                 PROGRAMMERS[pid], args.strip(), usb)],
         }
 
     root = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "catalog")
-    source = f"Imported from Apio's {build_info(definitions)} and {build_info(oss)} packages by scripts/import-apio-catalog.py."
+    source = "Logix Engine catalog."
     for name, data in [("fpgas", fpgas), ("boards", boards)]:
         with open(os.path.join(root, f"{name}.json"), "w", encoding="utf-8") as f:
             json.dump({"source": source, name: data}, f, indent=2, ensure_ascii=False)

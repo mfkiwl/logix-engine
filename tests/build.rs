@@ -218,7 +218,7 @@ async fn builds_an_ecp5_design() {
     // Another variant always rebuilds, even one that only changes how the
     // board is programmed; the build record keeps it for program_board.
     let ram = json!({"board": "icesugar-pro", "constraint_file": "main.lpf",
-                     "board_variant": {"memory": "ram"}});
+                     "board_variant": "usb-ram"});
     assert!(
         !build_it(&state, &src, ram.clone())
             .await
@@ -229,22 +229,23 @@ async fn builds_an_ecp5_design() {
         &std::fs::read(src.join("_build/default/build-record.json")).unwrap(),
     )
     .unwrap();
-    assert_eq!(
-        record["board"]["variant"],
-        json!({"connection": "usb", "memory": "ram"})
-    );
+    assert_eq!(record["board"]["variant"]["id"], json!("usb-ram"));
     assert_eq!(record["board"]["name"], "Icesugar Pro (RAM)");
     assert!(build_it(&state, &src, ram).await.unwrap().up_to_date);
     let err = build_it(
         &state,
         &src,
         json!({"board": "icesugar-pro", "constraint_file": "main.lpf",
-               "board_variant": {"memory": "eeprom"}}),
+               "board_variant": "usb-eeprom"}),
     )
     .await
     .unwrap_err();
     assert_eq!(err.category, logix_engine::errors::Category::Request);
-    assert!(err.message.contains("flash, ram"), "{}", err.message);
+    assert!(
+        err.message.contains("usb-flash, usb-ram"),
+        "{}",
+        err.message
+    );
 
     // A pin that doesn't exist is a design error.
     std::fs::write(
@@ -542,11 +543,11 @@ async fn a_full_board_definition_works() {
             "architecture": "ice40", "part_number": "ICE40HX4K-TQ144", "size": "8k",
             "nextpnr_device": "hx8k", "nextpnr_package": "tq144:4k"
         },
-        "variants": {"configurations": [{
-            "when": {"connection": "usb", "memory": "flash"},
+        "variants": [{
+            "id": "usb-flash", "connection": "usb", "memory": "flash",
             "programmer": "iceprog", "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {"vid": "0403", "pid": "6010"}, "tested": false
-        }]}
+        }]
     });
     let out = build_it(&state, &src, json!({"board": board}))
         .await

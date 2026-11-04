@@ -6,13 +6,12 @@
 //! catalog and the request's own definitions), never against precomputed
 //! data, since hosts can define boards at any time.
 
-use std::collections::BTreeMap;
 use std::time::Duration;
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::catalog::{UsbFilter, Variants};
+use crate::catalog::{UsbFilter, Variant};
 use crate::errors::{Action, ActionCode, ToolError};
 
 /// A connected device that the engine can open.
@@ -105,9 +104,8 @@ impl BoardMatch {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct VariantMatch {
-    /// The variant's dimension values, such as {"connection": "usb",
-    /// "memory": "flash"}, as in the board's configurations.
-    pub when: BTreeMap<String, String>,
+    /// The variant's ID within the board, such as usb-flash.
+    pub id: String,
     /// How sure the engine is that the device is the board in this variant,
     /// from 1 to 3: higher is surer, and 3 is always the highest. Compare it,
     /// such as to pre-select a device at 3; how the engine rates may improve
@@ -149,7 +147,7 @@ pub fn is_factory_default_name(name: &str) -> bool {
         .any(|d| d.eq_ignore_ascii_case(name))
 }
 
-/// How sure a match of a device to a configuration's filter is (the device
+/// How sure a match of a device to a variant's filter is (the device
 /// matches it): high for a matched serial pattern or a board-specific name,
 /// medium for a matched factory default name, low for USB IDs only.
 pub fn confidence(device: &Device, filter: &UsbFilter) -> u8 {
@@ -196,11 +194,11 @@ pub struct UnreachableDevice {
 }
 
 /// A board to match devices against: its ID, whether it came from the
-/// request, and its configurations.
+/// request, and its variants.
 pub struct Candidate<'a> {
     pub id: &'a str,
     pub custom: bool,
-    pub variants: &'a Variants,
+    pub variants: &'a [Variant],
 }
 
 /// Lists the connected USB devices, the ones the engine can't open
@@ -332,7 +330,7 @@ pub fn board_matches(device: &Device, boards: &[Candidate]) -> Vec<BoardMatch> {
     let mut out = Vec::new();
     for b in boards {
         let mut variants = Vec::new();
-        for c in &b.variants.configurations {
+        for c in b.variants {
             let hit = if device.reachable {
                 matches(device, &c.usb)
             } else {
@@ -341,7 +339,7 @@ pub fn board_matches(device: &Device, boards: &[Candidate]) -> Vec<BoardMatch> {
             if hit {
                 let confidence = confidence(device, &c.usb);
                 variants.push(VariantMatch {
-                    when: c.when.clone(),
+                    id: c.id.clone(),
                     confidence,
                 });
             }

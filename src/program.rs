@@ -8,7 +8,7 @@ use std::sync::OnceLock;
 
 use regex::Regex;
 
-use crate::catalog::{self, Configuration};
+use crate::catalog::{self, Variant};
 use crate::devices::Device;
 use crate::errors::{ActionCode, Category, ToolError};
 
@@ -127,9 +127,9 @@ pub fn verbose_flag(programmer: &str) -> Option<&'static str> {
 /// adapter.". `board` is the board's name (its description, without the
 /// variant: the line says it). An untested configuration ends with
 /// " (untested)" before the period.
-pub fn plan(board: &str, c: &Configuration) -> Option<String> {
+pub fn plan(board: &str, c: &Variant) -> Option<String> {
     let memory = memory_word(c)?;
-    let connection = c.when.get("connection").map(String::as_str);
+    let connection = Some(c.connection.as_str());
     let through = match connection {
         Some("usb") => " through its USB port".to_string(),
         Some("bootloader") => " through its USB bootloader".to_string(),
@@ -151,7 +151,7 @@ pub fn plan(board: &str, c: &Configuration) -> Option<String> {
 
 /// What a successful programming means, such as "Programmed the RAM of the
 /// RAM: the design is lost when the board is powered off.".
-pub fn done(board: &str, c: &Configuration) -> Option<String> {
+pub fn done(board: &str, c: &Variant) -> Option<String> {
     let memory = memory_word(c)?;
     let stays = if memory == "RAM" { "is lost" } else { "stays" };
     Some(format!(
@@ -160,15 +160,15 @@ pub fn done(board: &str, c: &Configuration) -> Option<String> {
 }
 
 /// The progress phase while the programmer writes.
-pub fn writing_phase(c: &Configuration) -> &'static str {
+pub fn writing_phase(c: &Variant) -> &'static str {
     match memory_word(c) {
         Some("RAM") => "Writing RAM",
         _ => "Writing flash",
     }
 }
 
-fn memory_word(c: &Configuration) -> Option<&'static str> {
-    match c.when.get("memory").map(String::as_str) {
+fn memory_word(c: &Variant) -> Option<&'static str> {
+    match Some(c.memory.as_str()) {
         Some("flash") => Some("flash"),
         Some("ram") => Some("RAM"),
         _ => None,
@@ -176,7 +176,7 @@ fn memory_word(c: &Configuration) -> Option<&'static str> {
 }
 
 pub fn command(
-    variant: &Configuration,
+    variant: &Variant,
     custom: Option<&str>,
     device: &Device,
     bitstream: &Path,
@@ -361,7 +361,7 @@ mod tests {
         let c = catalog::builtin();
         let d = device("0403", "6010", Some("Alhambra II"), None, 9);
         let bin = Path::new("/pkg/bin");
-        let v = &c.boards["alhambra-ii"].variants.configurations[0];
+        let v = &c.boards["alhambra-ii"].variants[0];
         let (prog, args) = command(v, None, &d, Path::new("/b/hardware.bin"), bin, false).unwrap();
         assert_eq!(prog, Path::new("/pkg/bin/openFPGALoader"));
         let args: Vec<String> = args.into_iter().map(|a| a.into_string().unwrap()).collect();
@@ -371,7 +371,7 @@ mod tests {
         );
         let (_, args) = command(v, None, &d, Path::new("/b/hardware.bin"), bin, true).unwrap();
         assert_eq!(args[0], "--verbose");
-        let v = &c.boards["icestick"].variants.configurations[0];
+        let v = &c.boards["icestick"].variants[0];
         let (prog, args) = command(v, None, &d, Path::new("/b/hardware.bin"), bin, false).unwrap();
         assert_eq!(prog, Path::new("/pkg/bin/iceprog"));
         assert_eq!(args.len(), 3); // -d d:1/9 /b/hardware.bin
@@ -380,7 +380,7 @@ mod tests {
     #[test]
     fn says_how_the_board_is_programmed() {
         let c = catalog::builtin();
-        let alhambra = &c.boards["alhambra-ii"].variants.configurations[0];
+        let alhambra = &c.boards["alhambra-ii"].variants[0];
         assert_eq!(
             plan("Alhambra II", alhambra).unwrap(),
             "Programming the flash of the Alhambra II through its USB port."
@@ -390,7 +390,7 @@ mod tests {
             "Programmed the flash of the Alhambra II: the design stays when the board is powered off."
         );
         assert_eq!(writing_phase(alhambra), "Writing flash");
-        let stick = &c.boards["butterstick-r10-2g-85k"].variants.configurations;
+        let stick = &c.boards["butterstick-r10-2g-85k"].variants;
         assert_eq!(
             plan("butterstick r1.0", &stick[0]).unwrap(),
             "Programming the flash of the butterstick r1.0 through its USB bootloader."
@@ -404,7 +404,7 @@ mod tests {
             "Programmed the RAM of the butterstick r1.0: the design is lost when the board is powered off."
         );
         assert_eq!(writing_phase(&stick[2]), "Writing RAM");
-        let arty = &c.boards["arty-a7-35t"].variants.configurations[0];
+        let arty = &c.boards["arty-a7-35t"].variants[0];
         assert!(!arty.tested);
         assert_eq!(
             plan("Arty A7-35T (Xilinx, Artix7)", arty).unwrap(),
@@ -417,9 +417,7 @@ mod tests {
         let tmp = tempfile::tempdir().unwrap();
         std::fs::write(tmp.path().join("iceprog"), "").unwrap();
         let d = device("0403", "6010", None, None, 2);
-        let v = &catalog::builtin().boards["alhambra-ii"]
-            .variants
-            .configurations[0];
+        let v = &catalog::builtin().boards["alhambra-ii"].variants[0];
         let b = Path::new("/b/hardware.bin");
         let (p, a) = command(v, Some("iceprog -S ${BITSTREAM}"), &d, b, tmp.path(), false).unwrap();
         assert_eq!(p, tmp.path().join("iceprog"));

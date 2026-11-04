@@ -76,7 +76,7 @@ pub fn run_with(
                 "custom_boards: {id:?} isn't a board ID: use lowercase letters, digits and hyphens."
             )));
         }
-        b.variants.validate().map_err(|e| {
+        crate::catalog::validate_variants(&b.variants).map_err(|e| {
             ToolError::request(format!(
                 "custom_boards: {id}: invalid board definition: {e}."
             ))
@@ -103,7 +103,7 @@ pub fn run_with(
             super::program_board::read_build(folder)?
                 .1
                 .board
-                .configuration
+                .variant
                 .usb,
         ),
         None => None,
@@ -198,10 +198,7 @@ mod tests {
         assert_eq!(
             bootloader.variants,
             [crate::devices::VariantMatch {
-                when: BTreeMap::from([
-                    ("connection".to_string(), "bootloader".to_string()),
-                    ("memory".to_string(), "flash".to_string())
-                ]),
+                id: "bootloader-flash".into(),
                 confidence: CONFIDENCE_HIGH,
             }]
         );
@@ -212,7 +209,7 @@ mod tests {
             .find(|m| m.board == "butterstick-r10-2g-85k")
             .unwrap();
         assert_eq!(butterstick.best_confidence(), CONFIDENCE_LOW);
-        assert_eq!(butterstick.variants[0].when["connection"], "ft232h");
+        assert_eq!(butterstick.variants[0].id, "ft232h-ram");
         assert_eq!(butterstick.variants[0].confidence, CONFIDENCE_LOW);
         assert!(out.devices[2].boards.is_empty());
         assert!(out.unreachable.is_empty());
@@ -223,13 +220,13 @@ mod tests {
         let custom = json!({"custom_boards": {"alhambra-ii": {
             "description": "My Alhambra",
             "fpga_id": "ice40hx4k-tq144-8k",
-            "variants": {"configurations": [{
-                "when": {"connection": "usb", "memory": "flash"},
+            "variants": [{
+                "id": "usb-flash", "connection": "usb", "memory": "flash",
                 "programmer": "iceprog",
                 "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
                 "usb": {"vid": "0403", "pid": "6010", "product_regex": "^Alhambra"},
                 "tested": true
-            }]}
+            }]
         }}});
         let out = list(
             custom,
@@ -246,14 +243,14 @@ mod tests {
 
         let bad = list(
             json!({"custom_boards": {"Bad ID": {
-                "description": "x", "fpga_id": "x", "variants": {"configurations": []}
+                "description": "x", "fpga_id": "x", "variants": []
             }}}),
             vec![],
         );
         assert_eq!(bad.unwrap_err().category, crate::errors::Category::Request);
         let bad = list(
             json!({"custom_boards": {"mine": {
-                "description": "x", "fpga_id": "x", "variants": {"configurations": []}
+                "description": "x", "fpga_id": "x", "variants": []
             }}}),
             vec![],
         );
@@ -264,7 +261,7 @@ mod tests {
     fn each_variant_has_its_own_confidence() {
         let config = |memory: &str, usb: serde_json::Value| {
             json!({
-                "when": {"connection": "usb", "memory": memory},
+                "id": format!("usb-{memory}"), "connection": "usb", "memory": memory,
                 "programmer": "iceprog",
                 "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
                 "usb": usb,
@@ -274,10 +271,10 @@ mod tests {
         let input = json!({"custom_boards": {"mine": {
             "description": "Mine",
             "fpga_id": "ice40hx4k-tq144-8k",
-            "variants": {"configurations": [
+            "variants": [
                 config("flash", json!({"vid": "0403", "pid": "6010", "product_regex": "^Dual RS232-HS"})),
                 config("ram", json!({"vid": "0403", "pid": "6010"})),
-            ]}
+            ]
         }}});
         let out = list(
             input,
@@ -288,9 +285,9 @@ mod tests {
         let rated: Vec<_> = mine
             .variants
             .iter()
-            .map(|v| (v.when["memory"].as_str(), v.confidence))
+            .map(|v| (v.id.as_str(), v.confidence))
             .collect();
-        assert_eq!(rated, [("flash", 2), ("ram", CONFIDENCE_LOW)]);
+        assert_eq!(rated, [("usb-flash", 2), ("usb-ram", CONFIDENCE_LOW)]);
     }
 
     #[test]

@@ -70,11 +70,10 @@ The Type columns in this document use these logical types. Each maps to a JSON t
 | build folder path | string | An absolute path that satisfies the path keyword rules |
 | catalog ID | string | Lowercase letters, digits and hyphens |
 | board specification | string or object | A catalog ID, or a full board definition |
-| board definition | object | A board entry in the catalog format: its `description`, its FPGA as `fpga_id`, and its `variants` |
-| board variants | object | A board's choices and how to program it with each: `configurations`, the combinations that exist, the first being the board's default, and, in `get_catalog` results, `dimensions`. Every board has the two standard dimensions, `connection` then `memory`, with values the engine defines: connection `usb` (the board's own USB port, through the programmer chip on the board), `bootloader` (its USB port in bootloader mode), the external JTAG adapters `ft2232h`, `ft232h`, `cmsis-dap` and `usb-blaster`, or `unspecified` (not known; shown as "USB"); memory `flash` (kept at power-off) or `ram` (lost at power-off). `dimensions` lists each with the values the board's configurations use, in the engine's order: a dimension has an `id`, a `label` for people (such as "Memory") and its `values`, each with an `id` (such as `ram`), a `label` (such as "RAM") and `help` text; it is derived by the engine, so inputs may leave it out (it is ignored). A dimension with one value is a fact about the board rather than a choice. Every configuration gives a known value for both dimensions, no two give the same values, and combinations that aren't listed don't exist. Configurations differ only in how the board is programmed: they all have the board's FPGA and the same pin file (every LED, button and clock on the same pin), so the same project works with each. Versions of a board with any signal on a different pin are different boards. A board sold in several FPGA sizes is one board per size |
-| board variant | object | A choice of configuration: values of the board's dimensions by dimension ID, such as `{"connection": "ft232h", "memory": "ram"}`. The first configuration with these values is used, and omitted dimensions match any value, so `{}` means the board's default configuration. An unknown dimension or value, or values no configuration has, are a request error that lists what exists |
+| board definition | object | A board entry in the catalog format: its `description`, its FPGA as `fpga_id`, its `variants` (a list of variants, the first being the default) and, in `get_catalog` results, its `dimensions`. Every board has the two standard dimensions, `connection` then `memory`, with values the engine defines: connection `usb` (the board's own USB port, through the programmer chip on the board), `bootloader` (its USB port in bootloader mode), the external JTAG adapters `ft2232h`, `ft232h`, `cmsis-dap` and `usb-blaster`, or `unspecified` (not known; shown as "USB"); memory `flash` (kept at power-off) or `ram` (lost at power-off). `dimensions` lists each with the values the board's variants use, in the engine's order, for showing the choices: a dimension has an `id`, a `label` for people (such as "Memory") and its `values`, each with an `id` (such as `ram`), a `label` (such as "RAM") and `help` text. It is derived by the engine, so inputs may leave it out (it is ignored). A dimension with one value is a fact about the board rather than a choice. Versions of a board with any signal on a different pin are different boards, and a board sold in several FPGA sizes is one board per size |
+| variant | object | One way to program a board, in a board definition's `variants`: its `id` within the board, such as `usb-flash` or `ft232h-ram` (catalog boards use `<connection>-<memory>`), its `connection` and `memory` values, and how to program the board that way. It names the programmer to run, such as `openfpgaloader`, and gives the full argument template for it, with variables such as `${VID}`, `${PID}`, `${BUS}`, `${DEV}`, `${SERIAL}` and `${BITSTREAM}`, and the USB filter that finds the device: `vid`, `pid`, an optional `product_regex`, a regular expression the device's product name must match, for boards that share USB IDs, and an optional `serial_regex`, a regular expression the device's serial number must match, for boards that share USB IDs and product names but whose serial numbers tell them apart. The engine maps the programmer name to its executable and the package that provides it, so there are no separate programmer definitions. The supported programmers are `openfpgaloader`, `iceprog`, `dfu-util` and `icesprog`, all from the toolchain package. Catalog variants also have `tested` and optional `user_notes` (see Catalog contents under the get_catalog tool); in requests, `tested` is required and `user_notes` ignored. IDs are unique within a board, and no two variants have the same connection and memory. Variants differ only in how the board is programmed: they all have the board's FPGA and the same pin file (every LED, button and clock on the same pin), so the same project works with each |
+| board variant | string | The ID of one of a board's variants, such as `"ft232h-ram"`, in requests. Omitted means the board's first variant, its default. An ID the board doesn't have is a request error that lists the board's variants |
 | FPGA definition | object | An FPGA entry in the catalog format: its `architecture` (`ice40`, `ecp5`, `gowin` or `xilinx`), `part_number`, `size`, and the toolchain parameters: `nextpnr_device` for every architecture; `nextpnr_package` for iCE40 and ECP5; `nextpnr_speed`, the speed grade, for ECP5 only; for Gowin only, `packer_device` (the device `gowin_pack` uses) and, when needed, `nextpnr_family` and `yosys_family`; and for Xilinx only, `yosys_arch` (such as `xc7`) and `prjxray_family` (the Project X-Ray database folder, such as `artix7`). A field that doesn't belong to the architecture is a request error |
-| configuration | object | One combination of a board's dimension values (`when`: a `connection` and a `memory` value) and how to program the board with it. It names the programmer to run, such as `openfpgaloader`, and gives the full argument template for it, with variables such as `${VID}`, `${PID}`, `${BUS}`, `${DEV}`, `${SERIAL}` and `${BITSTREAM}`, and the USB filter that finds the device: `vid`, `pid`, an optional `product_regex`, a regular expression the device's product name must match, for boards that share USB IDs, and an optional `serial_regex`, a regular expression the device's serial number must match, for boards that share USB IDs and product names but whose serial numbers tell them apart. The engine maps the programmer name to its executable and the package that provides it, so there are no separate programmer definitions. The engine supports the programmers `openfpgaloader`, `iceprog`, `dfu-util` and `icesprog`, all from the toolchain package. Catalog configurations also have `tested` and optional `user_notes` (see Catalog contents under the get_catalog tool); in requests, `tested` is required and `user_notes` ignored |
 | catalog query | object | Selects entries from one catalog section. It has `fetch`, a boolean that defaults to false, and `ids`, an optional list of catalog IDs. When `fetch` is true, the section is returned with only the listed IDs, or with all its entries when `ids` is omitted. An ID that isn't in the section is a request error |
 | date tag | string | `yyyy-mm-dd` |
 | USB ID | string | A 16-bit USB vendor or product ID, written as exactly four lowercase hexadecimal digits, such as `1d50`. Inputs are matched without regard to case |
@@ -101,9 +100,9 @@ Operations that work on a design take these fields. Paths are absolute unless no
 
 ### Board specification
 
-The `board` field is either a catalog ID, such as `"icestick"`, or a full definition object in the catalog format. A full definition can name its FPGA by catalog ID or include its full definition. Its configurations are always written out in full,.
+The `board` field is either a catalog ID, such as `"icestick"`, or a full definition object in the catalog format. A full definition can name its FPGA by catalog ID or include its full definition. Its variants are always written out in full.
 
-Tools that take a board also take an optional `board_variant`, which picks one of the board's configurations. The build record keeps the chosen configuration, and a different board variant always means a full rebuild, like a different board, even when the choice can't change the bitstream, such as flash or RAM. `program_board` programs with the configuration in the build record, so the upload always matches the build.
+Tools that take a board also take an optional `board_variant`, the ID of one of the board's variants. The build record keeps the chosen variant, and a different board variant always means a full rebuild, like a different board, even when the choice can't change the bitstream, such as flash or RAM. `program_board` programs with the variant in the build record, so the upload always matches the build.
 
 ### Results and errors
 
@@ -236,7 +235,7 @@ The Logix Engine adds the FPGA's primitive models, so designs that use primitive
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `board` | board specification | Yes | The target board. It selects the FPGA's primitive models |
-| `board_variant` | board variant | No | The board's configuration. Omitted means its first |
+| `board_variant` | board variant | No | The board's variant, by ID. Omitted means its first |
 | `top_module` | text | No | Name of the top-level module. When omitted, Verilator checks every module that no other module uses |
 | `source_folder`, `source_files` | See folder fields in Table 2 | Yes | The design files |
 | `testbench_files` | list of relative paths | No | Testbenches to check too, relative to the source folder. Defaults to none. A file may be listed only once in `source_files` and `testbench_files` together |
@@ -254,7 +253,7 @@ The Logix Engine adds the FPGA's primitive models, so designs that use primitive
 
 **Errors:** setup errors with `install_packages`. Request errors, such as an unknown board, a missing file or an included file outside the source folder. Tool failures, when Verilator fails without reporting a problem. Engine errors and cancellation.
 
-**Includes.** The source file rules in Table 8 (build tool) apply. Verilator and Icarus Verilog don't look for an included file in the including file's folder as yosys does, so the engine passes the folder of every listed and included file as an include folder. An include is then found in the source folder first, then in those folders. Hosts never list or include the toolchain's own FPGA files, such as yosys's primitive models and black boxes for each architecture: the Logix Engine adds the right ones for the board's FPGA in lint, test, simulate and build. Source files and includes are only the user's own files.
+**Includes.** The source file rules in Table 8 (build tool) apply. Verilator and Icarus Verilog don't look for an included file in the including file's folder as yosys does, so the engine passes the folder of every listed and included file as an include folder. An include is then found in the source folder first, then in those folders. Hosts don't deal with the toolchain's own files, such as the primitive models and black boxes for each FPGA architecture: the Logix Engine adds the right ones for the board's FPGA in lint, test, simulate and build, and doesn't expose toolchain files to hosts, except where a tool says so, such as `bin_folder` in get_engine_info for running Verible's language server. Source files and includes are only the user's own files.
 
 **Example**
 
@@ -300,7 +299,7 @@ Testbenches run in the source folder, so they read data files, such as with `$re
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `board` | board specification | Yes | The target board. It selects the FPGA's primitive models |
-| `board_variant` | board variant | No | The board's configuration. Omitted means its first |
+| `board_variant` | board variant | No | The board's variant, by ID. Omitted means its first |
 | `source_folder`, `source_files`, `build_folder` | See folder fields in Table 2 | Yes | The design files, without testbenches |
 | `testbench_files` | list of relative paths | Yes | The testbenches to run, in order, relative to the source folder. At least one. A file may be listed only once in `source_files` and `testbench_files` together |
 | `defines` | map of text | No | Macro definitions, as in the build tool. `LOGIX_SIM` is always defined as `0` |
@@ -390,7 +389,7 @@ This is the one case where the engine creates or deletes a file in the source fo
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `board` | board specification | Yes | The target board. It selects the FPGA's primitive models |
-| `board_variant` | board variant | No | The board's configuration. Omitted means its first |
+| `board_variant` | board variant | No | The board's variant, by ID. Omitted means its first |
 | `source_folder`, `source_files`, `build_folder` | See folder fields in Table 2 | Yes | The design files, without testbenches |
 | `testbench_file` | relative path | Yes | The testbench to simulate, relative to the source folder |
 | `layout_file` | relative path | No | The GTKWave layout file, relative to the source folder, ending in `.gtkw`. Its folder must exist; the file may not. When omitted, the layout goes into the build folder |
@@ -631,7 +630,7 @@ Xilinx builds use two packages, `oss-cad-suite` and `openxc7`. Two Xilinx builds
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `board` | board specification | Yes | The target board |
-| `board_variant` | board variant | No | The board's configuration. Omitted means its first |
+| `board_variant` | board variant | No | The board's variant, by ID. Omitted means its first |
 | `top_module` | text | Yes | Name of the top-level module |
 | `source_folder`, `source_files`, `constraint_file`, `build_folder` | See folder fields in Table 2 | Yes | The constraint file is required |
 | `defines` | map of text | No | Verilog and SystemVerilog macro definitions, from name to value, such as `{ "USE_PLL": "", "WIDTH": "8" }`. Names follow Verilog identifier rules, and a bad name is a request error. An empty value defines the macro with no text, for use with `` `ifdef ``. The engine always passes each value explicitly, so every tool sees the same text, and passes them in name order, so the same request always gives the same tool commands. `SYNTHESIZE` is always defined |
@@ -702,15 +701,15 @@ Output:
 
 ## program_board tool
 
-Programs a bitstream into the board it was built for, on the device the host chose. The `program_board` tool takes no board input. It reads the board spec from the build record in the build folder, so the board always matches the build. The host names the device with an `id` from `list_devices`, usually one whose `boards` include the build's board, asking the user when several do; the Logix Engine checks it, as described in the [device selection](requirements.md#device-selection) requirements, fills in the argument template of the build's configuration and runs it. It never chooses a device itself.
+Programs a bitstream into the board it was built for, on the device the host chose. The `program_board` tool takes no board input. It reads the board spec from the build record in the build folder, so the board always matches the build. The host names the device with an `id` from `list_devices`, usually one whose `boards` include the build's board, asking the user when several do; the Logix Engine checks it, as described in the [device selection](requirements.md#device-selection) requirements, fills in the argument template of the build's variant and runs it. It never chooses a device itself.
 
 **Note:** the `program_board` tool doesn't build. It programs the bitstream that is already in the build folder. A host that wants to build and program the board in one step calls `build` first, and calls `program_board` only if the build succeeded.
 
-**How it runs:** the engine reads the board from the build record, finds the chosen device and checks it (still connected on the same USB port with the same USB IDs and serial number; matching the build configuration's USB filter; and, when the command doesn't name the device by bus and device number or by a serial number only it has, no other connected device with its USB IDs, since the programmer would open the first one), fills in the configuration's argument template, splitting it into words first so paths with spaces stay whole, and runs the programmer in the build folder. Progress has the phases "Finding device", "Writing flash" (or "Writing RAM") and "Verifying", with percentages read from the programmer's output. With `programmer_command` the phases are "Finding device" and "Programming", without percentages. A programmer that fails because the device is missing or can't be opened gives a setup error with `connect_board` or `fix_device_permissions`; other failures are tool failures with the programmer's output in `details`. The build record's board checksum is checked first, so a damaged record is a request error.
+**How it runs:** the engine reads the board from the build record, finds the chosen device and checks it (still connected on the same USB port with the same USB IDs and serial number; matching the build variant's USB filter; and, when the command doesn't name the device by bus and device number or by a serial number only it has, no other connected device with its USB IDs, since the programmer would open the first one), fills in the variant's argument template, splitting it into words first so paths with spaces stay whole, and runs the programmer in the build folder. Progress has the phases "Finding device", "Writing flash" (or "Writing RAM") and "Verifying", with percentages read from the programmer's output. With `programmer_command` the phases are "Finding device" and "Programming", without percentages. A programmer that fails because the device is missing or can't be opened gives a setup error with `connect_board` or `fix_device_permissions`; other failures are tool failures with the programmer's output in `details`. The build record's board checksum is checked first, so a damaged record is a request error.
 
-**Flash or RAM:** the build's configuration decides whether the bitstream goes to flash, where it stays after power-off, or to RAM, where it is lost at power-off (its `memory` value; boards that offer both have a choice, made when building). The write phase is "Writing flash" or "Writing RAM".
+**Flash or RAM:** the build's variant decides whether the bitstream goes to flash, where it stays after power-off, or to RAM, where it is lost at power-off (its `memory` value; boards that offer both have a choice, made when building). The write phase is "Writing flash" or "Writing RAM".
 
-**Messages:** with live output, `program_board` says how it programs the board before it starts, naming the board (its description, without the board variant), such as "Programming the RAM of the butterstick r1.0 through the FT232H adapter." ("through its USB port" for `usb`, "through its USB bootloader", "through USB" for `unspecified`; an untested configuration adds " (untested)" before the period; the "of" form reads well with any name, including ones ending in parentheses), then the configuration's `user_notes` as "Note: …", and after success where the design went: "Programmed the flash of the Alhambra II: the design stays when the board is powered off." or "… is lost …" for RAM. These are `message` lines; a `programmer_command` gets none, since the engine can't know what it does.
+**Messages:** with live output, `program_board` says how it programs the board before it starts, naming the board (its description, without the variant), such as "Programming the RAM of the butterstick r1.0 through the FT232H adapter." ("through its USB port" for `usb`, "through its USB bootloader", "through USB" for `unspecified`; an untested variant adds " (untested)" before the period; the "of" form reads well with any name, including ones ending in parentheses), then the variant's `user_notes` as "Note: …", and after success where the design went: "Programmed the flash of the Alhambra II: the design stays when the board is powered off." or "… is lost …" for RAM. These are `message` lines; a `programmer_command` gets none, since the engine can't know what it does.
 
 **Table 9.** program_board tool inputs
 
@@ -718,7 +717,7 @@ Programs a bitstream into the board it was built for, on the device the host cho
 | --- | --- | --- | --- |
 | `build_folder` | build folder path | Yes | The build folder of a successful build. It holds the bitstream and the build record |
 | `device` | text | Yes | The device to program: the `id` of a device from `list_devices`. It is opaque and short-lived: it stays valid while the device stays on the same USB port |
-| `programmer_command` | text | No | A custom command template that replaces the configuration's whole command. Its first word is a program from the toolchain package, such as `openFPGALoader`, or an absolute path. It uses the same variables as argument templates and must use `${BITSTREAM}` |
+| `programmer_command` | text | No | A custom command template that replaces the variant's whole command. Its first word is a program from the toolchain package, such as `openFPGALoader`, or an absolute path. It uses the same variables as argument templates and must use `${BITSTREAM}` |
 | `verbose` | boolean | No | Let the programmer print more detail. Not applied to a `programmer_command`. Defaults to false |
 
 **Table 10.** program_board tool outputs
@@ -735,7 +734,7 @@ Programs a bitstream into the board it was built for, on the device the host cho
 
 Lists the connected USB devices, each with an `id` for `program_board` and the boards it may be. The Logix Engine reads USB devices with libusb, built into the engine, the same library the programmers use, so the bus and device numbers mean the same to both. Devices are sorted by vendor ID, product ID, bus and device number.
 
-**Matching.** A device matches a configuration's USB filter when its USB IDs are equal and, when the filter has `product_regex` or `serial_regex`, its product name or serial number contains a match for it. The engine matches every device against every catalog board and the request's `custom_boards` on each call, so a host's own boards count as soon as it sends them. Each device lists the boards it matches, best first: by their best board variant's confidence, then catalog boards before custom ones, then by board ID. A custom board may have a catalog board's ID; both are listed, the custom one with `custom: true`, and the host decides which it means.
+**Matching.** A device matches a variant's USB filter when its USB IDs are equal and, when the filter has `product_regex` or `serial_regex`, its product name or serial number contains a match for it. The engine matches every device against every catalog board and the request's `custom_boards` on each call, so a host's own boards count as soon as it sends them. Each device lists the boards it matches, best first: by their best board variant's confidence, then catalog boards before custom ones, then by board ID. A custom board may have a catalog board's ID; both are listed, the custom one with `custom: true`, and the host decides which it means.
 
 **Confidence.** A number from 1 to 3: how sure the engine is that the device is that board in a board variant, given for each board variant the device fits, since board variants can have different USB filters. Hosts use the rating of the board variant they mean, such as the build's or the one the user selected. Higher is surer, and 3 is always the highest. Hosts compare it, such as to pre-select a device at 3 or to show low matches only on request; they don't need to know how it is rated, which may improve between engine versions (the current rules are in the [requirements](requirements.md#device-selection)). Several boards can have the same confidence for one device, such as the two OrangeCrab sizes, and no rating proves which board is connected: boards the catalog doesn't know can report the same names.
 
@@ -770,7 +769,7 @@ Lists the connected USB devices, each with an `id` for `program_board` and the b
 | `serial_number` | text | Serial number, when available |
 | `bus`, `device` | integer | USB bus and device number, for USB devices. The device number changes when the device is plugged in again |
 | `build_confidence` | integer | Only with `build_folder`. How sure the engine is that the device is the build's board in the build's board variant, 1 to 3, as for `boards` (1 for an unreachable device) |
-| `boards` | list of objects | Optional, omitted when empty. The boards the device may be, best first, each with `board` (its ID), `custom` (true for a board from `custom_boards`, omitted otherwise) and `variants` (the board variants this device fits, in the board's order, each with `when`, its dimension values as in the board's configurations, and its own `confidence`) |
+| `boards` | list of objects | Optional, omitted when empty. The boards the device may be, best first, each with `board` (its ID), `custom` (true for a board from `custom_boards`, omitted otherwise) and `variants` (the board's variants this device fits, in the board's order, each with `id`, the variant's ID, and its own `confidence`) |
 
 **Errors:** setup errors with `install_drivers` or `fix_device_permissions` when devices cannot be scanned. Request errors for an invalid custom board, or a build folder without a build record from a successful build. Engine errors.
 
@@ -785,8 +784,8 @@ Lists the connected USB devices, each with an `id` for `program_board` and the b
       "manufacturer": "AlhambraBits", "product": "Alhambra II v1.0A",
       "serial_number": "FTATANKC", "bus": 1, "device": 7,
       "boards": [
-        { "board": "alhambra-ii", "variants": [{ "when": { "connection": "usb", "memory": "flash" }, "confidence": 3 }] },
-        { "board": "alchitry-au", "variants": [{ "when": { "connection": "usb", "memory": "flash" }, "confidence": 1 }, { "when": { "connection": "usb", "memory": "ram" }, "confidence": 1 }] }
+        { "board": "alhambra-ii", "variants": [{ "id": "usb-flash", "confidence": 3 }] },
+        { "board": "alchitry-au", "variants": [{ "id": "usb-flash", "confidence": 1 }, { "id": "usb-ram", "confidence": 1 }] }
       ]
     }
   ]
@@ -831,23 +830,21 @@ Output:
     "alhambra-ii": {
       "description": "Alhambra II",
       "fpga_id": "ice40hx4k-tq144-8k",
-      "variants": {
-        "dimensions": [
-          { "id": "connection", "label": "Connection",
-            "values": [ { "id": "usb", "label": "USB", "help": "The board's own USB port, through the programmer chip on the board." } ] },
-          { "id": "memory", "label": "Memory",
-            "values": [ { "id": "flash", "label": "Flash", "help": "Kept when the board is powered off." } ] }
-        ],
-        "configurations": [
-          {
-            "when": { "connection": "usb", "memory": "flash" },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -b ice40_generic --vid ${VID} --pid ${PID} --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
-            "usb": { "vid": "0403", "pid": "6010", "product_regex": "^Alhambra II.*" },
-            "tested": true
-          }
-        ]
-      }
+      "dimensions": [
+        { "id": "connection", "label": "Connection",
+          "values": [ { "id": "usb", "label": "USB", "help": "The board's own USB port, through the programmer chip on the board." } ] },
+        { "id": "memory", "label": "Memory",
+          "values": [ { "id": "flash", "label": "Flash", "help": "Kept when the board is powered off." } ] }
+      ],
+      "variants": [
+        {
+          "id": "usb-flash", "connection": "usb", "memory": "flash",
+          "programmer": "openfpgaloader",
+          "args": "--force-terminal-mode --verify -b ice40_generic --vid ${VID} --pid ${PID} --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+          "usb": { "vid": "0403", "pid": "6010", "product_regex": "^Alhambra II.*" },
+          "tested": true
+        }
+      ]
     }
   },
   "fpgas": {}
@@ -860,23 +857,21 @@ A board with a choice, such as the iCESugar-Pro, which can be programmed to flas
 {
   "description": "Icesugar Pro",
   "fpga_id": "lfe5u-25f-6bg256c",
-  "variants": {
-    "dimensions": [
-      { "id": "connection", "label": "Connection", "values": [ { "id": "usb", "label": "USB", "help": "..." } ] },
-      { "id": "memory", "label": "Memory",
-        "values": [ { "id": "flash", "label": "Flash", "help": "..." }, { "id": "ram", "label": "RAM", "help": "..." } ] }
-    ],
-    "configurations": [
-      { "when": { "connection": "usb", "memory": "flash" }, "programmer": "openfpgaloader", "args": "...", "usb": { "vid": "1d50", "pid": "602b" }, "tested": true },
-      { "when": { "connection": "usb", "memory": "ram" }, "programmer": "openfpgaloader", "args": "...", "usb": { "vid": "1d50", "pid": "602b" }, "tested": true }
-    ]
-  }
+  "dimensions": [
+    { "id": "connection", "label": "Connection", "values": [ { "id": "usb", "label": "USB", "help": "..." } ] },
+    { "id": "memory", "label": "Memory",
+      "values": [ { "id": "flash", "label": "Flash", "help": "..." }, { "id": "ram", "label": "RAM", "help": "..." } ] }
+  ],
+  "variants": [
+    { "id": "usb-flash", "connection": "usb", "memory": "flash", "programmer": "openfpgaloader", "args": "...", "usb": { "vid": "1d50", "pid": "602b" }, "tested": true },
+    { "id": "usb-ram", "connection": "usb", "memory": "ram", "programmer": "openfpgaloader", "args": "...", "usb": { "vid": "1d50", "pid": "602b" }, "tested": true }
+  ]
 }
 ```
 
-**Catalog contents.** The catalog is data in the engine's repo, `catalog/boards.json` and `catalog/fpgas.json`. It has every iCE40, ECP5, Gowin and Xilinx FPGA the toolchain packages support, and 84 boards: 31 iCE40, 22 ECP5, 8 Gowin and 23 Xilinx, with 131 configurations in all, programmed with `openfpgaloader`, `iceprog`, `dfu-util` or `icesprog`. 32 boards have a choice: memory (iCESugar-Pro, ColorLight i5, and most Xilinx and ECP5 boards, which have a RAM and a flash configuration; flash is the default wherever a board has it), connection and memory (ColorLight 5A-75E V7.1 and i9 v7.2, FleaFPGA Ohm), or both with fewer combinations (ButterStick r1.0: its USB bootloader writes flash, its adapters RAM). The others have one value of each, which still tells where an upload goes: 50 configurations write RAM, and the Zynq boards, the QMTECH XC7A100T and the ULX3S upload only to RAM. Every configuration has a USB filter, whatever its architecture. Boards programmed through a cable named with openFPGALoader's `-c` option, such as `-c ft2232`, use that cable's default USB IDs.
+**Catalog contents.** The catalog is data in the engine's repo, `catalog/boards.json` and `catalog/fpgas.json`. It has every iCE40, ECP5, Gowin and Xilinx FPGA the toolchain packages support, and 84 boards: 31 iCE40, 22 ECP5, 8 Gowin and 23 Xilinx, with 131 variants in all, programmed with `openfpgaloader`, `iceprog`, `dfu-util` or `icesprog`. 32 boards have a choice: memory (iCESugar-Pro, ColorLight i5, and most Xilinx and ECP5 boards, which have a RAM and a flash variant; flash is the default wherever a board has it), connection and memory (ColorLight 5A-75E V7.1 and i9 v7.2, FleaFPGA Ohm), or both with fewer combinations (ButterStick r1.0: its USB bootloader writes flash, its adapters RAM). The others have one value of each, which still tells where an upload goes: 50 variants write RAM, and the Zynq boards, the QMTECH XC7A100T and the ULX3S upload only to RAM. Every variant has a USB filter, whatever its architecture. Boards programmed through a cable named with openFPGALoader's `-c` option, such as `-c ft2232`, use that cable's default USB IDs.
 
-**Trust and notes.** Each catalog configuration has `tested`: true when its programming is known to work, because it was tried on the board or is used unchanged by a tool that people rely on; false when it hasn't been tried on hardware, such as a board moved to a different programmer. A change rated low risk after checking the programmer's source keeps `tested` true: every openFPGALoader command through an FTDI chip names the chosen device with `--busdev-num ${BUS}:${DEV}` (openFPGALoader's FTDI drivers then open that device), a change made without hardware tests. Optional `user_notes` give warnings and missing information for its users, such as a USB filter that also matches other boards, or a step needed before programming. The catalog file also keeps `maintainer_notes`, where each configuration's settings come from and why they changed, which `get_catalog` doesn't return. A USB filter can't always tell one board model from another: boards that use the same USB chip and report the same names look alike to the engine. Hosts can show both fields where users pick a board.
+**Trust and notes.** Each catalog variant has `tested`: true when its programming is known to work, because it was tried on the board or is used unchanged by a tool that people rely on; false when it hasn't been tried on hardware, such as a board moved to a different programmer. A change rated low risk after checking the programmer's source keeps `tested` true: every openFPGALoader command through an FTDI chip names the chosen device with `--busdev-num ${BUS}:${DEV}` (openFPGALoader's FTDI drivers then open that device), a change made without hardware tests. Optional `user_notes` give warnings and missing information for its users, such as a USB filter that also matches other boards, or a step needed before programming. The catalog file also keeps `maintainer_notes`, where each variant's settings come from and why they changed, which `get_catalog` doesn't return. A USB filter can't always tell one board model from another: boards that use the same USB chip and report the same names look alike to the engine. Hosts can show both fields where users pick a board.
 
 ## get_engine_info tool
 
@@ -967,7 +962,7 @@ Output:
 Deletes build folders. It is given a folder and deletes only build folders, which the Logix Engine marks with a `.logix-build` file when it first builds in them:
 
 - **A build folder,** such as `/home/user/proj/_build/default`: the tool deletes it with everything in it.
-- **A folder of build folders,** such as `/home/user/proj/_build` with one build folder per board or configuration: the tool deletes each build folder directly inside it, then deletes the folder itself if nothing else is left in it.
+- **A folder of build folders,** such as `/home/user/proj/_build` with one build folder per board or board variant: the tool deletes each build folder directly inside it, then deletes the folder itself if nothing else is left in it.
 
 It never deletes a folder without the marker or files outside the build folders, so a wrong path from a host can't remove the user's files. The folder must satisfy the build folder path rules. A folder that doesn't exist is not an error: nothing is deleted.
 
