@@ -626,7 +626,7 @@ async fn clean_build_removes_apio_style_env_folders() {
 // ----- list_devices and program_board, with fake device lists. Programming
 // real boards is checked by hand on hardware.
 
-use logix_engine::devices::{Confidence, Device};
+use logix_engine::devices::{CONFIDENCE_HIGH, Device};
 use logix_engine::errors::ActionCode;
 use logix_engine::tools::{list_devices, program_board};
 
@@ -662,7 +662,7 @@ fn list_devices_names_the_boards_each_device_may_be() {
     let best = &out.devices[0].boards[0];
     assert_eq!(
         (best.board.as_str(), best.confidence),
-        ("alhambra-ii", Confidence::Named)
+        ("alhambra-ii", CONFIDENCE_HIGH)
     );
     assert!(
         out.devices[1]

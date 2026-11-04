@@ -78,26 +78,65 @@ pub struct BoardMatch {
     /// host decides which one it means.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub custom: bool,
-    /// How sure the match is. named: the device's product name or serial
-    /// number matched the board's pattern, so the device says it is this
-    /// kind of board (several boards can still share one name). chip: only
-    /// the USB IDs matched, so it is any device with this USB chip, often
-    /// many boards and adapters.
-    pub confidence: Confidence,
+    /// How sure the engine is that the device is this board, from 1 to 3:
+    /// higher is surer, and 3 is always the highest. Compare it, such as to
+    /// pre-select a device at 3; how the engine rates may improve between
+    /// versions. No rating proves which board is connected, and several
+    /// boards can have the same one.
+    #[schemars(range(min = 1, max = 3))]
+    pub confidence: u8,
     /// The board's variants this device fits, as dimension values, such as
     /// {"connection": "usb", "memory": "flash"}, in the board's order.
     pub variants: Vec<BTreeMap<String, String>>,
 }
 
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize, JsonSchema,
-)]
-#[serde(rename_all = "lowercase")]
-pub enum Confidence {
-    /// The device's name or serial number matched the board's pattern.
-    Named,
-    /// Only the USB IDs matched.
-    Chip,
+/// The highest confidence: the device reports a name or serial number
+/// specific to the board.
+pub const CONFIDENCE_HIGH: u8 = 3;
+/// The board's name pattern matched, but the name is a USB chip's factory
+/// default, which many boards report.
+pub const CONFIDENCE_MEDIUM: u8 = 2;
+/// Only the USB IDs matched, or the device's names can't be read.
+pub const CONFIDENCE_LOW: u8 = 1;
+
+/// Product names that USB chips report out of the factory, which many boards
+/// keep. A match on one of these says little about the board.
+pub const FACTORY_DEFAULT_NAMES: &[&str] = &[
+    "Dual RS232-HS",            // FTDI FT2232H
+    "Single RS232-HS",          // FTDI FT232H
+    "Quad RS232-HS",            // FTDI FT4232H
+    "USB <-> Serial Converter", // FTDI FT2232D
+    "USB <-> Serial",
+    "FT232R USB UART",
+    "FT231X USB UART",
+    "FT230X Basic UART",
+    "DAPLink CMSIS-DAP",
+    "CMSIS-DAP",
+];
+
+/// Whether a product name is a USB chip's factory default.
+pub fn is_factory_default_name(name: &str) -> bool {
+    let name = name.trim();
+    FACTORY_DEFAULT_NAMES
+        .iter()
+        .any(|d| d.eq_ignore_ascii_case(name))
+}
+
+/// How sure a match of a device to a configuration's filter is (the device
+/// matches it): high for a matched serial pattern or a board-specific name,
+/// medium for a matched factory default name, low for USB IDs only.
+fn confidence(device: &Device, filter: &UsbFilter) -> u8 {
+    if !device.reachable {
+        return CONFIDENCE_LOW;
+    }
+    if filter.serial_regex.is_some() {
+        return CONFIDENCE_HIGH;
+    }
+    match (&filter.product_regex, &device.product) {
+        (Some(_), Some(name)) if is_factory_default_name(name) => CONFIDENCE_MEDIUM,
+        (Some(_), Some(_)) => CONFIDENCE_HIGH,
+        _ => CONFIDENCE_LOW,
+    }
 }
 
 /// A device the engine sees but can't open, so it can't read its names or
@@ -116,8 +155,8 @@ pub struct UnreachableDevice {
     pub bus: u8,
     /// USB device number on its bus.
     pub device: u8,
-    /// The boards whose USB IDs it has. Their confidence is always chip,
-    /// since its names can't be read.
+    /// The boards whose USB IDs it has. Their confidence is always the
+    /// lowest, 1, since its names can't be read.
     pub boards: Vec<BoardMatch>,
     /// What makes the device usable, such as fix_device_permissions.
     pub action: Action,
@@ -250,15 +289,15 @@ pub fn matches(device: &Device, filter: &UsbFilter) -> bool {
         && fits(&filter.serial_regex, &device.serial_number)
 }
 
-/// The boards a device may be, best first: named matches, then chip ones,
-/// each by board ID, catalog boards before custom ones. For a device the
-/// engine can't open, only the USB IDs are compared (its names are unknown),
-/// so every match is chip.
+/// The boards a device may be, best first: by confidence, then catalog
+/// boards before custom ones, then by board ID. A board's confidence is its
+/// best matching configuration's. For a device the engine can't open, only
+/// the USB IDs are compared (its names are unknown), so every match is low.
 pub fn board_matches(device: &Device, boards: &[Candidate]) -> Vec<BoardMatch> {
     let mut out = Vec::new();
     for b in boards {
         let mut variants = Vec::new();
-        let mut named = true;
+        let mut best = 0;
         for c in &b.variants.configurations {
             let hit = if device.reachable {
                 matches(device, &c.usb)
@@ -267,24 +306,19 @@ pub fn board_matches(device: &Device, boards: &[Candidate]) -> Vec<BoardMatch> {
             };
             if hit {
                 variants.push(c.when.clone());
-                let has_pattern = c.usb.product_regex.is_some() || c.usb.serial_regex.is_some();
-                named &= device.reachable && has_pattern;
+                best = best.max(confidence(device, &c.usb));
             }
         }
         if !variants.is_empty() {
             out.push(BoardMatch {
                 board: b.id.to_string(),
                 custom: b.custom,
-                confidence: if named {
-                    Confidence::Named
-                } else {
-                    Confidence::Chip
-                },
+                confidence: best,
                 variants,
             });
         }
     }
-    out.sort_by(|a, b| (a.confidence, a.custom, &a.board).cmp(&(b.confidence, b.custom, &b.board)));
+    out.sort_by(|a, b| (b.confidence, a.custom, &a.board).cmp(&(a.confidence, b.custom, &b.board)));
     out
 }
 
@@ -486,8 +520,8 @@ pub mod tests {
         let alhambra = device("0403", "6010", Some("Alhambra II v1.0A"), Some("FT1"), 3);
         let m = board_matches(&alhambra, &boards);
         assert_eq!(m[0].board, "alhambra-ii");
-        assert_eq!(m[0].confidence, Confidence::Named);
-        assert!(m[1..].iter().all(|m| m.confidence == Confidence::Chip));
+        assert_eq!(m[0].confidence, CONFIDENCE_HIGH);
+        assert!(m[1..].iter().all(|m| m.confidence == CONFIDENCE_LOW));
         assert!(
             ids(&m).contains(&"alchitry-au".to_string()),
             "a generic FTDI filter"
@@ -505,15 +539,40 @@ pub mod tests {
         let m = board_matches(&pro, &boards);
         assert_eq!(ids(&m), ["icesugar-pro"]);
         assert_eq!(m[0].variants.len(), 2);
+        assert_eq!(m[0].confidence, CONFIDENCE_HIGH, "a serial pattern");
+
+        // A factory default name: medium for the boards that expect it,
+        // before the low ones; a board-specific name in the same pattern
+        // is high.
+        let ftdi = device("0403", "6010", Some("Dual RS232-HS"), None, 4);
+        let m = board_matches(&ftdi, &boards);
+        let go = m.iter().find(|m| m.board == "go-board").unwrap();
+        assert_eq!(go.confidence, CONFIDENCE_MEDIUM);
+        assert_eq!(m[0].confidence, CONFIDENCE_MEDIUM);
+        assert_eq!(m.last().unwrap().confidence, CONFIDENCE_LOW);
+        let icebreaker = device("0403", "6010", Some("iCEBreaker V1.0e"), None, 5);
+        let m = board_matches(&icebreaker, &boards);
+        assert_eq!(
+            (m[0].board.as_str(), m[0].confidence),
+            ("icebreaker", CONFIDENCE_HIGH)
+        );
 
         // Can't be opened: every board with these USB IDs, as chip.
         let mut locked = pro.clone();
         locked.reachable = false;
         let m = board_matches(&locked, &boards);
         assert_eq!(ids(&m), ["icesugar-1-5", "icesugar-nano", "icesugar-pro"]);
-        assert!(m.iter().all(|m| m.confidence == Confidence::Chip));
+        assert!(m.iter().all(|m| m.confidence == CONFIDENCE_LOW));
 
         assert!(board_matches(&device("1234", "5678", None, None, 1), &boards).is_empty());
+    }
+
+    #[test]
+    fn factory_default_names() {
+        assert!(is_factory_default_name("Dual RS232-HS"));
+        assert!(is_factory_default_name(" dual rs232-hs "));
+        assert!(!is_factory_default_name("Alhambra II v1.0A"));
+        assert!(!is_factory_default_name("Dual RS232-HS v2"));
     }
 
     #[test]

@@ -18,8 +18,8 @@ impl EngineTool for ListDevices {
     const NAME: &'static str = "list_devices";
     const DESCRIPTION: &'static str = "Lists the USB devices connected to this computer, with \
         their USB IDs, names and serial numbers, and for each the boards it may be: catalog \
-        boards, and the request's custom_boards, each with a confidence (named: the device's \
-        name matched the board's; chip: only its USB chip did) and the variants it fits. \
+        boards, and the request's custom_boards, best first, each with a confidence from 1 to 3 \
+        (higher is surer; 3 is the highest) and the variants it fits. \
         program_board needs the id of one of these devices: pick the device whose boards \
         include the build's board. Devices that need a driver or permissions first are listed \
         apart, under unreachable, with the fix.";
@@ -120,8 +120,8 @@ pub fn run(_state: &EngineState, input: ListDevicesInput) -> Result<ListDevicesO
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::devices::Confidence;
     use crate::devices::tests::device;
+    use crate::devices::{CONFIDENCE_HIGH, CONFIDENCE_LOW};
     use serde_json::json;
 
     fn list(
@@ -153,7 +153,7 @@ mod tests {
         let bootloader = first(0).unwrap();
         // Two boards share the OrangeCrab bootloader's name: both named.
         assert_eq!(bootloader.board, "orangecrab-r02-25f");
-        assert_eq!(bootloader.confidence, Confidence::Named);
+        assert_eq!(bootloader.confidence, CONFIDENCE_HIGH);
         assert_eq!(out.devices[0].boards[1].board, "orangecrab-r02-85f");
         assert_eq!(
             bootloader.variants,
@@ -168,7 +168,7 @@ mod tests {
             .iter()
             .find(|m| m.board == "butterstick-r10-2g-85k")
             .unwrap();
-        assert_eq!(butterstick.confidence, Confidence::Chip);
+        assert_eq!(butterstick.confidence, CONFIDENCE_LOW);
         assert_eq!(butterstick.variants[0]["connection"], "ft232h");
         assert!(out.devices[2].boards.is_empty());
         assert!(out.unreachable.is_empty());
@@ -195,7 +195,7 @@ mod tests {
         let named: Vec<_> = out.devices[0]
             .boards
             .iter()
-            .filter(|m| m.confidence == Confidence::Named)
+            .filter(|m| m.confidence == CONFIDENCE_HIGH)
             .map(|m| (m.board.as_str(), m.custom))
             .collect();
         assert_eq!(named, [("alhambra-ii", false), ("alhambra-ii", true)]);
@@ -228,7 +228,7 @@ mod tests {
         let u = &out.unreachable[0];
         assert_eq!((u.vid.as_str(), u.pid.as_str()), ("0403", "6010"));
         assert!(u.boards.iter().any(|m| m.board == "alhambra-ii"));
-        assert!(u.boards.iter().all(|m| m.confidence == Confidence::Chip));
+        assert!(u.boards.iter().all(|m| m.confidence == CONFIDENCE_LOW));
         assert_eq!(u.action, devices::unreachable_action());
         let v = serde_json::to_value(&out).unwrap();
         assert!(

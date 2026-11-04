@@ -3465,7 +3465,7 @@
   },
   {
     "name": "list_devices",
-    "description": "Lists the USB devices connected to this computer, with their USB IDs, names and serial numbers, and for each the boards it may be: catalog boards, and the request's custom_boards, each with a confidence (named: the device's name matched the board's; chip: only its USB chip did) and the variants it fits. program_board needs the id of one of these devices: pick the device whose boards include the build's board. Devices that need a driver or permissions first are listed apart, under unreachable, with the fix.",
+    "description": "Lists the USB devices connected to this computer, with their USB IDs, names and serial numbers, and for each the boards it may be: catalog boards, and the request's custom_boards, best first, each with a confidence from 1 to 3 (higher is surer; 3 is the highest) and the variants it fits. program_board needs the id of one of these devices: pick the device whose boards include the build's board. Devices that need a driver or permissions first are listed apart, under unreachable, with the fix.",
     "inputSchema": {
       "$defs": {
         "Architecture": {
@@ -3843,8 +3843,10 @@
               "type": "string"
             },
             "confidence": {
-              "$ref": "#/$defs/Confidence",
-              "description": "How sure the match is. named: the device's product name or serial\nnumber matched the board's pattern, so the device says it is this\nkind of board (several boards can still share one name). chip: only\nthe USB IDs matched, so it is any device with this USB chip, often\nmany boards and adapters."
+              "description": "How sure the engine is that the device is this board, from 1 to 3:\nhigher is surer, and 3 is always the highest. Compare it, such as to\npre-select a device at 3; how the engine rates may improve between\nversions. No rating proves which board is connected, and several\nboards can have the same one.",
+              "maximum": 3,
+              "minimum": 1,
+              "type": "integer"
             },
             "custom": {
               "description": "True when the board is one of the request's custom_boards rather\nthan the catalog's. A custom board can have a catalog board's ID; the\nhost decides which one it means.",
@@ -3867,20 +3869,6 @@
             "variants"
           ],
           "type": "object"
-        },
-        "Confidence": {
-          "oneOf": [
-            {
-              "const": "named",
-              "description": "The device's name or serial number matched the board's pattern.",
-              "type": "string"
-            },
-            {
-              "const": "chip",
-              "description": "Only the USB IDs matched.",
-              "type": "string"
-            }
-          ]
         },
         "Device": {
           "additionalProperties": false,
@@ -3971,7 +3959,7 @@
               "description": "What makes the device usable, such as fix_device_permissions."
             },
             "boards": {
-              "description": "The boards whose USB IDs it has. Their confidence is always chip,\nsince its names can't be read.",
+              "description": "The boards whose USB IDs it has. Their confidence is always the\nlowest, 1, since its names can't be read.",
               "items": {
                 "$ref": "#/$defs/BoardMatch"
               },
@@ -4093,8 +4081,10 @@
               "type": "string"
             },
             "confidence": {
-              "$ref": "#/$defs/Confidence",
-              "description": "How sure the match is. named: the device's product name or serial\nnumber matched the board's pattern, so the device says it is this\nkind of board (several boards can still share one name). chip: only\nthe USB IDs matched, so it is any device with this USB chip, often\nmany boards and adapters."
+              "description": "How sure the engine is that the device is this board, from 1 to 3:\nhigher is surer, and 3 is always the highest. Compare it, such as to\npre-select a device at 3; how the engine rates may improve between\nversions. No rating proves which board is connected, and several\nboards can have the same one.",
+              "maximum": 3,
+              "minimum": 1,
+              "type": "integer"
             },
             "custom": {
               "description": "True when the board is one of the request's custom_boards rather\nthan the catalog's. A custom board can have a catalog board's ID; the\nhost decides which one it means.",
@@ -4156,20 +4146,6 @@
             "shell"
           ],
           "type": "object"
-        },
-        "Confidence": {
-          "oneOf": [
-            {
-              "const": "named",
-              "description": "The device's name or serial number matched the board's pattern.",
-              "type": "string"
-            },
-            {
-              "const": "chip",
-              "description": "Only the USB IDs matched.",
-              "type": "string"
-            }
-          ]
         },
         "Device": {
           "additionalProperties": false,
