@@ -539,6 +539,12 @@ mod tests {
                 .all(|v| PROGRAMMERS.contains(&v.programmer.as_str()))
         }));
         assert_eq!(c.boards.len(), 95);
+        // Users pick boards by description, so no two boards share one.
+        let mut descriptions: Vec<&str> =
+            c.boards.values().map(|b| b.description.as_str()).collect();
+        descriptions.sort();
+        descriptions.dedup();
+        assert_eq!(descriptions.len(), c.boards.len());
         for p in PROGRAMMERS {
             assert!(
                 c.boards

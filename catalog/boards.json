@@ -346,7 +346,7 @@
       "tested": true
     },
     "colorlight-5a-75e-v71-ft2232h": {
-      "description": "ColorLight-5A-75E-V71",
+      "description": "ColorLight-5A-75E-V71 (FT2232H)",
       "fpga_id": "lfe5u-25f-6bg256c",
       "default_variant": "flash",
       "variants": {
@@ -362,7 +362,7 @@
       "tested": true
     },
     "colorlight-5a-75e-v71-ft232h": {
-      "description": "ColorLight-5A-75E-V71",
+      "description": "ColorLight-5A-75E-V71 (FT232H)",
       "fpga_id": "lfe5u-25f-6bg256c",
       "default_variant": "flash",
       "variants": {
@@ -378,7 +378,7 @@
       "tested": true
     },
     "colorlight-5a-75e-v71-usb-blaster": {
-      "description": "ColorLight-5A-75E-V71",
+      "description": "ColorLight-5A-75E-V71 (USB-Blaster)",
       "fpga_id": "lfe5u-25f-6bg256c",
       "default_variant": "flash",
       "variants": {
@@ -428,7 +428,7 @@
       "tested": true
     },
     "colorlight-i9-v7-2-cmsis-dap": {
-      "description": "ColorLight-i9",
+      "description": "ColorLight-i9 v7.2 (CMSIS-DAP)",
       "fpga_id": "lfe5u-45f-6bg381c",
       "default_variant": "flash",
       "variants": {
@@ -444,7 +444,7 @@
       "tested": true
     },
     "colorlight-i9-v7-2-ft2232h": {
-      "description": "ColorLight-i9",
+      "description": "ColorLight-i9 v7.2 (FT2232H)",
       "fpga_id": "lfe5u-45f-6bg381c",
       "default_variant": "flash",
       "variants": {
@@ -460,7 +460,7 @@
       "tested": true
     },
     "colorlight-i9-v7-2-ft232h": {
-      "description": "ColorLight-i9",
+      "description": "ColorLight-i9 v7.2 (FT232H)",
       "fpga_id": "lfe5u-45f-6bg381c",
       "default_variant": "flash",
       "variants": {
@@ -476,7 +476,7 @@
       "tested": true
     },
     "colorlight-i9-v7-2-usb-blaster": {
-      "description": "ColorLight-i9",
+      "description": "ColorLight-i9 v7.2 (USB-Blaster)",
       "fpga_id": "lfe5u-45f-6bg381c",
       "default_variant": "flash",
       "variants": {
@@ -540,7 +540,7 @@
       "tested": true
     },
     "ecp5-mini-25": {
-      "description": "ECP5-Mini-12",
+      "description": "ECP5-Mini-25",
       "fpga_id": "lfe5u-25f-6bg256c",
       "default_variant": "flash",
       "variants": {
@@ -740,7 +740,7 @@
       "tested": true
     },
     "icebreaker-bitsy0": {
-      "description": "iCEBreaker bitsy",
+      "description": "iCEBreaker bitsy v0",
       "fpga_id": "ice40up5k-sg48",
       "default_variant": "flash",
       "variants": {
@@ -758,7 +758,7 @@
       "user_notes": "Programming needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
     },
     "icebreaker-bitsy1": {
-      "description": "iCEBreaker bitsy",
+      "description": "iCEBreaker bitsy v1",
       "fpga_id": "ice40up5k-sg48",
       "default_variant": "flash",
       "variants": {
