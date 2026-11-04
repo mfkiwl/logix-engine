@@ -9,19 +9,6 @@
           {
             "when": {
               "connection": "usb",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board alchitry_au ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6010"
-            },
-            "tested": true
-          },
-          {
-            "when": {
-              "connection": "usb",
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
@@ -32,6 +19,19 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a35tftg256, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board alchitry_au ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
         ]
       }
@@ -41,19 +41,6 @@
       "fpga_id": "xc7a100tftg256-1",
       "variants": {
         "configurations": [
-          {
-            "when": {
-              "connection": "usb",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board alchitry_au_plus ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6010"
-            },
-            "tested": true
-          },
           {
             "when": {
               "connection": "usb",
@@ -67,6 +54,19 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a100tftg256, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board alchitry_au_plus ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
         ]
       }
@@ -167,19 +167,6 @@
           {
             "when": {
               "connection": "usb",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board arty_a7_100t ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6010"
-            },
-            "tested": true
-          },
-          {
-            "when": {
-              "connection": "usb",
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
@@ -190,6 +177,19 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a100tcsg324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board arty_a7_100t ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
         ]
       }
@@ -199,21 +199,6 @@
       "fpga_id": "xc7a35tcsg324-1",
       "variants": {
         "configurations": [
-          {
-            "when": {
-              "connection": "usb",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board arty_a7_35t ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6010",
-              "product_regex": "^Digilent USB Device"
-            },
-            "tested": true,
-            "maintainer_notes": "USB filter: product_regex from a real Arty A7-35T (FTDI 0403:6010, product \"Digilent USB Device\", manufacturer \"Digilent\"), as the Basys3's; it lets hosts suggest the Arty for that device. Other Digilent boards likely report the same name but weren't checked, so they keep the chip ids only."
-          },
           {
             "when": {
               "connection": "usb",
@@ -228,6 +213,21 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a35tcsg324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. USB filter: product_regex from a real Arty A7-35T (FTDI 0403:6010, product \"Digilent USB Device\", manufacturer \"Digilent\"), as the Basys3's; it lets hosts suggest the Arty for that device. Other Digilent boards likely report the same name but weren't checked, so they keep the chip ids only."
+          },
+          {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board arty_a7_35t ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010",
+              "product_regex": "^Digilent USB Device"
+            },
+            "tested": true,
+            "maintainer_notes": "USB filter: product_regex from a real Arty A7-35T (FTDI 0403:6010, product \"Digilent USB Device\", manufacturer \"Digilent\"), as the Basys3's; it lets hosts suggest the Arty for that device. Other Digilent boards likely report the same name but weren't checked, so they keep the chip ids only."
           }
         ]
       }
@@ -237,19 +237,6 @@
       "fpga_id": "xc7s25csga324-1",
       "variants": {
         "configurations": [
-          {
-            "when": {
-              "connection": "usb",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board arty_s7_25 ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6010"
-            },
-            "tested": true
-          },
           {
             "when": {
               "connection": "usb",
@@ -263,6 +250,19 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7s25csga324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board arty_s7_25 ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
         ]
       }
@@ -272,19 +272,6 @@
       "fpga_id": "xc7s50csga324-1",
       "variants": {
         "configurations": [
-          {
-            "when": {
-              "connection": "usb",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board arty_s7_50 ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6010"
-            },
-            "tested": true
-          },
           {
             "when": {
               "connection": "usb",
@@ -298,6 +285,19 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7s50csga324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board arty_s7_50 ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
         ]
       }
@@ -332,20 +332,6 @@
           {
             "when": {
               "connection": "usb",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board basys3 ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6010",
-              "product_regex": "^Digilent USB Device*"
-            },
-            "tested": true
-          },
-          {
-            "when": {
-              "connection": "usb",
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
@@ -357,6 +343,20 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a35tcpg236, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board basys3 ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010",
+              "product_regex": "^Digilent USB Device*"
+            },
+            "tested": true
           }
         ]
       }
@@ -439,19 +439,6 @@
           {
             "when": {
               "connection": "usb",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board cmoda7_35t ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6010"
-            },
-            "tested": true
-          },
-          {
-            "when": {
-              "connection": "usb",
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
@@ -462,6 +449,19 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a35tcpg236, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board cmoda7_35t ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
         ]
       }
@@ -474,19 +474,6 @@
           {
             "when": {
               "connection": "ft2232h",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6010"
-            },
-            "tested": true
-          },
-          {
-            "when": {
-              "connection": "ft2232h",
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
@@ -498,6 +485,19 @@
             "tested": false,
             "user_notes": "Writing the flash replaces the firmware the board came with.",
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "ft2232h",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
         ]
       }
@@ -510,19 +510,6 @@
           {
             "when": {
               "connection": "ft2232h",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6010"
-            },
-            "tested": true
-          },
-          {
-            "when": {
-              "connection": "ft2232h",
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
@@ -534,6 +521,19 @@
             "tested": false,
             "user_notes": "Writing the flash replaces the firmware the board came with.",
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "ft2232h",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
         ]
       }
@@ -546,19 +546,6 @@
           {
             "when": {
               "connection": "ft2232h",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6010"
-            },
-            "tested": true
-          },
-          {
-            "when": {
-              "connection": "ft2232h",
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
@@ -570,6 +557,19 @@
             "tested": false,
             "user_notes": "Writing the flash replaces the firmware the board came with.",
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "ft2232h",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
         ]
       }
@@ -582,19 +582,6 @@
           {
             "when": {
               "connection": "ft2232h",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6010"
-            },
-            "tested": true
-          },
-          {
-            "when": {
-              "connection": "ft2232h",
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
@@ -606,15 +593,7 @@
             "tested": false,
             "user_notes": "Writing the flash replaces the firmware the board came with.",
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
-          }
-        ]
-      }
-    },
-    "colorlight-5a-75e-v71": {
-      "description": "ColorLight-5A-75E-V71",
-      "fpga_id": "lfe5u-25f-6bg256c",
-      "variants": {
-        "configurations": [
+          },
           {
             "when": {
               "connection": "ft2232h",
@@ -627,33 +606,15 @@
               "pid": "6010"
             },
             "tested": true
-          },
-          {
-            "when": {
-              "connection": "ft232h",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6014"
-            },
-            "tested": true
-          },
-          {
-            "when": {
-              "connection": "usb-blaster",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c usb-blaster -v --file-type bin ${BITSTREAM}",
-            "usb": {
-              "vid": "09fb",
-              "pid": "6001"
-            },
-            "tested": true
-          },
+          }
+        ]
+      }
+    },
+    "colorlight-5a-75e-v71": {
+      "description": "ColorLight-5A-75E-V71",
+      "fpga_id": "lfe5u-25f-6bg256c",
+      "variants": {
+        "configurations": [
           {
             "when": {
               "connection": "ft2232h",
@@ -698,6 +659,45 @@
             "tested": false,
             "user_notes": "Writing the flash replaces the firmware the board came with.",
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "ft2232h",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
+          },
+          {
+            "when": {
+              "connection": "ft232h",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6014"
+            },
+            "tested": true
+          },
+          {
+            "when": {
+              "connection": "usb-blaster",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c usb-blaster -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "09fb",
+              "pid": "6001"
+            },
+            "tested": true
           }
         ]
       }
@@ -743,58 +743,6 @@
       "fpga_id": "lfe5u-45f-6bg381c",
       "variants": {
         "configurations": [
-          {
-            "when": {
-              "connection": "cmsis-dap",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c cmsisdap -v --file-type bin ${BITSTREAM}",
-            "usb": {
-              "vid": "0d28",
-              "pid": "0204"
-            },
-            "tested": true
-          },
-          {
-            "when": {
-              "connection": "ft2232h",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6010"
-            },
-            "tested": true
-          },
-          {
-            "when": {
-              "connection": "ft232h",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6014"
-            },
-            "tested": true
-          },
-          {
-            "when": {
-              "connection": "usb-blaster",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c usb-blaster -v --file-type bin ${BITSTREAM}",
-            "usb": {
-              "vid": "09fb",
-              "pid": "6001"
-            },
-            "tested": true
-          },
           {
             "when": {
               "connection": "cmsis-dap",
@@ -854,6 +802,58 @@
             "tested": false,
             "user_notes": "Writing the flash replaces the firmware the board came with.",
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "cmsis-dap",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c cmsisdap -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0d28",
+              "pid": "0204"
+            },
+            "tested": true
+          },
+          {
+            "when": {
+              "connection": "ft2232h",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
+          },
+          {
+            "when": {
+              "connection": "ft232h",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6014"
+            },
+            "tested": true
+          },
+          {
+            "when": {
+              "connection": "usb-blaster",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c usb-blaster -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "09fb",
+              "pid": "6001"
+            },
+            "tested": true
           }
         ]
       }
@@ -863,19 +863,6 @@
       "fpga_id": "xc7a50tfgg484-1",
       "variants": {
         "configurations": [
-          {
-            "when": {
-              "connection": "usb",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board colorlight-i9+ -c cmsisdap ${BITSTREAM}",
-            "usb": {
-              "vid": "0d28",
-              "pid": "0204"
-            },
-            "tested": true
-          },
           {
             "when": {
               "connection": "usb",
@@ -889,6 +876,19 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a50tfgg484, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board colorlight-i9+ -c cmsisdap ${BITSTREAM}",
+            "usb": {
+              "vid": "0d28",
+              "pid": "0204"
+            },
+            "tested": true
           }
         ]
       }
@@ -901,19 +901,6 @@
           {
             "when": {
               "connection": "usb",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6010"
-            },
-            "tested": true
-          },
-          {
-            "when": {
-              "connection": "usb",
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
@@ -924,6 +911,19 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
         ]
       }
@@ -936,19 +936,6 @@
           {
             "when": {
               "connection": "ft2232h",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6010"
-            },
-            "tested": true
-          },
-          {
-            "when": {
-              "connection": "ft2232h",
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
@@ -959,6 +946,19 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "ft2232h",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
         ]
       }
@@ -971,19 +971,6 @@
           {
             "when": {
               "connection": "ft2232h",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6010"
-            },
-            "tested": true
-          },
-          {
-            "when": {
-              "connection": "ft2232h",
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
@@ -994,6 +981,19 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "ft2232h",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
         ]
       }
@@ -1049,45 +1049,6 @@
           {
             "when": {
               "connection": "ft2232h",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6010"
-            },
-            "tested": true
-          },
-          {
-            "when": {
-              "connection": "ft232h",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6014"
-            },
-            "tested": true
-          },
-          {
-            "when": {
-              "connection": "usb-blaster",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c usb-blaster -v --file-type bin ${BITSTREAM}",
-            "usb": {
-              "vid": "09fb",
-              "pid": "6001"
-            },
-            "tested": true
-          },
-          {
-            "when": {
-              "connection": "ft2232h",
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
@@ -1126,6 +1087,45 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "ft2232h",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
+          },
+          {
+            "when": {
+              "connection": "ft232h",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6014"
+            },
+            "tested": true
+          },
+          {
+            "when": {
+              "connection": "usb-blaster",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c usb-blaster -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "09fb",
+              "pid": "6001"
+            },
+            "tested": true
           }
         ]
       }
@@ -1339,19 +1339,6 @@
           {
             "when": {
               "connection": "usb",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft231X --pins=7:3:5:6 -v --file-type bin ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6015"
-            },
-            "tested": true
-          },
-          {
-            "when": {
-              "connection": "usb",
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
@@ -1362,6 +1349,19 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft231X --pins=7:3:5:6 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6015"
+            },
+            "tested": true
           }
         ]
       }
@@ -1528,20 +1528,6 @@
           {
             "when": {
               "connection": "unspecified",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft232 --fpga-part xc7a200tfbg484 ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6014"
-            },
-            "tested": true,
-            "maintainer_notes": "Programmed through an FT232 (openFPGALoader -c ft232); not found in the board's documentation whether the chip is on the board or an external adapter."
-          },
-          {
-            "when": {
-              "connection": "unspecified",
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
@@ -1552,6 +1538,20 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a200tfbg484, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Programmed through an FT232 (openFPGALoader -c ft232); not found in the board's documentation whether the chip is on the board or an external adapter."
+          },
+          {
+            "when": {
+              "connection": "unspecified",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft232 --fpga-part xc7a200tfbg484 ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6014"
+            },
+            "tested": true,
+            "maintainer_notes": "Programmed through an FT232 (openFPGALoader -c ft232); not found in the board's documentation whether the chip is on the board or an external adapter."
           }
         ]
       }
@@ -1561,19 +1561,6 @@
       "fpga_id": "xc7a50tfgg484-1",
       "variants": {
         "configurations": [
-          {
-            "when": {
-              "connection": "usb",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board mimas_a7 ${BITSTREAM}",
-            "usb": {
-              "vid": "2a19",
-              "pid": "1009"
-            },
-            "tested": true
-          },
           {
             "when": {
               "connection": "usb",
@@ -1587,6 +1574,19 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a50tfgg484, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board mimas_a7 ${BITSTREAM}",
+            "usb": {
+              "vid": "2a19",
+              "pid": "1009"
+            },
+            "tested": true
           }
         ]
       }
@@ -1596,20 +1596,6 @@
       "fpga_id": "lfe5u-45f-6bg256c",
       "variants": {
         "configurations": [
-          {
-            "when": {
-              "connection": "unspecified",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6010"
-            },
-            "tested": true,
-            "maintainer_notes": "Programmed through an FT2232 (openFPGALoader -c ft2232); not found in the board's documentation whether the chip is on the board or an external adapter."
-          },
           {
             "when": {
               "connection": "unspecified",
@@ -1623,6 +1609,20 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Programmed through an FT2232 (openFPGALoader -c ft2232); not found in the board's documentation whether the chip is on the board or an external adapter."
+          },
+          {
+            "when": {
+              "connection": "unspecified",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true,
+            "maintainer_notes": "Programmed through an FT2232 (openFPGALoader -c ft2232); not found in the board's documentation whether the chip is on the board or an external adapter."
           }
         ]
       }
@@ -1632,19 +1632,6 @@
       "fpga_id": "xc7a100tcsg324-1",
       "variants": {
         "configurations": [
-          {
-            "when": {
-              "connection": "usb",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board nexys_a7_100 ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6010"
-            },
-            "tested": true
-          },
           {
             "when": {
               "connection": "usb",
@@ -1658,6 +1645,19 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a100tcsg324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board nexys_a7_100 ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
         ]
       }
@@ -1667,19 +1667,6 @@
       "fpga_id": "xc7a50tcsg324-1",
       "variants": {
         "configurations": [
-          {
-            "when": {
-              "connection": "usb",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify --board nexys_a7_50 ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6010"
-            },
-            "tested": true
-          },
           {
             "when": {
               "connection": "usb",
@@ -1693,6 +1680,19 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a50tcsg324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify --board nexys_a7_50 ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
         ]
       }
@@ -1882,19 +1882,6 @@
           {
             "when": {
               "connection": "usb",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -b tangnano ${BITSTREAM}",
-            "usb": {
-              "vid": "0403",
-              "pid": "6010"
-            },
-            "tested": true
-          },
-          {
-            "when": {
-              "connection": "usb",
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
@@ -1905,6 +1892,19 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash, which writes the GW1N's internal flash. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "usb",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -b tangnano ${BITSTREAM}",
+            "usb": {
+              "vid": "0403",
+              "pid": "6010"
+            },
+            "tested": true
           }
         ]
       }
@@ -2357,19 +2357,6 @@
           {
             "when": {
               "connection": "usb-blaster",
-              "memory": "ram"
-            },
-            "programmer": "openfpgaloader",
-            "args": "--force-terminal-mode --verify -c usb-blaster ${BITSTREAM}",
-            "usb": {
-              "vid": "09fb",
-              "pid": "6001"
-            },
-            "tested": true
-          },
-          {
-            "when": {
-              "connection": "usb-blaster",
               "memory": "flash"
             },
             "programmer": "openfpgaloader",
@@ -2380,15 +2367,7 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a35tfgg484, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
-          }
-        ]
-      }
-    },
-    "zxtres-plus": {
-      "description": "ZXTRES+ (Xilinx, Artix7)",
-      "fpga_id": "xc7a100tfgg484-2",
-      "variants": {
-        "configurations": [
+          },
           {
             "when": {
               "connection": "usb-blaster",
@@ -2401,7 +2380,15 @@
               "pid": "6001"
             },
             "tested": true
-          },
+          }
+        ]
+      }
+    },
+    "zxtres-plus": {
+      "description": "ZXTRES+ (Xilinx, Artix7)",
+      "fpga_id": "xc7a100tfgg484-2",
+      "variants": {
+        "configurations": [
           {
             "when": {
               "connection": "usb-blaster",
@@ -2415,15 +2402,7 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a100tfgg484, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
-          }
-        ]
-      }
-    },
-    "zxtres-plus-plus": {
-      "description": "ZXTRES++ (Xilinx, Artix7)",
-      "fpga_id": "xc7a200tfbg484-2",
-      "variants": {
-        "configurations": [
+          },
           {
             "when": {
               "connection": "usb-blaster",
@@ -2436,7 +2415,15 @@
               "pid": "6001"
             },
             "tested": true
-          },
+          }
+        ]
+      }
+    },
+    "zxtres-plus-plus": {
+      "description": "ZXTRES++ (Xilinx, Artix7)",
+      "fpga_id": "xc7a200tfbg484-2",
+      "variants": {
+        "configurations": [
           {
             "when": {
               "connection": "usb-blaster",
@@ -2450,6 +2437,19 @@
             },
             "tested": false,
             "maintainer_notes": "New configuration: the RAM configuration's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a200tfbg484, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+          },
+          {
+            "when": {
+              "connection": "usb-blaster",
+              "memory": "ram"
+            },
+            "programmer": "openfpgaloader",
+            "args": "--force-terminal-mode --verify -c usb-blaster ${BITSTREAM}",
+            "usb": {
+              "vid": "09fb",
+              "pid": "6001"
+            },
+            "tested": true
           }
         ]
       }

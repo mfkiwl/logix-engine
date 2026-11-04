@@ -835,10 +835,16 @@ mod tests {
         ] {
             assert_eq!(dims(id), choices, "{id}");
         }
-        // Flash configurations added to RAM-only boards keep the RAM one as
-        // the default, so a project without a variant uploads as before.
-        assert_eq!(memory_of("arty-a7-35t", 0), "ram");
-        assert_eq!(memory_of("arty-a7-35t", 1), "flash");
+        // Flash is the default wherever a board has it: the design stays
+        // when the board is powered off, as users expect.
+        assert_eq!(memory_of("arty-a7-35t", 0), "flash");
+        assert_eq!(memory_of("arty-a7-35t", 1), "ram");
+        for (id, b) in &c.boards {
+            let cs = &b.variants.configurations;
+            if cs.iter().any(|v| v.when["memory"] == "flash") {
+                assert_eq!(cs[0].when["memory"], "flash", "{id}");
+            }
+        }
         // Where openFPGALoader can't tell the part (no --board), the flash
         // command names it, so it loads the right SPI-over-JTAG bridge.
         for b in c.boards.values() {
@@ -863,9 +869,9 @@ mod tests {
         // Where the design goes follows from the command: openFPGALoader
         // writes RAM unless told to write flash (iCE40 always flash).
         let memory = |id: &str| c.boards[id].variants.configurations[0].when["memory"].clone();
-        assert_eq!(memory("arty-a7-35t"), "ram");
+        assert_eq!(memory("arty-a7-35t"), "flash");
         assert_eq!(memory("sipeed-tang-nano-9k"), "flash");
-        assert_eq!(memory("sipeed-tang-nano"), "ram");
+        assert_eq!(memory("sipeed-tang-nano"), "flash");
         assert_eq!(memory("ulx3s-12f"), "ram");
         assert_eq!(memory("icestick"), "flash");
         for b in c.boards.values() {
