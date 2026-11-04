@@ -661,7 +661,7 @@ fn list_devices_names_the_boards_each_device_may_be() {
     let out = list_devices::run_with(Default::default(), || Ok(devices.clone())).unwrap();
     let best = &out.devices[0].boards[0];
     assert_eq!(
-        (best.board.as_str(), best.confidence),
+        (best.board.as_str(), best.variants[0].confidence),
         ("alhambra-ii", CONFIDENCE_HIGH)
     );
     assert!(

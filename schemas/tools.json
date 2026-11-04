@@ -3842,18 +3842,12 @@
               "description": "The board's ID: a catalog ID, or a key of the request's\ncustom_boards when custom is true.",
               "type": "string"
             },
-            "confidence": {
-              "description": "How sure the engine is that the device is this board: the highest\nconfidence of its variants. From 1 to 3: higher is surer, and 3 is\nalways the highest. Compare it, such as to pre-select a device at 3;\nhow the engine rates may improve between versions. No rating proves\nwhich board is connected, and several boards can have the same one.",
-              "maximum": 3,
-              "minimum": 1,
-              "type": "integer"
-            },
             "custom": {
               "description": "True when the board is one of the request's custom_boards rather\nthan the catalog's. A custom board can have a catalog board's ID; the\nhost decides which one it means.",
               "type": "boolean"
             },
             "variants": {
-              "description": "The board's variants this device fits, in the board's order, each\nwith its own confidence.",
+              "description": "The board's variants this device fits, in the board's order, each\nwith its own confidence. Use the confidence of the variant you mean,\nsuch as the build's.",
               "items": {
                 "$ref": "#/$defs/VariantMatch"
               },
@@ -3862,7 +3856,6 @@
           },
           "required": [
             "board",
-            "confidence",
             "variants"
           ],
           "type": "object"
@@ -3956,7 +3949,7 @@
               "description": "What makes the device usable, such as fix_device_permissions."
             },
             "boards": {
-              "description": "The boards whose USB IDs it has. Their confidence is always the\nlowest, 1, since its names can't be read.",
+              "description": "The boards whose USB IDs it has. Every variant's confidence is the\nlowest, 1, since its names can't be read.",
               "items": {
                 "$ref": "#/$defs/BoardMatch"
               },
@@ -4003,7 +3996,7 @@
           "description": "A variant of a board that a device fits.",
           "properties": {
             "confidence": {
-              "description": "How sure the engine is that the device is the board in this variant,\nfrom 1 to 3, as for the board.",
+              "description": "How sure the engine is that the device is the board in this variant,\nfrom 1 to 3: higher is surer, and 3 is always the highest. Compare it,\nsuch as to pre-select a device at 3; how the engine rates may improve\nbetween versions. No rating proves which board is connected, and\nseveral boards can have the same one.",
               "maximum": 3,
               "minimum": 1,
               "type": "integer"
@@ -4101,18 +4094,12 @@
               "description": "The board's ID: a catalog ID, or a key of the request's\ncustom_boards when custom is true.",
               "type": "string"
             },
-            "confidence": {
-              "description": "How sure the engine is that the device is this board: the highest\nconfidence of its variants. From 1 to 3: higher is surer, and 3 is\nalways the highest. Compare it, such as to pre-select a device at 3;\nhow the engine rates may improve between versions. No rating proves\nwhich board is connected, and several boards can have the same one.",
-              "maximum": 3,
-              "minimum": 1,
-              "type": "integer"
-            },
             "custom": {
               "description": "True when the board is one of the request's custom_boards rather\nthan the catalog's. A custom board can have a catalog board's ID; the\nhost decides which one it means.",
               "type": "boolean"
             },
             "variants": {
-              "description": "The board's variants this device fits, in the board's order, each\nwith its own confidence.",
+              "description": "The board's variants this device fits, in the board's order, each\nwith its own confidence. Use the confidence of the variant you mean,\nsuch as the build's.",
               "items": {
                 "$ref": "#/$defs/VariantMatch"
               },
@@ -4121,7 +4108,6 @@
           },
           "required": [
             "board",
-            "confidence",
             "variants"
           ],
           "type": "object"
@@ -4250,7 +4236,7 @@
           "description": "A variant of a board that a device fits.",
           "properties": {
             "confidence": {
-              "description": "How sure the engine is that the device is the board in this variant,\nfrom 1 to 3, as for the board.",
+              "description": "How sure the engine is that the device is the board in this variant,\nfrom 1 to 3: higher is surer, and 3 is always the highest. Compare it,\nsuch as to pre-select a device at 3; how the engine rates may improve\nbetween versions. No rating proves which board is connected, and\nseveral boards can have the same one.",
               "maximum": 3,
               "minimum": 1,
               "type": "integer"

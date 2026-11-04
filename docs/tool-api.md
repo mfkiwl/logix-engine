@@ -688,11 +688,11 @@ Programs a bitstream into the board it was built for, on the device the host cho
 
 Lists the connected USB devices, each with an `id` for `program_board` and the boards it may be. The engine reads USB devices with libusb, built into the engine, the same library the programmers use, so the bus and device numbers mean the same to both. Devices are sorted by vendor ID, product ID, bus and device number.
 
-**Matching.** A device matches a configuration's USB filter when its USB IDs are equal and, when the filter has `product_regex` or `serial_regex`, its product name or serial number contains a match for it. The engine matches every device against every catalog board and the request's `custom_boards` on each call, so a host's own boards count as soon as it sends them. Each device lists the boards it matches, best first: by confidence, then catalog boards before custom ones, then by board ID. A custom board may have a catalog board's ID; both are listed, the custom one with `custom: true`, and the host decides which it means.
+**Matching.** A device matches a configuration's USB filter when its USB IDs are equal and, when the filter has `product_regex` or `serial_regex`, its product name or serial number contains a match for it. The engine matches every device against every catalog board and the request's `custom_boards` on each call, so a host's own boards count as soon as it sends them. Each device lists the boards it matches, best first: by their best variant's confidence, then catalog boards before custom ones, then by board ID. A custom board may have a catalog board's ID; both are listed, the custom one with `custom: true`, and the host decides which it means.
 
-**Confidence.** A number from 1 to 3: how sure the engine is that the device is that board, given for each variant the device fits (variants can have different USB filters) and for the board, the best of its variants'. Higher is surer, and 3 is always the highest. Hosts compare it, such as to pre-select a device at 3 or to show low matches only on request; they don't need to know how it is rated, which may improve between engine versions (the current rules are in the [requirements](requirements.md#device-selection)). Several boards can have the same confidence for one device, such as the two OrangeCrab sizes, and no rating proves which board is connected: boards the catalog doesn't know can report the same names.
+**Confidence.** A number from 1 to 3: how sure the engine is that the device is that board in a variant, given for each variant the device fits, since variants can have different USB filters. Hosts use the rating of the variant they mean, such as the build's or the one the user selected. Higher is surer, and 3 is always the highest. Hosts compare it, such as to pre-select a device at 3 or to show low matches only on request; they don't need to know how it is rated, which may improve between engine versions (the current rules are in the [requirements](requirements.md#device-selection)). Several boards can have the same confidence for one device, such as the two OrangeCrab sizes, and no rating proves which board is connected: boards the catalog doesn't know can report the same names.
 
-**Unreachable devices.** A device the engine sees but can't open, because of missing permissions or a missing driver, can't be programmed and its names can't be read, so it isn't in `devices`. When its USB IDs fit a board, it is listed in `unreachable` with those boards (always confidence 1, since names are unknown) and the action that makes it usable: `install_drivers` on Windows, `fix_device_permissions` elsewhere. Other devices the engine can't open are left out.
+**Unreachable devices.** A device the engine sees but can't open, because of missing permissions or a missing driver, can't be programmed and its names can't be read, so it isn't in `devices`. When its USB IDs fit a board, it is listed in `unreachable` with those boards (every variant at confidence 1, since names are unknown) and the action that makes it usable: `install_drivers` on Windows, `fix_device_permissions` elsewhere. Other devices the engine can't open are left out.
 
 **Device IDs.** An `id` names the device on this computer for a short time: it is made from where the device is plugged in and what it is, so it stays valid while the device stays on the same USB port, even when it is plugged in again, and survives an engine restart. IDs differ between platforms and computers. Hosts must treat them as opaque, never parse or build them, and list the devices again before asking the user to choose.
 
@@ -719,7 +719,7 @@ Lists the connected USB devices, each with an `id` for `program_board` and the b
 | `manufacturer`, `product` | text | Names reported by the device, when available |
 | `serial_number` | text | Serial number, when available |
 | `bus`, `device` | integer | USB bus and device number, for USB devices. The device number changes when the device is plugged in again |
-| `boards` | list of objects | Optional, omitted when empty. The boards the device may be, best first, each with `board` (its ID), `custom` (true for a board from `custom_boards`, omitted otherwise), `confidence` (1 to 3, higher is surer: the best of its variants') and `variants` (the board's variants this device fits, in the board's order, each with `when`, its dimension values as in the board's configurations, and its own `confidence`) |
+| `boards` | list of objects | Optional, omitted when empty. The boards the device may be, best first, each with `board` (its ID), `custom` (true for a board from `custom_boards`, omitted otherwise) and `variants` (the board's variants this device fits, in the board's order, each with `when`, its dimension values as in the board's configurations, and its own `confidence`) |
 
 **Errors:** setup errors with `install_drivers` or `fix_device_permissions` when devices cannot be scanned. Request errors for an invalid custom board. Engine errors.
 
@@ -734,8 +734,8 @@ Lists the connected USB devices, each with an `id` for `program_board` and the b
       "manufacturer": "AlhambraBits", "product": "Alhambra II v1.0A",
       "serial_number": "FTATANKC", "bus": 1, "device": 7,
       "boards": [
-        { "board": "alhambra-ii", "confidence": 3, "variants": [{ "when": { "connection": "usb", "memory": "flash" }, "confidence": 3 }] },
-        { "board": "alchitry-au", "confidence": 1, "variants": [{ "when": { "connection": "usb", "memory": "flash" }, "confidence": 1 }, { "when": { "connection": "usb", "memory": "ram" }, "confidence": 1 }] }
+        { "board": "alhambra-ii", "variants": [{ "when": { "connection": "usb", "memory": "flash" }, "confidence": 3 }] },
+        { "board": "alchitry-au", "variants": [{ "when": { "connection": "usb", "memory": "flash" }, "confidence": 1 }, { "when": { "connection": "usb", "memory": "ram" }, "confidence": 1 }] }
       ]
     }
   ]

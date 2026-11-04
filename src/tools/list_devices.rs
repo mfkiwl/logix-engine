@@ -153,7 +153,7 @@ mod tests {
         let bootloader = first(0).unwrap();
         // Two boards share the OrangeCrab bootloader's name: both named.
         assert_eq!(bootloader.board, "orangecrab-r02-25f");
-        assert_eq!(bootloader.confidence, CONFIDENCE_HIGH);
+        assert_eq!(bootloader.best_confidence(), CONFIDENCE_HIGH);
         assert_eq!(out.devices[0].boards[1].board, "orangecrab-r02-85f");
         assert_eq!(
             bootloader.variants,
@@ -171,7 +171,7 @@ mod tests {
             .iter()
             .find(|m| m.board == "butterstick-r10-2g-85k")
             .unwrap();
-        assert_eq!(butterstick.confidence, CONFIDENCE_LOW);
+        assert_eq!(butterstick.best_confidence(), CONFIDENCE_LOW);
         assert_eq!(butterstick.variants[0].when["connection"], "ft232h");
         assert_eq!(butterstick.variants[0].confidence, CONFIDENCE_LOW);
         assert!(out.devices[2].boards.is_empty());
@@ -199,7 +199,7 @@ mod tests {
         let named: Vec<_> = out.devices[0]
             .boards
             .iter()
-            .filter(|m| m.confidence == CONFIDENCE_HIGH)
+            .filter(|m| m.best_confidence() == CONFIDENCE_HIGH)
             .map(|m| (m.board.as_str(), m.custom))
             .collect();
         assert_eq!(named, [("alhambra-ii", false), ("alhambra-ii", true)]);
@@ -251,7 +251,6 @@ mod tests {
             .map(|v| (v.when["memory"].as_str(), v.confidence))
             .collect();
         assert_eq!(rated, [("flash", 2), ("ram", CONFIDENCE_LOW)]);
-        assert_eq!(mine.confidence, 2, "the best variant's");
     }
 
     #[test]
@@ -266,12 +265,20 @@ mod tests {
         let u = &out.unreachable[0];
         assert_eq!((u.vid.as_str(), u.pid.as_str()), ("0403", "6010"));
         assert!(u.boards.iter().any(|m| m.board == "alhambra-ii"));
-        assert!(u.boards.iter().all(|m| m.confidence == CONFIDENCE_LOW));
+        assert!(
+            u.boards
+                .iter()
+                .all(|m| m.best_confidence() == CONFIDENCE_LOW)
+        );
         assert_eq!(u.action, devices::unreachable_action());
         let v = serde_json::to_value(&out).unwrap();
         assert!(
             v["unreachable"][0].get("id").is_none(),
             "can't be programmed"
+        );
+        assert!(
+            v["unreachable"][0]["boards"][0].get("confidence").is_none(),
+            "per variant only"
         );
     }
 }

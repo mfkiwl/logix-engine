@@ -78,16 +78,21 @@ pub struct BoardMatch {
     /// host decides which one it means.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub custom: bool,
-    /// How sure the engine is that the device is this board: the highest
-    /// confidence of its variants. From 1 to 3: higher is surer, and 3 is
-    /// always the highest. Compare it, such as to pre-select a device at 3;
-    /// how the engine rates may improve between versions. No rating proves
-    /// which board is connected, and several boards can have the same one.
-    #[schemars(range(min = 1, max = 3))]
-    pub confidence: u8,
     /// The board's variants this device fits, in the board's order, each
-    /// with its own confidence.
+    /// with its own confidence. Use the confidence of the variant you mean,
+    /// such as the build's.
     pub variants: Vec<VariantMatch>,
+}
+
+impl BoardMatch {
+    /// The highest confidence of the board's variants, for sorting.
+    pub fn best_confidence(&self) -> u8 {
+        self.variants
+            .iter()
+            .map(|v| v.confidence)
+            .max()
+            .unwrap_or(0)
+    }
 }
 
 /// A variant of a board that a device fits.
@@ -98,7 +103,10 @@ pub struct VariantMatch {
     /// "memory": "flash"}, as in the board's configurations.
     pub when: BTreeMap<String, String>,
     /// How sure the engine is that the device is the board in this variant,
-    /// from 1 to 3, as for the board.
+    /// from 1 to 3: higher is surer, and 3 is always the highest. Compare it,
+    /// such as to pre-select a device at 3; how the engine rates may improve
+    /// between versions. No rating proves which board is connected, and
+    /// several boards can have the same one.
     #[schemars(range(min = 1, max = 3))]
     pub confidence: u8,
 }
@@ -168,7 +176,7 @@ pub struct UnreachableDevice {
     pub bus: u8,
     /// USB device number on its bus.
     pub device: u8,
-    /// The boards whose USB IDs it has. Their confidence is always the
+    /// The boards whose USB IDs it has. Every variant's confidence is the
     /// lowest, 1, since its names can't be read.
     pub boards: Vec<BoardMatch>,
     /// What makes the device usable, such as fix_device_permissions.
@@ -302,15 +310,15 @@ pub fn matches(device: &Device, filter: &UsbFilter) -> bool {
         && fits(&filter.serial_regex, &device.serial_number)
 }
 
-/// The boards a device may be, best first: by confidence, then catalog
-/// boards before custom ones, then by board ID. Each variant has its own
-/// confidence, and the board the best of its variants'. For a device the engine can't open, only
-/// the USB IDs are compared (its names are unknown), so every match is low.
+/// The boards a device may be, best first: by their best variant's
+/// confidence, then catalog boards before custom ones, then by board ID.
+/// Each variant has its own confidence. For a device the engine can't open,
+/// only the USB IDs are compared (its names are unknown), so every match is
+/// low.
 pub fn board_matches(device: &Device, boards: &[Candidate]) -> Vec<BoardMatch> {
     let mut out = Vec::new();
     for b in boards {
         let mut variants = Vec::new();
-        let mut best = 0;
         for c in &b.variants.configurations {
             let hit = if device.reachable {
                 matches(device, &c.usb)
@@ -319,7 +327,6 @@ pub fn board_matches(device: &Device, boards: &[Candidate]) -> Vec<BoardMatch> {
             };
             if hit {
                 let confidence = confidence(device, &c.usb);
-                best = best.max(confidence);
                 variants.push(VariantMatch {
                     when: c.when.clone(),
                     confidence,
@@ -330,12 +337,13 @@ pub fn board_matches(device: &Device, boards: &[Candidate]) -> Vec<BoardMatch> {
             out.push(BoardMatch {
                 board: b.id.to_string(),
                 custom: b.custom,
-                confidence: best,
                 variants,
             });
         }
     }
-    out.sort_by(|a, b| (b.confidence, a.custom, &a.board).cmp(&(a.confidence, b.custom, &b.board)));
+    out.sort_by(|a, b| {
+        (b.best_confidence(), a.custom, &a.board).cmp(&(a.best_confidence(), b.custom, &b.board))
+    });
     out
 }
 
@@ -537,8 +545,8 @@ pub mod tests {
         let alhambra = device("0403", "6010", Some("Alhambra II v1.0A"), Some("FT1"), 3);
         let m = board_matches(&alhambra, &boards);
         assert_eq!(m[0].board, "alhambra-ii");
-        assert_eq!(m[0].confidence, CONFIDENCE_HIGH);
-        assert!(m[1..].iter().all(|m| m.confidence == CONFIDENCE_LOW));
+        assert_eq!(m[0].best_confidence(), CONFIDENCE_HIGH);
+        assert!(m[1..].iter().all(|m| m.best_confidence() == CONFIDENCE_LOW));
         assert!(
             ids(&m).contains(&"alchitry-au".to_string()),
             "a generic FTDI filter"
@@ -556,7 +564,7 @@ pub mod tests {
         let m = board_matches(&pro, &boards);
         assert_eq!(ids(&m), ["icesugar-pro"]);
         assert_eq!(m[0].variants.len(), 2);
-        assert_eq!(m[0].confidence, CONFIDENCE_HIGH, "a serial pattern");
+        assert_eq!(m[0].best_confidence(), CONFIDENCE_HIGH, "a serial pattern");
 
         // A factory default name: medium for the boards that expect it,
         // before the low ones; a board-specific name in the same pattern
@@ -564,13 +572,13 @@ pub mod tests {
         let ftdi = device("0403", "6010", Some("Dual RS232-HS"), None, 4);
         let m = board_matches(&ftdi, &boards);
         let go = m.iter().find(|m| m.board == "go-board").unwrap();
-        assert_eq!(go.confidence, CONFIDENCE_MEDIUM);
-        assert_eq!(m[0].confidence, CONFIDENCE_MEDIUM);
-        assert_eq!(m.last().unwrap().confidence, CONFIDENCE_LOW);
+        assert_eq!(go.best_confidence(), CONFIDENCE_MEDIUM);
+        assert_eq!(m[0].best_confidence(), CONFIDENCE_MEDIUM);
+        assert_eq!(m.last().unwrap().best_confidence(), CONFIDENCE_LOW);
         let icebreaker = device("0403", "6010", Some("iCEBreaker V1.0e"), None, 5);
         let m = board_matches(&icebreaker, &boards);
         assert_eq!(
-            (m[0].board.as_str(), m[0].confidence),
+            (m[0].board.as_str(), m[0].best_confidence()),
             ("icebreaker", CONFIDENCE_HIGH)
         );
 
@@ -579,7 +587,7 @@ pub mod tests {
         locked.reachable = false;
         let m = board_matches(&locked, &boards);
         assert_eq!(ids(&m), ["icesugar-1-5", "icesugar-nano", "icesugar-pro"]);
-        assert!(m.iter().all(|m| m.confidence == CONFIDENCE_LOW));
+        assert!(m.iter().all(|m| m.best_confidence() == CONFIDENCE_LOW));
 
         assert!(board_matches(&device("1234", "5678", None, None, 1), &boards).is_empty());
     }
