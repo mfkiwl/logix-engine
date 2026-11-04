@@ -675,6 +675,39 @@ fn list_devices_names_the_boards_each_device_may_be() {
 }
 
 #[tokio::test]
+async fn list_devices_for_a_build_lists_only_the_devices_that_fit() {
+    let state = engine().await;
+    let (_tmp, src) = project();
+    let folder = src.join("_build/default");
+    let input = |folder: &Path| -> list_devices::ListDevicesInput {
+        serde_json::from_value(json!({"build_folder": folder})).unwrap()
+    };
+    // No build yet: a request error.
+    let err = list_devices::run_with(input(&folder), || Ok(vec![])).unwrap_err();
+    assert_eq!(err.category, Category::Request);
+
+    build_it(&state, &src, json!({})).await.unwrap();
+    let mut locked = usb("", None, 7);
+    locked.product = None;
+    locked.reachable = false;
+    let devices = vec![
+        usb("Dual RS232-HS", None, 4),
+        usb("Alhambra II v1.0A", Some("A1"), 3),
+        locked,
+    ];
+    let out = list_devices::run_with(input(&folder), || Ok(devices)).unwrap();
+    let fit: Vec<_> = out
+        .devices
+        .iter()
+        .map(|d| (d.product.as_deref().unwrap(), d.build_confidence))
+        .collect();
+    assert_eq!(fit, [("Alhambra II v1.0A", Some(CONFIDENCE_HIGH))]);
+    assert!(!out.devices[0].boards.is_empty(), "still all its boards");
+    assert_eq!(out.unreachable.len(), 1);
+    assert_eq!(out.unreachable[0].build_confidence, Some(1));
+}
+
+#[tokio::test]
 async fn program_board_needs_a_successful_build() {
     let state = engine().await;
     let (_tmp, src) = project();

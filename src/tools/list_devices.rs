@@ -20,16 +20,18 @@ impl EngineTool for ListDevices {
         their USB IDs, names and serial numbers, and for each the boards it may be: catalog \
         boards, and the request's custom_boards, best first, each with a confidence from 1 to 3 \
         (higher is surer; 3 is the highest) and the variants it fits. \
-        program_board needs the id of one of these devices: pick the device whose boards \
-        include the build's board. Devices that need a driver or permissions first are listed \
-        apart, under unreachable, with the fix.";
+        program_board needs the id of one of these devices. Given a build_folder, it lists only \
+        the devices that fit that build's board and variant, best first, each with its \
+        build_confidence: program the only one, or ask the user when there are several. \
+        Devices that need a driver or permissions first are listed apart, under unreachable, \
+        with the fix.";
     const READ_ONLY: bool = true;
     type Input = ListDevicesInput;
     type Output = ListDevicesOutput;
 }
 
 /// Optionally, the host's own boards to match the devices against, besides
-/// the catalog's.
+/// the catalog's, and a build whose board the devices must fit.
 #[derive(Debug, Default, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ListDevicesInput {
@@ -39,6 +41,13 @@ pub struct ListDevicesInput {
     /// boards; matches name them with custom true. Omitted means none.
     #[serde(default)]
     pub custom_boards: BTreeMap<String, BoardInputDefinition>,
+    /// The build folder of a successful build, as an absolute path. When
+    /// given, only devices that fit the build's board in its variant are
+    /// listed (in devices and unreachable), each with build_confidence, best
+    /// first: the devices program_board can program that build into. The
+    /// build's board comes from its build record, custom boards included.
+    #[serde(default)]
+    pub build_folder: Option<String>,
 }
 
 /// The connected devices.
@@ -89,16 +98,41 @@ pub fn run_with(
         variants: &b.variants,
     }));
 
+    let build_usb = match &input.build_folder {
+        Some(folder) => Some(
+            super::program_board::read_build(folder)?
+                .1
+                .board
+                .configuration
+                .usb,
+        ),
+        None => None,
+    };
     let mut out = ListDevicesOutput {
         devices: Vec::new(),
         unreachable: Vec::new(),
     };
     for mut d in scan()? {
+        let build_confidence = match &build_usb {
+            None => None,
+            Some(usb) => {
+                let fits = if d.reachable {
+                    devices::matches(&d, usb)
+                } else {
+                    devices::same_ids(&d, usb)
+                };
+                if !fits {
+                    continue;
+                }
+                Some(devices::confidence(&d, usb))
+            }
+        };
         let matches = devices::board_matches(&d, &boards);
         if d.reachable {
             d.boards = matches;
+            d.build_confidence = build_confidence;
             out.devices.push(d);
-        } else if !matches.is_empty() {
+        } else if !matches.is_empty() || build_confidence.is_some() {
             out.unreachable.push(UnreachableDevice {
                 kind: d.kind,
                 vid: d.vid,
@@ -107,8 +141,14 @@ pub fn run_with(
                 device: d.device,
                 boards: matches,
                 action: devices::unreachable_action(),
+                build_confidence,
             });
         }
+    }
+    if build_usb.is_some() {
+        // Best first; the sort is stable, so equal ones keep the USB order.
+        out.devices
+            .sort_by_key(|d| std::cmp::Reverse(d.build_confidence));
     }
     Ok(out)
 }

@@ -48,6 +48,12 @@ pub struct Device {
     /// for a device that is no known board.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub boards: Vec<BoardMatch>,
+    /// How sure the engine is that the device is the board of the given
+    /// build, in the build's variant, from 1 to 3 as in boards. Present
+    /// only when list_devices was given a build_folder.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(range(min = 1, max = 3))]
+    pub build_confidence: Option<u8>,
     /// Where the device is plugged in, such as 1-2.3 (bus, then ports).
     #[serde(skip)]
     #[schemars(skip)]
@@ -146,7 +152,7 @@ pub fn is_factory_default_name(name: &str) -> bool {
 /// How sure a match of a device to a configuration's filter is (the device
 /// matches it): high for a matched serial pattern or a board-specific name,
 /// medium for a matched factory default name, low for USB IDs only.
-fn confidence(device: &Device, filter: &UsbFilter) -> u8 {
+pub fn confidence(device: &Device, filter: &UsbFilter) -> u8 {
     if !device.reachable {
         return CONFIDENCE_LOW;
     }
@@ -181,6 +187,12 @@ pub struct UnreachableDevice {
     pub boards: Vec<BoardMatch>,
     /// What makes the device usable, such as fix_device_permissions.
     pub action: Action,
+    /// The confidence that it is the given build's board, always 1 since
+    /// its names can't be read. Present only when list_devices was given a
+    /// build_folder.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(range(min = 1, max = 3))]
+    pub build_confidence: Option<u8>,
 }
 
 /// A board to match devices against: its ID, whether it came from the
@@ -283,6 +295,7 @@ impl Device {
             bus,
             device,
             boards: Vec::new(),
+            build_confidence: None,
             location,
             reachable,
         }

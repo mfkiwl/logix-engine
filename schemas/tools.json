@@ -3465,7 +3465,7 @@
   },
   {
     "name": "list_devices",
-    "description": "Lists the USB devices connected to this computer, with their USB IDs, names and serial numbers, and for each the boards it may be: catalog boards, and the request's custom_boards, best first, each with a confidence from 1 to 3 (higher is surer; 3 is the highest) and the variants it fits. program_board needs the id of one of these devices: pick the device whose boards include the build's board. Devices that need a driver or permissions first are listed apart, under unreachable, with the fix.",
+    "description": "Lists the USB devices connected to this computer, with their USB IDs, names and serial numbers, and for each the boards it may be: catalog boards, and the request's custom_boards, best first, each with a confidence from 1 to 3 (higher is surer; 3 is the highest) and the variants it fits. program_board needs the id of one of these devices. Given a build_folder, it lists only the devices that fit that build's board and variant, best first, each with its build_confidence: program the only one, or ask the user when there are several. Devices that need a driver or permissions first are listed apart, under unreachable, with the fix.",
     "inputSchema": {
       "$defs": {
         "Architecture": {
@@ -3771,8 +3771,16 @@
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
-      "description": "Optionally, the host's own boards to match the devices against, besides\nthe catalog's.",
+      "description": "Optionally, the host's own boards to match the devices against, besides\nthe catalog's, and a build whose board the devices must fit.",
       "properties": {
+        "build_folder": {
+          "default": null,
+          "description": "The build folder of a successful build, as an absolute path. When\ngiven, only devices that fit the build's board in its variant are\nlisted (in devices and unreachable), each with build_confidence, best\nfirst: the devices program_board can program that build into. The\nbuild's board comes from its build record, custom boards included.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
         "custom_boards": {
           "additionalProperties": {
             "$ref": "#/$defs/BoardInputDefinition"
@@ -3871,6 +3879,15 @@
               },
               "type": "array"
             },
+            "build_confidence": {
+              "description": "How sure the engine is that the device is the board of the given\nbuild, in the build's variant, from 1 to 3 as in boards. Present\nonly when list_devices was given a build_folder.",
+              "maximum": 3,
+              "minimum": 1,
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
             "bus": {
               "description": "USB bus number.",
               "maximum": 255,
@@ -3954,6 +3971,15 @@
                 "$ref": "#/$defs/BoardMatch"
               },
               "type": "array"
+            },
+            "build_confidence": {
+              "description": "The confidence that it is the given build's board, always 1 since\nits names can't be read. Present only when list_devices was given a\nbuild_folder.",
+              "maximum": 3,
+              "minimum": 1,
+              "type": [
+                "integer",
+                "null"
+              ]
             },
             "bus": {
               "description": "USB bus number.",
@@ -4161,6 +4187,15 @@
                 "$ref": "#/$defs/BoardMatch"
               },
               "type": "array"
+            },
+            "build_confidence": {
+              "description": "How sure the engine is that the device is the board of the given\nbuild, in the build's variant, from 1 to 3 as in boards. Present\nonly when list_devices was given a build_folder.",
+              "maximum": 3,
+              "minimum": 1,
+              "type": [
+                "integer",
+                "null"
+              ]
             },
             "bus": {
               "description": "USB bus number.",

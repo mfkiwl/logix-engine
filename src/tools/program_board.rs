@@ -70,19 +70,17 @@ pub struct ProgramBoardOutput {
     pub commands: Vec<crate::commands::CommandRecord>,
 }
 
-pub async fn run_with(
-    state: &EngineState,
-    input: ProgramBoardInput,
-    call: &Call,
-    scan: impl FnOnce() -> Result<Vec<Device>, ToolError>,
-) -> Result<ProgramBoardOutput, ToolError> {
-    let folder =
-        paths::check_build_folder(&input.build_folder, paths::home_folder().as_deref(), None)
-            .map_err(|e| ToolError::request(format!("build_folder: {e}.")))?;
+/// The checked build folder and its build record, from a successful build.
+/// A folder that breaks the keyword rules, has no record or a damaged one is
+/// a request error.
+pub fn read_build(
+    build_folder: &str,
+) -> Result<(std::path::PathBuf, build::BuildRecord), ToolError> {
+    let folder = paths::check_build_folder(build_folder, paths::home_folder().as_deref(), None)
+        .map_err(|e| ToolError::request(format!("build_folder: {e}.")))?;
     let record = build::read_record(&folder).ok_or_else(|| {
         ToolError::request(format!(
-            "{} has no build record from a successful build. Run build first.",
-            input.build_folder
+            "{build_folder} has no build record from a successful build. Run build first."
         ))
     })?;
     if record.board.checksum() != record.board_checksum {
@@ -90,6 +88,16 @@ pub async fn run_with(
             "The build record is damaged. Run build again.",
         ));
     }
+    Ok((folder, record))
+}
+
+pub async fn run_with(
+    state: &EngineState,
+    input: ProgramBoardInput,
+    call: &Call,
+    scan: impl FnOnce() -> Result<Vec<Device>, ToolError>,
+) -> Result<ProgramBoardOutput, ToolError> {
+    let (folder, record) = read_build(&input.build_folder)?;
     let bitstream = folder.join(&record.result.bitstream);
     if !bitstream.is_file() {
         return Err(ToolError::request(format!(

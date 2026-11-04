@@ -692,6 +692,8 @@ Lists the connected USB devices, each with an `id` for `program_board` and the b
 
 **Confidence.** A number from 1 to 3: how sure the engine is that the device is that board in a variant, given for each variant the device fits, since variants can have different USB filters. Hosts use the rating of the variant they mean, such as the build's or the one the user selected. Higher is surer, and 3 is always the highest. Hosts compare it, such as to pre-select a device at 3 or to show low matches only on request; they don't need to know how it is rated, which may improve between engine versions (the current rules are in the [requirements](requirements.md#device-selection)). Several boards can have the same confidence for one device, such as the two OrangeCrab sizes, and no rating proves which board is connected: boards the catalog doesn't know can report the same names.
 
+**For a build.** Upload is the common case: with `build_folder`, a host doesn't need the build's board ID or variant. It programs the only device listed, or asks the user when there are several, and when none is listed it says the board isn't connected, mentioning any `unreachable` device as a possible cause.
+
 **Unreachable devices.** A device the engine sees but can't open, because of missing permissions or a missing driver, can't be programmed and its names can't be read, so it isn't in `devices`. When its USB IDs fit a board, it is listed in `unreachable` with those boards (every variant at confidence 1, since names are unknown) and the action that makes it usable: `install_drivers` on Windows, `fix_device_permissions` elsewhere. Other devices the engine can't open are left out.
 
 **Device IDs.** An `id` names the device on this computer for a short time: it is made from where the device is plugged in and what it is, so it stays valid while the device stays on the same USB port, even when it is plugged in again, and survives an engine restart. IDs differ between platforms and computers. Hosts must treat them as opaque, never parse or build them, and list the devices again before asking the user to choose.
@@ -701,13 +703,14 @@ Lists the connected USB devices, each with an `id` for `program_board` and the b
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `custom_boards` | map of board definitions | No | The host's own boards, by board ID, in the catalog format (the FPGA as `fpga_id` or `fpga`), matched as well as the catalog's. Omitted means none |
+| `build_folder` | build folder path | No | A successful build's folder. When given, only the devices that fit the build's board in its variant are listed, in `devices` and `unreachable`, each with `build_confidence`, best first: the devices `program_board` can program that build into. The board comes from the build record, so it works for custom boards too |
 
 **Table 12.** list_devices tool outputs
 
 | Field | Type | Description |
 | --- | --- | --- |
 | `devices` | list of devices | The connected devices the engine can open. See device fields in Table 13 |
-| `unreachable` | list of objects | Optional. Devices that can't be opened and whose USB IDs fit a board: `kind`, `vid`, `pid`, `bus`, `device`, `boards` (as in Table 13) and `action`, the fix (see [Table 5](#results-and-errors)) |
+| `unreachable` | list of objects | Optional. Devices that can't be opened and whose USB IDs fit a board: `kind`, `vid`, `pid`, `bus`, `device`, `boards` (as in Table 13), `action`, the fix (see [Table 5](#results-and-errors)), and `build_confidence` with `build_folder` |
 
 **Table 13.** Device fields
 
@@ -719,9 +722,10 @@ Lists the connected USB devices, each with an `id` for `program_board` and the b
 | `manufacturer`, `product` | text | Names reported by the device, when available |
 | `serial_number` | text | Serial number, when available |
 | `bus`, `device` | integer | USB bus and device number, for USB devices. The device number changes when the device is plugged in again |
+| `build_confidence` | integer | Only with `build_folder`. How sure the engine is that the device is the build's board in the build's variant, 1 to 3, as for `boards` (1 for an unreachable device) |
 | `boards` | list of objects | Optional, omitted when empty. The boards the device may be, best first, each with `board` (its ID), `custom` (true for a board from `custom_boards`, omitted otherwise) and `variants` (the board's variants this device fits, in the board's order, each with `when`, its dimension values as in the board's configurations, and its own `confidence`) |
 
-**Errors:** setup errors with `install_drivers` or `fix_device_permissions` when devices cannot be scanned. Request errors for an invalid custom board. Engine errors.
+**Errors:** setup errors with `install_drivers` or `fix_device_permissions` when devices cannot be scanned. Request errors for an invalid custom board, or a build folder without a build record from a successful build. Engine errors.
 
 **Example**
 
