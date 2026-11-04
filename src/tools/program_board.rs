@@ -126,7 +126,7 @@ pub async fn run_with(
     // Say how the board will be programmed (not for a custom command, which
     // may do anything), and any note for users, such as holding a button.
     if custom.is_none() {
-        if let Some(plan) = program::plan(variant) {
+        if let Some(plan) = program::plan(&board.description, variant) {
             call.output.message(&plan);
         }
         if let Some(notes) = &variant.user_notes {
@@ -189,7 +189,7 @@ pub async fn run_with(
     match run {
         Ok(r) if r.status.success() => {
             if custom.is_none()
-                && let Some(done) = program::done(variant)
+                && let Some(done) = program::done(&board.description, variant)
             {
                 call.output.message(&done);
             }
