@@ -56,7 +56,7 @@ pub fn verilator_args(
     if req.synthesize {
         args.push("-DSYNTHESIZE".into());
     }
-    args.push("-DAPIO_SIM=0".into());
+    args.push("-DLOGIX_SIM=0".into());
     if let Some(top) = &req.top_module {
         args.push("--top-module".into());
         args.push(top.into());

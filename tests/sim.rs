@@ -297,7 +297,7 @@ fn test_input(src: &Path, extra: Value) -> test::TestInput {
 }
 
 /// A testbench in a subfolder that reads a data file relative to the source
-/// folder, checks APIO_SIM, and fails with $fatal when `fail` is set.
+/// folder, checks LOGIX_SIM, and fails with $fatal when `fail` is set.
 fn sub_tb(fail: bool) -> String {
     let expected = if fail { "8'h99" } else { "8'h5a" };
     format!(
@@ -305,10 +305,10 @@ fn sub_tb(fail: bool) -> String {
   reg [7:0] mem [0:0];
   initial begin
     $readmemh("data/mem.hex", mem);
-`ifndef APIO_SIM
-    $fatal(1, "APIO_SIM isn't defined");
+`ifndef LOGIX_SIM
+    $fatal(1, "LOGIX_SIM isn't defined");
 `endif
-    if (`APIO_SIM != 0) $fatal(1, "APIO_SIM isn't 0");
+    if (`LOGIX_SIM != 0) $fatal(1, "LOGIX_SIM isn't 0");
     $display("mem is %h", mem[0]);
     if (mem[0] !== {expected}) $fatal(1, "mem is %h", mem[0]);
     $finish;
@@ -461,12 +461,12 @@ fn simulate_input(src: &Path, extra: Value) -> simulate::SimulateInput {
 async fn simulate_writes_the_waveform_and_a_default_layout_then_keeps_the_users() {
     let state = engine().await;
     let (_tmp, src) = project();
-    // APIO_SIM is 1 when simulating for a viewer.
+    // LOGIX_SIM is 1 when simulating for a viewer.
     std::fs::write(
         src.join("main_tb.v"),
         MAIN_TB.replace(
             "$finish;",
-            "if (`APIO_SIM != 1) $fatal(1, \"APIO_SIM\");\n    $finish;",
+            "if (`LOGIX_SIM != 1) $fatal(1, \"LOGIX_SIM\");\n    $finish;",
         ),
     )
     .unwrap();
@@ -561,11 +561,11 @@ async fn simulate_request_errors() {
 }
 
 /// A testbench with Apio's assertion macro: it prints the failure, and calls
-/// $fatal only when APIO_SIM is 0, so simulate keeps going.
+/// $fatal only when LOGIX_SIM is 0, so simulate keeps going.
 const APIO_MACRO_TB: &str = r#"`define EXPECT(signal, value) \
     if (signal !== (value)) begin \
         $display("*** ASSERTION FAILED in %m (clk_num=%0d): expected (signal == value), actual: 'h%h", 0, (signal)); \
-        if (!`APIO_SIM) $fatal; \
+        if (!`LOGIX_SIM) $fatal; \
     end
 `timescale 1ns/1ps
 module main_tb;

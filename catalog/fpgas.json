@@ -1,5 +1,5 @@
 {
-  "source": "Logix Engine catalog. First imported from Apio's definitions 2026-10-26 and oss-cad-suite 2026-10-22 packages; maintained here since.",
+  "source": "Logix Engine catalog.",
   "fpgas": {
     "gw1n-lv1cs30c5-i4": {
       "architecture": "gowin",

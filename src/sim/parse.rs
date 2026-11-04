@@ -220,7 +220,7 @@ pub struct VvpMessage {
 /// Parses a testbench run's output from vvp: the messages of $fatal, $error
 /// and $warning, with the time from the "Time:" line vvp prints after each,
 /// and the failure lines Apio's assertion macros print. Under simulate those
-/// macros skip $fatal (APIO_SIM is 1), so their line is the only sign of a
+/// macros skip $fatal (LOGIX_SIM is 1), so their line is the only sign of a
 /// failure. Other lines, such as a testbench's own $display text, are left
 /// out.
 pub fn parse_vvp(output: &str, source_folder: &str) -> Vec<VvpMessage> {

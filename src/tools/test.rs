@@ -73,7 +73,7 @@ pub struct TestInput {
     pub build_folder: String,
     /// Verilog macro definitions, from name to value, such as
     /// {"WIDTH": "8"}. An empty value defines the macro with no text, for
-    /// `ifdef. APIO_SIM is always defined as 0.
+    /// `ifdef. LOGIX_SIM is always defined as 0.
     #[serde(default)]
     pub defines: BTreeMap<String, String>,
     /// Stop each testbench at its first failure ($fatal, $error or a

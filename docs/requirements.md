@@ -175,7 +175,7 @@ The engine follows Apio's testbench rules, so a testbench works unchanged with a
 
 - **Naming.** A testbench file name ends with `_tb.v` or `_tb.sv`. This is how the engine tells testbenches from design sources and keeps them out of synthesis.
 - **No `$dumpfile`.** A testbench that calls `$dumpfile(...)` is a design error. The engine sets the waveform file's location itself, always inside the build folder. Testbenches still call `$dumpvars` to choose what to record.
-- **Interactive define.** The engine defines a macro that is 1 when the simulation is interactive, with a waveform viewer, and 0 for automated test runs. `APIO_SIM` is also defined, with the same value, for Apio compatibility.
+- **Interactive define.** The engine defines a macro that is 1 when the simulation is interactive, with a waveform viewer, and 0 for automated test runs. It is `LOGIX_SIM`.
 - **User defines.** Defines given in the request apply to simulation as well as to build.
 - **Waveform viewer setup.** A viewer save file, such as a GTKWave `.gtkw` file, that the user saved next to the testbench is only read, never changed. When there is none, the engine generates one in the build folder, so the source folder isn't modified.
 

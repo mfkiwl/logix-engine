@@ -958,7 +958,7 @@
             "type": "string"
           },
           "default": {},
-          "description": "Verilog macro definitions, from name to value, such as\n{\"WIDTH\": \"8\"}. An empty value defines the macro with no text, for\n`ifdef. SYNTHESIZE is defined unless synthesize is false, and\nAPIO_SIM is defined as 0.",
+          "description": "Verilog macro definitions, from name to value, such as\n{\"WIDTH\": \"8\"}. An empty value defines the macro with no text, for\n`ifdef. SYNTHESIZE is defined unless synthesize is false, and\nLOGIX_SIM is defined as 0.",
           "type": "object"
         },
         "source_files": {
@@ -1495,7 +1495,7 @@
             "type": "string"
           },
           "default": {},
-          "description": "Verilog macro definitions, from name to value, such as\n{\"WIDTH\": \"8\"}. An empty value defines the macro with no text, for\n`ifdef. APIO_SIM is always defined as 0.",
+          "description": "Verilog macro definitions, from name to value, such as\n{\"WIDTH\": \"8\"}. An empty value defines the macro with no text, for\n`ifdef. LOGIX_SIM is always defined as 0.",
           "type": "object"
         },
         "max_sim_time_ns": {
@@ -2121,7 +2121,7 @@
             "type": "string"
           },
           "default": {},
-          "description": "Verilog macro definitions, from name to value, such as\n{\"WIDTH\": \"8\"}. An empty value defines the macro with no text, for\n`ifdef. APIO_SIM is always defined as 1.",
+          "description": "Verilog macro definitions, from name to value, such as\n{\"WIDTH\": \"8\"}. An empty value defines the macro with no text, for\n`ifdef. LOGIX_SIM is always defined as 1.",
           "type": "object"
         },
         "layout_file": {

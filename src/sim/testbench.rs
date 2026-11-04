@@ -42,7 +42,7 @@ pub enum Ending {
 /// How to run a testbench.
 #[derive(Debug, Clone, Copy)]
 pub struct RunOptions {
-    /// Define APIO_SIM as 1 (simulate) rather than 0 (test).
+    /// Define LOGIX_SIM as 1 (simulate) rather than 0 (test).
     pub interactive: bool,
     /// Stop at the first failure.
     pub stop_at_first_failure: bool,
@@ -162,7 +162,7 @@ pub fn check_no_dumpfile(source_folder: &Path, testbench: &str) -> Result<(), To
 }
 
 /// iverilog's arguments, in Apio's order: the output file, the request's
-/// macros, APIO_SIM (1 when simulating for a viewer, 0 when testing), the
+/// macros, LOGIX_SIM (1 when simulating for a viewer, 0 when testing), the
 /// FPGA's models, then the design files and the testbench.
 pub fn iverilog_args(
     sources: &Sources,
@@ -179,7 +179,7 @@ pub fn iverilog_args(
     args.push("-o".into());
     args.push(out_file.into());
     args.extend(sources.define_args());
-    args.push(format!("-DAPIO_SIM={}", u8::from(interactive)).into());
+    args.push(format!("-DLOGIX_SIM={}", u8::from(interactive)).into());
     args.extend(lib.defines.iter().map(OsString::from));
     args.extend(includes.iter().cloned());
     let mut lib_dir = OsString::from("-I");

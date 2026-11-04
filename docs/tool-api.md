@@ -184,7 +184,7 @@ A package is unpacked into a temporary folder and renamed into place only when i
 
 Checks the design and, optionally, its testbenches with Verilator in lint-only mode. It is much faster than a build and finds likely mistakes that synthesis accepts, such as width mismatches. It writes nothing and needs no build folder.
 
-It runs Verilator with these options: `--lint-only --quiet --bbox-unsup --timing -Wno-TIMESCALEMOD -Wno-MULTITOP`, the macros `SYNTHESIZE` (unless `synthesize` is false) and `APIO_SIM=0`, the top module when given, the request's macros, and the FPGA's primitive models, such as `cells_sim.v` with `NO_ICE40_DEFAULT_ASSIGNMENTS` for iCE40, `cells_sim.v` and the black boxes in `cells_bb.v` for ECP5, or `cells_sim.v` and the family's black boxes (`cells_xtra_gw1n.v`, `cells_xtra_gw2a.v` or `cells_xtra_gw5a.v`, chosen by the start of `nextpnr_device`) for Gowin, or `cells_sim.v` and the black boxes in `cells_xtra.v` for Xilinx, so designs that use primitives such as `SB_IO`, `EHXPLLL`, `rPLL` or `PLLE2_BASE` lint cleanly. Verilator treats warnings as failures, so `passed` is false when there are warnings too. Warnings in the primitive models aren't the user's to fix, so the engine turns them off with a Verilator config file. When `top_module` is omitted, Verilator takes every module that no other module uses as a top module, so the engine passes the model files as libraries (`-v`): only the primitives the design uses are read. With a top module, they are passed as plain source files.
+It runs Verilator with these options: `--lint-only --quiet --bbox-unsup --timing -Wno-TIMESCALEMOD -Wno-MULTITOP`, the macros `SYNTHESIZE` (unless `synthesize` is false) and `LOGIX_SIM=0`, the top module when given, the request's macros, and the FPGA's primitive models, such as `cells_sim.v` with `NO_ICE40_DEFAULT_ASSIGNMENTS` for iCE40, `cells_sim.v` and the black boxes in `cells_bb.v` for ECP5, or `cells_sim.v` and the family's black boxes (`cells_xtra_gw1n.v`, `cells_xtra_gw2a.v` or `cells_xtra_gw5a.v`, chosen by the start of `nextpnr_device`) for Gowin, or `cells_sim.v` and the black boxes in `cells_xtra.v` for Xilinx, so designs that use primitives such as `SB_IO`, `EHXPLLL`, `rPLL` or `PLLE2_BASE` lint cleanly. Verilator treats warnings as failures, so `passed` is false when there are warnings too. Warnings in the primitive models aren't the user's to fix, so the engine turns them off with a Verilator config file. When `top_module` is omitted, Verilator takes every module that no other module uses as a top module, so the engine passes the model files as libraries (`-v`): only the primitives the design uses are read. With a top module, they are passed as plain source files.
 
 **Problems are the result.** Lint's job is to find problems, so problems in the design are returned in `diagnostics` with `passed` set to false, not as a design error. The other errors in the list below still apply.
 
@@ -197,7 +197,7 @@ It runs Verilator with these options: `--lint-only --quiet --bbox-unsup --timing
 | `top_module` | text | No | Name of the top-level module. When omitted, Verilator checks every module that no other module uses |
 | `source_folder`, `source_files` | See folder fields in [Table 2](#folders) | Yes | The design files |
 | `testbench_files` | list of relative paths | No | Testbenches to check too, relative to the source folder. Defaults to none. A file may be listed only once in `source_files` and `testbench_files` together |
-| `defines` | map of text | No | Macro definitions, as in the [build tool](#build-tool). `SYNTHESIZE` is defined unless `synthesize` is false, and `APIO_SIM` is defined as `0` |
+| `defines` | map of text | No | Macro definitions, as in the [build tool](#build-tool). `SYNTHESIZE` is defined unless `synthesize` is false, and `LOGIX_SIM` is defined as `0` |
 | `synthesize` | boolean | No | Define `SYNTHESIZE`, so `` `ifdef SYNTHESIZE `` picks the code for synthesis, as in a build. False leaves it undefined, to check the simulation code instead. Defaults to true |
 | `verbose` | boolean | No | Run Verilator without `--quiet`. Defaults to false |
 
@@ -246,7 +246,7 @@ Output:
 
 Runs testbenches with Icarus Verilog. For each testbench in order, iverilog compiles the design files, the FPGA's primitive models and the testbench into the build folder, then vvp runs it and writes its waveform there. Every testbench runs, even after one fails. By default the engine stops each testbench at its first failure, so a failing run ends fast; see [Test and simulate modes](#test-and-simulate-modes).
 
-The commands are `iverilog -g2012 -o <build folder>/<testbench>.out`, the request's macros, `APIO_SIM=0`, the FPGA's primitive models, the design files and the testbench, then `vvp -i <testbench>.out -dumpfile=<build folder>/<testbench>.vcd`. The `-i` makes vvp print each line at once instead of when it exits, so the engine sees a failure while the testbench runs. It doesn't change the results. Both run in the source folder, so a testbench reads data files, such as with `$readmemh`, relative to it. `SYNTHESIZE` isn't defined, so designs can tell simulation from synthesis.
+The commands are `iverilog -g2012 -o <build folder>/<testbench>.out`, the request's macros, `LOGIX_SIM=0`, the FPGA's primitive models, the design files and the testbench, then `vvp -i <testbench>.out -dumpfile=<build folder>/<testbench>.vcd`. The `-i` makes vvp print each line at once instead of when it exits, so the engine sees a failure while the testbench runs. It doesn't change the results. Both run in the source folder, so a testbench reads data files, such as with `$readmemh`, relative to it. `SYNTHESIZE` isn't defined, so designs can tell simulation from synthesis.
 
 **Testbench rules:** see [Writing testbenches](#writing-testbenches). A testbench fails by calling `$error` or `$fatal`, or by printing an assertion failure line (see `diagnostics` in Table 27). It must not call `$dumpfile`, which is a design error at that line.
 
@@ -260,7 +260,7 @@ The commands are `iverilog -g2012 -o <build folder>/<testbench>.out`, the reques
 | `variant` | variant | No | The board's configuration. Omitted means its first |
 | `source_folder`, `source_files`, `build_folder` | See folder fields in [Table 2](#folders) | Yes | The design files, without testbenches |
 | `testbench_files` | list of relative paths | Yes | The testbenches to run, in order, relative to the source folder. At least one. A file may be listed only once in `source_files` and `testbench_files` together |
-| `defines` | map of text | No | Macro definitions, as in the [build tool](#build-tool). `APIO_SIM` is always defined as `0` |
+| `defines` | map of text | No | Macro definitions, as in the [build tool](#build-tool). `LOGIX_SIM` is always defined as `0` |
 | `stop_at_first_failure` | boolean | No | Stop each testbench at its first failure, so a failing run ends fast; its output and waveform then end there. False runs each testbench to the end, to see every failure. Defaults to true |
 | `max_sim_time_ns` | integer | No | Stop each testbench when simulated time reaches this many nanoseconds. Defaults to no limit. See [Runs that don't end](#runs-that-dont-end) |
 | `timeout_seconds` | integer | No | Stop each testbench after this many seconds of real time. Defaults to 600; 0 means no limit |
@@ -327,7 +327,7 @@ Output:
 
 ## simulate tool
 
-Simulates one testbench and opens its waveform in GTKWave. It compiles and runs the testbench as the [test tool](#test-tool) does, with the same commands, testbench rules and build folder files, except that `APIO_SIM` is defined as `1` and the testbench always runs to the end, so the whole waveform is there to look at. Then it makes sure there is a layout file and starts GTKWave fully detached with the waveform and the layout, and returns without waiting for it. For a layout the user saved, it adds `--rcvar=do_initial_zoom_fit 1` first; a default layout sets its own view, which that would replace. GTKWave keeps running after the operation and after the engine exits.
+Simulates one testbench and opens its waveform in GTKWave. It compiles and runs the testbench as the [test tool](#test-tool) does, with the same commands, testbench rules and build folder files, except that `LOGIX_SIM` is defined as `1` and the testbench always runs to the end, so the whole waveform is there to look at. Then it makes sure there is a layout file and starts GTKWave fully detached with the waveform and the layout, and returns without waiting for it. For a layout the user saved, it adds `--rcvar=do_initial_zoom_fit 1` first; a default layout sets its own view, which that would replace. GTKWave keeps running after the operation and after the engine exits.
 
 **Layout files.** A GTKWave layout (`.gtkw`) holds the signals shown and how. It is a project file the user changes by saving from GTKWave, which reads and saves the same path, so the host names it in `layout_file`, usually next to the testbench, such as `main_tb.gtkw`.
 
@@ -354,7 +354,7 @@ This is the one case where the engine creates or deletes a file in the source fo
 | `open_viewer` | boolean | No | Start GTKWave on the waveform. Defaults to true |
 | `max_sim_time_ns` | integer | No | Stop the testbench when simulated time reaches this many nanoseconds. Defaults to no limit |
 | `timeout_seconds` | integer | No | Stop the testbench after this many seconds of real time. Defaults to no limit |
-| `defines` | map of text | No | Macro definitions, as in the [build tool](#build-tool). `APIO_SIM` is always defined as `1` |
+| `defines` | map of text | No | Macro definitions, as in the [build tool](#build-tool). `LOGIX_SIM` is always defined as `1` |
 | `verbose` | boolean | No | Run iverilog with `-v`. Defaults to false |
 
 **Table 29.** simulate tool outputs
@@ -430,11 +430,11 @@ To stop a testbench, the engine asks vvp to exit, which writes out the waveform 
 
 ## Writing testbenches
 
-These are the engine's guidelines for testbenches. Testbenches written for other open source FPGA tools keep working: the macro `APIO_SIM` is defined for them (0 in `test` and `lint`, 1 in `simulate`), and assertion failure lines count as failures.
+These are the engine's guidelines for testbenches. The engine defines the macro `LOGIX_SIM`: 0 in `test` and `lint`, 1 in `simulate`. Assertion failure lines count as failures.
 
 1. **Report a failure with `$error`, then keep going.** Put the expected and actual values in the message. The engine reads `$error` with its file, line and simulation time, and decides whether to stop.
 2. **Use `$fatal` only when going on makes no sense,** such as a missing data file. It stops the run in both modes.
-3. **Don't check the mode.** No `` if (!`APIO_SIM) $fatal ``: the engine stops `test` at the first failure and lets `simulate` run to the end.
+3. **Don't check the mode.** No `` if (!`LOGIX_SIM) $fatal ``: the engine stops `test` at the first failure and lets `simulate` run to the end.
 4. **End with `$finish`.** A testbench that runs out of things to do without it fails, and one that never ends is stopped by a [limit](#runs-that-dont-end) and fails.
 5. **Call `$dumpvars(0, <testbench module>)` at the start** to write a waveform, and **never call `$dumpfile`**: the engine decides where the waveform goes.
 6. **Read data files relative to the source folder,** such as `$readmemh("data/rom.hex", rom)`. Testbenches run there.
@@ -827,7 +827,7 @@ A board with a choice, such as the iCESugar-Pro, which can be programmed to flas
 }
 ```
 
-**Catalog contents.** The catalog is data in the engine's repo, `catalog/boards.json` and `catalog/fpgas.json`, first imported from existing open source board and FPGA definitions. It has every iCE40, ECP5, Gowin and Xilinx FPGA the toolchain packages support, and 84 boards: 31 iCE40, 22 ECP5, 8 Gowin and 23 Xilinx, with 131 configurations in all, programmed with `openfpgaloader`, `iceprog`, `dfu-util` or `icesprog`. 32 boards have a choice: memory (iCESugar-Pro, ColorLight i5, and most boards whose original command uploads to RAM, such as the Xilinx boards, which also have a flash configuration; flash is the default wherever a board has it), connection and memory (ColorLight 5A-75E V7.1 and i9 v7.2, FleaFPGA Ohm), or both with fewer combinations (ButterStick r1.0: its USB bootloader writes flash, its adapters RAM). The others have one value of each, which still tells where an upload goes: 50 configurations write RAM, and the Zynq boards, the QMTECH XC7A100T and the ULX3S upload only to RAM. Every configuration has a USB filter, whatever its architecture. A few of the imported boards had none, mostly boards programmed through a cable named with openFPGALoader's `-c` option, such as `-c ft2232`. The import gives those the cable's default USB IDs in openFPGALoader, so the engine can still find the device.
+**Catalog contents.** The catalog is data in the engine's repo, `catalog/boards.json` and `catalog/fpgas.json`. It has every iCE40, ECP5, Gowin and Xilinx FPGA the toolchain packages support, and 84 boards: 31 iCE40, 22 ECP5, 8 Gowin and 23 Xilinx, with 131 configurations in all, programmed with `openfpgaloader`, `iceprog`, `dfu-util` or `icesprog`. 32 boards have a choice: memory (iCESugar-Pro, ColorLight i5, and most Xilinx and ECP5 boards, which have a RAM and a flash configuration; flash is the default wherever a board has it), connection and memory (ColorLight 5A-75E V7.1 and i9 v7.2, FleaFPGA Ohm), or both with fewer combinations (ButterStick r1.0: its USB bootloader writes flash, its adapters RAM). The others have one value of each, which still tells where an upload goes: 50 configurations write RAM, and the Zynq boards, the QMTECH XC7A100T and the ULX3S upload only to RAM. Every configuration has a USB filter, whatever its architecture. Boards programmed through a cable named with openFPGALoader's `-c` option, such as `-c ft2232`, use that cable's default USB IDs.
 
 **Trust and notes.** Each catalog configuration has `tested`: true when its programming is known to work, because it was tried on the board or is used unchanged by a tool that people rely on; false when it hasn't been tried on hardware, such as a board moved to a different programmer. A change rated low risk after checking the programmer's source keeps `tested` true: every openFPGALoader command through an FTDI chip names the chosen device with `--busdev-num ${BUS}:${DEV}` (openFPGALoader's FTDI drivers then open that device), a change made without hardware tests. Optional `user_notes` give warnings and missing information for its users, such as a USB filter that also matches other boards, or a step needed before programming. The catalog file also keeps `maintainer_notes`, where each configuration's settings come from and why they changed, which `get_catalog` doesn't return. A USB filter can't always tell one board model from another: boards that use the same USB chip and report the same names look alike to the engine. Hosts can show both fields where users pick a board.
 

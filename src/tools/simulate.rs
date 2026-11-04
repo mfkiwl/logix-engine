@@ -99,7 +99,7 @@ pub struct SimulateInput {
     pub timeout_seconds: Option<u64>,
     /// Verilog macro definitions, from name to value, such as
     /// {"WIDTH": "8"}. An empty value defines the macro with no text, for
-    /// `ifdef. APIO_SIM is always defined as 1.
+    /// `ifdef. LOGIX_SIM is always defined as 1.
     #[serde(default)]
     pub defines: BTreeMap<String, String>,
     /// Let iverilog print more detail, shown in the live output and the

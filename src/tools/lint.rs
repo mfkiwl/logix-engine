@@ -66,7 +66,7 @@ pub struct LintInput {
     /// Verilog macro definitions, from name to value, such as
     /// {"WIDTH": "8"}. An empty value defines the macro with no text, for
     /// `ifdef. SYNTHESIZE is defined unless synthesize is false, and
-    /// APIO_SIM is defined as 0.
+    /// LOGIX_SIM is defined as 0.
     #[serde(default)]
     pub defines: BTreeMap<String, String>,
     /// Define SYNTHESIZE, so `ifdef SYNTHESIZE picks the code for synthesis,
@@ -232,7 +232,7 @@ mod tests {
         assert_eq!(
             args.join(" "),
             "--lint-only --quiet --bbox-unsup --timing -Wno-TIMESCALEMOD -Wno-MULTITOP \
-             -DSYNTHESIZE -DAPIO_SIM=0 --top-module main -DA= -DWIDTH=8 \
+             -DSYNTHESIZE -DLOGIX_SIM=0 --top-module main -DA= -DWIDTH=8 \
              -DNO_ICE40_DEFAULT_ASSIGNMENTS -Irtl -I/pkg/share/yosys/ice40 \
              /engine/tmp/models.vlt /pkg/share/yosys/ice40/cells_sim.v main.v rtl/uart.v main_tb.v"
         );
@@ -245,7 +245,7 @@ mod tests {
         assert!(!args.contains(&"--quiet".into()));
         assert!(!args.contains(&"--top-module".into()));
         assert!(!args.contains(&"-DSYNTHESIZE".into()));
-        assert!(args.contains(&"-DAPIO_SIM=0".into()));
+        assert!(args.contains(&"-DLOGIX_SIM=0".into()));
     }
 
     #[test]
