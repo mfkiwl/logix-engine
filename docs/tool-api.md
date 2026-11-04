@@ -794,7 +794,7 @@ Lists the connected USB devices, each with an `id` for `program_board` and the b
 
 ## get_catalog tool
 
-Returns the Logix Engine's read-only catalog. Hosts use it to list boards and to merge it with their own custom definitions.
+Returns the Logix Engine's built-in catalog, fixed for each engine version. Hosts use it to list boards and to merge it with their own custom definitions, which extend or override it in their requests.
 
 **Table 14.** get_catalog tool inputs
 

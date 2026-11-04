@@ -8,40 +8,42 @@ Draft requirements for the engine. [Architecture](architecture.md), [Tool API](t
 
 | Term | Definition |
 | --- | --- |
-| Engine | Short for FPGA engine. The single component this document specifies. It performs FPGA operations on behalf of its hosts |
+| Engine | Short for Logix FPGA Engine. The single component this document specifies. It performs FPGA operations on behalf of its hosts |
 | Host | The program that launches the engine as a child process on the same computer, shares folders with it and talks to it over MCP. A host is either a local frontend or the network adapter |
-| Frontend | A program that people use to do FPGA work, such as an IDE, a CLI tool, an AI agent or a browser app. Most frontends are also hosts, but remote frontends, such as browser apps, are not: they reach the engine through the network adapter, which is the host |
-| Network adapter | An optional host that relays requests from remote frontends, such as browser apps, to the engine. It handles auth and file transfer |
+| Frontend | A program or workflow that people use to do FPGA work. Examples include IDEs, CLI tools, AI agents, browser apps, and test or automation scripts and workflows. Most frontends are also hosts, but remote frontends, such as browser apps, are not: they reach the engine through the network adapter, which is the host |
+| Network adapter | An optional host that relays requests from remote frontends, such as browser apps, to the engine. It typically handles auth and file transfer |
 | Operation | A unit of functionality the engine offers, such as build, simulate or program board |
 | Instance | One running engine process, from launch to exit. With stdin/stdout, each instance serves exactly one session |
 | Session | One connection between a host and the engine, from start to close. The host decides how long it lasts |
-| Catalog | The engine's collection of known boards, with their variants, and FPGAs, kept as data. It is read-only and fixed for each engine version |
-| Board | A product the user picks by its name. Different names are different boards, unrelated even when their hardware is identical. See [Boards and variants](#boards-and-variants) |
-| Variant | One way to program a board, such as through its USB port to flash or through an FT232H adapter to RAM: an ID, a value of each standard dimension, and how to program it. A board lists its variants; outside a board's context it is called a board variant, as in the `board_variant` field of requests |
+| Catalog | The engine's collection of known boards, with their board variants, and FPGAs, kept as data. The built-in catalog is fixed for each engine version. Hosts can extend or override it at runtime by providing custom definitions, which the engine then uses for builds, programming and other operations |
+| Board | A product the user picks by its name. Different names are different boards, unrelated even when their hardware is identical. See [Boards and board variants](#boards-and-board-variants) |
+| Board variant | One way to program a board, such as through its USB port to flash or through an FT232H adapter to RAM: an ID, a value of each standard dimension, and how to program it. A board lists its board variants; requests select one with the `board_variant` field |
 | Toolchain | The open source FPGA tools the engine runs to perform operations, such as synthesis and place-and-route tools |
 | Shared folders | Folders on the host's computer that both the host and the engine use: the engine folder, the source folder and the build folder. The host chooses their locations: the engine folder when it launches an instance, the source and build folders with each request. They may overlap |
 | Source folder | The shared folder that holds the design's sources, such as HDL files, testbenches and constraint files. The host owns it and names it in each request. The engine reads it, and writes to it only when an operation calls for it, such as formatting, or writing a default waveform layout the request names. It may also hold other files, such as a frontend's project files. The host can exclude parts of it from the engine, such as Apio's `_build` folder, even when the build folder is only a subfolder of the excluded part, such as `_build/<env_name>` |
-| Build folder | The shared folder where the engine writes generated files, such as bitstreams, reports and waveforms, and keeps any state between requests, such as incremental build data. The host names it in each request. Deleting it may slow the next build but never changes its result |
+| Build folder | The shared folder where the engine writes generated files, such as bitstreams, reports and waveforms, and keeps any state between requests, such as incremental build data. The host names it in each request. Deleting it may slow the next build but never changes its result. It may be inside the source folder or outside it, but is never the source folder itself |
 | Project model | How a frontend organizes a design on disk, such as Apio's `apio.ini` and directory layout. The engine does not impose one |
 | MCP | Model Context Protocol, the open standard all hosts use to call engine operations as tools |
 
 ## Goals
 
-An open source, low-level FPGA engine that makes it easy to build a wide range of frontends for FPGA development and testing. These are the tools developers use across the whole cycle, from writing and simulating a design to programming a board and verifying it on real hardware. The engine handles the underlying operations, such as synthesis, simulation, testing, board programming, automated on-board verification, and more. That way, each frontend can focus on its own user experience instead of reimplementing the toolchain.
+An open source, low-level FPGA engine that makes it easy to build a wide range of frontends for FPGA development and testing. These are the tools developers use across the whole cycle, from writing and simulating a design to programming a board and verifying it on real hardware. The engine handles the underlying operations, such as synthesis, simulation, testing, discovery of connected FPGA boards, board programming, automated on-board verification, and more. That way, each frontend can focus on its own user experience instead of reimplementing the toolchain.
+
+**HDL languages.** The engine supports Verilog and SystemVerilog, from the first release on.
 
 **Table 2.** Frontend types
 
 | Frontend type | Examples |
 | --- | --- |
-| Graphical tools | IceStudio |
-| Command-line tools | Apio |
+| Graphical tools | Logix Studio, IceStudio |
+| Command-line tools | Logix CLI, Apio |
 | Automation | Scripts and workflows |
-| IDE extensions | Apio VS Code |
-| Standalone IDEs | Logix |
+| IDE extensions | Logix VSCode, Apio VS Code |
+| Standalone IDEs | Logix IDE |
 | Browser-based IDEs and playgrounds | None yet |
-| AI coding assistants | MCP-based agents |
+| AI coding assistants | Logix AI, MCP-based agents |
 | HDL frameworks | Amaranth, LiteX, SpinalHDL, Chisel |
-| Education platforms and remote labs | None yet |
+| Education platforms and remote labs | Logix Remote |
 
 ## Non-goals
 
@@ -55,7 +57,6 @@ The engine is not:
 - **A new toolchain.** The engine does not implement synthesis, place and route or programming itself. It installs and drives existing open source tools.
 - **A front for proprietary vendor tools.** Tools such as Vivado, Quartus or Gowin's own IDE are out of scope. The engine uses open source toolchains only.
 - **Self-updating.** The engine never updates itself or its packages unless a host asks.
-- **A VHDL toolchain, for now.** VHDL support may become a future goal, but it is not part of the current scope.
 
 ## Frontend deployment forms
 
@@ -65,15 +66,15 @@ The engine must support frontends in each of the deployment forms below. Fronten
 
 | Frontend form | Examples | Implementation example |
 | --- | --- | --- |
-| Desktop graphical design apps | IceStudio | NW.js, Electron or Qt app |
-| Desktop standalone IDEs | Logix | |
-| Command-line tools | Apio | Python process |
+| Desktop graphical design apps | Logix Studio, IceStudio | NW.js, Electron or Qt app |
+| Desktop standalone IDEs | Logix IDE |  |
+| Command-line tools | Logix CLI, Apio | Python process |
 | Scripts and automated workflows | CI runners, containers | Shell scripts, GitHub Actions |
-| IDE extensions | Apio VS Code | TypeScript in the VS Code extension host |
+| IDE extensions | Logix VSCode, Apio VS Code | TypeScript in the VS Code extension host |
 | Programs that embed the engine | Amaranth, LiteX | Python library calls |
 | Browser-based apps | Served from a remote server, or fully in-browser | JavaScript web page |
-| AI coding assistants and agents | | LLM agent making tool calls |
-| Remote frontends | Remote labs | Laptop app talking to a lab computer |
+| AI coding assistants and agents | Logix AI | LLM agent making tool calls |
+| Remote frontends | Logix Remote, remote labs | Laptop app talking to a lab computer |
 
 [Table 1 in Architecture](architecture.md#host-connections) shows how each of these forms connects to the engine as a host.
 
@@ -114,7 +115,7 @@ The engine provides the core FPGA operations that frontends build on. The table 
 
 ## Reference hosts
 
-Apio, IceStudio and Logix must each be implementable as a host of the engine, using the engine's operations instead of their own toolchain handling or calls to Apio. These three are the reference hosts that validate the engine's interface. The [Apio compatibility](#apio-compatibility) section covers what Apio needs. Table 6 lists what IceStudio and Logix need beyond that.
+Apio, IceStudio and Logix must each be implementable as a host of the engine, using the engine's operations instead of their own toolchain handling or calls to Apio. These three are the reference hosts that validate the engine's interface. The Apio compatibility section covers what Apio needs. Table 6 lists what IceStudio and Logix need beyond that.
 
 **Table 6.** Requirements from IceStudio and Logix beyond Apio
 
@@ -295,27 +296,27 @@ Every error report includes:
 
 Messages never assume a particular host. For example, the engine says that a package is not installed, not which command to run, so each host can phrase the fix in its own terms.
 
-## Boards and variants
+## Boards and board variants
 
-Apio lists boards that differ only by a cable or by flash or RAM as separate boards (such as `icesugar-pro` and `icesugar-pro-ram`). The engine makes each one board with variants (since neither the engine nor Logix IDE had been released, the old IDs weren't kept). The format is in the [tool API](tool-api.md) (variants, variant).
+Apio lists boards that differ only by a cable or by flash or RAM as separate boards (such as `icesugar-pro` and `icesugar-pro-ram`). The engine makes each one board with board variants (since neither the engine nor Logix IDE had been released, the old IDs weren't kept). The format is in the [tool API](tool-api.md) (variants, variant).
 
-- **A board is a name.** The board's name is how users select it. Two boards with different names are different boards, unrelated even when their hardware is identical, such as Alchitry Au and Au+, or ColorLight i5 and i9. Variants exist only within one name.
+- **A board is a name.** The board's name is how users select it. Two boards with different names are different boards, unrelated even when their hardware is identical, such as Alchitry Au and Au+, or ColorLight i5 and i9. Board variants exist only within one name.
 - **Sizes are boards.** A board sold with several FPGA sizes, such as the Arty A7-35T and A7-100T or the ULX3S 12K to 85K, is one board per size: vendors name the sizes, and a larger FPGA in the same package can have pins a smaller one lacks (ECP5 in the 381-ball package has 197 I/O pins on the 12F and 205 on the 85F), so a pin file isn't guaranteed to work on every size.
-- **What a variant may change.** Only how the board is programmed, such as the connection or the memory. Every variant of a board has the same FPGA and the same pin file, so the same project, its sources and pin file, works unchanged with every variant.
-- **Same pin file.** All variants of a board must use the same pin file: every LED, button, clock and connector is on the same FPGA pin. Versions of a board whose LED, or any other signal, is on a different pin are different boards, each with its own name, even when everything else is the same. So is a mode that needs a different design, such as logic the design must include.
+- **What a board variant may change.** Only how the board is programmed, such as the connection or the memory. Every board variant of a board has the same FPGA and the same pin file, so the same project, its sources and pin file, works unchanged with every board variant.
+- **Same pin file.** All board variants of a board must use the same pin file: every LED, button, clock and connector is on the same FPGA pin. Versions of a board whose LED, or any other signal, is on a different pin are different boards, each with its own name, even when everything else is the same. So is a mode that needs a different design, such as logic the design must include.
 - **Standard dimensions.** Every board has the same two dimensions, with meanings the engine defines, so hosts can rely on them and decide how to show them (for example, a choice only where a dimension has more than one value, and a single value as a fact, such as "uploads to RAM"):
-  - **`connection`**, how the computer reaches the board: `usb` (the board's own USB port, through the programmer chip on the board), `bootloader` (the board's USB port, with the board in its bootloader mode), an external JTAG adapter (`ft2232h`, `ft232h`, `cmsis-dap`, `usb-blaster`), or `unspecified` when the catalog doesn't know (shown as "USB", with help pointing to the board's documentation; a variant that uses it needs `maintainer_notes` saying why).
+  - **`connection`**, how the computer reaches the board: `usb` (the board's own USB port, through the programmer chip on the board), `bootloader` (the board's USB port, with the board in its bootloader mode), an external JTAG adapter (`ft2232h`, `ft232h`, `cmsis-dap`, `usb-blaster`), or `unspecified` when the catalog doesn't know (shown as "USB", with help pointing to the board's documentation; a board variant that uses it needs `maintainer_notes` saying why).
   - **`memory`**, where the design goes: `flash` (kept when the board is powered off) or `ram` (faster to upload; lost when the board is powered off). It follows from the command: openFPGALoader writes RAM unless told to write flash (`-f`, `--write-flash`), except on iCE40, which it always programs through flash; iceprog, icesprog and the DFU bootloaders write flash.
-- **Labels and help come from the engine** (`STANDARD_DIMENSIONS` in `src/catalog.rs`), so a value means the same on every board. Values are named by what the user plugs in or chooses, in plain words: "FT232H adapter" (the USB adapter around the FTDI chip, connected to the board's JTAG pins), "CMSIS-DAP adapter", "USB-Blaster" (a product name), "USB bootloader", not the programmer's terms (openFPGALoader calls adapters cables, which users may not recognize). The catalog file lists only each variant's values; `get_catalog` adds the board's `dimensions`, each standard dimension with the values its variants use, labels and help included. New values are added to the engine's list, never invented by a board.
-- **Drivers** (planned, for Windows and Linux). Which driver a user needs depends mostly on the connection and the OS: FTDI chips need a WinUSB driver on Windows and a udev rule on Linux, CMSIS-DAP usually nothing on Windows, DFU bootloaders WinUSB, macOS nothing. This will be engine data on each connection value (per OS), with the USB IDs for udev rules from the variant's USB filter, and an override on a variant for a board that needs something special. `unspecified` connections have none.
-- **Variants.** A board's `variants` list every way it can be programmed. Each has an `id` (`<connection>-<memory>` in the catalog, such as `ft232h-ram`), a value of both standard dimensions (`connection`, `memory`) and everything needed to program the board that way: the programmer, its argument template and USB filter. Combinations that aren't listed don't exist, so there are no compatibility rules. A variant also has `tested`, optional `user_notes` and optional `maintainer_notes` (required when `tested` is false or the connection is `unspecified`). One concept, decided 2026-11-04: variants replaced the earlier pair of variant values and configurations, for a clearer model.
-- **Defaults and names.** The first variant is the board's default. A board that can upload to flash has a flash variant first (decided 2026-11-04: the design then stays when the board is powered off, as users expect; RAM is the faster choice for those who pick it); among those, the first is the usual connection. A catalog test checks it. Variants have no names or descriptions of their own: hosts show them by their values' labels, such as "ButterStick r1.0, FT232H adapter, RAM". Messages name only the dimensions a board has a choice in ("Icesugar Pro (RAM)", but just "Alhambra II").
-- **Catalog checks.** A test checks every board: each variant has a unique ID following `<connection>-<memory>` and a known value of both standard dimensions, no two variants have the same values, there is at least one variant, the memory matches the command, and every `unspecified` connection has a maintainer note.
-- **Requests.** Tools that take a board also take an optional `board_variant`, the ID of one of its variants, such as `"ft232h-ram"`; without one the engine uses the default. An ID the board doesn't have is a request error that lists its variants.
-- **Builds.** The build record keeps the variant. A different variant always means a full rebuild, like a different board, even when the choice can't affect the bitstream, such as flash or RAM: simple and always correct, and variants change rarely. `program_board` programs with the variant in the build record, so the upload always matches the build. `program_board` checks the chosen device against that variant's USB filter, and its messages name the board.
+- **Labels and help come from the engine** (`STANDARD_DIMENSIONS` in `src/catalog.rs`), so a value means the same on every board. Values are named by what the user plugs in or chooses, in plain words: "FT232H adapter" (the USB adapter around the FTDI chip, connected to the board's JTAG pins), "CMSIS-DAP adapter", "USB-Blaster" (a product name), "USB bootloader", not the programmer's terms (openFPGALoader calls adapters cables, which users may not recognize). The catalog file lists only each board variant's values; `get_catalog` adds the board's `dimensions`, each standard dimension with the values its board variants use, labels and help included. New values are added to the engine's list, never invented by a board.
+- **Drivers** (planned, for Windows and Linux). Which driver a user needs depends mostly on the connection and the OS: FTDI chips need a WinUSB driver on Windows and a udev rule on Linux, CMSIS-DAP usually nothing on Windows, DFU bootloaders WinUSB, macOS nothing. This will be engine data on each connection value (per OS), with the USB IDs for udev rules from the board variant's USB filter, and an override on a board variant for a board that needs something special. `unspecified` connections have none.
+- **Board variants.** A board's `variants` list every way it can be programmed. Each has an `id` (`<connection>-<memory>` in the catalog, such as `ft232h-ram`), a value of both standard dimensions (`connection`, `memory`) and everything needed to program the board that way: the programmer, its argument template and USB filter. Combinations that aren't listed don't exist, so there are no compatibility rules. A board variant also has `tested`, optional `user_notes` and optional `maintainer_notes` (required when `tested` is false or the connection is `unspecified`). One concept, decided 2026-11-04: board variants replaced the earlier pair of variant values and configurations, for a clearer model.
+- **Defaults and names.** The first board variant is the board's default. A board that can upload to flash has a flash board variant first (decided 2026-11-04: the design then stays when the board is powered off, as users expect; RAM is the faster choice for those who pick it); among those, the first is the usual connection. A catalog test checks it. Board variants have no names or descriptions of their own: hosts show them by their values' labels, such as "ButterStick r1.0, FT232H adapter, RAM". Messages name only the dimensions a board has a choice in ("Icesugar Pro (RAM)", but just "Alhambra II").
+- **Catalog checks.** A test checks every board: each board variant has a unique ID following `<connection>-<memory>` and a known value of both standard dimensions, no two board variants have the same values, there is at least one board variant, the memory matches the command, and every `unspecified` connection has a maintainer note.
+- **Requests.** Tools that take a board also take an optional `board_variant`, the ID of one of its board variants, such as `"ft232h-ram"`; without one the engine uses the default. An ID the board doesn't have is a request error that lists its board variants.
+- **Builds.** The build record keeps the board variant. A different board variant always means a full rebuild, like a different board, even when the choice can't affect the bitstream, such as flash or RAM: simple and always correct, and board variants change rarely. `program_board` programs with the board variant in the build record, so the upload always matches the build. `program_board` checks the chosen device against that board variant's USB filter, and its messages name the board.
 - **Wrong size** (not done yet). Programmers read the FPGA's ID before writing, so a board of another size than the one chosen (such as an Arty A7-100T connected while the build is for the 35T) should give a plain error naming both.
-- **The catalog.** 84 boards, 131 variants. By connection: 76 `usb`, 9 `bootloader`, 42 external adapters, 4 `unspecified` (Mimas ECP5 Mini, MicroPhase A7-Lite, each in flash and RAM); by memory: 81 flash, 50 RAM. Apio's commands upload all Xilinx boards, most ECP5 boards and the Tang Nano to RAM; those boards also have a flash variant (added 2026-11-04, untested: the RAM command plus `--write-flash`; on Xilinx openFPGALoader first loads its SPI-over-JTAG bridge for the FPGA part, so a command without `--board` names the part with `--fpga-part`; ColorLight boards add `--unprotect-flash`, as the i5's does, and a user note that the flash's factory firmware is replaced), and flash is now their default (see Defaults and names). Still RAM only: the Zynq boards (PYNQ-Z1, PYNQ-Z2, ZedBoard, Zybo Z7; openFPGALoader can't write their flash, which only the processor side reaches), the QMTECH XC7A100T (no bridge bitstream for its xc7a100tfgg676 package in oss-cad-suite) and the ULX3S (an open question: some have a DFU bootloader at the start of the flash, which a JTAG flash write would overwrite, as on the ButterStick). Boards with a choice (32): iCESugar-Pro, ColorLight i5 and the boards above with a flash variant (memory: flash, RAM); ColorLight 5A-75E V7.1, ColorLight i9 v7.2 and FleaFPGA Ohm (connection: their JTAG adapters, each in flash and RAM); ButterStick r1.0, with two dimensions (connection: USB bootloader, FT2232H or FT232H adapter; memory: the bootloader writes flash and the adapters RAM, as their commands from Apio do; a flash write over an adapter isn't offered, since it could overwrite the bootloader at the start of the flash); every other board has one variant. The Fomu's memory is flash (its bootloader stores the design there) but whether the design comes back at power-up is to check on hardware.
-- **Examples.** Examples belong to frontends and to a board, so they are the same for every variant.
+- **The catalog.** 84 boards, 131 board variants. By connection: 76 `usb`, 9 `bootloader`, 42 external adapters, 4 `unspecified` (Mimas ECP5 Mini, MicroPhase A7-Lite, each in flash and RAM); by memory: 81 flash, 50 RAM. Apio's commands upload all Xilinx boards, most ECP5 boards and the Tang Nano to RAM; those boards also have a flash board variant (added 2026-11-04, untested: the RAM command plus `--write-flash`; on Xilinx openFPGALoader first loads its SPI-over-JTAG bridge for the FPGA part, so a command without `--board` names the part with `--fpga-part`; ColorLight boards add `--unprotect-flash`, as the i5's does, and a user note that the flash's factory firmware is replaced), and flash is now their default (see Defaults and names). Still RAM only: the Zynq boards (PYNQ-Z1, PYNQ-Z2, ZedBoard, Zybo Z7; openFPGALoader can't write their flash, which only the processor side reaches), the QMTECH XC7A100T (no bridge bitstream for its xc7a100tfgg676 package in oss-cad-suite) and the ULX3S (an open question: some have a DFU bootloader at the start of the flash, which a JTAG flash write would overwrite, as on the ButterStick). Boards with a choice (32): iCESugar-Pro, ColorLight i5 and the boards above with a flash board variant (memory: flash, RAM); ColorLight 5A-75E V7.1, ColorLight i9 v7.2 and FleaFPGA Ohm (connection: their JTAG adapters, each in flash and RAM); ButterStick r1.0, with two dimensions (connection: USB bootloader, FT2232H or FT232H adapter; memory: the bootloader writes flash and the adapters RAM, as their commands from Apio do; a flash write over an adapter isn't offered, since it could overwrite the bootloader at the start of the flash); every other board has one board variant. The Fomu's memory is flash (its bootloader stores the design there) but whether the design comes back at power-up is to check on hardware.
+- **Examples.** Examples belong to frontends and to a board, so they are the same for every board variant.
 
 ## Device selection
 
@@ -323,31 +324,31 @@ The engine identifies the connected devices and the boards they may be; the host
 
 For now, the engine supports only USB devices, not boards programmed over a serial port. This leaves out 11 Apio boards, most of them legacy: TinyFPGA, BlackIce, Olimex iCE40 EVB and Devantech boards. It is an exception to full Apio compatibility.
 
-- **Board filters.** Each variant of a board defines a USB filter: vendor ID, product ID and a regular expression for the product name.
-- **Variants.** Each board defines one or more variants, such as flash or RAM, or a particular adapter; the first is its default (see [Boards and variants](#boards-and-variants)). Each variant names the programmer to run, such as openFPGALoader, and gives its full argument template and the USB filter that finds the device. There are no separate programmer definitions, since in Apio the board already supplies almost all of the command. The template uses variables that the engine fills in from the selected device: vendor ID, product ID, bus, device number and serial number, and always the bitstream file.
+- **Board filters.** Each board variant of a board defines a USB filter: vendor ID, product ID and a regular expression for the product name.
+- **Board variants.** Each board defines one or more board variants, such as flash or RAM, or a particular adapter; the first is its default (see [Boards and board variants](#boards-and-board-variants)). Each board variant names the programmer to run, such as openFPGALoader, and gives its full argument template and the USB filter that finds the device. There are no separate programmer definitions, since in Apio the board already supplies almost all of the command. The template uses variables that the engine fills in from the selected device: vendor ID, product ID, bus, device number and serial number, and always the bitstream file.
 - **Device scan.** An operation lists the connected USB devices, with vendor ID, product ID, manufacturer, product name and serial number, which are enough for a user to report a device whose filter needs fixing.
-- **Boards per device.** Each listed device names the boards whose filters it matches, best first, and for each the variants it fits, each with a confidence from 1 to 3. No filter proves which board is connected, since boards the catalog doesn't know can look the same, so these are suggestions, and hosts show them as such.
-- **Confidence.** Hosts only compare it (higher is surer, 3 is always the highest), so the engine may improve its rules without breaking hosts. Each variant the device fits has its own rating; boards have none of their own, so hosts use the variant they mean. The rules today, per matching variant:
+- **Boards per device.** Each listed device names the boards whose filters it matches, best first, and for each the board variants it fits, each with a confidence from 1 to 3. No filter proves which board is connected, since boards the catalog doesn't know can look the same, so these are suggestions, and hosts show them as such.
+- **Confidence.** Hosts only compare it (higher is surer, 3 is always the highest), so the engine may improve its rules without breaking hosts. Each board variant the device fits has its own rating; boards have none of their own, so hosts use the board variant they mean. The rules today, per matching board variant:
   - **3:** the filter's serial number pattern matched, or its name pattern matched a name specific to the board, such as "Alhambra II v1.0A".
   - **2:** the name pattern matched a USB chip's factory default name, which many boards keep, such as FTDI's "Dual RS232-HS". The engine keeps the list (`FACTORY_DEFAULT_NAMES` in `src/devices.rs`), so the rule is the same for catalog and custom boards.
   - **1:** only the USB IDs matched (the filter has no pattern), or the device can't be opened, so its names are unknown.
 - **Matching at request time.** Hosts can define their own boards at any time, so the engine matches devices on every request against the catalog and the custom boards the request carries, never against data prepared in advance.
-- **Devices for a build.** The scan can be limited to the devices that fit a build's board and variant, each with its confidence for that build, so every host's Upload works the same way without knowing board IDs, custom boards included.
+- **Devices for a build.** The scan can be limited to the devices that fit a build's board and board variant, each with its confidence for that build, so every host's Upload works the same way without knowing board IDs, custom boards included.
 - **The host chooses.** Programming takes the ID of a device from the scan; the engine never picks one. A host that sees exactly one suitable device may send it without asking; otherwise it asks the user. A device ID is opaque and short-lived, and may depend on the platform and the computer: it stays valid while the device stays on the same USB port.
-- **Commands name the device.** Where the programmer can be told which device to open, the command does: openFPGALoader through an FTDI chip with `--busdev-num ${BUS}:${DEV}` (72 variants), iceprog with `-d d:${BUS}/${DEV}`. USB-Blaster and CMSIS-DAP adapters (through openFPGALoader), icesprog and dfu-util can't be told, so for those the engine's check below refuses when another device with the same USB IDs is connected.
-- **The engine checks.** Before programming, the engine checks that the device is still there (same port, USB IDs and serial number), that it matches the build's variant, and, when the command can't name the device by bus and device number or by a serial number only it has, that no other connected device has its USB IDs, since the programmer would open the first one.
+- **Commands name the device.** Where the programmer can be told which device to open, the command does: openFPGALoader through an FTDI chip with `--busdev-num ${BUS}:${DEV}` (72 board variants), iceprog with `-d d:${BUS}/${DEV}`. USB-Blaster and CMSIS-DAP adapters (through openFPGALoader), icesprog and dfu-util can't be told, so for those the engine's check below refuses when another device with the same USB IDs is connected.
+- **The engine checks.** Before programming, the engine checks that the device is still there (same port, USB IDs and serial number), that it matches the build's board variant, and, when the command can't name the device by bus and device number or by a serial number only it has, that no other connected device has its USB IDs, since the programmer would open the first one.
 - **Unreachable devices.** A device that can't be opened, for lack of a driver or permissions, is treated as not connected: it can't be chosen. When its USB IDs fit a board, the scan lists it apart, with that partial signature and the fix, so the host can suggest installing a driver or fixing permissions.
-- **Custom programmer command.** A request can carry a custom command template that replaces the variant's.
+- **Custom programmer command.** A request can carry a custom command template that replaces the board variant's.
 - **Linux permissions.** The engine provides the udev rules that give users access to the devices. When a device is found but cannot be opened, the engine reports a setup error saying that permissions are missing.
 
 ## Custom definitions
 
-The engine's catalog is read-only and fixed for each engine version. Custom boards and FPGAs belong to the host, like the rest of its project model.
+The built-in catalog is fixed for each engine version. Hosts extend or override it at runtime with custom definitions, which apply in their requests for building, programming and the other operations. Custom boards and FPGAs belong to the host, like the rest of its project model.
 
 - **Reading the catalog.** Hosts can read the full catalog through an engine request.
 - **Merging is up to the host.** A host combines the catalog with its own local definitions, using its own rules. For example, Apio replaces catalog entries with project entries of the same ID and adds new ones.
 - **ID or full definition.** Each request either names a catalog ID, such as a board ID, or carries the full definition to use. Hosts without custom definitions just send IDs.
-- **Self-contained requests.** The engine never looks up or merges definitions from files. A request alone determines which board, FPGA and variant are used.
+- **Self-contained requests.** The engine never looks up or merges definitions from files. A request alone determines which board, FPGA and board variant are used.
 - **Errors.** The host reports problems in its own definition files, with file and line. The engine reports an invalid definition in a request as a request error.
 - **Stable format.** The definition format is part of the tool API and follows the rule that it never breaks.
 - **Catalog fixes.** A fix to the catalog needs an engine release. Until then, a host can send a corrected definition in its requests.
@@ -405,7 +406,7 @@ Milestone 1 tested the interface with an AI coding agent as the host, before any
 | First start | `apio api get-system`, which installs the packages | `install_packages`, with progress |
 | Stop | Cancelling the running Apio command | Cancellation of every tool |
 
-**Boards dropped from Milestone 2 (decided 2026-11-03).** The catalog covers 95 of Apio's 109 boards (as 84 boards, some with variants). The 14 others are dropped because their programmers are legacy or inactive, or not in the packages the engine uses. None of the programmers the engine supports can program them:
+**Boards dropped from Milestone 2 (decided 2026-11-03).** The catalog covers 95 of Apio's 109 boards (as 84 boards, some with board variants). The 14 others are dropped because their programmers are legacy or inactive, or not in the packages the engine uses. None of the programmers the engine supports can program them:
 
 | Programmer | Boards | Reason |
 | --- | --- | --- |
@@ -447,7 +448,7 @@ The project relies heavily on AI-generated tests to catch regressions, since hum
 - Whether to move more boards to openFPGALoader, which would simplify packages and testing. Its DFU support may cover the dfu-util boards, but each moved board must be tested on hardware.
 - Whether to offer flash on the ULX3S: some boards have a DFU bootloader at the start of the flash, which a JTAG flash write (`-f`) would overwrite. openFPGALoader's `ulx3s_dfu` board writes through that bootloader instead, but only on boards that have it.
 - How to program one particular board when several boards of the same model are connected. Device IDs tell them apart by USB port, and Upload asks which one, but the user may not know which physical board each entry is: identical boards report the same names, and many have no serial number or the same one. Some programmers can't be told which device to open at all (icesprog, dfu-util with `-d VID:PID`, openFPGALoader with USB-Blaster or CMSIS-DAP adapters), so today the engine refuses when another device with the same USB IDs is connected. Ideas to weigh: show where each board is plugged in, in words a user can follow (such as the port or hub); let the user identify a board by unplugging it and watching which entry disappears; pass dfu-util's `--path` (the USB port) or a serial number where the programmer supports it; and let a host remember a name the user gives a board, keyed by its serial number when it has a unique one.
-- What the scope and lifetime of a device ID should be. Today an ID is made from the USB port path, the USB IDs and the serial number, and the API promises only that it is opaque and short-lived. In practice it stays valid when the device is plugged in again in the same port and across engine restarts, but not when it moves to another port, and maybe not after the computer restarts, since bus numbers can change then. Questions: should the API promise any of these, or stay at "list the devices again before choosing"? Should there also be a stable identity a host may store, such as to remember "my second Alhambra", based on a unique serial number where there is one? This ties in with choosing one of several identical boards (above), which goes beyond choosing a board and variant.
+- What the scope and lifetime of a device ID should be. Today an ID is made from the USB port path, the USB IDs and the serial number, and the API promises only that it is opaque and short-lived. In practice it stays valid when the device is plugged in again in the same port and across engine restarts, but not when it moves to another port, and maybe not after the computer restarts, since bus numbers can change then. Questions: should the API promise any of these, or stay at "list the devices again before choosing"? Should there also be a stable identity a host may store, such as to remember "my second Alhambra", based on a unique serial number where there is one? This ties in with choosing one of several identical boards (above), which goes beyond choosing a board and its board variant.
 - What the ButterStick r1.0 bootloader reports as its product name. Its filter, `^butterstick (dfu v1.1)` from Apio, treats the parentheses as a regular expression group, so it matches "butterstick dfu v1.1" but not "butterstick (dfu v1.1)"; a real board's name decides the fix.
 - Whether to support Linux arm64 and single-board computers attached to the target board, such as a Raspberry Pi.
 - Which hardware test interface to use for the engine's own hardware tests, and whether the same interface can serve the on-board verification feature for user designs.
