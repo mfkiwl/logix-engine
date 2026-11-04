@@ -119,11 +119,11 @@ A host that wants to show the tools' output as it happens, such as in a console,
 
 Lines that the engine reads into diagnostics still come in the tool result too. The live lines are for showing, not for parsing.
 
-**Verbose.** Tools that run other tools take an optional boolean `verbose`, like Apio's `--verbose`. It asks those tools to print more detail, which shows in the live output and the logs, and never changes the result. Each tool maps it to what its tools offer: `build` runs yosys and nextpnr without `-q`, `lint` runs Verilator without `--quiet`, `test` and `simulate` run iverilog with `-v`, `format` adds Verible's `--verbose`, and `program_board` adds openFPGALoader's `--verbose`, or iceprog's or dfu-util's `-v` (icesprog has no such option). A build that is up to date runs nothing, so it prints nothing extra.
+**Verbose.** Tools that run other tools take an optional boolean `verbose`. It asks those tools to print more detail, which shows in the live output and the logs, and never changes the result. Each tool maps it to what its tools offer: `build` runs yosys and nextpnr without `-q`, `lint` runs Verilator without `--quiet`, `test` and `simulate` run iverilog with `-v`, `format` adds Verible's `--verbose`, and `program_board` adds openFPGALoader's `--verbose`, or iceprog's or dfu-util's `-v` (icesprog has no such option). A build that is up to date runs nothing, so it prints nothing extra.
 
 ### Commands
 
-Results of the tools that run programs (`lint`, `test`, `simulate`, `format`, `build` and `program_board`) list the programs they ran in `commands`, in order, and so does `data.commands` in an error from them. Like Apio's command listing, it lets anyone run a step again without the engine, such as to report a bug to the tool's developers. A build that is up to date runs nothing, so its list is empty.
+Results of the tools that run programs (`lint`, `test`, `simulate`, `format`, `build` and `program_board`) list the programs they ran in `commands`, in order, and so does `data.commands` in an error from them. It lets anyone run a step again without the engine, such as to report a bug to the tool's developers. A build that is up to date runs nothing, so its list is empty.
 
 **Table 30.** Command fields
 
@@ -162,7 +162,7 @@ Every operation that can take more than a second or two reports progress by phas
 
 ### Packages
 
-Before running, each tool checks that the packages it needs from the manifest are installed and intact. It installs missing packages and repairs broken ones itself, as Apio does. A package is broken when its install record is missing or incomplete, or when one of its tools fails to start. Install progress is sent as the operation's progress notifications, and cancelling the operation cancels the install. A lock in the engine folder stops two instances from installing the same package at once.
+Before running, each tool checks that the packages it needs from the manifest are installed and intact. It installs missing packages and repairs broken ones itself. A package is broken when its install record is missing or incomplete, or when one of its tools fails to start. Install progress is sent as the operation's progress notifications, and cancelling the operation cancels the install. A lock in the engine folder stops two instances from installing the same package at once.
 
 The `--no-auto-install` command-line argument, described in [Command line](command-line.md), turns this off for offline or managed setups. A missing or broken package is then a setup error with `install_packages`, and so is an install that fails, such as when there's no network. To install, the host calls the [install_packages tool](#install_packages-tool), which works whether automatic install is on or off.
 
@@ -182,9 +182,9 @@ A package is unpacked into a temporary folder and renamed into place only when i
 
 ## lint tool
 
-Checks the design and, optionally, its testbenches with Verilator in lint-only mode, like `apio lint`. It is much faster than a build and finds likely mistakes that synthesis accepts, such as width mismatches. It writes nothing and needs no build folder.
+Checks the design and, optionally, its testbenches with Verilator in lint-only mode. It is much faster than a build and finds likely mistakes that synthesis accepts, such as width mismatches. It writes nothing and needs no build folder.
 
-It runs Verilator with Apio's options, so it reports the same problems: `--lint-only --quiet --bbox-unsup --timing -Wno-TIMESCALEMOD -Wno-MULTITOP`, the macros `SYNTHESIZE` (unless `synthesize` is false) and `APIO_SIM=0`, the top module when given, the request's macros, and the FPGA's primitive models, such as `cells_sim.v` with `NO_ICE40_DEFAULT_ASSIGNMENTS` for iCE40, `cells_sim.v` and the black boxes in `cells_bb.v` for ECP5, or `cells_sim.v` and the family's black boxes (`cells_xtra_gw1n.v`, `cells_xtra_gw2a.v` or `cells_xtra_gw5a.v`, chosen by the start of `nextpnr_device`) for Gowin, or `cells_sim.v` and the black boxes in `cells_xtra.v` for Xilinx, so designs that use primitives such as `SB_IO`, `EHXPLLL`, `rPLL` or `PLLE2_BASE` lint cleanly. Verilator treats warnings as failures, as in Apio, so `passed` is false when there are warnings too. Warnings in the primitive models aren't the user's to fix, so the engine turns them off with a Verilator config, like Apio's `hardware.vlt`. When `top_module` is omitted, Verilator takes every module that no other module uses as a top module, so the engine passes the model files as libraries (`-v`): only the primitives the design uses are read. With a top module, the files are passed as Apio passes them.
+It runs Verilator with these options: `--lint-only --quiet --bbox-unsup --timing -Wno-TIMESCALEMOD -Wno-MULTITOP`, the macros `SYNTHESIZE` (unless `synthesize` is false) and `APIO_SIM=0`, the top module when given, the request's macros, and the FPGA's primitive models, such as `cells_sim.v` with `NO_ICE40_DEFAULT_ASSIGNMENTS` for iCE40, `cells_sim.v` and the black boxes in `cells_bb.v` for ECP5, or `cells_sim.v` and the family's black boxes (`cells_xtra_gw1n.v`, `cells_xtra_gw2a.v` or `cells_xtra_gw5a.v`, chosen by the start of `nextpnr_device`) for Gowin, or `cells_sim.v` and the black boxes in `cells_xtra.v` for Xilinx, so designs that use primitives such as `SB_IO`, `EHXPLLL`, `rPLL` or `PLLE2_BASE` lint cleanly. Verilator treats warnings as failures, so `passed` is false when there are warnings too. Warnings in the primitive models aren't the user's to fix, so the engine turns them off with a Verilator config file. When `top_module` is omitted, Verilator takes every module that no other module uses as a top module, so the engine passes the model files as libraries (`-v`): only the primitives the design uses are read. With a top module, they are passed as plain source files.
 
 **Problems are the result.** Lint's job is to find problems, so problems in the design are returned in `diagnostics` with `passed` set to false, not as a design error. The other errors in the list below still apply.
 
@@ -198,7 +198,7 @@ It runs Verilator with Apio's options, so it reports the same problems: `--lint-
 | `source_folder`, `source_files` | See folder fields in [Table 2](#folders) | Yes | The design files |
 | `testbench_files` | list of relative paths | No | Testbenches to check too, relative to the source folder. Defaults to none. A file may be listed only once in `source_files` and `testbench_files` together |
 | `defines` | map of text | No | Macro definitions, as in the [build tool](#build-tool). `SYNTHESIZE` is defined unless `synthesize` is false, and `APIO_SIM` is defined as `0` |
-| `synthesize` | boolean | No | Define `SYNTHESIZE`, so `` `ifdef SYNTHESIZE `` picks the code for synthesis, as in a build. False leaves it undefined, to check the simulation code instead, like `apio lint --nosynth`. Defaults to true |
+| `synthesize` | boolean | No | Define `SYNTHESIZE`, so `` `ifdef SYNTHESIZE `` picks the code for synthesis, as in a build. False leaves it undefined, to check the simulation code instead. Defaults to true |
 | `verbose` | boolean | No | Run Verilator without `--quiet`. Defaults to false |
 
 **Table 24.** lint tool outputs
@@ -244,11 +244,11 @@ Output:
 
 ## test tool
 
-Runs testbenches with Icarus Verilog, like `apio test`. For each testbench in order, iverilog compiles the design files, the FPGA's primitive models and the testbench into the build folder, then vvp runs it and writes its waveform there. Every testbench runs, even after one fails. By default the engine stops each testbench at its first failure, so a failing run ends fast; see [Test and simulate modes](#test-and-simulate-modes).
+Runs testbenches with Icarus Verilog. For each testbench in order, iverilog compiles the design files, the FPGA's primitive models and the testbench into the build folder, then vvp runs it and writes its waveform there. Every testbench runs, even after one fails. By default the engine stops each testbench at its first failure, so a failing run ends fast; see [Test and simulate modes](#test-and-simulate-modes).
 
-It uses Apio's commands: `iverilog -g2012 -o <build folder>/<testbench>.out`, the request's macros, `APIO_SIM=0`, the FPGA's primitive models, the design files and the testbench, then `vvp -i <testbench>.out -dumpfile=<build folder>/<testbench>.vcd`. The `-i` isn't in Apio's command: it makes vvp print each line at once instead of when it exits, so the engine sees a failure while the testbench runs. It doesn't change the results. Both run in the source folder, so a testbench reads data files, such as with `$readmemh`, relative to it, as in Apio. `SYNTHESIZE` isn't defined, so designs can tell simulation from synthesis.
+The commands are `iverilog -g2012 -o <build folder>/<testbench>.out`, the request's macros, `APIO_SIM=0`, the FPGA's primitive models, the design files and the testbench, then `vvp -i <testbench>.out -dumpfile=<build folder>/<testbench>.vcd`. The `-i` makes vvp print each line at once instead of when it exits, so the engine sees a failure while the testbench runs. It doesn't change the results. Both run in the source folder, so a testbench reads data files, such as with `$readmemh`, relative to it. `SYNTHESIZE` isn't defined, so designs can tell simulation from synthesis.
 
-**Testbench rules:** see [Writing testbenches](#writing-testbenches). A testbench fails by calling `$error` or `$fatal`, or by printing a failure line from Apio's assertion macros. It must not call `$dumpfile`, which is a design error at that line.
+**Testbench rules:** see [Writing testbenches](#writing-testbenches). A testbench fails by calling `$error` or `$fatal`, or by printing an assertion failure line (see `diagnostics` in Table 27). It must not call `$dumpfile`, which is a design error at that line.
 
 **Failures are the result.** A failing testbench is returned in `testbenches` with `passed` set to false, not as an error. Compile errors are a design error, since nothing could run.
 
@@ -279,8 +279,8 @@ It uses Apio's commands: `iverilog -g2012 -o <build folder>/<testbench>.out`, th
 | Field | Type | Description |
 | --- | --- | --- |
 | `file` | relative path | The testbench, relative to the source folder |
-| `passed` | boolean | True when it ended itself with `$finish` (`ending` is `finished`) without `$fatal`, `$error` or a failure line from Apio's assertion macros |
-| `diagnostics` | list of diagnostics | Compile warnings, and the testbench's `$fatal`, `$error` and `$warning` messages at file and line. The failure lines of Apio's assertion macros are errors too, at file and line when they give one, such as `ERROR at main_tb.v:52: ...` and `*** ASSERTION FAILED at main_tb.v:52: ...`; `*** ASSERTION FAILED in main_tb ...` has no location |
+| `passed` | boolean | True when it ended itself with `$finish` (`ending` is `finished`) without `$fatal`, `$error` or an assertion failure line |
+| `diagnostics` | list of diagnostics | Compile warnings, and the testbench's `$fatal`, `$error` and `$warning` messages at file and line. Assertion failure lines, as common testbench assertion macros print them, are errors too, at file and line when they give one, such as `ERROR at main_tb.v:52: ...` and `*** ASSERTION FAILED at main_tb.v:52: ...`; `*** ASSERTION FAILED in main_tb ...` has no location |
 | `output` | multiline text | What the testbench printed, such as with `$display`. When it printed more than 5,000 lines, the first and last 2,500, with a line saying how many were left out between them |
 | `waveform_file` | relative path | The waveform (`.vcd`), relative to the build folder, when the testbench wrote one with `$dumpvars` |
 | `ending` | enum | How the run ended: `finished` (the testbench ended itself, with `$finish` or `$fatal`), `first_failure`, `sim_time_limit` or `timeout` (the engine stopped it; its output and waveform end there), or `no_finish` (it ran out of things to simulate without calling `$finish`, which usually means it stopped early by mistake) |
@@ -288,7 +288,7 @@ It uses Apio's commands: `iverilog -g2012 -o <build folder>/<testbench>.out`, th
 
 **Errors:** design errors for compile errors and `$dumpfile`. Setup errors with `install_packages`. Request errors, such as an unknown board, a missing file or a build folder that breaks the keyword rules. Tool failures, engine errors and cancellation.
 
-**Build folder files.** For a testbench `rtl/uart_tb.v`, the build folder gets `rtl/uart_tb.out` (the compiled simulation) and `rtl/uart_tb.vcd` (the waveform): the testbench's path without its extension, as in Apio. Each run replaces them. Like a build, the first run writes the `.logix-build` marker, so `clean_build` can delete the folder.
+**Build folder files.** For a testbench `rtl/uart_tb.v`, the build folder gets `rtl/uart_tb.out` (the compiled simulation) and `rtl/uart_tb.vcd` (the waveform): the testbench's path without its extension. Each run replaces them. Like a build, the first run writes the `.logix-build` marker, so `clean_build` can delete the folder.
 
 **Example**
 
@@ -327,11 +327,11 @@ Output:
 
 ## simulate tool
 
-Simulates one testbench and opens its waveform in GTKWave, like `apio sim --detach`. It compiles and runs the testbench as the [test tool](#test-tool) does, with the same commands, testbench rules and build folder files, except that `APIO_SIM` is defined as `1` and the testbench always runs to the end, so the whole waveform is there to look at. Then it makes sure there is a layout file and starts GTKWave fully detached with the waveform and the layout, and returns without waiting for it. For a layout the user saved, it adds `--rcvar=do_initial_zoom_fit 1` first, as Apio does; a default layout sets its own view, which that would replace. GTKWave keeps running after the operation and after the engine exits.
+Simulates one testbench and opens its waveform in GTKWave. It compiles and runs the testbench as the [test tool](#test-tool) does, with the same commands, testbench rules and build folder files, except that `APIO_SIM` is defined as `1` and the testbench always runs to the end, so the whole waveform is there to look at. Then it makes sure there is a layout file and starts GTKWave fully detached with the waveform and the layout, and returns without waiting for it. For a layout the user saved, it adds `--rcvar=do_initial_zoom_fit 1` first; a default layout sets its own view, which that would replace. GTKWave keeps running after the operation and after the engine exits.
 
 **Layout files.** A GTKWave layout (`.gtkw`) holds the signals shown and how. It is a project file the user changes by saving from GTKWave, which reads and saves the same path, so the host names it in `layout_file`, usually next to the testbench, such as `main_tb.gtkw`.
 
-- **Missing or default:** when the file doesn't exist, or is a default one the engine or Apio generated (it has their marker line), the engine writes a default layout there with the testbench's top-level signals, so GTKWave doesn't open empty. The default layout also sets the view: the whole run when the testbench passed, or, when it failed, a window around the first failure that has a time, with GTKWave's marker on the failure about two thirds of the way across, so what led up to it shows too. The window is about 80 times the waveform's typical step between changes, roughly 40 cycles of a clock, and never wider than the run. A default is replaced on each simulation, so it follows design changes.
+- **Missing or default:** when the file doesn't exist, or is a default one generated by the engine or another tool (it has a known generated-file marker line), the engine writes a default layout there with the testbench's top-level signals, so GTKWave doesn't open empty. The default layout also sets the view: the whole run when the testbench passed, or, when it failed, a window around the first failure that has a time, with GTKWave's marker on the failure about two thirds of the way across, so what led up to it shows too. The window is about 80 times the waveform's typical step between changes, roughly 40 cycles of a clock, and never wider than the run. A default is replaced on each simulation, so it follows design changes.
 - **Saved by the user:** a layout without the marker is the user's and is never changed. GTKWave opens it, and saving from GTKWave updates it.
 - **Unsaved defaults are cleaned up:** when GTKWave exits, the engine deletes the layout if it still has the marker, so default layouts the user never saved don't pile up in the project or end up in version control. This is best-effort: if the engine exits before GTKWave, the default stays until a later simulation replaces or deletes it.
 - **No layout file:** when `layout_file` is omitted, the layout goes into the build folder as `<testbench>.gtkw`, where a saved layout is lost when the folder is cleaned.
@@ -430,7 +430,7 @@ To stop a testbench, the engine asks vvp to exit, which writes out the waveform 
 
 ## Writing testbenches
 
-These are the engine's guidelines for testbenches. Testbenches written for Apio keep working: `APIO_SIM` is still defined (0 in `test` and `lint`, 1 in `simulate`), and the failure lines of Apio's assertion macros count as failures.
+These are the engine's guidelines for testbenches. Testbenches written for other open source FPGA tools keep working: the macro `APIO_SIM` is defined for them (0 in `test` and `lint`, 1 in `simulate`), and assertion failure lines count as failures.
 
 1. **Report a failure with `$error`, then keep going.** Put the expected and actual values in the message. The engine reads `$error` with its file, line and simulation time, and decides whether to stop.
 2. **Use `$fatal` only when going on makes no sense,** such as a missing data file. It stops the run in both modes.
@@ -439,7 +439,7 @@ These are the engine's guidelines for testbenches. Testbenches written for Apio 
 5. **Call `$dumpvars(0, <testbench module>)` at the start** to write a waveform, and **never call `$dumpfile`**: the engine decides where the waveform goes.
 6. **Read data files relative to the source folder,** such as `$readmemh("data/rom.hex", rom)`. Testbenches run there.
 7. **`SYNTHESIZE` isn't defined in `test` and `simulate`,** so `` `ifdef SYNTHESIZE `` / `` `else `` selects the simulation code.
-8. **Name testbenches `<name>_tb.v` or `<name>_tb.sv`** and give them a `` `timescale ``. The engine doesn't need the names, since requests list the testbenches, but Apio and hosts that follow its naming find them that way.
+8. **Name testbenches `<name>_tb.v` or `<name>_tb.sv`** and give them a `` `timescale ``. The engine doesn't need the names, since requests list the testbenches, but hosts that follow this naming find them that way.
 
 **Example**
 
@@ -469,9 +469,9 @@ A failed check reports, for example, `q is a, expected b` at `counter_tb.v:15` w
 
 ## format tool
 
-Formats Verilog and SystemVerilog files in place with Verible's formatter, like `apio format`. Formatting changes only layout, such as indentation, spacing and line breaks, never meaning. The host lists the files; the engine doesn't search for them. To format text that isn't saved yet, such as an editor's buffer, a host writes it to a file in a scratch folder and formats it there, since requests never carry source text.
+Formats Verilog and SystemVerilog files in place with Verible's formatter. Formatting changes only layout, such as indentation, spacing and line breaks, never meaning. The host lists the files; the engine doesn't search for them. To format text that isn't saved yet, such as an editor's buffer, a host writes it to a file in a scratch folder and formats it there, since requests never carry source text.
 
-Each file is formatted on its own, in order, with Apio's command: `verible-verilog-format --nofailsafe_success --inplace`, the request's options, then the file. Verible rewrites a file only when its layout changes. A file reached through a symbolic link is formatted where it really is, which must be inside the source folder, and the link stays. Code between `// verilog_format: off` and `// verilog_format: on` comments is left as is.
+Each file is formatted on its own, in order, with `verible-verilog-format --nofailsafe_success --inplace`, the request's options, then the file. Verible rewrites a file only when its layout changes. A file reached through a symbolic link is formatted where it really is, which must be inside the source folder, and the link stays. Code between `// verilog_format: off` and `// verilog_format: on` comments is left as is.
 
 **Problems are the result.** A file Verible can't format, such as one with a syntax error, is left unchanged and listed as `failed`, with the problems in `diagnostics` and `passed` set to false, as in lint. The other files are still formatted. A statement too complex for Verible to lay out within its search limit fails the same way; its diagnostic suggests the option `--max_search_states=2000000` or `verilog_format: off` comments.
 
@@ -480,8 +480,8 @@ Each file is formatted on its own, in order, with Apio's command: `verible-veril
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `source_folder` | absolute path | Yes | The folder with the files |
-| `source_files` | list of relative paths | Yes | The files to format, relative to the source folder: `.v`, `.sv`, `.vh` or `.svh`, as Apio formats. Each is rewritten in place, and may be listed only once |
-| `verible_options` | list of text | No | Extra options for the formatter, like Apio's `format-verible-options`, such as `["--column_limit=80", "--indentation_spaces=4"]`. Each must be one option, `--name` or `--name=value`, so it can't name a file. `--inplace`, which the engine always passes, and the options that read options from elsewhere (`--flagfile`, `--fromenv`, `--tryfromenv`) are refused. Defaults to none, which gives Verible's default style |
+| `source_files` | list of relative paths | Yes | The files to format, relative to the source folder: `.v`, `.sv`, `.vh` or `.svh`. Each is rewritten in place, and may be listed only once |
+| `verible_options` | list of text | No | Extra options for the formatter, such as `["--column_limit=80", "--indentation_spaces=4"]`. Each must be one option, `--name` or `--name=value`, so it can't name a file. `--inplace`, which the engine always passes, and the options that read options from elsewhere (`--flagfile`, `--fromenv`, `--tryfromenv`) are refused. Defaults to none, which gives Verible's default style |
 | `verbose` | boolean | No | Add Verible's `--verbose`. Defaults to false |
 
 **Table 32.** format tool outputs
@@ -527,15 +527,15 @@ Output:
 
 ## graph tool
 
-Draws a diagram of one module of the design, its cells, ports and the wires between them, like `apio graph --no-viewer`. Yosys reads the design without synthesizing it and writes the module as a Graphviz `.dot` file, then Graphviz's `dot` draws it. Both come from the toolchain package. The host shows the file, such as an SVG in a web view.
+Draws a diagram of one module of the design, its cells, ports and the wires between them. Yosys reads the design without synthesizing it and writes the module as a Graphviz `.dot` file, then Graphviz's `dot` draws it. Both come from the toolchain package. The host shows the file, such as an SVG in a web view.
 
-The commands are Apio's: `yosys -p "read_verilog -sv <files>; show -format dot -colors 1 -wireshape plaintext -prefix graph <module>" -DSYNTHESIZE <defines> -q`, then `dot -T<format> graph.dot -o graph.<format>`. Both run in the build folder, with the design files as absolute paths, since yosys can't take a quoted output path. FPGA primitives, such as `SB_LUT4`, are drawn as boxes. Each call replaces `graph.dot` and the graph in the build folder, and deletes the old ones first, so a failed call never leaves an old graph looking current.
+The commands are `yosys -p "read_verilog -sv <files>; show -format dot -colors 1 -wireshape plaintext -prefix graph <module>" -DSYNTHESIZE <defines> -q`, then `dot -T<format> graph.dot -o graph.<format>`. Both run in the build folder, with the design files as absolute paths, since yosys can't take a quoted output path. FPGA primitives, such as `SB_LUT4`, are drawn as boxes. Each call replaces `graph.dot` and the graph in the build folder, and deletes the old ones first, so a failed call never leaves an old graph looking current.
 
 **Table 33.** graph tool inputs
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `top_module` | text | Yes | The module to draw, such as the design's top module, or any module in the design files, like `apio graph -t uart` |
+| `top_module` | text | Yes | The module to draw, such as the design's top module, or any module in the design files, such as `uart` |
 | `source_folder`, `source_files`, `build_folder` | See folder fields in [Table 2](#folders) | Yes | The design files, without testbenches or included files. Paths with a double quote (`"`) are refused, since yosys reads them from a script |
 | `defines` | map of text | No | Macro definitions, as in the [build tool](#build-tool). `SYNTHESIZE` is always defined |
 | `format` | enum | No | `svg`, `pdf` or `png`. Defaults to `svg` |
@@ -577,7 +577,7 @@ Output:
 
 Synthesizes the design, places and routes it, and generates the bitstream in the build folder. A build with no changes since the last one returns quickly with `up_to_date` set.
 
-It runs the same commands as Apio, so the bitstreams match Apio's for the same package versions: for iCE40, yosys (`synth_ice40`), nextpnr-ice40 and icepack; for ECP5, yosys (`synth_ecp5`), nextpnr-ecp5 (with Apio's `--timing-allow-fail --force`) and `ecppack --compress`; for Gowin, yosys (`synth_gowin`, with `-family` when the FPGA has a `yosys_family`), nextpnr-himbaechel (with `--vopt family=` when it has a `nextpnr_family`) and `gowin_pack`; for Xilinx 7 Series, yosys (`synth_xilinx -arch`), nextpnr-xilinx, `fasm2frames` and `xc7frames2bit`, with the FPGA's family database from Project X-Ray. The constraint file is in the architecture's format: `.pcf` for iCE40, `.lpf` for ECP5, `.cst` for Gowin, `.xdc` for Xilinx. Its extension must be that one (any case), or the request is refused: the place-and-route tools take the format from their command-line option, not the file name, so a misnamed file (such as PCF text in `pins.lpf` for an iCE40 board) would otherwise build as if it were right, or fail with a puzzling parse error. Xilinx builds need two packages: yosys comes from `oss-cad-suite` and the other tools from `openxc7`. Apio sends fasm2frames' output to the frames file through the shell; the engine names the file as fasm2frames' second argument, which gives the same file. The Xilinx bitstream's header holds the frames file's name, as the engine passes it, and the build date, so only those bytes differ from Apio's.
+It runs each architecture's open source flow: for iCE40, yosys (`synth_ice40`), nextpnr-ice40 and icepack; for ECP5, yosys (`synth_ecp5`), nextpnr-ecp5 (with `--timing-allow-fail --force`) and `ecppack --compress`; for Gowin, yosys (`synth_gowin`, with `-family` when the FPGA has a `yosys_family`), nextpnr-himbaechel (with `--vopt family=` when it has a `nextpnr_family`) and `gowin_pack`; for Xilinx 7 Series, yosys (`synth_xilinx -arch`), nextpnr-xilinx, `fasm2frames` and `xc7frames2bit`, with the FPGA's family database from Project X-Ray. The constraint file is in the architecture's format: `.pcf` for iCE40, `.lpf` for ECP5, `.cst` for Gowin, `.xdc` for Xilinx. Its extension must be that one (any case), or the request is refused: the place-and-route tools take the format from their command-line option, not the file name, so a misnamed file (such as PCF text in `pins.lpf` for an iCE40 board) would otherwise build as if it were right, or fail with a puzzling parse error. Xilinx builds need two packages: yosys comes from `oss-cad-suite` and the other tools from `openxc7`. The engine names the frames file as fasm2frames' second argument. The Xilinx bitstream's header holds that file's name and the build date, so two builds of the same design differ only in those bytes.
 
 **Table 6.** build tool inputs
 
@@ -615,7 +615,7 @@ It runs the same commands as Apio, so the bitstreams match Apio's for the same p
 
 **Build record.** When a build succeeds, the engine writes a build record into the build folder. It holds the full board spec the build used and its checksum. The `program_board` tool reads it to get the board. A build that fails removes the old record, so `program_board` can't program a stale bitstream.
 
-**Build folder files.** The engine creates the build folder if needed, and first writes a marker file, `.logix-build`, which tells the [clean_build tool](#clean_build-tool) the folder is a build folder. A build makes `hardware.json` (synthesized netlist), the placed and routed design (`hardware.asc` for iCE40, `hardware.config` for ECP5, `hardware.pnr.json` for Gowin, `hardware.fasm` for Xilinx), `hardware.pnr` (nextpnr's report), for Xilinx `hardware.frames` (the configuration frames), the bitstream (`hardware.bin` for iCE40, `hardware.bit` for ECP5 and Xilinx, `hardware.fs` for Gowin), the tool logs `synth.log` and `pnr.log`, and the build record `build-record.json`, written last. These names are a fixed engine convention, the same for every build and host, taken from Apio. Each build replaces the files the previous build made, such as the bitstream, intermediate files and reports. When a build has to run again, it deletes the previous build's outputs first, so a failed build never leaves an old bitstream that looks current. An up-to-date build keeps them. The engine never deletes files in the build folder that it didn't make, such as files put there by the host or the user.
+**Build folder files.** The engine creates the build folder if needed, and first writes a marker file, `.logix-build`, which tells the [clean_build tool](#clean_build-tool) the folder is a build folder. A build makes `hardware.json` (synthesized netlist), the placed and routed design (`hardware.asc` for iCE40, `hardware.config` for ECP5, `hardware.pnr.json` for Gowin, `hardware.fasm` for Xilinx), `hardware.pnr` (nextpnr's report), for Xilinx `hardware.frames` (the configuration frames), the bitstream (`hardware.bin` for iCE40, `hardware.bit` for ECP5 and Xilinx, `hardware.fs` for Gowin), the tool logs `synth.log` and `pnr.log`, and the build record `build-record.json`, written last. These names are a fixed engine convention, the same for every build and host. Each build replaces the files the previous build made, such as the bitstream, intermediate files and reports. When a build has to run again, it deletes the previous build's outputs first, so a failed build never leaves an old bitstream that looks current. An up-to-date build keeps them. The engine never deletes files in the build folder that it didn't make, such as files put there by the host or the user.
 
 **Example**
 
@@ -657,7 +657,7 @@ Output:
 
 Programs a bitstream into the board it was built for, on the device the host chose. The `program_board` tool takes no board input. It reads the board spec from the build record in the build folder, so the board always matches the build. The host names the device with an `id` from [`list_devices`](#list_devices-tool), usually one whose `boards` include the build's board, asking the user when several do; the engine checks it, as described in the [device selection](requirements.md#device-selection) requirements, fills in the argument template of the build's configuration and runs it. It never chooses a device itself.
 
-**Note:** unlike `apio upload`, the `program_board` tool doesn't build. It programs the bitstream that is already in the build folder. A host that wants to build and program the board in one step calls `build` first, and calls `program_board` only if the build succeeded.
+**Note:** the `program_board` tool doesn't build. It programs the bitstream that is already in the build folder. A host that wants to build and program the board in one step calls `build` first, and calls `program_board` only if the build succeeded.
 
 **How it runs:** the engine reads the board from the build record, finds the chosen device and checks it (still connected on the same USB port with the same USB IDs and serial number; matching the build configuration's USB filter; and, when the command doesn't name the device by bus and device number or by a serial number only it has, no other connected device with its USB IDs, since the programmer would open the first one), fills in the configuration's argument template, splitting it into words first so paths with spaces stay whole, and runs the programmer in the build folder. Progress has the phases "Finding device", "Writing flash" (or "Writing RAM") and "Verifying", with percentages read from the programmer's output. With `programmer_command` the phases are "Finding device" and "Programming", without percentages. A programmer that fails because the device is missing or can't be opened gives a setup error with `connect_board` or `fix_device_permissions`; other failures are tool failures with the programmer's output in `details`. The build record's board checksum is checked first, so a damaged record is a request error.
 
@@ -671,7 +671,7 @@ Programs a bitstream into the board it was built for, on the device the host cho
 | --- | --- | --- | --- |
 | `build_folder` | build folder path | Yes | The build folder of a successful build. It holds the bitstream and the build record |
 | `device` | text | Yes | The device to program: the `id` of a device from `list_devices`. It is opaque and short-lived: it stays valid while the device stays on the same USB port |
-| `programmer_command` | text | No | A custom command template that replaces the configuration's whole command, like Apio's `programmer_cmd`. Its first word is a program from the toolchain package, such as `openFPGALoader`, or an absolute path. It uses the same variables as argument templates and must use `${BITSTREAM}` |
+| `programmer_command` | text | No | A custom command template that replaces the configuration's whole command. Its first word is a program from the toolchain package, such as `openFPGALoader`, or an absolute path. It uses the same variables as argument templates and must use `${BITSTREAM}` |
 | `verbose` | boolean | No | Let the programmer print more detail. Not applied to a `programmer_command`. Defaults to false |
 
 **Table 10.** program_board tool outputs
@@ -827,7 +827,7 @@ A board with a choice, such as the iCESugar-Pro, which can be programmed to flas
 }
 ```
 
-**Catalog contents.** The catalog is data in the engine's repo, `catalog/boards.json` and `catalog/fpgas.json`, first imported from Apio's definitions. It has every iCE40, ECP5, Gowin and Xilinx FPGA (Xilinx FPGAs come from Apio's openxc7 package), and 84 boards: 31 iCE40, 22 ECP5, 8 Gowin and 23 Xilinx, with 131 configurations in all, programmed with `openfpgaloader`, `iceprog`, `dfu-util` or `icesprog`. 32 boards have a choice: memory (iCESugar-Pro, ColorLight i5, and most boards that Apio uploads to RAM, such as the Xilinx boards, which also have a flash configuration; flash is the default wherever a board has it), connection and memory (ColorLight 5A-75E V7.1 and i9 v7.2, FleaFPGA Ohm), or both with fewer combinations (ButterStick r1.0: its USB bootloader writes flash, its adapters RAM). The others have one value of each, which still tells where an upload goes: 50 configurations write RAM, and the Zynq boards, the QMTECH XC7A100T and the ULX3S upload only to RAM. Every configuration has a USB filter, whatever its architecture, as in Apio. A few of Apio's boards have none, mostly boards programmed through a cable named with openFPGALoader's `-c` option, such as `-c ft2232`. The import gives those the cable's default USB IDs in openFPGALoader, so the engine can still find the device.
+**Catalog contents.** The catalog is data in the engine's repo, `catalog/boards.json` and `catalog/fpgas.json`, first imported from existing open source board and FPGA definitions. It has every iCE40, ECP5, Gowin and Xilinx FPGA the toolchain packages support, and 84 boards: 31 iCE40, 22 ECP5, 8 Gowin and 23 Xilinx, with 131 configurations in all, programmed with `openfpgaloader`, `iceprog`, `dfu-util` or `icesprog`. 32 boards have a choice: memory (iCESugar-Pro, ColorLight i5, and most boards whose original command uploads to RAM, such as the Xilinx boards, which also have a flash configuration; flash is the default wherever a board has it), connection and memory (ColorLight 5A-75E V7.1 and i9 v7.2, FleaFPGA Ohm), or both with fewer combinations (ButterStick r1.0: its USB bootloader writes flash, its adapters RAM). The others have one value of each, which still tells where an upload goes: 50 configurations write RAM, and the Zynq boards, the QMTECH XC7A100T and the ULX3S upload only to RAM. Every configuration has a USB filter, whatever its architecture. A few of the imported boards had none, mostly boards programmed through a cable named with openFPGALoader's `-c` option, such as `-c ft2232`. The import gives those the cable's default USB IDs in openFPGALoader, so the engine can still find the device.
 
 **Trust and notes.** Each catalog configuration has `tested`: true when its programming is known to work, because it was tried on the board or is used unchanged by a tool that people rely on; false when it hasn't been tried on hardware, such as a board moved to a different programmer. A change rated low risk after checking the programmer's source keeps `tested` true: every openFPGALoader command through an FTDI chip names the chosen device with `--busdev-num ${BUS}:${DEV}` (openFPGALoader's FTDI drivers then open that device), a change made without hardware tests. Optional `user_notes` give warnings and missing information for its users, such as a USB filter that also matches other boards, or a step needed before programming. The catalog file also keeps `maintainer_notes`, where each configuration's settings come from and why they changed, which `get_catalog` doesn't return. A USB filter can't always tell one board model from another: boards that use the same USB chip and report the same names look alike to the engine. Hosts can show both fields where users pick a board.
 
@@ -865,12 +865,12 @@ Output:
   "engine_version": "2026-12-01",
   "protocol_versions": ["2026-07-28", "2025-11-25"],
   "platform": "darwin-arm64",
-  "engine_folder": "/Users/u/.apio/engine",
+  "engine_folder": "/Users/u/.myhost/engine",
   "auto_install": true,
-  "command_line": ["--engine-folder", "/Users/u/.apio/engine"],
-  "log_file": "/Users/u/.apio/engine/logs/20261028-4123.log",
+  "command_line": ["--engine-folder", "/Users/u/.myhost/engine"],
+  "log_file": "/Users/u/.myhost/engine/logs/20261028-4123.log",
   "packages": [
-    { "name": "oss-cad-suite", "version": "2026-11-20", "status": "installed", "bin_folder": "/Users/u/.apio/engine/packages/oss-cad-suite/2026-11-20/bin" },
+    { "name": "oss-cad-suite", "version": "2026-11-20", "status": "installed", "bin_folder": "/Users/u/.myhost/engine/packages/oss-cad-suite/2026-11-20/bin" },
     { "name": "examples", "version": "2026-10-15", "status": "missing" }
   ]
 }
@@ -885,7 +885,7 @@ Installs or repairs the engine's packages. Packages that are already installed a
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `packages` | list of text | No | Names of the packages to install or repair, as `get_engine_info` lists them. Omitted means every package in the manifest |
-| `force` | boolean | No | Download and install the packages again even if they are installed, replacing the installed copies, like Apio's `apio packages install --force`. It fixes files that were damaged or deleted after the install, which the status check doesn't see. The installed copy stays until the new one is complete. Defaults to false |
+| `force` | boolean | No | Download and install the packages again even if they are installed, replacing the installed copies. It fixes files that were damaged or deleted after the install, which the status check doesn't see. The installed copy stays until the new one is complete. Defaults to false |
 
 **Table 19.** install_packages tool outputs
 
@@ -917,10 +917,10 @@ Output:
 
 ## clean_build tool
 
-Deletes build folders, like `apio clean`. It is given a folder and deletes only build folders, which the engine marks with a `.logix-build` file when it first builds in them:
+Deletes build folders. It is given a folder and deletes only build folders, which the engine marks with a `.logix-build` file when it first builds in them:
 
 - **A build folder,** such as `/home/u/proj/_build/default`: the tool deletes it with everything in it.
-- **A folder of build folders,** such as `/home/u/proj/_build` with one build folder per Apio env: the tool deletes each build folder directly inside it, then deletes the folder itself if nothing else is left in it.
+- **A folder of build folders,** such as `/home/u/proj/_build` with one build folder per board or configuration: the tool deletes each build folder directly inside it, then deletes the folder itself if nothing else is left in it.
 
 It never deletes a folder without the marker or files outside the build folders, so a wrong path from a host can't remove the user's files. The folder must satisfy the build folder path rules. A folder that doesn't exist is not an error: nothing is deleted.
 
@@ -960,8 +960,8 @@ Output:
 
 ## Open questions
 
-- **Skipping build steps whose inputs didn't change.** Today a build is up to date as a whole, by a checksum of all its inputs, and otherwise reruns synthesis, place and route, and packing. Apio, with SCons, skips steps whose own inputs are unchanged, so a change to only the constraint file skips synthesis. Per-step checksums in the build record would do the same. Most edits change the sources, which rerun every step anyway, so this waits until large designs make pin-only rebuilds slow.
-- **What clean_build may delete.** Today it deletes only folders the engine marked with `.logix-build`, so it leaves old build folders made by Apio alone until the engine builds in them. The alternative is to delete any folder that passes the build folder path checks, as `apio clean` does. That cleans Apio's old folders too, but a wrong path such as `/home/u/builds/myproject` passes those checks, since one of its last two folder names contains "build". A middle way would be to also refuse folders that directly contain design files, such as `.v`, `.sv` or `.pcf` files.
-- **Extra tool arguments for build.** Apio lets users pass extra options to the synthesis and place-and-route tools, so the build tool likely needs something similar. One option is to define abstract build phases, such as synthesis, place and route, and bitstream, offer portable options such as a target frequency and a seed, and add extra arguments per phase as an explicit escape hatch, passed unchanged to whatever tool runs that phase. The build output would then report which tool and version ran each phase.
+- **Skipping build steps whose inputs didn't change.** Today a build is up to date as a whole, by a checksum of all its inputs, and otherwise reruns synthesis, place and route, and packing. Incremental build tools such as SCons skip steps whose own inputs are unchanged, so a change to only the constraint file skips synthesis. Per-step checksums in the build record would do the same. Most edits change the sources, which rerun every step anyway, so this waits until large designs make pin-only rebuilds slow.
+- **What clean_build may delete.** Today it deletes only folders the engine marked with `.logix-build`, so it leaves old build folders made by other tools alone until the engine builds in them. The alternative is to delete any folder that passes the build folder path checks. That cleans other tools' old folders too, but a wrong path such as `/home/u/builds/myproject` passes those checks, since one of its last two folder names contains "build". A middle way would be to also refuse folders that directly contain design files, such as `.v`, `.sv` or `.pcf` files.
+- **Extra tool arguments for build.** Other FPGA tools let users pass extra options to the synthesis and place-and-route tools, so the build tool likely needs something similar. One option is to define abstract build phases, such as synthesis, place and route, and bitstream, offer portable options such as a target frequency and a seed, and add extra arguments per phase as an explicit escape hatch, passed unchanged to whatever tool runs that phase. The build output would then report which tool and version ran each phase.
 - **Include folders for build.** Some projects keep header files in a separate folder. An optional `include_folders` input, a list of relative paths under `source_folder`, would let the host name extra places to look up included files.
 - **Separating simulation from viewing.** Today `simulate` writes the waveform and also opens GTKWave. Longer term, `simulate` could only write the waveform and return the top-level signals, with opening a viewer as an optional step or its own tool. GTKWave layouts would then be one viewer's concern, and other viewers, such as Surfer or a waveform view inside an IDE, would fit the same way. It only adds fields and tools, so it breaks nothing.
