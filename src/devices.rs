@@ -573,6 +573,18 @@ pub mod tests {
         );
         assert!(!ids(&m).contains(&"icezum".to_string()), "another name");
 
+        // A real Tang Nano 9K: its debugger reports "JTAG Debugger".
+        let nano9k = device(
+            "0403",
+            "6010",
+            Some("JTAG Debugger"),
+            Some("FactoryAIOT Pro\"3DUal"),
+            4,
+        );
+        let m = board_matches(&nano9k, &boards);
+        assert_eq!(m[0].board, "sipeed-tang-nano-9k");
+        assert_eq!(m[0].best_confidence(), CONFIDENCE_HIGH);
+
         // Both iCESugar-Pro variants, and not the other iCESugar boards.
         let pro = device(
             "1d50",
