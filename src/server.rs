@@ -25,12 +25,18 @@ impl EngineServer {
     }
 }
 
+/// The server instructions, sent to every client at `initialize`. The
+/// default project model in it is only a suggestion for AI sessions with no
+/// other requirements, not a standard for frontends and hosts; the engine
+/// needs no project file in any format. Full text: docs/tool-api.md,
+/// Default project model.
 const INSTRUCTIONS: &str = "Logix Engine builds and tests FPGA designs and programs FPGA boards, using open source \
     tools that it installs and runs itself. Every request is self-contained: it names its own \
     board, source folder, source files and build folder, as absolute paths. Errors come back as \
     data with a category (design, setup, request, tool, engine or cancelled), a message and, \
-    when there is one, a suggested action. For a new project with no layout of its own, use the \
-    default project model: one folder with logix.json (board, board_variant, top_module), \
+    when there is one, a suggested action. The engine needs no project file. If your session \
+    has no other requirements and the project has no layout of its own, a suggested default \
+    project model is: one folder with logix.json (board, board_variant, top_module), \
     main.v, a pinout constraint file, <name>_tb.v testbenches and a _build build folder, as \
     https://github.com/openlogix/logix-engine/blob/main/docs/tool-api.md#default-project-model \
     describes. Full reference, including how to launch the engine and \

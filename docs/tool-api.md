@@ -1004,7 +1004,9 @@ Output:
 
 ## Default project model
 
-The Logix Engine doesn't impose a project model: each frontend organizes designs its own way, and requests name every folder and file. When there is no frontend with its own model, such as an AI agent starting a design from scratch, the engine suggests this one. Use it only for a new project, or a folder without a layout of its own.
+The Logix Engine doesn't impose a project model: each frontend organizes designs its own way, and requests name every folder and file. The engine doesn't need a project file, in JSON or any other format, and never reads one.
+
+This model is only a suggestion for AI sessions that have no other requirements, such as an AI agent starting a design from scratch with only the engine. It isn't a standard or a recommendation for frontends and hosts, which keep their own models. Use it only for a new project, or a folder without a layout of its own.
 
 - **One folder** holds the project, with every file at its top level.
 - **`logix.json`** holds the request values that would otherwise have to be remembered between sessions, under their request field names:
@@ -1013,7 +1015,7 @@ The Logix Engine doesn't impose a project model: each frontend organizes designs
   { "board": "alhambra-ii", "board_variant": "usb-flash", "top_module": "main" }
   ```
 
-  `board` is anything the `board` field takes: a catalog ID, or a full definition for a board that isn't in the catalog. `board_variant` is optional: without it, requests use the board's first variant. Copy the values into each request. The engine never reads this file.
+  `board` is anything the `board` field takes: a catalog ID, or a full definition for a board that isn't in the catalog. `board_variant` is optional: without it, requests use the board's first variant. Copy the values into each request. The engine never reads this file: it is only the AI session's notes.
 - **`main.v`** holds the top module, `main`, or **`main.sv`** for SystemVerilog. Other source files sit next to it.
 - **One constraint file,** `pinout` with the extension of the FPGA's format: `pinout.pcf` (iCE40), `pinout.lpf` (ECP5), `pinout.cst` (Gowin) or `pinout.xdc` (Xilinx). `get_catalog` gives the board's FPGA.
 - **Testbenches** are named `<name>_tb.v` or `<name>_tb.sv`, next to the code they test (see Writing testbenches).
