@@ -114,7 +114,7 @@ async def build():
                     "source_folder": "/home/user/proj",
                     "source_files": ["main.v"],
                     "constraint_file": "pinout.pcf",
-                    "build_folder": "/home/user/proj/_build/default",
+                    "build_folder": "/home/user/proj/_build",
                 },
                 progress_callback=on_progress,
             )
@@ -250,7 +250,7 @@ async function build(projectDir) {
               source_folder: projectDir,
               source_files: ["main.v"],
               constraint_file: "pinout.pcf",
-              build_folder: `${projectDir}/_build/default`,
+              build_folder: `${projectDir}/_build`,
             },
           },
           undefined,

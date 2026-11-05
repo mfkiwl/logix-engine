@@ -16,10 +16,10 @@ pub struct CleanBuild;
 impl EngineTool for CleanBuild {
     const NAME: &'static str = "clean_build";
     const DESCRIPTION: &'static str = "Deletes build folders. Given a build \
-        folder, such as /home/user/proj/_build/default, it deletes it. Given a folder of build \
-        folders, such as /home/user/proj/_build, it deletes each build folder directly inside it, \
-        then the folder itself if nothing else is left. It only deletes folders the build tool \
-        made, so other files are never removed. A folder that doesn't exist is fine.";
+        folder, such as /home/user/proj/_build, it deletes it. Given a folder of build folders, \
+        such as /home/user/proj/builds with one build folder per board, it deletes each build \
+        folder directly inside it, then the folder itself if nothing else is left. It only \
+        deletes folders the build tool made, so other files are never removed. A folder that doesn't exist is fine.";
     const READ_ONLY: bool = false;
     type Input = CleanBuildInput;
     type Output = CleanBuildOutput;

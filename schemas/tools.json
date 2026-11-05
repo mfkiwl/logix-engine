@@ -1349,7 +1349,7 @@
           ]
         },
         "build_folder": {
-          "description": "Where the compiled testbenches and their waveforms go, as an absolute\npath. One of its last two folder names must contain \"build\", such as\n/home/user/proj/_build/default. It is created if needed.",
+          "description": "Where the compiled testbenches and their waveforms go, as an absolute\npath. One of its last two folder names must contain \"build\", such as\n/home/user/proj/_build. It is created if needed.",
           "type": "string"
         },
         "defines": {
@@ -1905,7 +1905,7 @@
           ]
         },
         "build_folder": {
-          "description": "Where the compiled testbench and its waveform go, as an absolute path.\nOne of its last two folder names must contain \"build\", such as\n/home/user/proj/_build/default. It is created if needed.",
+          "description": "Where the compiled testbench and its waveform go, as an absolute path.\nOne of its last two folder names must contain \"build\", such as\n/home/user/proj/_build. It is created if needed.",
           "type": "string"
         },
         "defines": {
@@ -2903,7 +2903,7 @@
           ]
         },
         "build_folder": {
-          "description": "Where the build writes its files, as an absolute path. One of its last\ntwo folder names must contain \"build\", such as\n/home/user/proj/_build/default. It may be inside the source folder but\ncan't be the source folder itself. It is created if needed.",
+          "description": "Where the build writes its files, as an absolute path. One of its last\ntwo folder names must contain \"build\", such as\n/home/user/proj/_build. It may be inside the source folder but\ncan't be the source folder itself. It is created if needed.",
           "type": "string"
         },
         "constraint_file": {
@@ -3135,7 +3135,7 @@
   },
   {
     "name": "clean_build",
-    "description": "Deletes build folders. Given a build folder, such as /home/user/proj/_build/default, it deletes it. Given a folder of build folders, such as /home/user/proj/_build, it deletes each build folder directly inside it, then the folder itself if nothing else is left. It only deletes folders the build tool made, so other files are never removed. A folder that doesn't exist is fine.",
+    "description": "Deletes build folders. Given a build folder, such as /home/user/proj/_build, it deletes it. Given a folder of build folders, such as /home/user/proj/builds with one build folder per board, it deletes each build folder directly inside it, then the folder itself if nothing else is left. It only deletes folders the build tool made, so other files are never removed. A folder that doesn't exist is fine.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,

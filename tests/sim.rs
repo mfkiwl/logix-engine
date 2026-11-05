@@ -291,7 +291,7 @@ fn test_input(src: &Path, extra: Value) -> test::TestInput {
         "source_folder": src,
         "source_files": ["main.v", "rtl/counter.v"],
         "testbench_files": ["main_tb.v"],
-        "build_folder": src.join("_build/default"),
+        "build_folder": src.join("_build"),
     });
     serde_json::from_value(with(v, extra)).expect("a valid test input")
 }
@@ -332,7 +332,7 @@ async fn test_runs_a_passing_testbench_and_writes_its_waveform() {
     assert!(tb.output.contains("main_tb passed"), "{}", tb.output);
     assert!(!tb.output.contains("VCD info"), "{}", tb.output);
     assert_eq!(tb.waveform_file.as_deref(), Some("main_tb.vcd"));
-    let build = src.join("_build/default");
+    let build = src.join("_build");
     assert!(build.join("main_tb.vcd").is_file());
     assert!(build.join("main_tb.out").is_file());
     assert!(build.join(".logix-build").is_file());
@@ -368,7 +368,7 @@ async fn test_runs_every_testbench_and_reports_failures_as_results() {
     assert_eq!(d.text, "mem is 5a");
     // No $dumpvars, so no waveform.
     assert_eq!(failed.waveform_file, None);
-    assert!(src.join("_build/default/tb/sub_tb.out").is_file());
+    assert!(src.join("_build/tb/sub_tb.out").is_file());
 }
 
 #[tokio::test]
@@ -450,7 +450,7 @@ fn simulate_input(src: &Path, extra: Value) -> simulate::SimulateInput {
         "source_folder": src,
         "source_files": ["main.v", "rtl/counter.v"],
         "testbench_file": "main_tb.v",
-        "build_folder": src.join("_build/default"),
+        "build_folder": src.join("_build"),
         "layout_file": "main_tb.gtkw",
         "open_viewer": false,
     });
@@ -475,7 +475,7 @@ async fn simulate_writes_the_waveform_and_a_default_layout_then_keeps_the_users(
         .unwrap();
     assert!(out.passed, "{out:#?}");
     assert_eq!(out.waveform_file, "main_tb.vcd");
-    assert!(src.join("_build/default/main_tb.vcd").is_file());
+    assert!(src.join("_build/main_tb.vcd").is_file());
     assert_eq!(out.layout_file, src.join("main_tb.gtkw").to_string_lossy());
     assert!(out.layout_created);
     assert!(!out.viewer_opened);
@@ -508,7 +508,7 @@ async fn simulate_writes_the_waveform_and_a_default_layout_then_keeps_the_users(
     // Without a layout file, the default goes into the build folder.
     let input = simulate_input(&src, json!({"layout_file": null}));
     let out = simulate::run(&state, input, &call()).await.unwrap();
-    let in_build = src.join("_build/default/main_tb.gtkw");
+    let in_build = src.join("_build/main_tb.gtkw");
     assert_eq!(out.layout_file, in_build.to_string_lossy());
     assert!(in_build.is_file());
 }
@@ -525,7 +525,7 @@ async fn simulate_shows_a_failing_testbench_but_needs_a_waveform() {
     // The comparison changed, not the message.
     assert_eq!(out.diagnostics[0].text, "q is  9, expected 9");
     assert_eq!(out.diagnostics[0].line, Some(10));
-    assert!(src.join("_build/default/main_tb.vcd").is_file());
+    assert!(src.join("_build/main_tb.vcd").is_file());
 
     std::fs::write(
         src.join("main_tb.v"),
@@ -770,7 +770,7 @@ async fn runs_that_dont_end_are_stopped_by_the_limits() {
         "no timescale warning: {:#?}",
         tb.diagnostics
     );
-    assert!(src.join("_build/default/main_tb.vcd").is_file());
+    assert!(src.join("_build/main_tb.vcd").is_file());
 
     // Real time limit.
     let start = std::time::Instant::now();
@@ -876,7 +876,7 @@ async fn failed_calls_carry_their_commands_in_the_error() {
         "source_folder": src,
         "source_files": ["main.v", "rtl/counter.v"],
         "testbench_files": ["main_tb.v"],
-        "build_folder": src.join("_build/default"),
+        "build_folder": src.join("_build"),
     }))
     .unwrap();
     let result = logix_engine::tools::call(&state, "test", args.as_object().cloned(), &call())

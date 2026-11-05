@@ -235,7 +235,7 @@ pub fn check_build_folder(
     let given = check_absolute_path(s)?;
     if !has_build_keyword(&given) {
         return Err(format!(
-            "one of the last two folder names of the build folder {s:?} must contain \"build\", such as _build or _build/default"
+            "one of the last two folder names of the build folder {s:?} must contain \"build\", such as _build or _build/alhambra-ii"
         ));
     }
     let resolved =
@@ -278,7 +278,7 @@ mod build_folder_tests {
         let base = tmp.path().canonicalize().unwrap();
         let b = base.to_str().unwrap();
         assert!(check_build_folder(&format!("{b}/p/_build"), None, None).is_ok());
-        assert!(check_build_folder(&format!("{b}/p/_build/default"), None, None).is_ok());
+        assert!(check_build_folder(&format!("{b}/p/_build/alhambra-ii"), None, None).is_ok());
         assert!(check_build_folder(&format!("{b}/build/x/y"), None, None).is_err());
         assert!(check_build_folder(&format!("{b}/p/out"), None, None).is_err());
         let src = base.join("build-src");

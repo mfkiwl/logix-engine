@@ -74,7 +74,7 @@ mod tests {
     #[test]
     fn deletes_a_build_folder() {
         let tmp = tempfile::tempdir().unwrap();
-        let b = tmp.path().join("_build/default");
+        let b = tmp.path().join("_build/alhambra-ii");
         build_folder(&b);
         assert_eq!(clean(&b, &b).unwrap(), vec![b.clone()]);
         assert!(!b.exists());
@@ -110,7 +110,7 @@ mod tests {
         // A project folder with a build folder two levels down: nothing,
         // since only direct subfolders are looked at.
         let proj = tmp.path().join("proj");
-        build_folder(&proj.join("_build/default"));
+        build_folder(&proj.join("_build/alhambra-ii"));
         fs::write(proj.join("main.v"), "").unwrap();
         assert!(clean(&proj, &proj).unwrap().is_empty());
         assert!(proj.join("main.v").exists());

@@ -16,7 +16,7 @@
 #
 # Examples:
 #
-#   scripts/engine-cmd.sh --add-dir ~/work "Build ~/work for the Alhambra II with the build folder _build/default."
+#   scripts/engine-cmd.sh --add-dir ~/work "Build ~/work for the Alhambra II with the build folder _build."
 #   scripts/engine-cmd.sh -c "Program the board."
 #
 # Claude can't stop to ask for permission here. The engine's tools and

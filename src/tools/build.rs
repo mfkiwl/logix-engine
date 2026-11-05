@@ -61,7 +61,7 @@ pub struct BuildInput {
     pub constraint_file: String,
     /// Where the build writes its files, as an absolute path. One of its last
     /// two folder names must contain "build", such as
-    /// /home/user/proj/_build/default. It may be inside the source folder but
+    /// /home/user/proj/_build. It may be inside the source folder but
     /// can't be the source folder itself. It is created if needed.
     pub build_folder: String,
     /// Verilog macro definitions, from name to value, such as

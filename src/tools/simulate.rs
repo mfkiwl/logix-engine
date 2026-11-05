@@ -71,7 +71,7 @@ pub struct SimulateInput {
     pub testbench_file: String,
     /// Where the compiled testbench and its waveform go, as an absolute path.
     /// One of its last two folder names must contain "build", such as
-    /// /home/user/proj/_build/default. It is created if needed.
+    /// /home/user/proj/_build. It is created if needed.
     pub build_folder: String,
     /// The GTKWave layout file (.gtkw), relative to the source folder, such
     /// as main_tb.gtkw. GTKWave opens it and saves the user's changes to it.

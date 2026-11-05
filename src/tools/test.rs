@@ -67,7 +67,7 @@ pub struct TestInput {
     pub testbench_files: Vec<String>,
     /// Where the compiled testbenches and their waveforms go, as an absolute
     /// path. One of its last two folder names must contain "build", such as
-    /// /home/user/proj/_build/default. It is created if needed.
+    /// /home/user/proj/_build. It is created if needed.
     pub build_folder: String,
     /// Verilog macro definitions, from name to value, such as
     /// {"WIDTH": "8"}. An empty value defines the macro with no text, for

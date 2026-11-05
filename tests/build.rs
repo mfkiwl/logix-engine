@@ -91,7 +91,7 @@ fn request(src: &Path, extra: Value) -> build::BuildInput {
         "source_folder": src,
         "source_files": ["main.v"],
         "constraint_file": "pinout.pcf",
-        "build_folder": src.join("_build/default"),
+        "build_folder": src.join("_build"),
     });
     for (k, val) in extra.as_object().unwrap() {
         v[k] = val.clone();
@@ -111,7 +111,7 @@ async fn build_it(
 async fn builds_then_is_up_to_date_until_an_input_changes() {
     let state = engine().await;
     let (_tmp, src) = project();
-    let out_dir = src.join("_build/default");
+    let out_dir = src.join("_build");
 
     let out = build_it(&state, &src, json!({})).await.unwrap();
     assert!(!out.up_to_date);
@@ -206,7 +206,7 @@ async fn builds_an_ecp5_design() {
     );
     assert!(pnr.contains(&"--timing-allow-fail".to_string()));
     assert_eq!(out.bitstream, "hardware.bit");
-    let bit = std::fs::read(src.join("_build/default/hardware.bit")).unwrap();
+    let bit = std::fs::read(src.join("_build/hardware.bit")).unwrap();
     assert!(bit.len() > 10_000, "{}", bit.len());
     assert!(
         out.resources_usage["TRELLIS_COMB"].used > 0,
@@ -225,10 +225,9 @@ async fn builds_an_ecp5_design() {
             .unwrap()
             .up_to_date
     );
-    let record: Value = serde_json::from_slice(
-        &std::fs::read(src.join("_build/default/build-record.json")).unwrap(),
-    )
-    .unwrap();
+    let record: Value =
+        serde_json::from_slice(&std::fs::read(src.join("_build/build-record.json")).unwrap())
+            .unwrap();
     assert_eq!(record["board"]["variant"]["id"], json!("usb-ram"));
     assert_eq!(record["board"]["name"], "Icesugar Pro (RAM)");
     assert!(build_it(&state, &src, ram).await.unwrap().up_to_date);
@@ -265,7 +264,7 @@ async fn builds_an_ecp5_design() {
         logix_engine::errors::Category::Design,
         "{err:?}"
     );
-    assert!(!src.join("_build/default/hardware.bit").exists());
+    assert!(!src.join("_build/hardware.bit").exists());
 }
 
 /// A Gowin build with the standard commands, for the Tang Nano 9K.
@@ -311,7 +310,7 @@ async fn builds_a_gowin_design() {
         ["-d", "GW1N-9C", "-o", "hardware.fs", "hardware.pnr.json"]
     );
     assert_eq!(out.bitstream, "hardware.fs");
-    let fs = std::fs::read(src.join("_build/default/hardware.fs")).unwrap();
+    let fs = std::fs::read(src.join("_build/hardware.fs")).unwrap();
     assert!(fs.len() > 10_000, "{}", fs.len());
     assert!(
         out.resources_usage["LUT4"].used > 0 && out.resources_usage["DFF"].used > 0,
@@ -332,7 +331,7 @@ async fn builds_a_gowin_design() {
         logix_engine::errors::Category::Design,
         "{err:?}"
     );
-    assert!(!src.join("_build/default/hardware.fs").exists());
+    assert!(!src.join("_build/hardware.fs").exists());
 }
 
 /// A Xilinx build with the standard commands, for the Arty A7-35T: yosys from
@@ -388,7 +387,7 @@ async fn builds_a_xilinx_design() {
     assert_eq!(&frames[4..], ["hardware.fasm", "hardware.frames"]);
     assert!(out.commands[3].args[2].ends_with("prjxray-db/artix7/xc7a35tcsg324-1/part.yaml"));
     assert_eq!(out.bitstream, "hardware.bit");
-    let bit = std::fs::read(src.join("_build/default/hardware.bit")).unwrap();
+    let bit = std::fs::read(src.join("_build/hardware.bit")).unwrap();
     assert!(bit.len() > 100_000, "{}", bit.len());
     assert!(!out.resources_usage.is_empty(), "{:?}", out.resources_usage);
     assert_eq!(out.timing.len(), 1, "{:?}", out.timing);
@@ -405,14 +404,14 @@ async fn builds_a_xilinx_design() {
         logix_engine::errors::Category::Design,
         "{err:?}"
     );
-    assert!(!src.join("_build/default/hardware.bit").exists());
+    assert!(!src.join("_build/hardware.bit").exists());
 }
 
 #[tokio::test]
 async fn a_syntax_error_is_a_design_error_and_removes_the_old_bitstream() {
     let state = engine().await;
     let (_tmp, src) = project();
-    let out_dir = src.join("_build/default");
+    let out_dir = src.join("_build");
     build_it(&state, &src, json!({})).await.unwrap();
     std::fs::write(out_dir.join("my-notes.txt"), "keep").unwrap();
 
@@ -552,7 +551,7 @@ async fn a_full_board_definition_works() {
     let out = build_it(&state, &src, json!({"board": board}))
         .await
         .unwrap();
-    assert!(src.join("_build/default").join(out.bitstream).exists());
+    assert!(src.join("_build").join(out.bitstream).exists());
 }
 
 #[tokio::test]
@@ -592,10 +591,14 @@ async fn clean_build_removes_a_folder_of_build_folders() {
     let state = engine().await;
     let (_tmp, src) = project();
     let root = src.join("_build");
-    build_it(&state, &src, json!({"build_folder": root.join("default")}))
-        .await
-        .unwrap();
-    build_it(&state, &src, json!({"build_folder": root.join("env2")}))
+    build_it(
+        &state,
+        &src,
+        json!({"build_folder": root.join("alhambra-ii")}),
+    )
+    .await
+    .unwrap();
+    build_it(&state, &src, json!({"build_folder": root.join("icezum")}))
         .await
         .unwrap();
 
@@ -607,8 +610,8 @@ async fn clean_build_removes_a_folder_of_build_folders() {
     assert_eq!(
         out.deleted,
         vec![
-            root.join("default").display().to_string(),
-            root.join("env2").display().to_string(),
+            root.join("alhambra-ii").display().to_string(),
+            root.join("icezum").display().to_string(),
             root.display().to_string(),
         ]
     );
@@ -679,7 +682,7 @@ fn list_devices_names_the_boards_each_device_may_be() {
 async fn list_devices_for_a_build_lists_only_the_devices_that_fit() {
     let state = engine().await;
     let (_tmp, src) = project();
-    let folder = src.join("_build/default");
+    let folder = src.join("_build");
     let input = |folder: &Path| -> list_devices::ListDevicesInput {
         serde_json::from_value(json!({"build_folder": folder})).unwrap()
     };
@@ -712,7 +715,7 @@ async fn list_devices_for_a_build_lists_only_the_devices_that_fit() {
 async fn program_board_needs_a_successful_build() {
     let state = engine().await;
     let (_tmp, src) = project();
-    let folder = src.join("_build/default");
+    let folder = src.join("_build");
     let input = program_input(&folder, json!({"device": "usb:250-3:0403:6010:"}));
     let err = program_board::run_with(&state, input, &call(), || Ok(vec![]))
         .await
@@ -725,7 +728,7 @@ async fn program_board_needs_a_successful_build() {
 async fn program_board_checks_the_chosen_device() {
     let state = engine().await;
     let (_tmp, src) = project();
-    let folder = src.join("_build/default");
+    let folder = src.join("_build");
     build_it(&state, &src, json!({})).await.unwrap();
     let alhambra = || usb("Alhambra II v2.0", Some("A1"), 3);
     let second = || usb("Alhambra II", Some("B2"), 5);
@@ -787,7 +790,7 @@ async fn program_board_runs_the_command_with_the_device_and_bitstream() {
     }
     let state = engine().await;
     let (tmp, src) = project();
-    let folder = src.join("_build/default");
+    let folder = src.join("_build");
     build_it(&state, &src, json!({})).await.unwrap();
 
     // A fake programmer that records its arguments.

@@ -37,10 +37,10 @@ A call and its response look like this (wrapped for reading; on the wire each is
 ```json
 {"jsonrpc": "2.0", "id": 7, "method": "tools/call",
  "params": {"name": "clean_build",
-            "arguments": {"folder": "/home/user/proj/_build"}}}
+            "arguments": {"folder": "/home/user/proj/builds"}}}
 
 {"jsonrpc": "2.0", "id": 7,
- "result": {"structuredContent": {"deleted": ["/home/user/proj/_build/default", "/home/user/proj/_build"]},
+ "result": {"structuredContent": {"deleted": ["/home/user/proj/builds/alhambra-ii", "/home/user/proj/builds"]},
             "isError": false}}
 ```
 
@@ -342,7 +342,7 @@ Input:
   "source_folder": "/home/user/proj",
   "source_files": ["main.v"],
   "testbench_files": ["main_tb.v"],
-  "build_folder": "/home/user/proj/_build/default"
+  "build_folder": "/home/user/proj/_build"
 }
 ```
 
@@ -426,7 +426,7 @@ Input:
   "source_folder": "/home/user/proj",
   "source_files": ["main.v"],
   "testbench_file": "main_tb.v",
-  "build_folder": "/home/user/proj/_build/default",
+  "build_folder": "/home/user/proj/_build",
   "layout_file": "main_tb.gtkw"
 }
 ```
@@ -602,7 +602,7 @@ Input:
   "top_module": "main",
   "source_folder": "/home/user/proj",
   "source_files": ["main.v", "uart.v"],
-  "build_folder": "/home/user/proj/_build/default"
+  "build_folder": "/home/user/proj/_build"
 }
 ```
 
@@ -674,7 +674,7 @@ Input:
   "source_folder": "/home/user/proj",
   "source_files": ["main.v", "uart.v"],
   "constraint_file": "pinout.pcf",
-  "build_folder": "/home/user/proj/_build/default"
+  "build_folder": "/home/user/proj/_build"
 }
 ```
 
@@ -961,8 +961,8 @@ Output:
 
 Deletes build folders. It is given a folder and deletes only build folders, which the Logix Engine marks with a `.logix-build` file when it first builds in them:
 
-- **A build folder,** such as `/home/user/proj/_build/default`: the tool deletes it with everything in it.
-- **A folder of build folders,** such as `/home/user/proj/_build` with one build folder per board or board variant: the tool deletes each build folder directly inside it, then deletes the folder itself if nothing else is left in it.
+- **A build folder,** such as `/home/user/proj/_build`: the tool deletes it with everything in it.
+- **A folder of build folders,** such as `/home/user/proj/builds` with one build folder per board or board variant: the tool deletes each build folder directly inside it, then deletes the folder itself if nothing else is left in it.
 
 It never deletes a folder without the marker or files outside the build folders, so a wrong path from a host can't remove the user's files. The folder must satisfy the build folder path rules. A folder that doesn't exist is not an error: nothing is deleted.
 
@@ -985,7 +985,7 @@ It never deletes a folder without the marker or files outside the build folders,
 Input:
 
 ```json
-{ "folder": "/home/user/proj/_build" }
+{ "folder": "/home/user/proj/builds" }
 ```
 
 Output:
@@ -993,9 +993,9 @@ Output:
 ```json
 {
   "deleted": [
-    "/home/user/proj/_build/default",
-    "/home/user/proj/_build/icezum",
-    "/home/user/proj/_build"
+    "/home/user/proj/builds/alhambra-ii",
+    "/home/user/proj/builds/icezum",
+    "/home/user/proj/builds"
   ]
 }
 ```
