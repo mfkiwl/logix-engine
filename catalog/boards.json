@@ -13,10 +13,11 @@
           "args": "--force-terminal-mode --verify --board alchitry_au --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
             "vid": "0403",
-            "pid": "6010"
+            "pid": "6010",
+            "product_regex": "^Alchitry Au$"
           },
           "tested": false,
-          "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a35tftg256, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
+          "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a35tftg256, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): the exact product name, from Alchitry's own loader, alchitry/Alchitry-Interface src/main/kotlin/com/alchitry/hardware/Board.kt (1c71e16), which finds boards by comparing it for equality: \"Alchitry Au\", \"Alchitry Au+\", \"Alchitry Cu\", and \"Alchitry Au V2\", \"Alchitry Cu V2\", \"Alchitry Pt V2\" for other boards, so the pattern matches the whole name."
         },
         {
           "id": "usb-ram",
@@ -26,10 +27,11 @@
           "args": "--force-terminal-mode --verify --board alchitry_au --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
             "vid": "0403",
-            "pid": "6010"
+            "pid": "6010",
+            "product_regex": "^Alchitry Au$"
           },
           "tested": true,
-          "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
+          "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): the exact product name, from Alchitry's own loader, alchitry/Alchitry-Interface src/main/kotlin/com/alchitry/hardware/Board.kt (1c71e16), which finds boards by comparing it for equality: \"Alchitry Au\", \"Alchitry Au+\", \"Alchitry Cu\", and \"Alchitry Au V2\", \"Alchitry Cu V2\", \"Alchitry Pt V2\" for other boards, so the pattern matches the whole name."
         }
       ]
     },
@@ -45,10 +47,11 @@
           "args": "--force-terminal-mode --verify --board alchitry_au_plus --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
             "vid": "0403",
-            "pid": "6010"
+            "pid": "6010",
+            "product_regex": "^Alchitry Au\\+$"
           },
           "tested": false,
-          "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a100tftg256, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
+          "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a100tftg256, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): the exact product name, from Alchitry's own loader, alchitry/Alchitry-Interface src/main/kotlin/com/alchitry/hardware/Board.kt (1c71e16), which finds boards by comparing it for equality: \"Alchitry Au\", \"Alchitry Au+\", \"Alchitry Cu\", and \"Alchitry Au V2\", \"Alchitry Cu V2\", \"Alchitry Pt V2\" for other boards, so the pattern matches the whole name."
         },
         {
           "id": "usb-ram",
@@ -58,10 +61,11 @@
           "args": "--force-terminal-mode --verify --board alchitry_au_plus --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
             "vid": "0403",
-            "pid": "6010"
+            "pid": "6010",
+            "product_regex": "^Alchitry Au\\+$"
           },
           "tested": true,
-          "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
+          "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): the exact product name, from Alchitry's own loader, alchitry/Alchitry-Interface src/main/kotlin/com/alchitry/hardware/Board.kt (1c71e16), which finds boards by comparing it for equality: \"Alchitry Au\", \"Alchitry Au+\", \"Alchitry Cu\", and \"Alchitry Au V2\", \"Alchitry Cu V2\", \"Alchitry Pt V2\" for other boards, so the pattern matches the whole name."
         }
       ]
     },
@@ -78,9 +82,10 @@
           "usb": {
             "vid": "0403",
             "pid": "6010",
-            "product_regex": "^Alchitry Cu"
+            "product_regex": "^Alchitry Cu$"
           },
-          "tested": true
+          "tested": true,
+          "maintainer_notes": "USB filter (2026-11-05): was ^Alchitry Cu, which also matched the Alchitry Cu V2, another board; now the exact product name, from Alchitry's own loader, alchitry/Alchitry-Interface src/main/kotlin/com/alchitry/hardware/Board.kt (1c71e16), which finds boards by comparing it for equality: \"Alchitry Au\", \"Alchitry Au+\", \"Alchitry Cu\", and \"Alchitry Au V2\", \"Alchitry Cu V2\", \"Alchitry Pt V2\" for other boards, so the pattern matches the whole name."
         }
       ]
     },
@@ -827,10 +832,11 @@
           "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
             "vid": "0403",
-            "pid": "6010"
+            "pid": "6010",
+            "product_regex": "^(Lattice ECP5 Evaluation Board|Dual RS232-HS)$"
           },
           "tested": false,
-          "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
+          "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): \"Lattice ECP5 Evaluation Board\" is the product name fujprog looks for on 0403:6010 (kost/fujprog fujprog.c, cable_hw_map). Also accepts the FT2232H's factory name, as the Versa's filter accepts its chip's, in case a board ships without the Lattice name (not checked)."
         },
         {
           "id": "usb-ram",
@@ -840,10 +846,11 @@
           "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
             "vid": "0403",
-            "pid": "6010"
+            "pid": "6010",
+            "product_regex": "^(Lattice ECP5 Evaluation Board|Dual RS232-HS)$"
           },
           "tested": true,
-          "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
+          "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): \"Lattice ECP5 Evaluation Board\" is the product name fujprog looks for on 0403:6010 (kost/fujprog fujprog.c, cable_hw_map). Also accepts the FT2232H's factory name, as the Versa's filter accepts its chip's, in case a board ships without the Lattice name (not checked)."
         }
       ]
     },
@@ -1417,10 +1424,11 @@
           "args": "--force-terminal-mode --verify --board mimas_a7 --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
             "vid": "2a19",
-            "pid": "1009"
+            "pid": "1009",
+            "product_regex": "^Mimas Artix 7 FPGA Module$"
           },
           "tested": false,
-          "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a50tfgg484, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
+          "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a50tfgg484, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): the product name from Numato's own OpenOCD file (numato/samplecode FPGA/MimasA7/openocd/numato_mimasa7.cfg) and OpenOCD's tcl/board/numato_mimas_a7.cfg; 2a19 is Numato's vendor ID."
         },
         {
           "id": "usb-ram",
@@ -1430,10 +1438,11 @@
           "args": "--force-terminal-mode --verify --board mimas_a7 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
             "vid": "2a19",
-            "pid": "1009"
+            "pid": "1009",
+            "product_regex": "^Mimas Artix 7 FPGA Module$"
           },
           "tested": true,
-          "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
+          "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): the product name from Numato's own OpenOCD file (numato/samplecode FPGA/MimasA7/openocd/numato_mimasa7.cfg) and OpenOCD's tcl/board/numato_mimas_a7.cfg; 2a19 is Numato's vendor ID."
         }
       ]
     },
@@ -1889,11 +1898,12 @@
           "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
             "vid": "0403",
-            "pid": "6015"
+            "pid": "6015",
+            "product_regex": "^ULX3S FPGA 12K |^ULX3S FPGA (board|v1\\.7)$|^FT231X USB UART$"
           },
           "tested": false,
-          "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches every ULX3S size and any device with an FTDI FT231X chip.",
-          "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware."
+          "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. A ULX3S whose USB chip has no ULX3S name, or only an early name without the FPGA size, matches every ULX3S size.",
+          "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware. USB filter (2026-11-05): the ULX3S's FT231X is programmed with a product name that gives the FPGA size and board revision, such as \"ULX3S FPGA 85K v3.0.8\": kost/fujprog fujprog.c (cable_hw_map, compared for equality) lists 12K to 85K for v2.1.2, v3.0.3, v3.0.7 and v3.0.8, and the early names \"ULX3S FPGA board\" and \"ULX3S FPGA v1.7\" without a size; intergalaktik/ulx3s-bin README sets it with ftx_prog (manufacturer FER-RADIONA-EMARD). Also accepts the FT231X's factory name, for a board whose chip was never named."
         }
       ]
     },
@@ -1909,11 +1919,12 @@
           "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
             "vid": "0403",
-            "pid": "6015"
+            "pid": "6015",
+            "product_regex": "^ULX3S FPGA 25K |^ULX3S FPGA (board|v1\\.7)$|^FT231X USB UART$"
           },
           "tested": false,
-          "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches every ULX3S size and any device with an FTDI FT231X chip.",
-          "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware."
+          "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. A ULX3S whose USB chip has no ULX3S name, or only an early name without the FPGA size, matches every ULX3S size.",
+          "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware. USB filter (2026-11-05): the ULX3S's FT231X is programmed with a product name that gives the FPGA size and board revision, such as \"ULX3S FPGA 85K v3.0.8\": kost/fujprog fujprog.c (cable_hw_map, compared for equality) lists 12K to 85K for v2.1.2, v3.0.3, v3.0.7 and v3.0.8, and the early names \"ULX3S FPGA board\" and \"ULX3S FPGA v1.7\" without a size; intergalaktik/ulx3s-bin README sets it with ftx_prog (manufacturer FER-RADIONA-EMARD). Also accepts the FT231X's factory name, for a board whose chip was never named."
         }
       ]
     },
@@ -1929,11 +1940,12 @@
           "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
             "vid": "0403",
-            "pid": "6015"
+            "pid": "6015",
+            "product_regex": "^ULX3S FPGA 45K |^ULX3S FPGA (board|v1\\.7)$|^FT231X USB UART$"
           },
           "tested": false,
-          "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches every ULX3S size and any device with an FTDI FT231X chip.",
-          "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware."
+          "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. A ULX3S whose USB chip has no ULX3S name, or only an early name without the FPGA size, matches every ULX3S size.",
+          "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware. USB filter (2026-11-05): the ULX3S's FT231X is programmed with a product name that gives the FPGA size and board revision, such as \"ULX3S FPGA 85K v3.0.8\": kost/fujprog fujprog.c (cable_hw_map, compared for equality) lists 12K to 85K for v2.1.2, v3.0.3, v3.0.7 and v3.0.8, and the early names \"ULX3S FPGA board\" and \"ULX3S FPGA v1.7\" without a size; intergalaktik/ulx3s-bin README sets it with ftx_prog (manufacturer FER-RADIONA-EMARD). Also accepts the FT231X's factory name, for a board whose chip was never named."
         }
       ]
     },
@@ -1949,11 +1961,12 @@
           "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
             "vid": "0403",
-            "pid": "6015"
+            "pid": "6015",
+            "product_regex": "^ULX3S FPGA 85K |^ULX3S FPGA (board|v1\\.7)$|^FT231X USB UART$"
           },
           "tested": false,
-          "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. Its USB filter matches every ULX3S size and any device with an FTDI FT231X chip.",
-          "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware."
+          "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. A ULX3S whose USB chip has no ULX3S name, or only an early name without the FPGA size, matches every ULX3S size.",
+          "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware. USB filter (2026-11-05): the ULX3S's FT231X is programmed with a product name that gives the FPGA size and board revision, such as \"ULX3S FPGA 85K v3.0.8\": kost/fujprog fujprog.c (cable_hw_map, compared for equality) lists 12K to 85K for v2.1.2, v3.0.3, v3.0.7 and v3.0.8, and the early names \"ULX3S FPGA board\" and \"ULX3S FPGA v1.7\" without a size; intergalaktik/ulx3s-bin README sets it with ftx_prog (manufacturer FER-RADIONA-EMARD). Also accepts the FT231X's factory name, for a board whose chip was never named."
         }
       ]
     },

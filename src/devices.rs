@@ -603,9 +603,10 @@ pub mod tests {
         assert_eq!(m[0].best_level(), MatchLevel::Strong);
         assert!(m[1..].iter().all(|m| m.best_level() == MatchLevel::Weak));
         assert!(
-            ids(&m).contains(&"alchitry-au".to_string()),
-            "a generic FTDI filter"
+            ids(&m).contains(&"cmod-a7-35t".to_string()),
+            "a filter with only USB IDs"
         );
+        assert!(!ids(&m).contains(&"alchitry-au".to_string()), "named");
         assert!(!ids(&m).contains(&"icezum".to_string()), "another name");
 
         // A real Tang Nano 9K: its debugger reports "JTAG Debugger", a
@@ -648,6 +649,62 @@ pub mod tests {
         assert_eq!(
             (m[0].board.as_str(), m[0].best_level()),
             ("icebreaker", MatchLevel::Strong)
+        );
+
+        // Alchitry boards by their exact names (from Alchitry's loader):
+        // the Au+ and the Cu V2 aren't the Au or the Cu.
+        for (name, board) in [
+            ("Alchitry Au", "alchitry-au"),
+            ("Alchitry Au+", "alchitry-au-plus"),
+            ("Alchitry Cu", "alchitry-cu"),
+        ] {
+            let m = board_matches(&device("0403", "6010", Some(name), None, 6), &boards);
+            assert_eq!(
+                (m[0].board.as_str(), m[0].best_level()),
+                (board, MatchLevel::Strong)
+            );
+            assert!(
+                m[1..].iter().all(|m| m.best_level() == MatchLevel::Weak),
+                "{name}"
+            );
+            assert!(
+                !ids(&m)
+                    .iter()
+                    .any(|b| b.starts_with("alchitry") && b != board)
+            );
+        }
+        let cu2 = device("0403", "6010", Some("Alchitry Cu V2"), None, 6);
+        assert!(
+            !ids(&board_matches(&cu2, &boards))
+                .iter()
+                .any(|b| b.starts_with("alchitry"))
+        );
+
+        // A ULX3S names its FPGA size (fujprog's names); one with the
+        // FT231X's factory name is possibly any size.
+        let ulx3s = device(
+            "0403",
+            "6015",
+            Some("ULX3S FPGA 85K v3.0.8"),
+            Some("120001"),
+            6,
+        );
+        let m = board_matches(&ulx3s, &boards);
+        assert_eq!(
+            (m[0].board.as_str(), m[0].best_level()),
+            ("ulx3s-85f", MatchLevel::Strong)
+        );
+        assert!(!ids(&m).contains(&"ulx3s-12f".to_string()));
+        let blank = device("0403", "6015", Some("FT231X USB UART"), None, 6);
+        let m = board_matches(&blank, &boards);
+        let possible: Vec<_> = m
+            .iter()
+            .filter(|m| m.best_level() == MatchLevel::Possible)
+            .map(|m| m.board.as_str())
+            .collect();
+        assert_eq!(
+            possible,
+            ["ulx3s-12f", "ulx3s-25f", "ulx3s-45f", "ulx3s-85f"]
         );
 
         // Can't be opened: every board with these USB IDs, weak, even when
