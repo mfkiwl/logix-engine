@@ -292,6 +292,35 @@ pub enum Architecture {
 }
 
 impl Architecture {
+    /// Every family, in the engine's order.
+    pub const ALL: [Architecture; 4] = [
+        Architecture::Ice40,
+        Architecture::Ecp5,
+        Architecture::Gowin,
+        Architecture::Xilinx,
+    ];
+
+    /// The family's ID, as FPGA definitions name it, such as "ice40".
+    pub fn id(self) -> &'static str {
+        match self {
+            Architecture::Ice40 => "ice40",
+            Architecture::Ecp5 => "ecp5",
+            Architecture::Gowin => "gowin",
+            Architecture::Xilinx => "xilinx",
+        }
+    }
+
+    /// The family's full name for people, with its vendor, such as
+    /// "Lattice iCE40".
+    pub fn full_label(self) -> &'static str {
+        match self {
+            Architecture::Ice40 => "Lattice iCE40",
+            Architecture::Ecp5 => "Lattice ECP5",
+            Architecture::Gowin => "Gowin",
+            Architecture::Xilinx => "Xilinx",
+        }
+    }
+
     /// The family's name for people, such as "iCE40".
     pub fn label(self) -> &'static str {
         match self {

@@ -254,7 +254,7 @@ async fn get_catalog_returns_the_requested_entries() {
         .await
         .structured_content
         .unwrap();
-    assert_eq!(out, json!({"boards": {}, "fpgas": {}}));
+    assert_eq!(out, json!({"boards": {}, "fpgas": {}, "architectures": {}}));
 
     // One board and all FPGAs.
     let result = call(

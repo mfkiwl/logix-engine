@@ -56,6 +56,10 @@ Same conventions as logix-ide, using the shared actions from `openlogix/.github`
 - **No network at startup, no silent upgrades.** Network access happens only to install or repair packages an operation needs, or when a host asks.
 - **Date versions.** Canonical form `yyyy-mm-dd`. Compare by date, never as mixed-form strings.
 
+## A reference for frontends
+
+The Logix IDE is the reference frontend: the rule is in the website repo's `CLAUDE.md` (shared Open Logix rules). For the engine this means: logic every frontend would need, that doesn't depend on a frontend's own model, belongs here, such as FPGA family names (`get_catalog` architectures) and plain resource names (`build` `resources_summary`). When the IDE has to repeat engine knowledge, that is an engine gap: fill it here and have the IDE use it. The tool API stands on its own for frontends outside Open Logix, and its "Recipes for frontend developers" point to the IDE files that implement each recipe.
+
 ## How work is done here
 
 The human directs the work and tests the results. Claude writes and maintains the code, the tests and the docs. Humans don't review every line, so:

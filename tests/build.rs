@@ -126,6 +126,14 @@ async fn builds_then_is_up_to_date_until_an_input_changes() {
     );
     assert_eq!(out.commands[0].cwd, src.to_string_lossy());
     assert_eq!(out.bitstream, "hardware.bin");
+    // The plain-language summary: logic cells first, as the build used them.
+    let main = &out.resources_summary[0];
+    assert_eq!(
+        (main.kind.as_str(), main.label.as_str()),
+        ("logic_cells", "logic cells")
+    );
+    assert_eq!(main.used, out.resources_usage["ICESTORM_LC"].used);
+    assert!(out.resources_summary.iter().any(|r| r.kind == "io_pins"));
     let bin = std::fs::read(out_dir.join("hardware.bin")).unwrap();
     assert!(bin.len() > 100_000, "an hx8k bitstream is about 135 KB");
     let lc = &out.resources_usage["ICESTORM_LC"];

@@ -645,6 +645,7 @@ Xilinx builds use two packages, `oss-cad-suite` and `openxc7`. Two Xilinx builds
 | `bitstream` | relative path | Path of the bitstream, relative to the build folder |
 | `up_to_date` | boolean | True if nothing had to be rebuilt |
 | `resources_usage` | map of resource usage | Resource use, keyed by the toolchain's resource names. For iCE40: `ICESTORM_LC` (logic cells, each a LUT and a flip-flop), `ICESTORM_RAM` (block RAMs), `SB_IO` (I/O pins), `SB_GB` (global buffers), `ICESTORM_PLL` and others. For ECP5: `TRELLIS_COMB` (LUTs), `TRELLIS_FF` (flip-flops), `TRELLIS_IO`, `DP16KD` (block RAMs), `MULT18X18D`, `EHXPLLL` and others. For Gowin: `LUT4`, `DFF` (flip-flops), `ALU` (carry logic), `IOB` (I/O pins), `BSRAM` (block RAMs), `rPLL` and others. For Xilinx: `SLICE_LUTX` (LUTs), `SLICE_FFX` (flip-flops), `CARRY4`, `PAD` (I/O pins), `RAMB18E1` and `RAMB36E1` (block RAMs), `DSP48E1`, `PLLE2_ADV`, `MMCME2_ADV` and others. Each value has integer `used` and `available` fields |
+| `resources_summary` | list of objects | The main resources in plain words, so frontends don't need each family's resource names: the family's main capacity measure first (`logic_cells` for iCE40, `luts` elsewhere), then `flip_flops`, `ram_blocks`, `multipliers`, `plls` and `io_pins` where the FPGA has them, each with `kind`, `label` (plain words, plural, such as "logic cells"), `used` and `available`. More kinds may be added |
 | `timing` | map of numbers | Maximum frequency in MHz for each clock net, keyed by the clock net name nextpnr reports, rounded to 0.01 MHz |
 | `warnings` | list of diagnostics | Warnings from the tools. See diagnostic fields in Table 4 |
 | `commands` | list of commands | The programs this call ran, in order, so they can be run again without the Logix Engine. See Commands |
@@ -812,6 +813,7 @@ Returns the Logix Engine's built-in catalog, fixed for each engine version. Host
 | --- | --- | --- | --- |
 | `boards` | catalog query | No | Which boards to return. Omitted means none |
 | `fpgas` | catalog query | No | Which FPGAs to return. Omitted means none |
+| `architectures` | catalog query | No | Which FPGA architectures (families) to return, by ID, such as `ice40`. Omitted means none |
 
 **Table 15.** get_catalog tool outputs
 
@@ -819,6 +821,7 @@ Returns the Logix Engine's built-in catalog, fixed for each engine version. Host
 | --- | --- | --- |
 | `boards` | map of board definitions | Board definitions by catalog ID |
 | `fpgas` | map of FPGA definitions | FPGA definitions by catalog ID |
+| `architectures` | map of objects | FPGA architectures by ID (`ice40`, `ecp5`, `gowin`, `xilinx`, as FPGA definitions name them), each with `label` (its name for people, with its vendor, such as "Lattice iCE40"), `short_label` (such as "iCE40"), `constraint_extension` (its pin constraint files' extension, without the dot, such as `pcf`: the build takes only this format for its boards) and `order` (its place in the engine's order, 0 first), so frontends don't keep their own lists |
 
 **Errors:** request errors for unknown sections or IDs. Engine errors.
 
@@ -1034,6 +1037,19 @@ This model is only a suggestion for AI sessions that have no other requirements,
 
 The Logix Engine was designed together with the Logix IDE, and its tools map to what a frontend shows: buttons, panels, a console and a device picker. These recipes give the intended flow for common tasks; the tool sections above have the fields. The Logix IDE is only an example here. The Logix Engine doesn't depend on it or on any of its traits: a frontend can be an editor, a graphical or block-based design tool, a command-line tool, a CI job or anything else.
 
+**Reference frontend.** The Logix IDE ([github.com/openlogix/logix-ide](https://github.com/openlogix/logix-ide), Apache 2.0) implements every recipe below, and its code is meant as a worked example for any frontend, from Open Logix or not. Read it with its AI spec, its `CLAUDE.md`, which says what each part does and why:
+
+| Recipe | In the Logix IDE |
+| --- | --- |
+| Start up, calls, progress and live output | [engine/client.rs](https://github.com/openlogix/logix-ide/blob/main/src-tauri/src/engine/client.rs) (the MCP session), [setup.rs](https://github.com/openlogix/logix-ide/blob/main/src-tauri/src/engine/setup.rs) (download, start, version check) |
+| Show whether the board is connected | [engine/devices.rs](https://github.com/openlogix/logix-ide/blob/main/src-tauri/src/engine/devices.rs), [ui/src/lib/boards.ts](https://github.com/openlogix/logix-ide/blob/main/ui/src/lib/boards.ts) (device groups), [ui/src/lib/devices.ts](https://github.com/openlogix/logix-ide/blob/main/ui/src/lib/devices.ts) (match levels in words) |
+| Upload: build, pick a device, program | [engine/task.rs](https://github.com/openlogix/logix-ide/blob/main/src-tauri/src/engine/task.rs) (`pick_device`), [ui/src/lib/DevicePicker.svelte](https://github.com/openlogix/logix-ide/blob/main/ui/src/lib/DevicePicker.svelte) |
+| Show problems, build results and testbench results | [engine/task.rs](https://github.com/openlogix/logix-ide/blob/main/src-tauri/src/engine/task.rs), [ui/src/lib/buildReport.ts](https://github.com/openlogix/logix-ide/blob/main/ui/src/lib/buildReport.ts), [ui/src/lib/tasks.ts](https://github.com/openlogix/logix-ide/blob/main/ui/src/lib/tasks.ts) |
+| Pick a board and its board variant | [engine/catalog.rs](https://github.com/openlogix/logix-ide/blob/main/src-tauri/src/engine/catalog.rs), [ui/src/lib/BoardPicker.svelte](https://github.com/openlogix/logix-ide/blob/main/ui/src/lib/BoardPicker.svelte), [ui/src/lib/variants.ts](https://github.com/openlogix/logix-ide/blob/main/ui/src/lib/variants.ts) |
+| Format an unsaved editor buffer | [engine/format.rs](https://github.com/openlogix/logix-ide/blob/main/src-tauri/src/engine/format.rs) |
+
+Logic that every frontend would need and that doesn't depend on a frontend's own model belongs in the Logix Engine, not in each frontend: when a frontend finds itself repeating engine knowledge, such as FPGA family names or the toolchain's resource names, that is a gap to fill in the engine.
+
 ### Start up
 
 1. Launch the Logix Engine with `--engine-folder`, do the MCP handshake, then call `get_engine_info`.
@@ -1066,6 +1082,7 @@ The Logix Engine was designed together with the Logix IDE, and its tools map to 
 
 - Every tool reports problems as diagnostics with `file` relative to the source folder, `line`, `column` and `severity`, so one routine can underline them for lint, test, build and format alike.
 - `lint` is fast and writes nothing, so it suits running on save. Build warnings come in `warnings`.
+- Summarize a build from `resources_summary`, such as "27 of 7680 logic cells (0.4%)" for its first, main entry, and the clocks' `timing`; `resources_usage` has the toolchain's own names for anyone who needs them.
 - Turn an error's `action` code into a button: `install_packages` calls the install_packages tool, and `connect_board`, `fix_device_permissions`, `install_drivers` and `disconnect_devices` show short instructions.
 
 ### Run and debug testbenches
@@ -1076,7 +1093,8 @@ The Logix Engine was designed together with the Logix IDE, and its tools map to 
 
 ### Pick a board
 
-- Fill a board picker from `get_catalog` with `boards.fetch` true. Show each board's `dimensions` labels and help as the board variant choices, and its `tested` and `user_notes` where the user picks.
+- Fill a board picker from `get_catalog` with `boards.fetch`, `fpgas.fetch` and `architectures.fetch` true: group boards by their FPGA's `architecture`, with the architecture's `label` and `order`, and use its `constraint_extension` for the board's pin file.
+- Show each board's `dimensions` labels and help as the board variant choices, and its `tested` and `user_notes` where the user picks.
 - A user's own boards stay in the frontend: send them as full board definitions in `board`, and in `custom_boards` for `list_devices`.
 
 ### Format an unsaved editor buffer

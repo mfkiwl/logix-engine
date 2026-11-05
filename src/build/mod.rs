@@ -17,6 +17,7 @@
 
 pub mod clean;
 pub mod parse;
+pub mod summary;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::ffi::OsString;

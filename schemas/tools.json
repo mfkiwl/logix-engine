@@ -245,7 +245,7 @@
   },
   {
     "name": "get_catalog",
-    "description": "Returns board and FPGA definitions from the engine's read-only catalog. Use it to find a board's catalog ID, such as alhambra-ii, to pass as the board of other tools, or to see a board's FPGA and how it is programmed. Each section is returned only when asked for: {\"boards\": {\"fetch\": true}} returns all boards, and {\"boards\": {\"fetch\": true, \"ids\": [\"alhambra-ii\"]}} only the listed ones. Board descriptions are the boards' names for people.",
+    "description": "Returns board and FPGA definitions from the engine's read-only catalog. Use it to find a board's catalog ID, such as alhambra-ii, to pass as the board of other tools, or to see a board's FPGA and how it is programmed. Each section is returned only when asked for: {\"boards\": {\"fetch\": true}} returns all boards, and {\"boards\": {\"fetch\": true, \"ids\": [\"alhambra-ii\"]}} only the listed ones. The architectures section gives each FPGA family's name for people and the extension of its pin constraint files. Board descriptions are the boards' names for people.",
     "inputSchema": {
       "$defs": {
         "CatalogQuery": {
@@ -276,6 +276,17 @@
       "additionalProperties": false,
       "description": "Which catalog entries to return.",
       "properties": {
+        "architectures": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CatalogQuery"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Which FPGA architectures (families) to return, by ID, such as ice40.\nOmitted means none."
+        },
         "boards": {
           "anyOf": [
             {
@@ -328,6 +339,36 @@
               "type": "string"
             }
           ]
+        },
+        "ArchitectureInfo": {
+          "additionalProperties": false,
+          "description": "An FPGA architecture (family), as FPGA definitions name it.",
+          "properties": {
+            "constraint_extension": {
+              "description": "The extension of the family's pin constraint files, without the\ndot, such as pcf: the build takes only this format for the family's\nboards.",
+              "type": "string"
+            },
+            "label": {
+              "description": "The family's name for people, with its vendor, such as \"Lattice\niCE40\", for grouping boards.",
+              "type": "string"
+            },
+            "order": {
+              "description": "The family's place in the engine's order (0 first), for listing\nfamilies in a fixed order.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "short_label": {
+              "description": "The family's short name, such as \"iCE40\", for messages.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "label",
+            "short_label",
+            "constraint_extension",
+            "order"
+          ],
+          "type": "object"
         },
         "BoardDefinition": {
           "additionalProperties": false,
@@ -598,6 +639,14 @@
       "additionalProperties": false,
       "description": "The requested catalog entries. Sections that weren't fetched are empty.",
       "properties": {
+        "architectures": {
+          "additionalProperties": {
+            "$ref": "#/$defs/ArchitectureInfo"
+          },
+          "default": {},
+          "description": "FPGA architectures (families), by ID, such as ice40.",
+          "type": "object"
+        },
         "boards": {
           "additionalProperties": {
             "$ref": "#/$defs/BoardDefinition"
@@ -3081,6 +3130,37 @@
           ],
           "type": "object"
         },
+        "ResourceSummary": {
+          "additionalProperties": false,
+          "description": "One kind of FPGA resource, in plain words, with how much the design uses.",
+          "properties": {
+            "available": {
+              "description": "How many the FPGA has.",
+              "minimum": 0,
+              "type": "integer"
+            },
+            "kind": {
+              "description": "The kind: logic_cells, luts, flip_flops, ram_blocks, multipliers,\nplls or io_pins. More kinds may be added.",
+              "type": "string"
+            },
+            "label": {
+              "description": "The kind in plain words, plural, such as \"logic cells\" or \"LUTs\", for\nshowing to people.",
+              "type": "string"
+            },
+            "used": {
+              "description": "How many the design uses.",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "kind",
+            "label",
+            "used",
+            "available"
+          ],
+          "type": "object"
+        },
         "ResourceUsage": {
           "additionalProperties": false,
           "description": "How much of one FPGA resource the design uses.",
@@ -3125,6 +3205,13 @@
           },
           "type": "array"
         },
+        "resources_summary": {
+          "description": "The main resources in plain words, for showing to people without\nknowing each FPGA family's names: the family's main capacity measure\nfirst (logic cells or LUTs), then RAM blocks, multipliers, PLLs, I/O\npins and others the FPGA has, such as \"27 of 7680 logic cells\".",
+          "items": {
+            "$ref": "#/$defs/ResourceSummary"
+          },
+          "type": "array"
+        },
         "resources_usage": {
           "additionalProperties": {
             "$ref": "#/$defs/ResourceUsage"
@@ -3155,6 +3242,7 @@
         "bitstream",
         "up_to_date",
         "resources_usage",
+        "resources_summary",
         "timing",
         "warnings",
         "commands"

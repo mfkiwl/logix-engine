@@ -88,6 +88,11 @@ pub struct BuildOutput {
     /// (logic cells: a LUT and a flip-flop), ICESTORM_RAM (block RAMs) and
     /// SB_IO (I/O pins).
     pub resources_usage: BTreeMap<String, ResourceUsage>,
+    /// The main resources in plain words, for showing to people without
+    /// knowing each FPGA family's names: the family's main capacity measure
+    /// first (logic cells or LUTs), then RAM blocks, multipliers, PLLs, I/O
+    /// pins and others the FPGA has, such as "27 of 7680 logic cells".
+    pub resources_summary: Vec<crate::build::summary::ResourceSummary>,
     /// The maximum frequency each clock can run at, in MHz, by clock net
     /// name. A clock that misses its target isn't an error: compare these
     /// with the design's needs.
@@ -226,11 +231,13 @@ pub async fn run(
     call: &Call,
 ) -> Result<BuildOutput, ToolError> {
     let request = check(input)?;
+    let arch = request.board.fpga.architecture;
     let r = build::build(state, request, call).await?;
     Ok(BuildOutput {
         commands: call.commands.take(),
         bitstream: r.bitstream,
         up_to_date: r.up_to_date,
+        resources_summary: crate::build::summary::summarize(arch, &r.resources_usage),
         resources_usage: r.resources_usage,
         timing: r.timing,
         warnings: r.warnings,

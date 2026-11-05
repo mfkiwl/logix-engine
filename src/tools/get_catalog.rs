@@ -19,7 +19,9 @@ impl EngineTool for GetCatalog {
         the board of other tools, or to see a board's FPGA and how it is programmed. Each \
         section is returned only when asked for: {\"boards\": {\"fetch\": true}} returns all \
         boards, and {\"boards\": {\"fetch\": true, \"ids\": [\"alhambra-ii\"]}} only the listed \
-        ones. Board descriptions are the boards' names for people.";
+        ones. The architectures section gives each FPGA family's name for people and the \
+        extension of its pin constraint files. Board descriptions are the boards' names for \
+        people.";
     const READ_ONLY: bool = true;
     type Input = GetCatalogInput;
     type Output = GetCatalogOutput;
@@ -35,6 +37,28 @@ pub struct GetCatalogInput {
     /// Which FPGAs to return. Omitted means none.
     #[serde(default)]
     pub fpgas: Option<CatalogQuery>,
+    /// Which FPGA architectures (families) to return, by ID, such as ice40.
+    /// Omitted means none.
+    #[serde(default)]
+    pub architectures: Option<CatalogQuery>,
+}
+
+/// An FPGA architecture (family), as FPGA definitions name it.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ArchitectureInfo {
+    /// The family's name for people, with its vendor, such as "Lattice
+    /// iCE40", for grouping boards.
+    pub label: String,
+    /// The family's short name, such as "iCE40", for messages.
+    pub short_label: String,
+    /// The extension of the family's pin constraint files, without the
+    /// dot, such as pcf: the build takes only this format for the family's
+    /// boards.
+    pub constraint_extension: String,
+    /// The family's place in the engine's order (0 first), for listing
+    /// families in a fixed order.
+    pub order: u32,
 }
 
 /// Selects entries from one catalog section.
@@ -58,6 +82,9 @@ pub struct GetCatalogOutput {
     pub boards: BTreeMap<String, BoardDefinition>,
     /// FPGA definitions, by catalog ID.
     pub fpgas: BTreeMap<String, FpgaDefinition>,
+    /// FPGA architectures (families), by ID, such as ice40.
+    #[serde(default)]
+    pub architectures: BTreeMap<String, ArchitectureInfo>,
 }
 
 fn select<T: Clone>(
@@ -92,5 +119,53 @@ pub fn run(_state: &EngineState, input: GetCatalogInput) -> Result<GetCatalogOut
     Ok(GetCatalogOutput {
         boards: select("boards", &c.boards, input.boards)?,
         fpgas: select("fpgas", &c.fpgas, input.fpgas)?,
+        architectures: select("architectures", &architectures(), input.architectures)?,
     })
+}
+
+/// Every architecture the engine supports, by ID.
+fn architectures() -> BTreeMap<String, ArchitectureInfo> {
+    catalog::Architecture::ALL
+        .iter()
+        .enumerate()
+        .map(|(i, a)| {
+            (
+                a.id().to_string(),
+                ArchitectureInfo {
+                    label: a.full_label().to_string(),
+                    short_label: a.label().to_string(),
+                    constraint_extension: a.constraint_extension().to_string(),
+                    order: i as u32,
+                },
+            )
+        })
+        .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::catalog::Architecture;
+
+    #[test]
+    fn architectures_have_labels_and_pin_file_extensions() {
+        let all = architectures();
+        let q: CatalogQuery = serde_json::from_value(serde_json::json!({"fetch": true})).unwrap();
+        let out = select("architectures", &all, Some(q)).unwrap();
+        assert!(
+            select("architectures", &all, None).unwrap().is_empty(),
+            "only when asked"
+        );
+        let ice40 = &out["ice40"];
+        assert_eq!(ice40.label, "Lattice iCE40");
+        assert_eq!(ice40.short_label, "iCE40");
+        assert_eq!(ice40.constraint_extension, "pcf");
+        assert_eq!(ice40.order, 0);
+        assert_eq!(out["xilinx"].constraint_extension, "xdc");
+        assert_eq!(out.len(), Architecture::ALL.len());
+        // Each ID is the one FPGA definitions use.
+        for a in Architecture::ALL {
+            assert_eq!(serde_json::to_value(a).unwrap(), a.id());
+        }
+    }
 }
