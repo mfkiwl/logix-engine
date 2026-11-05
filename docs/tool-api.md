@@ -647,6 +647,7 @@ Xilinx builds use two packages, `oss-cad-suite` and `openxc7`. Two Xilinx builds
 | `resources_usage` | map of resource usage | Resource use, keyed by the toolchain's resource names. For iCE40: `ICESTORM_LC` (logic cells, each a LUT and a flip-flop), `ICESTORM_RAM` (block RAMs), `SB_IO` (I/O pins), `SB_GB` (global buffers), `ICESTORM_PLL` and others. For ECP5: `TRELLIS_COMB` (LUTs), `TRELLIS_FF` (flip-flops), `TRELLIS_IO`, `DP16KD` (block RAMs), `MULT18X18D`, `EHXPLLL` and others. For Gowin: `LUT4`, `DFF` (flip-flops), `ALU` (carry logic), `IOB` (I/O pins), `BSRAM` (block RAMs), `rPLL` and others. For Xilinx: `SLICE_LUTX` (LUTs), `SLICE_FFX` (flip-flops), `CARRY4`, `PAD` (I/O pins), `RAMB18E1` and `RAMB36E1` (block RAMs), `DSP48E1`, `PLLE2_ADV`, `MMCME2_ADV` and others. Each value has integer `used` and `available` fields |
 | `resources_summary` | list of objects | The main resources in plain words, so frontends don't need each family's resource names: the family's main capacity measure first (`logic_cells` for iCE40, `luts` elsewhere), then `flip_flops`, `ram_blocks`, `multipliers`, `plls` and `io_pins` where the FPGA has them, each with `kind`, `label` (plain words, plural, such as "logic cells"), `used` and `available`. More kinds may be added |
 | `timing` | map of numbers | Maximum frequency in MHz for each clock net, keyed by the clock net name nextpnr reports, rounded to 0.01 MHz |
+| `clocks_summary` | list of objects | The clocks in `timing` with plain names, so frontends don't need each family's clock net names: each with `name` (for showing to people: usually the design's clock signal, such as `CLK` for `CLK$SB_IO_IN_$glb_clk`; for Xilinx the name synthesis gave the clock net, such as `o100`, since nextpnr-xilinx doesn't report the signal's name), `net` (the key in `timing`) and `max_mhz`, in the order of `timing` |
 | `warnings` | list of diagnostics | Warnings from the tools. See diagnostic fields in Table 4 |
 | `commands` | list of commands | The programs this call ran, in order, so they can be run again without the Logix Engine. See Commands |
 
@@ -696,6 +697,7 @@ Output:
     "SB_WARMBOOT": { "used": 0, "available": 1 }
   },
   "timing": { "CLK$SB_IO_IN_$glb_clk": 87.4 },
+  "clocks_summary": [{ "name": "CLK", "net": "CLK$SB_IO_IN_$glb_clk", "max_mhz": 87.4 }],
   "warnings": [
     { "file": "uart.v", "line": 12, "severity": "warning", "text": "Identifier `\\rx_done' is implicitly declared.", "tool": "yosys" }
   ]
@@ -1082,7 +1084,7 @@ Logic that every frontend would need and that doesn't depend on a frontend's own
 
 - Every tool reports problems as diagnostics with `file` relative to the source folder, `line`, `column` and `severity`, so one routine can underline them for lint, test, build and format alike.
 - `lint` is fast and writes nothing, so it suits running on save. Build warnings come in `warnings`.
-- Summarize a build from `resources_summary`, such as "27 of 7680 logic cells (0.4%)" for its first, main entry, and the clocks' `timing`; `resources_usage` has the toolchain's own names for anyone who needs them.
+- Summarize a build from `resources_summary`, such as "27 of 7680 logic cells (0.4%)" for its first, main entry, and its clocks from `clocks_summary`, such as "Maximum clock speed: 87.4 MHz (CLK)"; `resources_usage` and `timing` have the toolchain's own names for anyone who needs them.
 - Turn an error's `action` code into a button: `install_packages` calls the install_packages tool, and `connect_board`, `fix_device_permissions`, `install_drivers` and `disconnect_devices` show short instructions.
 
 ### Run and debug testbenches

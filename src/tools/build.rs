@@ -97,6 +97,11 @@ pub struct BuildOutput {
     /// name. A clock that misses its target isn't an error: compare these
     /// with the design's needs.
     pub timing: BTreeMap<String, f64>,
+    /// The clocks in timing with plain names, for showing to people without
+    /// knowing how each FPGA family's tools name clock nets: usually the
+    /// design's clock signal, such as "CLK" for the net
+    /// CLK$SB_IO_IN_$glb_clk.
+    pub clocks_summary: Vec<crate::build::summary::ClockSummary>,
     /// Warnings from the tools.
     pub warnings: Vec<Diagnostic>,
     /// The programs this call ran, in order, each with the exact command and
@@ -239,6 +244,7 @@ pub async fn run(
         up_to_date: r.up_to_date,
         resources_summary: crate::build::summary::summarize(arch, &r.resources_usage),
         resources_usage: r.resources_usage,
+        clocks_summary: crate::build::summary::summarize_clocks(arch, &r.timing),
         timing: r.timing,
         warnings: r.warnings,
     })

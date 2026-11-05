@@ -56,6 +56,14 @@ async fn engine() -> EngineState {
     }
 }
 
+/// The plain names of a build's clocks, each with its net in timing.
+fn clock_names(out: &build::BuildOutput) -> Vec<String> {
+    for c in &out.clocks_summary {
+        assert_eq!(out.timing.get(&c.net), Some(&c.max_mhz), "{c:?}");
+    }
+    out.clocks_summary.iter().map(|c| c.name.clone()).collect()
+}
+
 fn call() -> Call {
     Call::new(Arc::new(NoProgress), CancellationToken::new())
 }
@@ -140,6 +148,7 @@ async fn builds_then_is_up_to_date_until_an_input_changes() {
     assert!(lc.used > 0 && lc.available == 7680, "{lc:?}");
     assert_eq!(out.resources_usage["SB_IO"].used, 3);
     assert_eq!(out.timing.len(), 1);
+    assert_eq!(clock_names(&out), ["CLK"], "{:?}", out.timing);
     assert!(
         out.timing.values().all(|mhz| *mhz > 50.0),
         "{:?}",
@@ -222,6 +231,7 @@ async fn builds_an_ecp5_design() {
         out.resources_usage
     );
     assert_eq!(out.timing.len(), 1, "{:?}", out.timing);
+    assert_eq!(clock_names(&out), ["CLK"], "{:?}", out.timing);
 
     // Another variant always rebuilds, even one that only changes how the
     // board is programmed; the build record keeps it for program_board.
@@ -326,6 +336,7 @@ async fn builds_a_gowin_design() {
         out.resources_usage
     );
     assert_eq!(out.timing.len(), 1, "{:?}", out.timing);
+    assert_eq!(clock_names(&out), ["CLK"], "{:?}", out.timing);
 
     // A pin that doesn't exist is a design error.
     std::fs::write(
@@ -399,6 +410,13 @@ async fn builds_a_xilinx_design() {
     assert!(bit.len() > 100_000, "{}", bit.len());
     assert!(!out.resources_usage.is_empty(), "{:?}", out.resources_usage);
     assert_eq!(out.timing.len(), 1, "{:?}", out.timing);
+    // nextpnr-xilinx reports a net name synthesis made up, such as
+    // $abc$21083$aiger$o100; the summary keeps its last part.
+    let names = clock_names(&out);
+    assert!(
+        names.len() == 1 && !names[0].is_empty() && !names[0].contains('$'),
+        "{names:?}"
+    );
 
     // A pin that doesn't exist is a design error.
     std::fs::write(

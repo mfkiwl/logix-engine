@@ -3037,6 +3037,30 @@
     },
     "outputSchema": {
       "$defs": {
+        "ClockSummary": {
+          "additionalProperties": false,
+          "description": "One clock of the design, with a plain name and its maximum frequency.",
+          "properties": {
+            "max_mhz": {
+              "description": "The maximum frequency the clock can run at, in MHz.",
+              "type": "number"
+            },
+            "name": {
+              "description": "The clock's name for showing to people, usually the design's clock\nsignal, such as \"CLK\". For Xilinx it is the name synthesis gave the\nclock net, such as \"o100\", since nextpnr-xilinx doesn't report the\nsignal's own name.",
+              "type": "string"
+            },
+            "net": {
+              "description": "The clock net name nextpnr reports, the key in timing.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "name",
+            "net",
+            "max_mhz"
+          ],
+          "type": "object"
+        },
         "CommandRecord": {
           "additionalProperties": false,
           "description": "One program the engine ran, with what it takes to run it again.",
@@ -3198,6 +3222,13 @@
           "description": "Path of the bitstream, relative to the build folder.",
           "type": "string"
         },
+        "clocks_summary": {
+          "description": "The clocks in timing with plain names, for showing to people without\nknowing how each FPGA family's tools name clock nets: usually the\ndesign's clock signal, such as \"CLK\" for the net\nCLK$SB_IO_IN_$glb_clk.",
+          "items": {
+            "$ref": "#/$defs/ClockSummary"
+          },
+          "type": "array"
+        },
         "commands": {
           "description": "The programs this call ran, in order, each with the exact command and\na shell line that runs it again without the engine, such as for a bug\nreport to the tool's developers.",
           "items": {
@@ -3244,6 +3275,7 @@
         "resources_usage",
         "resources_summary",
         "timing",
+        "clocks_summary",
         "warnings",
         "commands"
       ],

@@ -1,6 +1,7 @@
 //! A plain-language summary of a build's resource use (docs/tool-api.md,
 //! build tool), so hosts don't need to know each FPGA family's resource
-//! names: "logic cells" instead of ICESTORM_LC.
+//! names: "logic cells" instead of ICESTORM_LC, and "CLK" instead of the
+//! clock net name nextpnr reports, such as CLK$SB_IO_IN_$glb_clk.
 
 use std::collections::BTreeMap;
 
@@ -92,9 +93,89 @@ pub fn summarize(
     out
 }
 
+/// One clock of the design, with a plain name and its maximum frequency.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ClockSummary {
+    /// The clock's name for showing to people, usually the design's clock
+    /// signal, such as "CLK". For Xilinx it is the name synthesis gave the
+    /// clock net, such as "o100", since nextpnr-xilinx doesn't report the
+    /// signal's own name.
+    pub name: String,
+    /// The clock net name nextpnr reports, the key in timing.
+    pub net: String,
+    /// The maximum frequency the clock can run at, in MHz.
+    pub max_mhz: f64,
+}
+
+/// A plain name for a clock net, per family, as the toolchains name the
+/// net after the signal (the same rules as Apio's build report):
+///
+/// - iCE40: the part before the first `$`, without trailing `_`
+///   (`CLK$SB_IO_IN_$glb_clk` is CLK).
+/// - ECP5: the third `$`-separated part (`$glbnet$CLK$TRELLIS_IO_IN` is CLK).
+/// - Gowin: the part before the first `$`, without `_IBUF_I_O`
+///   (`CLK_IBUF_I_O` is CLK).
+/// - Xilinx: the last non-empty part (`$abc$21083$aiger$o100` is o100).
+///   TODO(revisit): that is a name synthesis made up, not the design's clock
+///   signal; a fix may come from the openxc7 tools.
+///
+/// A net that doesn't follow the pattern keeps its full name.
+pub fn clock_name(arch: Architecture, net: &str) -> String {
+    let parts: Vec<&str> = net.split('$').collect();
+    let name = match arch {
+        Architecture::Ice40 => parts[0].trim_end_matches('_'),
+        Architecture::Ecp5 => parts.get(2).copied().unwrap_or(""),
+        Architecture::Gowin => parts[0].trim_end_matches("_IBUF_I_O"),
+        Architecture::Xilinx => parts
+            .iter()
+            .rev()
+            .find(|p| !p.is_empty())
+            .copied()
+            .unwrap_or(""),
+    };
+    if name.is_empty() { net } else { name }.to_string()
+}
+
+/// The design's clocks with plain names, in the order of timing (by net).
+pub fn summarize_clocks(arch: Architecture, timing: &BTreeMap<String, f64>) -> Vec<ClockSummary> {
+    timing
+        .iter()
+        .map(|(net, mhz)| ClockSummary {
+            name: clock_name(arch, net),
+            net: net.clone(),
+            max_mhz: *mhz,
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn names_clocks_as_the_design_does() {
+        use Architecture::*;
+        assert_eq!(clock_name(Ice40, "CLK$SB_IO_IN_$glb_clk"), "CLK");
+        assert_eq!(clock_name(Ice40, "sys_clk$SB_IO_IN"), "sys_clk");
+        assert_eq!(clock_name(Ecp5, "$glbnet$CLK$TRELLIS_IO_IN"), "CLK");
+        assert_eq!(clock_name(Gowin, "sys_clk_IBUF_I_O"), "sys_clk");
+        assert_eq!(clock_name(Xilinx, "$abc$21083$aiger$o100"), "o100");
+        assert_eq!(clock_name(Xilinx, "sys_clk_IBUF_BUFG"), "sys_clk_IBUF_BUFG");
+        // Nets that don't follow the pattern keep their name.
+        assert_eq!(clock_name(Ecp5, "clk"), "clk");
+        assert_eq!(clock_name(Ice40, "$glb$x"), "$glb$x");
+
+        let timing = BTreeMap::from([("CLK_IBUF_I_O".to_string(), 199.5)]);
+        assert_eq!(
+            summarize_clocks(Gowin, &timing),
+            [ClockSummary {
+                name: "CLK".into(),
+                net: "CLK_IBUF_I_O".into(),
+                max_mhz: 199.5
+            }]
+        );
+    }
 
     fn usage(pairs: &[(&str, u64, u64)]) -> BTreeMap<String, ResourceUsage> {
         pairs
