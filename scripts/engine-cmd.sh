@@ -1,8 +1,8 @@
 #!/bin/bash
 # Sends one prompt to Claude Code with the engine connected, prints the
 # answer as plain text and exits, so it stays in the terminal's normal
-# scrollback. Built on scripts/run.sh (same engine build, engine folder and
-# playground; see its comments for the prerequisites).
+# scrollback. Built on scripts/run-claude.sh (same engine build, engine
+# folder and playground; see its comments for the prerequisites).
 #
 # Usage: scripts/engine-cmd.sh [options] PROMPT...
 #
@@ -69,4 +69,4 @@ if [[ $# -eq 0 ]]; then
 fi
 prompt="$*"
 
-exec "$(dirname "$0")/run.sh" ${claude_args[@]+"${claude_args[@]}"} --allowedTools "${tools[@]}" -p "$prompt"
+exec "$(dirname "$0")/run-claude.sh" ${claude_args[@]+"${claude_args[@]}"} --allowedTools "${tools[@]}" -p "$prompt"

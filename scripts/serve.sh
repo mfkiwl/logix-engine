@@ -5,7 +5,7 @@
 #
 #   npx @modelcontextprotocol/inspector /path/to/logix-engine/scripts/serve.sh
 #
-# (To try the engine with Claude Code, use scripts/run.sh.)
+# (To try the engine with Claude Code, use scripts/run-claude.sh.)
 #
 # Uses the engine folder ~/.logix-dev/engine unless LOGIX_ENGINE_FOLDER is
 # set. Extra arguments are passed to the engine, e.g. --log-level debug.

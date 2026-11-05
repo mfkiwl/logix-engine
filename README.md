@@ -35,13 +35,14 @@ Check the setup with `cargo --version`.
 | --- | --- |
 | `scripts/test.sh` | All checks and tests: format, lint, unit, schema, command-line, build and end-to-end MCP tests. Run it before committing. CI runs it too. The first run downloads the FPGA toolchain (526 MB) for the build tests |
 | `scripts/build.sh` | Builds the release binary, `target/release/logix-engine` |
-| `scripts/run.sh` | Builds if needed and starts Claude Code with the engine connected, so you can prompt it. Claude works in `~/.logix-dev/playground`, and the engine uses `~/.logix-dev/engine` |
+| `scripts/run-claude.sh` | Builds if needed and starts Claude Code with the engine connected, so you can prompt it. Claude works in `~/.logix-dev/playground`, and the engine uses `~/.logix-dev/engine` |
+| `scripts/run-grok.sh` | The same with Grok as the host. It writes the engine into the playground's `.grok/config.toml` |
 | `scripts/engine-cmd.sh` | Sends one prompt to Claude Code with the engine connected and prints the answer as plain text, such as `scripts/engine-cmd.sh --add-dir ~/proj "Build ~/proj for the Alhambra II"`. `-c` continues the previous conversation. See `--help` |
 | `scripts/serve.sh` | Builds if needed and runs the engine as an MCP server on stdin/stdout, for other MCP clients |
 | `scripts/clean.sh` | Deletes the build output |
 | `scripts/update-schemas.sh` | Regenerates [schemas/tools.json](schemas/tools.json), the published copy of the tool schemas, after a deliberate change |
 
-To try the engine with Claude Code as the host, run `scripts/run.sh` and type prompts, such as "What version is the Logix engine?". It uses the `claude` command, or the one bundled with the Claude Code VS Code extension. To try it with another MCP client, such as the [MCP Inspector](https://github.com/modelcontextprotocol/inspector), point the client at `scripts/serve.sh`:
+To try the engine with Claude Code as the host, run `scripts/run-claude.sh` and type prompts, such as "What version is the Logix engine?". It uses the `claude` command, or the one bundled with the Claude Code VS Code extension. `scripts/run-grok.sh` does the same with Grok. To try it with another MCP client, such as the [MCP Inspector](https://github.com/modelcontextprotocol/inspector), point the client at `scripts/serve.sh`:
 
 ```
 npx @modelcontextprotocol/inspector /path/to/logix-engine/scripts/serve.sh
