@@ -30,7 +30,7 @@ const INSTRUCTIONS: &str = "Logix Engine builds and tests FPGA designs and progr
     board, source folder, source files and build folder, as absolute paths. Errors come back as \
     data with a category (design, setup, request, tool, engine or cancelled), a message and, \
     when there is one, a suggested action. For a new project with no layout of its own, use the \
-    default project model: one folder with project.json (board, board_variant, top_module), \
+    default project model: one folder with logix.json (board, board_variant, top_module), \
     main.v, a pinout constraint file, <name>_tb.v testbenches and a _build build folder, as \
     https://github.com/openlogix/logix-engine/blob/main/docs/tool-api.md#default-project-model \
     describes. Full reference, including how to launch the engine and \

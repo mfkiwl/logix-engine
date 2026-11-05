@@ -1007,7 +1007,7 @@ Output:
 The Logix Engine doesn't impose a project model: each frontend organizes designs its own way, and requests name every folder and file. When there is no frontend with its own model, such as an AI agent starting a design from scratch, the engine suggests this one. Use it only for a new project, or a folder without a layout of its own.
 
 - **One folder** holds the project, with every file at its top level.
-- **`project.json`** holds the request values that would otherwise have to be remembered between sessions, under their request field names:
+- **`logix.json`** holds the request values that would otherwise have to be remembered between sessions, under their request field names:
 
   ```json
   { "board": "alhambra-ii", "board_variant": "usb-flash", "top_module": "main" }
