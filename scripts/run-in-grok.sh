@@ -18,12 +18,27 @@
 # folder so Grok starts it. MCP servers in your own Grok config
 # (~/.grok/config.toml) are loaded too.
 #
+# Unlike Claude Code, Grok doesn't accept --add-dir, so name work folders in
+# the prompt instead; the engine's tools take any folder.
+#
 # Uses the grok command on the PATH, or else ~/.grok/bin/grok.
 #
 # Prerequisites: the same as scripts/run-in-claude.sh, with Grok instead of
 # Claude Code, installed and signed in (run grok once by hand to sign in).
 
 set -euo pipefail
+
+# Grok 1.0.70 refuses --add-dir for every folder ("a session works only in
+# its cwd"), so stop before building instead of opening a broken session.
+for arg in "$@"; do
+  if [[ "$arg" == --add-dir || "$arg" == --add-dir=* ]]; then
+    echo "Error: Grok doesn't support --add-dir (a session works only in its" >&2
+    echo "working directory). Name the folder in the prompt instead, such as" >&2
+    echo "\"Build ~/work for the Alhambra II\": the engine takes any folder." >&2
+    exit 2
+  fi
+done
+
 cd "$(dirname "$0")/.."
 source scripts/_rust-env.sh
 
