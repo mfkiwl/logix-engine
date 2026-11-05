@@ -8,10 +8,11 @@
 # Arguments are passed to claude. Claude runs in a playground folder,
 # ~/.logix-dev/playground (or LOGIX_PLAYGROUND), where it can create
 # designs, not in this repo. The engine uses the engine folder
-# ~/.logix-dev/engine (or LOGIX_ENGINE_FOLDER). Only the engine's MCP server
-# is loaded, and its tools are allowed without asking. Each run starts the
-# freshly built engine, copied to ~/.logix-dev/bin so the session doesn't
-# see this repo's path.
+# ~/.logix-dev/engine (or LOGIX_ENGINE_FOLDER), and logs at LOGIX_LOG_LEVEL
+# (info by default; debug also logs every program's output). Only the
+# engine's MCP server is loaded, and its tools are allowed without asking.
+# Each run starts the freshly built engine, copied to ~/.logix-dev/bin so
+# the session doesn't see this repo's path.
 #
 # For a reproducible starting point, the session loads none of your user
 # settings (~/.claude/settings.json), no CLAUDE.md files (your own
@@ -62,6 +63,9 @@ source scripts/_test-session.sh
 
 repo="$(pwd)"
 engine_folder="${LOGIX_ENGINE_FOLDER:-$HOME/.logix-dev/engine}"
+# The engine log level: error, warn, info (default) or debug, which also logs
+# every program's output, such as a programmer's.
+log_level="${LOGIX_LOG_LEVEL:-info}"
 playground="${LOGIX_PLAYGROUND:-$HOME/.logix-dev/playground}"
 
 # Find claude.
@@ -79,14 +83,14 @@ fi
 echo "Building the engine..." >&2
 cargo build --release --locked
 engine="$(copy_engine "$repo/target/release/logix-engine")"
-echo "Engine $("$engine" --version | cut -d' ' -f2), engine folder $engine_folder" >&2
+echo "Engine $("$engine" --version | cut -d' ' -f2), engine folder $engine_folder, log level $log_level" >&2
 echo "Claude Code: $claude_bin, in $playground" >&2
 
 mkdir -p "$playground"
 cd "$playground"
 
 mcp_config=$(cat <<JSON
-{"mcpServers": {"logix-engine": {"command": "$engine", "args": ["--engine-folder", "$engine_folder"]}}}
+{"mcpServers": {"logix-engine": {"command": "$engine", "args": ["--engine-folder", "$engine_folder", "--log-level", "$log_level"]}}}
 JSON
 )
 

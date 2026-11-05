@@ -9,9 +9,10 @@
 # passed to grok. Grok runs in a playground folder, ~/.logix-dev/playground
 # (or LOGIX_PLAYGROUND), where it can create designs, not in this repo. The
 # engine uses the engine folder ~/.logix-dev/engine (or
-# LOGIX_ENGINE_FOLDER). The engine's tools are allowed without asking. Each
-# run starts the freshly built engine, copied to ~/.logix-dev/bin so the
-# session doesn't see this repo's path.
+# LOGIX_ENGINE_FOLDER), and logs at LOGIX_LOG_LEVEL (info by default; debug
+# also logs every program's output). The engine's tools are allowed without
+# asking. Each run starts the freshly built engine, copied to
+# ~/.logix-dev/bin so the session doesn't see this repo's path.
 #
 # For a reproducible starting point, the session has Grok's memory off,
 # loads none of Claude Code's files (such as ~/.claude/CLAUDE.md), and gets
@@ -52,6 +53,9 @@ source scripts/_test-session.sh
 
 repo="$(pwd)"
 engine_folder="${LOGIX_ENGINE_FOLDER:-$HOME/.logix-dev/engine}"
+# The engine log level: error, warn, info (default) or debug, which also logs
+# every program's output, such as a programmer's.
+log_level="${LOGIX_LOG_LEVEL:-info}"
 playground="${LOGIX_PLAYGROUND:-$HOME/.logix-dev/playground}"
 
 # Find grok.
@@ -67,7 +71,7 @@ fi
 echo "Building the engine..." >&2
 cargo build --release --locked
 engine="$(copy_engine "$repo/target/release/logix-engine")"
-echo "Engine $("$engine" --version | cut -d' ' -f2), engine folder $engine_folder" >&2
+echo "Engine $("$engine" --version | cut -d' ' -f2), engine folder $engine_folder, log level $log_level" >&2
 echo "Grok: $grok_bin, in $playground" >&2
 
 mkdir -p "$playground"
@@ -75,7 +79,7 @@ cd "$playground"
 
 # Adds the engine to ./.grok/config.toml, or updates it there.
 "$grok_bin" mcp add --scope project logix-engine -- \
-  "$engine" --engine-folder "$engine_folder" > /dev/null
+  "$engine" --engine-folder "$engine_folder" --log-level "$log_level" > /dev/null
 
 # A reproducible starting point: no Grok memory, none of Claude Code's
 # files (CLAUDE.md, rules, skills, MCP servers), and the session rules.
