@@ -98,6 +98,8 @@ Operations that work on a design take these fields. Paths are absolute unless no
 | `constraint_file` | relative path | Depends on the operation | Constraint file, relative to the source folder |
 | `build_folder` | build folder path | Yes | The build folder, as an absolute path. It may or may not be inside the source folder, but it can't be the source folder itself |
 
+**Build folders are disposable.** A host or a person can delete a build folder whenever no operation is using it, and no data is lost: it holds only generated files, and the next operation that writes to it creates it again, with the same result. Until the next build, `program_board` returns a request error that says to build first. The only exceptions are files that a host or a person puts there, and a GTKWave layout that a `simulate` request without `layout_file` puts there (see Layout files). The full rule is in docs/requirements.md, Interaction with the file system.
+
 ### Board specification
 
 The `board` field is either a catalog ID, such as `"icestick"`, or a full definition object in the catalog format. A full definition can name its FPGA by catalog ID or include its full definition. Its variants are always written out in full.

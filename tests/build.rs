@@ -586,6 +586,28 @@ async fn progress_and_cancel() {
     assert_eq!(err.category, Category::Cancelled);
 }
 
+/// Build folders are disposable: deleting one loses nothing, and the next
+/// build creates it again with the same result.
+#[tokio::test]
+async fn a_deleted_build_folder_is_built_again_with_the_same_result() {
+    let state = engine().await;
+    let (_tmp, src) = project();
+    let folder = src.join("_build");
+    build_it(&state, &src, json!({})).await.unwrap();
+    let bin = std::fs::read(folder.join("hardware.bin")).unwrap();
+    let record = std::fs::read(folder.join("build-record.json")).unwrap();
+
+    std::fs::remove_dir_all(&folder).unwrap();
+    let out = build_it(&state, &src, json!({})).await.unwrap();
+    assert!(!out.up_to_date, "a deleted folder is built again");
+    assert!(folder.join(".logix-build").is_file());
+    assert_eq!(std::fs::read(folder.join("hardware.bin")).unwrap(), bin);
+    assert_eq!(
+        std::fs::read(folder.join("build-record.json")).unwrap(),
+        record
+    );
+}
+
 #[tokio::test]
 async fn clean_build_removes_a_folder_of_build_folders() {
     let state = engine().await;

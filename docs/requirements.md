@@ -21,7 +21,7 @@ Draft requirements for the engine. [Architecture](architecture.md), [Tool API](t
 | Toolchain | The open source FPGA tools the engine runs to perform operations, such as synthesis and place-and-route tools |
 | Shared folders | Folders on the host's computer that both the host and the engine use: the engine folder, the source folder and the build folder. The host chooses their locations: the engine folder when it launches an instance, the source and build folders with each request. They may overlap |
 | Source folder | The shared folder that holds the design's sources, such as HDL files, testbenches and constraint files. The host owns it and names it in each request. The engine reads it, and writes to it only when an operation calls for it, such as formatting, or writing a default waveform layout the request names. It may also hold other files, such as a frontend's project files. The host can exclude parts of it from the engine, such as a `_build` folder, even when the build folder is only a subfolder of the excluded part, such as `_build/<env_name>` |
-| Build folder | The shared folder where the engine writes generated files, such as bitstreams, reports and waveforms, and keeps any state between requests, such as incremental build data. The host names it in each request. Deleting it may slow the next build but never changes its result. It may be inside the source folder or outside it, but is never the source folder itself |
+| Build folder | The shared folder where the engine writes generated files, such as bitstreams, reports and waveforms, and keeps any state between requests, such as incremental build data. The host names it in each request. Deleting it loses no data: the next operation that writes to it creates it again, maybe more slowly, with the same result. It may be inside the source folder or outside it, but is never the source folder itself |
 | Project model | How a frontend organizes a design on disk, such as a project file and directory layout. The engine does not impose one |
 | MCP | Model Context Protocol, the open standard all hosts use to call engine operations as tools |
 
@@ -200,7 +200,14 @@ Hosts interact with the engine in the following ways.
 
 ## Interaction with the file system
 
-The engine works with three shared folders. The engine has no hard-wired disk locations. All sources reach the engine through the shared folders: requests never carry source text. The host sets the engine folder when it launches each instance. Each request carries the source and build folders it uses. Any state the engine keeps between requests lives in the build folder. Restarting the engine or deleting the build folder may make the next build slower, but never changes its result.
+The engine works with three shared folders. The engine has no hard-wired disk locations. All sources reach the engine through the shared folders: requests never carry source text. The host sets the engine folder when it launches each instance. Each request carries the source and build folders it uses. Any state the engine keeps between requests lives in the build folder. Restarting the engine may make the next build slower, but never changes its result.
+
+**Build folders are disposable.** A host or a person can delete a build folder whenever no operation is using it, and no data is lost:
+
+- It holds only files the engine generates from the sources and the request. The engine never keeps the only copy of anything in it.
+- Every operation that writes to a build folder creates it again, such as `build`, `test`, `simulate` and `graph`. The next build may be slower, but its result is the same.
+- An operation that only reads a build's outputs, such as `program_board`, can't work until the next build. It returns a request error that says to build first.
+- Exceptions are files that a host or a person puts into a build folder, and a GTKWave layout saved from a `simulate` request without `layout_file`, which goes into the build folder. A host that keeps layouts names a `layout_file` in the source folder.
 
 **Table 10.** Shared folders
 
