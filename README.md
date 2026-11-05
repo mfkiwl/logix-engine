@@ -42,7 +42,7 @@ Check the setup with `cargo --version`.
 | `scripts/clean.sh` | Deletes the build output |
 | `scripts/update-schemas.sh` | Regenerates [schemas/tools.json](schemas/tools.json), the published copy of the tool schemas, after a deliberate change |
 
-To try the engine with Claude Code as the host, run `scripts/run-in-claude.sh` and type prompts, such as "What version is the Logix engine?". It uses the `claude` command, or the one bundled with the Claude Code VS Code extension. `scripts/run-in-grok.sh` does the same with Grok. To try it with another MCP client, such as the [MCP Inspector](https://github.com/modelcontextprotocol/inspector), point the client at `scripts/serve.sh`:
+To try the engine with Claude Code as the host, run `scripts/run-in-claude.sh` and type prompts, such as "What version is the Logix engine?". It uses the `claude` command, or the one bundled with the Claude Code VS Code extension. `scripts/run-in-grok.sh` does the same with Grok. Both start the agent from a clean slate for reproducible hand tests: none of your own agent settings, instructions or memories, a copy of the engine outside the repo, and rules asking the agent to start only from what the engine provides. To try it with another MCP client, such as the [MCP Inspector](https://github.com/modelcontextprotocol/inspector), point the client at `scripts/serve.sh`:
 
 ```
 npx @modelcontextprotocol/inspector /path/to/logix-engine/scripts/serve.sh

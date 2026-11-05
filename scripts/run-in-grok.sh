@@ -10,7 +10,14 @@
 # (or LOGIX_PLAYGROUND), where it can create designs, not in this repo. The
 # engine uses the engine folder ~/.logix-dev/engine (or
 # LOGIX_ENGINE_FOLDER). The engine's tools are allowed without asking. Each
-# run starts the freshly built engine.
+# run starts the freshly built engine, copied to ~/.logix-dev/bin so the
+# session doesn't see this repo's path.
+#
+# For a reproducible starting point, the session has Grok's memory off,
+# loads none of Claude Code's files (such as ~/.claude/CLAUDE.md), and gets
+# the rules in scripts/_test-session.sh: start only from what the engine
+# provides, and don't read local repos or earlier notes. The rules ask the
+# agent; they don't enforce.
 #
 # Grok has no option to hand it an MCP server for one session, so this
 # script writes the engine into the playground's project config,
@@ -41,6 +48,7 @@ done
 
 cd "$(dirname "$0")/.."
 source scripts/_rust-env.sh
+source scripts/_test-session.sh
 
 repo="$(pwd)"
 engine_folder="${LOGIX_ENGINE_FOLDER:-$HOME/.logix-dev/engine}"
@@ -58,7 +66,7 @@ fi
 
 echo "Building the engine..." >&2
 cargo build --release --locked
-engine="$repo/target/release/logix-engine"
+engine="$(copy_engine "$repo/target/release/logix-engine")"
 echo "Engine $("$engine" --version | cut -d' ' -f2), engine folder $engine_folder" >&2
 echo "Grok: $grok_bin, in $playground" >&2
 
@@ -69,8 +77,16 @@ cd "$playground"
 "$grok_bin" mcp add --scope project logix-engine -- \
   "$engine" --engine-folder "$engine_folder" > /dev/null
 
+# A reproducible starting point: no Grok memory, none of Claude Code's
+# files (CLAUDE.md, rules, skills, MCP servers), and the session rules.
+export GROK_MEMORY=0
+export GROK_CLAUDE_AGENTS_ENABLED=0 GROK_CLAUDE_RULES_ENABLED=0
+export GROK_CLAUDE_SKILLS_ENABLED=0 GROK_CLAUDE_MCPS_ENABLED=0
+export GROK_CLAUDE_HOOKS_ENABLED=0
+
 # --trust: Grok starts a project's MCP servers only in a trusted folder.
 exec "$grok_bin" \
   --trust \
+  --rules "$SESSION_RULES" \
   --allow "MCPTool(logix-engine__*)" \
   "$@"
