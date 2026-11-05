@@ -1102,6 +1102,56 @@ mod tests {
         assert!(check_template("${BITSTREAM").is_err());
     }
 
+    /// The top-level alternatives of a regular expression: `a|(b|c)` has
+    /// two, `a` and `(b|c)`.
+    fn top_level_alternatives(re: &str) -> Vec<String> {
+        let (mut out, mut cur, mut depth, mut chars) = (Vec::new(), String::new(), 0, re.chars());
+        let mut in_class = false;
+        while let Some(c) = chars.next() {
+            match c {
+                '\\' => {
+                    cur.push(c);
+                    cur.extend(chars.next());
+                    continue;
+                }
+                '[' if !in_class => in_class = true,
+                ']' if in_class => in_class = false,
+                '(' if !in_class => depth += 1,
+                ')' if !in_class => depth -= 1,
+                '|' if !in_class && depth == 0 => {
+                    out.push(std::mem::take(&mut cur));
+                    continue;
+                }
+                _ => {}
+            }
+            cur.push(c);
+        }
+        out.push(cur);
+        out
+    }
+
+    /// Catalog name patterns match from the start of the name in every
+    /// alternative: in `^(A)|(B)`, `^` anchors only A, so B would match
+    /// anywhere in the name. Write `^(A|B)` or `^A|^B`.
+    #[test]
+    fn catalog_name_patterns_are_anchored() {
+        assert_eq!(top_level_alternatives("^(A)|(B)"), ["^(A)", "(B)"]);
+        assert_eq!(top_level_alternatives("^(A|B)$"), ["^(A|B)$"]);
+        assert_eq!(top_level_alternatives("^[|]\\|x"), ["^[|]\\|x"]);
+        for (id, b) in &builtin().boards {
+            for v in &b.variants {
+                for re in [&v.usb.product_regex, &v.usb.serial_regex]
+                    .into_iter()
+                    .flatten()
+                {
+                    for alt in top_level_alternatives(re) {
+                        assert!(alt.starts_with('^'), "{id} {}: {re:?}", v.id);
+                    }
+                }
+            }
+        }
+    }
+
     #[test]
     fn bad_boards_are_refused() {
         let ok = builtin().boards["alhambra-ii"].clone();

@@ -663,9 +663,9 @@ pub mod tests {
         assert!(!ids(&m).contains(&"alchitry-au".to_string()), "named");
         assert!(!ids(&m).contains(&"icezum".to_string()), "another name");
 
-        // A real Tang Nano 9K: its debugger reports "JTAG Debugger", a
-        // generic name, so the 9K is a possible match, not a strong one.
-        // Its BL702 reports release 0500, as the other BL702 Tang boards.
+        // A real Tang Nano 9K: its BL702 debugger reports "JTAG Debugger",
+        // a generic name, and release 0500, as on every BL702 Tang board, so
+        // the four are possible matches, before the weak ones.
         let mut nano9k = device(
             "0403",
             "6010",
@@ -675,15 +675,21 @@ pub mod tests {
         );
         nano9k.release = Some("0500".into());
         let m = board_matches(&nano9k, &boards);
-        assert_eq!(m[0].board, "sipeed-tang-nano-9k");
-        assert_eq!(m[0].best_level(), MatchLevel::Possible);
-        for bl702 in [
-            "sipeed-tang-nano-1k",
-            "sipeed-tang-nano-4k",
-            "sipeed-tang-primer-20k",
-        ] {
-            assert!(ids(&m).contains(&bl702.to_string()), "{bl702}");
-        }
+        let possible: Vec<_> = m
+            .iter()
+            .take_while(|m| m.best_level() == MatchLevel::Possible)
+            .map(|m| m.board.as_str())
+            .collect();
+        assert_eq!(
+            possible,
+            [
+                "sipeed-tang-nano-1k",
+                "sipeed-tang-nano-4k",
+                "sipeed-tang-nano-9k",
+                "sipeed-tang-primer-20k"
+            ]
+        );
+        assert!(m[4..].iter().all(|m| m.best_level() == MatchLevel::Weak));
         // A real FT2232H (release 0700) is none of the BL702 boards, even
         // when the engine can't open it.
         let mut ft2232h = device("0403", "6010", Some("Alhambra II v1.0A"), None, 5);
