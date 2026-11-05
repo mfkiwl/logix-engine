@@ -2,8 +2,8 @@
 # Builds the engine if needed, then starts an interactive Claude Code
 # session with the engine connected as an MCP server, so you can prompt it:
 #
-#   scripts/run-claude.sh               # then type prompts
-#   scripts/run-claude.sh "What version is the Logix engine?"
+#   scripts/run-in-claude.sh            # then type prompts
+#   scripts/run-in-claude.sh "What version is the Logix engine?"
 #
 # Arguments are passed to claude. Claude runs in a playground folder,
 # ~/.logix-dev/playground (or LOGIX_PLAYGROUND), where it can create

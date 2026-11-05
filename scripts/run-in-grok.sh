@@ -2,10 +2,10 @@
 # Builds the engine if needed, then starts an interactive Grok session with
 # the engine connected as an MCP server, so you can prompt it:
 #
-#   scripts/run-grok.sh                 # then type prompts
-#   scripts/run-grok.sh "What version is the Logix engine?"
+#   scripts/run-in-grok.sh              # then type prompts
+#   scripts/run-in-grok.sh "What version is the Logix engine?"
 #
-# The same as scripts/run-claude.sh, with Grok as the host. Arguments are
+# The same as scripts/run-in-claude.sh, with Grok as the host. Arguments are
 # passed to grok. Grok runs in a playground folder, ~/.logix-dev/playground
 # (or LOGIX_PLAYGROUND), where it can create designs, not in this repo. The
 # engine uses the engine folder ~/.logix-dev/engine (or
@@ -20,7 +20,7 @@
 #
 # Uses the grok command on the PATH, or else ~/.grok/bin/grok.
 #
-# Prerequisites: the same as scripts/run-claude.sh, with Grok instead of
+# Prerequisites: the same as scripts/run-in-claude.sh, with Grok instead of
 # Claude Code, installed and signed in (run grok once by hand to sign in).
 
 set -euo pipefail
