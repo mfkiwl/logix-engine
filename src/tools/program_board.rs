@@ -303,11 +303,12 @@ async fn check_fpga(
     })
 }
 
-/// The catalog boards with the FPGA of this ID code whose USB filters the
-/// device matches, by name.
-fn boards_with_fpga(code: u32, device: &Device) -> Vec<String> {
+/// The catalog boards with the FPGA of this ID code that the device most
+/// likely is: of those whose USB filters it matches, the ones with the
+/// highest confidence, as list_devices rates them.
+pub fn boards_with_fpga(code: u32, device: &Device) -> Vec<String> {
     let catalog = crate::catalog::builtin();
-    catalog
+    let rated: Vec<(u8, &str)> = catalog
         .boards
         .values()
         .filter(|b| {
@@ -317,9 +318,22 @@ fn boards_with_fpga(code: u32, device: &Device) -> Vec<String> {
                 .and_then(|f| f.jtag_idcode.as_deref())
                 .and_then(crate::catalog::parse_idcode)
                 == Some(code)
-                && b.variants.iter().any(|v| devices::matches(device, &v.usb))
         })
-        .map(|b| b.description.clone())
+        .filter_map(|b| {
+            let best = b
+                .variants
+                .iter()
+                .filter(|v| devices::matches(device, &v.usb))
+                .map(|v| devices::confidence(device, &v.usb))
+                .max()?;
+            Some((best, b.description.as_str()))
+        })
+        .collect();
+    let top = rated.iter().map(|(c, _)| *c).max().unwrap_or(0);
+    rated
+        .into_iter()
+        .filter(|(c, _)| *c == top)
+        .map(|(_, name)| name.to_string())
         .collect()
 }
 

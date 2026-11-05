@@ -355,7 +355,7 @@ pub fn parse_detect(output: &str) -> Vec<DetectedFpga> {
 }
 
 /// Checks that the FPGA found is the build's. `others` names the boards
-/// with the found FPGA, to suggest.
+/// with the found FPGA that the device most likely is, to suggest.
 pub fn check_fpga(
     found: &[DetectedFpga],
     fpga: &FpgaDefinition,
@@ -388,7 +388,7 @@ pub fn check_fpga(
     let boards = others(first.idcode);
     if !boards.is_empty() {
         message.push_str(&format!(
-            " Boards with that FPGA that the device could be: {}.",
+            " Boards with that FPGA that the device most likely is: {}.",
             boards.join(", ")
         ));
     }
@@ -776,7 +776,7 @@ mod tests {
         assert_eq!(e.action.as_ref().unwrap().code, ActionCode::ConnectBoard);
         assert_eq!(
             e.message,
-            "The connected board has XC7A100 (ID code 0x03631093), but the build is for the Arty A7-35T, which has XC7A35T-1CSG324 (ID code 0x0362d093). Nothing was written. Boards with that FPGA that the device could be: Arty A7-100T."
+            "The connected board has XC7A100 (ID code 0x03631093), but the build is for the Arty A7-35T, which has XC7A35T-1CSG324 (ID code 0x0362d093). Nothing was written. Boards with that FPGA that the device most likely is: Arty A7-100T."
         );
 
         // A chip openFPGALoader doesn't know, and no FPGA at all.

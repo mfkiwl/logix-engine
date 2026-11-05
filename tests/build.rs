@@ -1011,3 +1011,28 @@ async fn program_board_refuses_a_board_with_another_fpga() {
     let runs = std::fs::read_to_string(&log).unwrap();
     assert_eq!(runs.lines().count(), 1, "only detect ran: {runs}");
 }
+
+/// The wrong-FPGA error suggests only the boards the device most likely is,
+/// as list_devices rates them: for a Digilent device with an XC7A35T, the
+/// boards whose filters name Digilent's chip, not the Alchitry Au, whose
+/// filter matches any FTDI chip with those USB IDs.
+#[test]
+fn the_wrong_fpga_error_suggests_the_most_likely_boards() {
+    let digilent = usb("Digilent USB Device", Some("210319AFEF8F"), 4);
+    let boards = program_board::boards_with_fpga(0x0362d093, &digilent);
+    assert!(
+        boards.iter().any(|b| b.starts_with("Arty A7-35T")),
+        "{boards:?}"
+    );
+    assert!(
+        !boards.iter().any(|b| b.starts_with("Alchitry Au")),
+        "{boards:?}"
+    );
+    // A plain FTDI chip matches them all equally.
+    let plain = usb("Dual RS232-HS", None, 4);
+    let boards = program_board::boards_with_fpga(0x0362d093, &plain);
+    assert!(
+        boards.iter().any(|b| b.starts_with("Alchitry Au")),
+        "{boards:?}"
+    );
+}
