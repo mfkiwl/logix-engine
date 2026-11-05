@@ -15,8 +15,8 @@
 #
 # For a reproducible starting point, the session loads none of your user
 # settings (~/.claude/settings.json), no CLAUDE.md files (your own
-# ~/.claude/CLAUDE.md included), no auto memory and no personal skills,
-# doesn't connect to an IDE, and gets the rules in scripts/_test-session.sh: start only from
+# ~/.claude/CLAUDE.md included) and no auto memory, doesn't connect to an
+# IDE, and gets the rules in scripts/_test-session.sh: start only from
 # what the engine provides, and don't read local repos or earlier notes.
 # The rules ask the agent; they don't enforce.
 #
@@ -92,8 +92,8 @@ JSON
 
 # A reproducible starting point: none of your user settings (they may add
 # working folders, such as local repos), no CLAUDE.md files (yours
-# included), no auto memory, no personal skills, no IDE connection, and the
-# session rules.
+# included), no auto memory, no IDE connection, and the session rules.
+# Slash commands stay on.
 claude_settings=$(cat <<JSON
 {"claudeMdExcludes": ["$HOME/.claude/CLAUDE.md", "**/CLAUDE.md", "**/CLAUDE.local.md"]}
 JSON
@@ -101,7 +101,6 @@ JSON
 CLAUDE_CODE_DISABLE_AUTO_MEMORY=1 CLAUDE_CODE_AUTO_CONNECT_IDE=false exec "$claude_bin" \
   --setting-sources project,local \
   --settings "$claude_settings" \
-  --disable-slash-commands \
   --append-system-prompt "$SESSION_RULES" \
   --strict-mcp-config \
   --mcp-config "$mcp_config" \
