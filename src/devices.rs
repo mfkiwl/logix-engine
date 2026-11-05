@@ -770,8 +770,9 @@ pub mod tests {
                 .any(|b| b.starts_with("alchitry"))
         );
 
-        // A ULX3S names its FPGA size (fujprog's names); one with the
-        // FT231X's factory name is possibly any size.
+        // A ULX3S names its FPGA size (fujprog's names); the FT231X's
+        // factory name is possibly any ULX3S size, or an Icepi Zero, which
+        // keeps that name.
         let ulx3s = device(
             "0403",
             "6015",
@@ -794,7 +795,13 @@ pub mod tests {
             .collect();
         assert_eq!(
             possible,
-            ["ulx3s-12f", "ulx3s-25f", "ulx3s-45f", "ulx3s-85f"]
+            [
+                "icepi-zero",
+                "ulx3s-12f",
+                "ulx3s-25f",
+                "ulx3s-45f",
+                "ulx3s-85f"
+            ]
         );
 
         // Can't be opened: every board with these USB IDs, weak, even when
