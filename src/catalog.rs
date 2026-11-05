@@ -133,6 +133,15 @@ pub struct UsbFilter {
     /// that tell them apart. Omitted means any serial number.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub serial_regex: Option<String>,
+    /// The device's release number (USB bcdDevice), four lowercase hex
+    /// digits, such as 0500, that the device must report, for boards that
+    /// share USB IDs but differ in it. On FTDI chips, and on board debuggers
+    /// that act like them, it tells the chip type: 0700 for an FT2232H, 0500
+    /// for an FT2232C/D or a debugger that acts like one. Omitted means any
+    /// release.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(pattern(r"^[0-9a-f]{4}$"))]
+    pub release: Option<String>,
 }
 
 /// An FPGA: its architecture, part and toolchain parameters.
@@ -418,6 +427,9 @@ impl Variant {
         check_template(&self.args)?;
         if !is_usb_id(&self.usb.vid) || !is_usb_id(&self.usb.pid) {
             return Err("USB IDs must be four lowercase hex digits".into());
+        }
+        if self.usb.release.as_deref().is_some_and(|r| !is_usb_id(r)) {
+            return Err("a USB release must be four lowercase hex digits".into());
         }
         if let Some(re) = &self.usb.product_regex {
             regex::Regex::new(re).map_err(|e| format!("bad product_regex: {e}"))?;
@@ -1111,6 +1123,12 @@ mod tests {
         let mut b = ok.clone();
         first(&mut b).usb.serial_regex = Some("(".into());
         assert!(b.validate().is_err());
+        let mut b = ok.clone();
+        first(&mut b).usb.release = Some("700".into());
+        assert!(b.validate().is_err());
+        let mut b = ok.clone();
+        first(&mut b).usb.release = Some("0700".into());
+        assert!(b.validate().is_ok());
         // A bad ID, the same ID twice, the same connection and memory twice.
         let mut b = ok.clone();
         first(&mut b).id = "USB Flash".into();

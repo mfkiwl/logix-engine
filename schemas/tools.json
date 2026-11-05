@@ -563,6 +563,14 @@
                 "null"
               ]
             },
+            "release": {
+              "description": "The device's release number (USB bcdDevice), four lowercase hex\ndigits, such as 0500, that the device must report, for boards that\nshare USB IDs but differ in it. On FTDI chips, and on board debuggers\nthat act like them, it tells the chip type: 0700 for an FT2232H, 0500\nfor an FT2232C/D or a debugger that acts like one. Omitted means any\nrelease.",
+              "pattern": "^[0-9a-f]{4}$",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "serial_regex": {
               "description": "A regular expression the device's serial number must match, for\nboards that share USB IDs and product names but have serial numbers\nthat tell them apart. Omitted means any serial number.",
               "type": [
@@ -855,6 +863,14 @@
             },
             "product_regex": {
               "description": "A regular expression the device's product name must match, when\nseveral boards share the same USB IDs. Omitted means any product name.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "release": {
+              "description": "The device's release number (USB bcdDevice), four lowercase hex\ndigits, such as 0500, that the device must report, for boards that\nshare USB IDs but differ in it. On FTDI chips, and on board debuggers\nthat act like them, it tells the chip type: 0700 for an FT2232H, 0500\nfor an FT2232C/D or a debugger that acts like one. Omitted means any\nrelease.",
+              "pattern": "^[0-9a-f]{4}$",
               "type": [
                 "string",
                 "null"
@@ -1325,6 +1341,14 @@
             },
             "product_regex": {
               "description": "A regular expression the device's product name must match, when\nseveral boards share the same USB IDs. Omitted means any product name.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "release": {
+              "description": "The device's release number (USB bcdDevice), four lowercase hex\ndigits, such as 0500, that the device must report, for boards that\nshare USB IDs but differ in it. On FTDI chips, and on board debuggers\nthat act like them, it tells the chip type: 0700 for an FT2232H, 0500\nfor an FT2232C/D or a debugger that acts like one. Omitted means any\nrelease.",
+              "pattern": "^[0-9a-f]{4}$",
               "type": [
                 "string",
                 "null"
@@ -1888,6 +1912,14 @@
             },
             "product_regex": {
               "description": "A regular expression the device's product name must match, when\nseveral boards share the same USB IDs. Omitted means any product name.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "release": {
+              "description": "The device's release number (USB bcdDevice), four lowercase hex\ndigits, such as 0500, that the device must report, for boards that\nshare USB IDs but differ in it. On FTDI chips, and on board debuggers\nthat act like them, it tells the chip type: 0700 for an FT2232H, 0500\nfor an FT2232C/D or a debugger that acts like one. Omitted means any\nrelease.",
+              "pattern": "^[0-9a-f]{4}$",
               "type": [
                 "string",
                 "null"
@@ -2898,6 +2930,14 @@
                 "null"
               ]
             },
+            "release": {
+              "description": "The device's release number (USB bcdDevice), four lowercase hex\ndigits, such as 0500, that the device must report, for boards that\nshare USB IDs but differ in it. On FTDI chips, and on board debuggers\nthat act like them, it tells the chip type: 0700 for an FT2232H, 0500\nfor an FT2232C/D or a debugger that acts like one. Omitted means any\nrelease.",
+              "pattern": "^[0-9a-f]{4}$",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "serial_regex": {
               "description": "A regular expression the device's serial number must match, for\nboards that share USB IDs and product names but have serial numbers\nthat tell them apart. Omitted means any serial number.",
               "type": [
@@ -3503,6 +3543,14 @@
                 "null"
               ]
             },
+            "release": {
+              "description": "The device's release number (USB bcdDevice), four lowercase hex\ndigits, such as 0500, that the device must report, for boards that\nshare USB IDs but differ in it. On FTDI chips, and on board debuggers\nthat act like them, it tells the chip type: 0700 for an FT2232H, 0500\nfor an FT2232C/D or a debugger that acts like one. Omitted means any\nrelease.",
+              "pattern": "^[0-9a-f]{4}$",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "serial_regex": {
               "description": "A regular expression the device's serial number must match, for\nboards that share USB IDs and product names but have serial numbers\nthat tell them apart. Omitted means any serial number.",
               "type": [
@@ -3729,6 +3777,13 @@
             },
             "product": {
               "description": "The product name the device reports, when available.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "release": {
+              "description": "The device's release number (USB bcdDevice), four lowercase hex\ndigits, such as 0700. Known even for devices the engine can't open.\nOn FTDI chips, and on board debuggers that act like them, it tells the\nchip type: 0700 for an FT2232H, 0500 for an FT2232C/D or a debugger\nthat acts like one.",
               "type": [
                 "string",
                 "null"
@@ -4057,6 +4112,13 @@
             },
             "product": {
               "description": "The product name the device reports, when available.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "release": {
+              "description": "The device's release number (USB bcdDevice), four lowercase hex\ndigits, such as 0700. Known even for devices the engine can't open.\nOn FTDI chips, and on board debuggers that act like them, it tells the\nchip type: 0700 for an FT2232H, 0500 for an FT2232C/D or a debugger\nthat acts like one.",
               "type": [
                 "string",
                 "null"

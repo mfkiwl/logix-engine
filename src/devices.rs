@@ -38,6 +38,13 @@ pub struct Device {
     /// The serial number the device reports, when available.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub serial_number: Option<String>,
+    /// The device's release number (USB bcdDevice), four lowercase hex
+    /// digits, such as 0700. Known even for devices the engine can't open.
+    /// On FTDI chips, and on board debuggers that act like them, it tells the
+    /// chip type: 0700 for an FT2232H, 0500 for an FT2232C/D or a debugger
+    /// that acts like one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub release: Option<String>,
     /// USB bus number.
     pub bus: u8,
     /// USB device number on its bus. It changes when the device is plugged
@@ -262,7 +269,7 @@ pub fn scan() -> Result<Vec<Device>, ToolError> {
             ),
             _ => format!("{}-a{}", d.bus_number(), d.address()),
         };
-        out.push(Device::usb(
+        let mut device = Device::usb(
             format!("{:04x}", desc.vendor_id()),
             format!("{:04x}", desc.product_id()),
             manufacturer,
@@ -272,7 +279,9 @@ pub fn scan() -> Result<Vec<Device>, ToolError> {
             d.address(),
             location,
             reachable,
-        ));
+        );
+        device.release = raw_release(&d);
+        out.push(device);
     }
     out.sort_by(|a, b| (&a.vid, &a.pid, a.bus, a.device).cmp(&(&b.vid, &b.pid, b.bus, b.device)));
     Ok(out)
@@ -304,6 +313,7 @@ impl Device {
             manufacturer,
             product,
             serial_number,
+            release: None,
             bus,
             device,
             boards: Vec::new(),
@@ -324,11 +334,31 @@ pub fn has_port_path(device: &Device) -> bool {
     })
 }
 
+/// Whether a device has a filter's USB IDs and, when the filter names one,
+/// its release. All of these come from the device descriptor, so they're
+/// known even for a device the engine can't open.
 pub fn same_ids(device: &Device, filter: &UsbFilter) -> bool {
-    device.vid.eq_ignore_ascii_case(&filter.vid) && device.pid.eq_ignore_ascii_case(&filter.pid)
+    device.vid.eq_ignore_ascii_case(&filter.vid)
+        && device.pid.eq_ignore_ascii_case(&filter.pid)
+        && match (&filter.release, &device.release) {
+            (None, _) => true,
+            (Some(want), Some(has)) => want.eq_ignore_ascii_case(has),
+            (Some(_), None) => false,
+        }
 }
 
-/// Whether a device passes a board's USB filter: same IDs, a product name
+/// The device's bcdDevice, exactly as reported. rusb only offers it decoded
+/// as a decimal version, which loses values that aren't decimal digits,
+/// such as 0a00.
+fn raw_release(d: &rusb::Device<rusb::GlobalContext>) -> Option<String> {
+    let mut desc = std::mem::MaybeUninit::<rusb::ffi::libusb_device_descriptor>::uninit();
+    // SAFETY: d is a valid device for the duration of the call, and libusb
+    // fills the whole descriptor when it returns 0.
+    let rc = unsafe { rusb::ffi::libusb_get_device_descriptor(d.as_raw(), desc.as_mut_ptr()) };
+    (rc == 0).then(|| format!("{:04x}", unsafe { desc.assume_init() }.bcdDevice))
+}
+
+/// Whether a device passes a board's USB filter: same IDs (and release), a product name
 /// matching product_regex and a serial number matching serial_regex, when
 /// the filter has them.
 pub fn matches(device: &Device, filter: &UsbFilter) -> bool {
@@ -489,6 +519,7 @@ pub mod tests {
             pid: "6010".into(),
             product_regex: re.map(Into::into),
             serial_regex: None,
+            release: None,
         }
     }
 
@@ -512,12 +543,35 @@ pub mod tests {
             &device("0403", "6014", Some("Alhambra II"), None, 6),
             &f
         ));
+        // A release in the filter: only devices that report it, whether or
+        // not the engine can open them.
+        let bl702 = UsbFilter {
+            release: Some("0500".into()),
+            ..filter(None)
+        };
+        let with_release = |r: Option<&str>, reachable: bool| {
+            let mut d = device("0403", "6010", Some("JTAG Debugger"), None, 7);
+            d.release = r.map(Into::into);
+            d.reachable = reachable;
+            d
+        };
+        assert!(matches(&with_release(Some("0500"), true), &bl702));
+        assert!(!matches(&with_release(Some("0700"), true), &bl702));
+        assert!(
+            !matches(&with_release(None, true), &bl702),
+            "unknown release"
+        );
+        assert!(same_ids(&with_release(Some("0500"), false), &bl702));
+        assert!(!same_ids(&with_release(Some("0700"), false), &bl702));
+        assert!(matches(&with_release(Some("0700"), true), &filter(None)));
+
         // iCESugar boards share IDs and product name; the serial tells them apart.
         let nano_filter = UsbFilter {
             vid: "1d50".into(),
             pid: "602b".into(),
             product_regex: Some("^DAPLink CMSIS-DAP".into()),
             serial_regex: Some("^0720".into()),
+            release: None,
         };
         let pro = device(
             "1d50",
@@ -611,16 +665,46 @@ pub mod tests {
 
         // A real Tang Nano 9K: its debugger reports "JTAG Debugger", a
         // generic name, so the 9K is a possible match, not a strong one.
-        let nano9k = device(
+        // Its BL702 reports release 0500, as the other BL702 Tang boards.
+        let mut nano9k = device(
             "0403",
             "6010",
             Some("JTAG Debugger"),
             Some("FactoryAIOT Pro\"3DUal"),
             4,
         );
+        nano9k.release = Some("0500".into());
         let m = board_matches(&nano9k, &boards);
         assert_eq!(m[0].board, "sipeed-tang-nano-9k");
         assert_eq!(m[0].best_level(), MatchLevel::Possible);
+        for bl702 in [
+            "sipeed-tang-nano-1k",
+            "sipeed-tang-nano-4k",
+            "sipeed-tang-primer-20k",
+        ] {
+            assert!(ids(&m).contains(&bl702.to_string()), "{bl702}");
+        }
+        // A real FT2232H (release 0700) is none of the BL702 boards, even
+        // when the engine can't open it.
+        let mut ft2232h = device("0403", "6010", Some("Alhambra II v1.0A"), None, 5);
+        ft2232h.release = Some("0700".into());
+        for reachable in [true, false] {
+            ft2232h.reachable = reachable;
+            let m = board_matches(&ft2232h, &boards);
+            assert!(!m.is_empty());
+            for bl702 in [
+                "sipeed-tang-nano-1k",
+                "sipeed-tang-nano-4k",
+                "sipeed-tang-nano-9k",
+                "sipeed-tang-primer-20k",
+            ] {
+                assert!(!ids(&m).contains(&bl702.to_string()), "{bl702}");
+            }
+            assert!(
+                ids(&m).contains(&"sipeed-tang-nano-20k".to_string()),
+                "no release"
+            );
+        }
 
         // Both iCESugar-Pro variants, and not the other iCESugar boards.
         let pro = device(
@@ -762,6 +846,8 @@ pub mod tests {
         for d in &devices {
             assert_eq!(d.vid.len(), 4);
             assert!(d.id.starts_with("usb:"));
+            let release = d.release.as_deref().unwrap();
+            assert!(release.len() == 4 && release.bytes().all(|b| b.is_ascii_hexdigit()));
         }
     }
 }
