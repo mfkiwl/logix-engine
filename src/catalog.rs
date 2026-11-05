@@ -12,7 +12,8 @@ use serde::{Deserialize, Serialize};
 pub const PROGRAMMERS: &[&str] = &["openfpgaloader", "iceprog", "dfu-util", "icesprog"];
 
 /// The variables a programming variant's argument template may use.
-pub const TEMPLATE_VARIABLES: &[&str] = &["VID", "PID", "BUS", "DEV", "SERIAL", "BITSTREAM"];
+pub const TEMPLATE_VARIABLES: &[&str] =
+    &["VID", "PID", "BUS", "DEV", "SERIAL", "PORT", "BITSTREAM"];
 
 /// A board: its FPGA and its variants. A board is a name: two boards with
 /// different names are unrelated, even when their hardware is identical, as
@@ -91,7 +92,8 @@ pub struct Variant {
     /// The programmer's arguments, as a template. The engine replaces
     /// ${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,
     /// product ID, bus and device number, ${SERIAL} with its serial number,
-    /// and ${BITSTREAM} with the bitstream path.
+    /// ${PORT} with its USB port path (such as 1-2.3, as dfu-util's -p
+    /// takes it), and ${BITSTREAM} with the bitstream path.
     pub args: String,
     /// The USB filter that finds the board's device.
     pub usb: UsbFilter,
@@ -176,6 +178,29 @@ pub struct FpgaDefinition {
     /// only, where it's required.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub prjxray_family: Option<String>,
+    /// The FPGA's JTAG ID code, such as 0x0362d093, as openFPGALoader's
+    /// --detect reports it. Before programming over JTAG, the engine reads
+    /// the connected FPGA's ID code and refuses to program a different
+    /// FPGA, such as a board of another size than the build's. It
+    /// identifies the chip, not the size a board uses it as, so FPGAs made
+    /// from the same chip share it. ECP5, Gowin and Xilinx only, optional:
+    /// without it there is no check.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub jtag_idcode: Option<String>,
+}
+
+/// Reads a JTAG ID code written as 0x and 8 lowercase hex digits, such as
+/// 0x0362d093.
+pub fn parse_idcode(code: &str) -> Option<u32> {
+    let hex = code.strip_prefix("0x")?;
+    if hex.len() != 8
+        || !hex
+            .bytes()
+            .all(|c| c.is_ascii_digit() || (b'a'..=b'f').contains(&c))
+    {
+        return None;
+    }
+    u32::from_str_radix(hex, 16).ok()
 }
 
 impl FpgaDefinition {
@@ -218,6 +243,16 @@ impl FpgaDefinition {
                 Some(_) => return Err(format!("{arch} FPGAs have no {name}")),
                 None if required => return Err(format!("{arch} FPGAs need {name}")),
                 None => {}
+            }
+        }
+        if let Some(code) = &self.jtag_idcode {
+            if self.architecture == Architecture::Ice40 {
+                return Err(format!("{arch} FPGAs have no jtag_idcode"));
+            }
+            if parse_idcode(code).is_none() {
+                return Err(format!(
+                    "bad jtag_idcode {code:?}: write it as 0x and 8 lowercase hex digits"
+                ));
             }
         }
         // These name folders in the Project X-Ray database.
@@ -608,6 +643,7 @@ mod tests {
             yosys_family: None,
             yosys_arch: None,
             prjxray_family: None,
+            jtag_idcode: Some("0x41111043".into()),
         };
         assert!(ecp5.validate().is_ok());
         let no_speed = FpgaDefinition {
@@ -644,6 +680,7 @@ mod tests {
             yosys_family: None,
             yosys_arch: None,
             prjxray_family: None,
+            jtag_idcode: Some("0x0100481b".into()),
         };
         assert!(gowin.validate().is_ok());
         let no_packer = FpgaDefinition {
@@ -678,8 +715,38 @@ mod tests {
             yosys_family: None,
             yosys_arch: Some("xc7".into()),
             prjxray_family: Some("artix7".into()),
+            jtag_idcode: Some("0x0362d093".into()),
         };
         assert!(xilinx.validate().is_ok());
+        for bad in ["0x0362D093", "0362d093", "0x362d093", "0x0362d0930"] {
+            let e = FpgaDefinition {
+                jtag_idcode: Some(bad.into()),
+                ..xilinx.clone()
+            }
+            .validate()
+            .unwrap_err();
+            assert!(e.starts_with("bad jtag_idcode"), "{bad}: {e}");
+        }
+        assert!(
+            FpgaDefinition {
+                jtag_idcode: None,
+                ..xilinx.clone()
+            }
+            .validate()
+            .is_ok(),
+            "optional"
+        );
+        assert_eq!(parse_idcode("0x0362d093"), Some(0x0362d093));
+        let ice40_with_idcode = FpgaDefinition {
+            architecture: Architecture::Ice40,
+            nextpnr_speed: None,
+            yosys_family: None,
+            ..ecp5_with_family.clone()
+        };
+        assert_eq!(
+            ice40_with_idcode.validate().unwrap_err(),
+            "ice40 FPGAs have no jtag_idcode"
+        );
         let no_family = FpgaDefinition {
             prjxray_family: None,
             ..xilinx.clone()
@@ -731,6 +798,62 @@ mod tests {
             }
         }
         assert!(checked > 70, "{checked}");
+    }
+
+    #[test]
+    fn dfu_util_commands_name_the_chosen_device() {
+        // dfu-util opens the device at a USB port path when given --path
+        // (-p), in the same bus-port.port form as the engine's location, so
+        // two identical boards in their bootloaders don't block each other.
+        let mut checked = 0;
+        for (name, b) in &builtin().boards {
+            for c in &b.variants {
+                if c.programmer == "dfu-util" {
+                    assert!(
+                        c.args.contains("-p ${PORT}"),
+                        "{name} {:?}: {}",
+                        c.id,
+                        c.args
+                    );
+                    checked += 1;
+                }
+            }
+        }
+        assert_eq!(checked, 9);
+    }
+
+    #[test]
+    fn jtag_boards_have_their_fpgas_id_code() {
+        // Every board programmed over JTAG by openFPGALoader can be checked
+        // for the wrong FPGA before programming, so its FPGA needs its ID
+        // code.
+        let c = builtin();
+        let mut checked = 0;
+        for (name, b) in &c.boards {
+            let fpga = &c.fpgas[&b.fpga_id];
+            for v in &b.variants {
+                if v.programmer == "openfpgaloader" && fpga.architecture != Architecture::Ice40 {
+                    assert!(
+                        crate::program::checks_fpga(v, fpga),
+                        "{name} {:?}: {} has no jtag_idcode",
+                        v.id,
+                        b.fpga_id
+                    );
+                    checked += 1;
+                }
+            }
+        }
+        assert!(checked > 90, "{checked}");
+        // Spot checks against openFPGALoader 1.2.0's part.hpp.
+        for (id, code) in [
+            ("xc7a35tcsg324-1", "0x0362d093"),
+            ("xc7a100tcsg324-1", "0x03631093"),
+            ("lfe5u-25f-6bg256c", "0x41111043"),
+            ("lfe5um5g-85f-8bg381c", "0x81113043"),
+            ("gw1nr-lv9qn88pc6-i5", "0x0100481b"),
+        ] {
+            assert_eq!(c.fpgas[id].jtag_idcode.as_deref(), Some(code), "{id}");
+        }
     }
 
     #[test]

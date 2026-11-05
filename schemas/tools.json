@@ -429,6 +429,13 @@
               "$ref": "#/$defs/Architecture",
               "description": "The FPGA family: ice40, ecp5, gowin or xilinx."
             },
+            "jtag_idcode": {
+              "description": "The FPGA's JTAG ID code, such as 0x0362d093, as openFPGALoader's\n--detect reports it. Before programming over JTAG, the engine reads\nthe connected FPGA's ID code and refuses to program a different\nFPGA, such as a board of another size than the build's. It\nidentifies the chip, not the size a board uses it as, so FPGAs made\nfrom the same chip share it. ECP5, Gowin and Xilinx only, optional:\nwithout it there is no check.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "nextpnr_device": {
               "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5,\nGW1NR-LV9QN88PC6/I5 for Gowin or xc7a35tcsg324-1 for Xilinx.",
               "type": "string"
@@ -539,7 +546,7 @@
           "description": "One way to program a board: its connection and memory, and how to\nprogram the board that way.",
           "properties": {
             "args": {
-              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
+              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\n${PORT} with its USB port path (such as 1-2.3, as dfu-util's -p\ntakes it), and ${BITSTREAM} with the bitstream path.",
               "type": "string"
             },
             "connection": {
@@ -711,6 +718,13 @@
               "$ref": "#/$defs/Architecture",
               "description": "The FPGA family: ice40, ecp5, gowin or xilinx."
             },
+            "jtag_idcode": {
+              "description": "The FPGA's JTAG ID code, such as 0x0362d093, as openFPGALoader's\n--detect reports it. Before programming over JTAG, the engine reads\nthe connected FPGA's ID code and refuses to program a different\nFPGA, such as a board of another size than the build's. It\nidentifies the chip, not the size a board uses it as, so FPGAs made\nfrom the same chip share it. ECP5, Gowin and Xilinx only, optional:\nwithout it there is no check.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "nextpnr_device": {
               "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5,\nGW1NR-LV9QN88PC6/I5 for Gowin or xc7a35tcsg324-1 for Xilinx.",
               "type": "string"
@@ -821,7 +835,7 @@
           "description": "One way to program a board: its connection and memory, and how to\nprogram the board that way.",
           "properties": {
             "args": {
-              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
+              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\n${PORT} with its USB port path (such as 1-2.3, as dfu-util's -p\ntakes it), and ${BITSTREAM} with the bitstream path.",
               "type": "string"
             },
             "connection": {
@@ -1174,6 +1188,13 @@
               "$ref": "#/$defs/Architecture",
               "description": "The FPGA family: ice40, ecp5, gowin or xilinx."
             },
+            "jtag_idcode": {
+              "description": "The FPGA's JTAG ID code, such as 0x0362d093, as openFPGALoader's\n--detect reports it. Before programming over JTAG, the engine reads\nthe connected FPGA's ID code and refuses to program a different\nFPGA, such as a board of another size than the build's. It\nidentifies the chip, not the size a board uses it as, so FPGAs made\nfrom the same chip share it. ECP5, Gowin and Xilinx only, optional:\nwithout it there is no check.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "nextpnr_device": {
               "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5,\nGW1NR-LV9QN88PC6/I5 for Gowin or xc7a35tcsg324-1 for Xilinx.",
               "type": "string"
@@ -1284,7 +1305,7 @@
           "description": "One way to program a board: its connection and memory, and how to\nprogram the board that way.",
           "properties": {
             "args": {
-              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
+              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\n${PORT} with its USB port path (such as 1-2.3, as dfu-util's -p\ntakes it), and ${BITSTREAM} with the bitstream path.",
               "type": "string"
             },
             "connection": {
@@ -1730,6 +1751,13 @@
               "$ref": "#/$defs/Architecture",
               "description": "The FPGA family: ice40, ecp5, gowin or xilinx."
             },
+            "jtag_idcode": {
+              "description": "The FPGA's JTAG ID code, such as 0x0362d093, as openFPGALoader's\n--detect reports it. Before programming over JTAG, the engine reads\nthe connected FPGA's ID code and refuses to program a different\nFPGA, such as a board of another size than the build's. It\nidentifies the chip, not the size a board uses it as, so FPGAs made\nfrom the same chip share it. ECP5, Gowin and Xilinx only, optional:\nwithout it there is no check.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "nextpnr_device": {
               "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5,\nGW1NR-LV9QN88PC6/I5 for Gowin or xc7a35tcsg324-1 for Xilinx.",
               "type": "string"
@@ -1840,7 +1868,7 @@
           "description": "One way to program a board: its connection and memory, and how to\nprogram the board that way.",
           "properties": {
             "args": {
-              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
+              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\n${PORT} with its USB port path (such as 1-2.3, as dfu-util's -p\ntakes it), and ${BITSTREAM} with the bitstream path.",
               "type": "string"
             },
             "connection": {
@@ -2728,6 +2756,13 @@
               "$ref": "#/$defs/Architecture",
               "description": "The FPGA family: ice40, ecp5, gowin or xilinx."
             },
+            "jtag_idcode": {
+              "description": "The FPGA's JTAG ID code, such as 0x0362d093, as openFPGALoader's\n--detect reports it. Before programming over JTAG, the engine reads\nthe connected FPGA's ID code and refuses to program a different\nFPGA, such as a board of another size than the build's. It\nidentifies the chip, not the size a board uses it as, so FPGAs made\nfrom the same chip share it. ECP5, Gowin and Xilinx only, optional:\nwithout it there is no check.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "nextpnr_device": {
               "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5,\nGW1NR-LV9QN88PC6/I5 for Gowin or xc7a35tcsg324-1 for Xilinx.",
               "type": "string"
@@ -2838,7 +2873,7 @@
           "description": "One way to program a board: its connection and memory, and how to\nprogram the board that way.",
           "properties": {
             "args": {
-              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
+              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\n${PORT} with its USB port path (such as 1-2.3, as dfu-util's -p\ntakes it), and ${BITSTREAM} with the bitstream path.",
               "type": "string"
             },
             "connection": {
@@ -3255,6 +3290,13 @@
               "$ref": "#/$defs/Architecture",
               "description": "The FPGA family: ice40, ecp5, gowin or xilinx."
             },
+            "jtag_idcode": {
+              "description": "The FPGA's JTAG ID code, such as 0x0362d093, as openFPGALoader's\n--detect reports it. Before programming over JTAG, the engine reads\nthe connected FPGA's ID code and refuses to program a different\nFPGA, such as a board of another size than the build's. It\nidentifies the chip, not the size a board uses it as, so FPGAs made\nfrom the same chip share it. ECP5, Gowin and Xilinx only, optional:\nwithout it there is no check.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "nextpnr_device": {
               "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5,\nGW1NR-LV9QN88PC6/I5 for Gowin or xc7a35tcsg324-1 for Xilinx.",
               "type": "string"
@@ -3365,7 +3407,7 @@
           "description": "One way to program a board: its connection and memory, and how to\nprogram the board that way.",
           "properties": {
             "args": {
-              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\nand ${BITSTREAM} with the bitstream path.",
+              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\n${PORT} with its USB port path (such as 1-2.3, as dfu-util's -p\ntakes it), and ${BITSTREAM} with the bitstream path.",
               "type": "string"
             },
             "connection": {
@@ -3716,7 +3758,7 @@
   },
   {
     "name": "program_board",
-    "description": "Programs the bitstream of a successful build into the board it was built for. It doesn't build: call build first, and program_board only if the build succeeded. The board comes from the build, so it takes the build folder and the device to program: the id of a device from list_devices whose boards include the build's board (ask the user when several do). A device that isn't connected anymore is a setup error with connect_board; list the devices again. Most boards are programmed to flash, so the design stays after power-off.",
+    "description": "Programs the bitstream of a successful build into the board it was built for. It doesn't build: call build first, and program_board only if the build succeeded. The board comes from the build, so it takes the build folder and the device to program: the id of a device from list_devices whose boards include the build's board (ask the user when several do). A device that isn't connected anymore is a setup error with connect_board; list the devices again. On ECP5, Gowin and Xilinx boards it first reads the connected FPGA's ID code and refuses a different FPGA, such as a board of another size than the build's, before writing anything. Most boards are programmed to flash, so the design stays after power-off.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
@@ -3732,7 +3774,7 @@
         },
         "programmer_command": {
           "default": null,
-          "description": "A custom programmer command that replaces the board's default one,\nfor a custom setup. Its first word is a program from the\ntoolchain package, such as openFPGALoader, or an absolute path. It may\nuse ${VID}, ${PID}, ${BUS}, ${DEV}, ${SERIAL} and must use\n${BITSTREAM}.",
+          "description": "A custom programmer command that replaces the board's default one,\nfor a custom setup. Its first word is a program from the\ntoolchain package, such as openFPGALoader, or an absolute path. It may\nuse ${VID}, ${PID}, ${BUS}, ${DEV}, ${SERIAL}, ${PORT} and must use\n${BITSTREAM}.",
           "type": [
             "string",
             "null"

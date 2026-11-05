@@ -301,6 +301,15 @@ impl Device {
 }
 
 /// Whether a device has the filter's USB IDs (case doesn't matter).
+/// Whether the device's location is its USB port path, such as 1-2.3, as
+/// dfu-util's --path takes it. Without port numbers, the location is the
+/// bus and address instead.
+pub fn has_port_path(device: &Device) -> bool {
+    device.location.split_once('-').is_some_and(|(_, ports)| {
+        !ports.is_empty() && ports.bytes().all(|c| c.is_ascii_digit() || c == b'.')
+    })
+}
+
 pub fn same_ids(device: &Device, filter: &UsbFilter) -> bool {
     device.vid.eq_ignore_ascii_case(&filter.vid) && device.pid.eq_ignore_ascii_case(&filter.pid)
 }

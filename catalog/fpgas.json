@@ -6,126 +6,144 @@
       "part_number": "GW1N-LV1CS30C5/I4",
       "size": "1k",
       "nextpnr_device": "GW1N-LV1CS30C5/I4",
-      "packer_device": "GW1N-1"
+      "packer_device": "GW1N-1",
+      "jtag_idcode": "0x0900281b"
     },
     "gw1n-lv1cs30c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-LV1CS30C6/I5",
       "size": "1k",
       "nextpnr_device": "GW1N-LV1CS30C6/I5",
-      "packer_device": "GW1N-1"
+      "packer_device": "GW1N-1",
+      "jtag_idcode": "0x0900281b"
     },
     "gw1n-lv1lq100c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-LV1LQ100C6/I5",
       "size": "1k",
       "nextpnr_device": "GW1N-LV1LQ100C6/I5",
-      "packer_device": "GW1N-1"
+      "packer_device": "GW1N-1",
+      "jtag_idcode": "0x0900281b"
     },
     "gw1n-lv1lq144c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-LV1LQ144C6/I5",
       "size": "1k",
       "nextpnr_device": "GW1N-LV1LQ144C6/I5",
-      "packer_device": "GW1N-1"
+      "packer_device": "GW1N-1",
+      "jtag_idcode": "0x0900281b"
     },
     "gw1n-lv1qn32c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-LV1QN32C6/I5",
       "size": "1k",
       "nextpnr_device": "GW1N-LV1QN32C6/I5",
-      "packer_device": "GW1N-1"
+      "packer_device": "GW1N-1",
+      "jtag_idcode": "0x0900281b"
     },
     "gw1n-lv1qn48c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-LV1QN48C6/I5",
       "size": "1k",
       "nextpnr_device": "GW1N-LV1QN48C6/I5",
-      "packer_device": "GW1N-1"
+      "packer_device": "GW1N-1",
+      "jtag_idcode": "0x0900281b"
     },
     "gw1n-lv4cs72c5-i4": {
       "architecture": "gowin",
       "part_number": "GW1N-LV4CS72C5/I4",
       "size": "4k",
       "nextpnr_device": "GW1N-LV4CS72C5/I4",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-lv4cs72c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-LV4CS72C6/I5",
       "size": "4k",
       "nextpnr_device": "GW1N-LV4CS72C6/I5",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-lv4lq100c5-i4": {
       "architecture": "gowin",
       "part_number": "GW1N-LV4LQ100C5/I4",
       "size": "4k",
       "nextpnr_device": "GW1N-LV4LQ100C5/I4",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-lv4lq100c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-LV4LQ100C6/I5",
       "size": "4k",
       "nextpnr_device": "GW1N-LV4LQ100C6/I5",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-lv4lq144c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-LV4LQ144C6/I5",
       "size": "4k",
       "nextpnr_device": "GW1N-LV4LQ144C6/I5",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-lv4mg160c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-LV4MG160C6/I5",
       "size": "4k",
       "nextpnr_device": "GW1N-LV4MG160C6/I5",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-lv4pg256c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-LV4PG256C6/I5",
       "size": "4k",
       "nextpnr_device": "GW1N-LV4PG256C6/I5",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-lv4pg256mc6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-LV4PG256MC6/I5",
       "size": "4k",
       "nextpnr_device": "GW1N-LV4PG256MC6/I5",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-lv4qn32c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-LV4QN32C6/I5",
       "size": "4k",
       "nextpnr_device": "GW1N-LV4QN32C6/I5",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-lv4qn48c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-LV4QN48C6/I5",
       "size": "4k",
       "nextpnr_device": "GW1N-LV4QN48C6/I5",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-lv4qn88a4": {
       "architecture": "gowin",
       "part_number": "GW1N-LV4QN88A4",
       "size": "4k",
       "nextpnr_device": "GW1N-LV4QN88A4",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-lv4qn88c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-LV4QN88C6/I5",
       "size": "4k",
       "nextpnr_device": "GW1N-LV4QN88C6/I5",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-lv9cm64c6-i5": {
       "architecture": "gowin",
@@ -133,7 +151,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9CM64C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9cm64c7-i6": {
       "architecture": "gowin",
@@ -141,7 +160,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9CM64C7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9cs81mc6-i5": {
       "architecture": "gowin",
@@ -149,7 +169,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9CS81MC6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9cs81mc7-i6": {
       "architecture": "gowin",
@@ -157,7 +178,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9CS81MC7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9eq144c6-i5": {
       "architecture": "gowin",
@@ -165,7 +187,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9EQ144C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9eq144es": {
       "architecture": "gowin",
@@ -181,7 +204,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9EQ176C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9eq176c7-i6": {
       "architecture": "gowin",
@@ -189,7 +213,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9EQ176C7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9lq100c6-i5": {
       "architecture": "gowin",
@@ -197,7 +222,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9LQ100C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9lq100c7-i6": {
       "architecture": "gowin",
@@ -205,7 +231,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9LQ100C7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9lq144c6-i5": {
       "architecture": "gowin",
@@ -213,7 +240,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9LQ144C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9lq144c7-i6": {
       "architecture": "gowin",
@@ -221,7 +249,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9LQ144C7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9lq176c6-i5": {
       "architecture": "gowin",
@@ -229,7 +258,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9LQ176C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9lq176c7-i6": {
       "architecture": "gowin",
@@ -237,7 +267,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9LQ176C7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9lq176es": {
       "architecture": "gowin",
@@ -253,7 +284,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9MG100C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9mg100c7-i6": {
       "architecture": "gowin",
@@ -261,7 +293,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9MG100C7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9mg100es": {
       "architecture": "gowin",
@@ -269,7 +302,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9MG100ES",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9mg100tc6-i5": {
       "architecture": "gowin",
@@ -277,7 +311,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9MG100TC6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9mg100tc7-i6": {
       "architecture": "gowin",
@@ -285,7 +320,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9MG100TC7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9mg160c6-i5": {
       "architecture": "gowin",
@@ -293,7 +329,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9MG160C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9mg160c7-i6": {
       "architecture": "gowin",
@@ -301,7 +338,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9MG160C7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9mg196c6-i5": {
       "architecture": "gowin",
@@ -309,7 +347,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9MG196C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9mg196c7-i6": {
       "architecture": "gowin",
@@ -317,7 +356,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9MG196C7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9pg256c6-i5": {
       "architecture": "gowin",
@@ -325,7 +365,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9PG256C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9pg256c7-i6": {
       "architecture": "gowin",
@@ -333,7 +374,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9PG256C7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9qn48c6-i5": {
       "architecture": "gowin",
@@ -341,7 +383,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9QN48C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9qn48c7-i6": {
       "architecture": "gowin",
@@ -349,7 +392,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9QN48C7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9qn48fc6-i5": {
       "architecture": "gowin",
@@ -357,7 +401,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9QN48FC6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9qn48fc7-i6": {
       "architecture": "gowin",
@@ -365,7 +410,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9QN48FC7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9qn60a4": {
       "architecture": "gowin",
@@ -373,7 +419,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9QN60A4",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9qn88c6-i5": {
       "architecture": "gowin",
@@ -381,7 +428,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9QN88C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9qn88c7-i6": {
       "architecture": "gowin",
@@ -389,7 +437,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9QN88C7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9qn88es": {
       "architecture": "gowin",
@@ -397,7 +446,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9QN88ES",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9qn88fa4": {
       "architecture": "gowin",
@@ -405,7 +455,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9QN88FA4",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9ug169c6-i5": {
       "architecture": "gowin",
@@ -413,7 +464,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9UG169C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9ug169c7-i6": {
       "architecture": "gowin",
@@ -421,7 +473,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9UG169C7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9ug256c6-i5": {
       "architecture": "gowin",
@@ -429,7 +482,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9UG256C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9ug256c7-i6": {
       "architecture": "gowin",
@@ -437,7 +491,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9UG256C7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9ug332c6-i5": {
       "architecture": "gowin",
@@ -445,7 +500,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9UG332C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-lv9ug332c7-i6": {
       "architecture": "gowin",
@@ -453,84 +509,96 @@
       "size": "9k",
       "nextpnr_device": "GW1N-LV9UG332C7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-uv4cs72c5-i4": {
       "architecture": "gowin",
       "part_number": "GW1N-UV4CS72C5/I4",
       "size": "4k",
       "nextpnr_device": "GW1N-UV4CS72C5/I4",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-uv4cs72c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-UV4CS72C6/I5",
       "size": "4k",
       "nextpnr_device": "GW1N-UV4CS72C6/I5",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-uv4lq100c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-UV4LQ100C6/I5",
       "size": "4k",
       "nextpnr_device": "GW1N-UV4LQ100C6/I5",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-uv4lq144c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-UV4LQ144C6/I5",
       "size": "4k",
       "nextpnr_device": "GW1N-UV4LQ144C6/I5",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-uv4mg160c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-UV4MG160C6/I5",
       "size": "4k",
       "nextpnr_device": "GW1N-UV4MG160C6/I5",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-uv4pg256c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-UV4PG256C6/I5",
       "size": "4k",
       "nextpnr_device": "GW1N-UV4PG256C6/I5",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-uv4pg256mc6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-UV4PG256MC6/I5",
       "size": "4k",
       "nextpnr_device": "GW1N-UV4PG256MC6/I5",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-uv4qn32c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-UV4QN32C6/I5",
       "size": "4k",
       "nextpnr_device": "GW1N-UV4QN32C6/I5",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-uv4qn48c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-UV4QN48C6/I5",
       "size": "4k",
       "nextpnr_device": "GW1N-UV4QN48C6/I5",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-uv4qn88a4": {
       "architecture": "gowin",
       "part_number": "GW1N-UV4QN88A4",
       "size": "4k",
       "nextpnr_device": "GW1N-UV4QN88A4",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-uv4qn88c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1N-UV4QN88C6/I5",
       "size": "4k",
       "nextpnr_device": "GW1N-UV4QN88C6/I5",
-      "packer_device": "GW1N-4"
+      "packer_device": "GW1N-4",
+      "jtag_idcode": "0x0100381b"
     },
     "gw1n-uv9cm64c6-i5": {
       "architecture": "gowin",
@@ -538,7 +606,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-UV9CM64C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-uv9eq144c6-i5": {
       "architecture": "gowin",
@@ -546,7 +615,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-UV9EQ144C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-uv9eq144es": {
       "architecture": "gowin",
@@ -554,7 +624,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-UV9EQ144ES",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-uv9eq176c6-i5": {
       "architecture": "gowin",
@@ -562,7 +633,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-UV9EQ176C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-uv9lq100c6-i5": {
       "architecture": "gowin",
@@ -570,7 +642,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-UV9LQ100C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-uv9lq144c6-i5": {
       "architecture": "gowin",
@@ -578,7 +651,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-UV9LQ144C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-uv9lq144es": {
       "architecture": "gowin",
@@ -586,7 +660,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-UV9LQ144ES",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-uv9lq176c6-i5": {
       "architecture": "gowin",
@@ -594,7 +669,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-UV9LQ176C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-uv9lq176es": {
       "architecture": "gowin",
@@ -610,7 +686,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-UV9MG160C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-uv9mg196c6-i5": {
       "architecture": "gowin",
@@ -618,7 +695,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-UV9MG196C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-uv9pg256c6-i5": {
       "architecture": "gowin",
@@ -626,7 +704,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-UV9PG256C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-uv9qn48c6-i5": {
       "architecture": "gowin",
@@ -634,7 +713,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-UV9QN48C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-uv9qn88c6-i5": {
       "architecture": "gowin",
@@ -642,7 +722,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-UV9QN88C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-uv9qn88es": {
       "architecture": "gowin",
@@ -650,7 +731,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-UV9QN88ES",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-uv9ug169c6-i5": {
       "architecture": "gowin",
@@ -658,7 +740,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-UV9UG169C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-uv9ug169es": {
       "architecture": "gowin",
@@ -666,7 +749,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-UV9UG169ES",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-uv9ug256c6-i5": {
       "architecture": "gowin",
@@ -674,7 +758,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-UV9UG256C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-uv9ug256es": {
       "architecture": "gowin",
@@ -682,7 +767,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-UV9UG256ES",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1n-uv9ug332c6-i5": {
       "architecture": "gowin",
@@ -690,7 +776,8 @@
       "size": "9k",
       "nextpnr_device": "GW1N-UV9UG332C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9lq144pc6-i5": {
       "architecture": "gowin",
@@ -698,7 +785,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9LQ144PC6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9lq144pc7-i6": {
       "architecture": "gowin",
@@ -706,7 +794,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9LQ144PC7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9lq144pes": {
       "architecture": "gowin",
@@ -714,7 +803,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9LQ144PES",
       "nextpnr_family": "GW1N-9",
-      "packer_device": "GW1N-9"
+      "packer_device": "GW1N-9",
+      "jtag_idcode": "0x0100581b"
     },
     "gw1nr-lv9mg100pac6-i5": {
       "architecture": "gowin",
@@ -722,7 +812,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9MG100PAC6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9mg100pac7-i6": {
       "architecture": "gowin",
@@ -730,7 +821,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9MG100PAC7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9mg100paes": {
       "architecture": "gowin",
@@ -738,7 +830,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9MG100PAES",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9mg100pc6-i5": {
       "architecture": "gowin",
@@ -746,7 +839,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9MG100PC6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9mg100pc7-i6": {
       "architecture": "gowin",
@@ -754,7 +848,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9MG100PC7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9mg100pdc6-i5": {
       "architecture": "gowin",
@@ -762,7 +857,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9MG100PDC6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9mg100pdc7-i6": {
       "architecture": "gowin",
@@ -770,7 +866,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9MG100PDC7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9mg100pes": {
       "architecture": "gowin",
@@ -778,7 +875,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9MG100PES",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9mg100pfc6-i5": {
       "architecture": "gowin",
@@ -786,7 +884,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9MG100PFC6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9mg100pfc7-i6": {
       "architecture": "gowin",
@@ -794,7 +893,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9MG100PFC7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9mg100pfes": {
       "architecture": "gowin",
@@ -802,7 +902,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9MG100PFES",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9mg100psc6-i5": {
       "architecture": "gowin",
@@ -810,7 +911,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9MG100PSC6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9mg100psc7-i6": {
       "architecture": "gowin",
@@ -818,7 +920,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9MG100PSC7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9mg100pses": {
       "architecture": "gowin",
@@ -826,7 +929,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9MG100PSES",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9mg100ptc6-i5": {
       "architecture": "gowin",
@@ -834,7 +938,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9MG100PTC6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9mg100ptc7-i6": {
       "architecture": "gowin",
@@ -842,7 +947,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9MG100PTC7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9mg100ptes": {
       "architecture": "gowin",
@@ -850,7 +956,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9MG100PTES",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9qn88c6-i5": {
       "architecture": "gowin",
@@ -858,7 +965,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9QN88C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9qn88c7-i6": {
       "architecture": "gowin",
@@ -866,7 +974,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9QN88C7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9qn88pc6-i5": {
       "architecture": "gowin",
@@ -874,7 +983,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9QN88PC6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9qn88pc7-i6": {
       "architecture": "gowin",
@@ -882,7 +992,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9QN88PC7/I6",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-lv9qn88pes": {
       "architecture": "gowin",
@@ -890,7 +1001,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-LV9QN88PES",
       "nextpnr_family": "GW1N-9",
-      "packer_device": "GW1N-9"
+      "packer_device": "GW1N-9",
+      "jtag_idcode": "0x0100581b"
     },
     "gw1nr-uv9lq144pc6-i5": {
       "architecture": "gowin",
@@ -898,7 +1010,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-UV9LQ144PC6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-uv9lq144pes": {
       "architecture": "gowin",
@@ -906,7 +1019,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-UV9LQ144PES",
       "nextpnr_family": "GW1N-9",
-      "packer_device": "GW1N-9"
+      "packer_device": "GW1N-9",
+      "jtag_idcode": "0x0100581b"
     },
     "gw1nr-uv9mg100pc6-i5": {
       "architecture": "gowin",
@@ -914,7 +1028,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-UV9MG100PC6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-uv9mg100pes": {
       "architecture": "gowin",
@@ -922,7 +1037,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-UV9MG100PES",
       "nextpnr_family": "GW1N-9",
-      "packer_device": "GW1N-9"
+      "packer_device": "GW1N-9",
+      "jtag_idcode": "0x0100581b"
     },
     "gw1nr-uv9qn88c6-i5": {
       "architecture": "gowin",
@@ -930,7 +1046,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-UV9QN88C6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-uv9qn88pc6-i5": {
       "architecture": "gowin",
@@ -938,7 +1055,8 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-UV9QN88PC6/I5",
       "nextpnr_family": "GW1N-9C",
-      "packer_device": "GW1N-9C"
+      "packer_device": "GW1N-9C",
+      "jtag_idcode": "0x0100481b"
     },
     "gw1nr-uv9qn88pes": {
       "architecture": "gowin",
@@ -946,182 +1064,208 @@
       "size": "9k",
       "nextpnr_device": "GW1NR-UV9QN88PES",
       "nextpnr_family": "GW1N-9",
-      "packer_device": "GW1N-9"
+      "packer_device": "GW1N-9",
+      "jtag_idcode": "0x0100581b"
     },
     "gw1nsr-lv4cmg64pc6-i5": {
       "architecture": "gowin",
       "part_number": "GW1NSR-LV4CMG64PC6/I5",
       "size": "4k",
       "nextpnr_device": "GW1NSR-LV4CMG64PC6/I5",
-      "packer_device": "GW1NS-4"
+      "packer_device": "GW1NS-4",
+      "jtag_idcode": "0x0100981b"
     },
     "gw1nsr-lv4cmg64pc7-i6": {
       "architecture": "gowin",
       "part_number": "GW1NSR-LV4CMG64PC7/I6",
       "size": "4k",
       "nextpnr_device": "GW1NSR-LV4CMG64PC7/I6",
-      "packer_device": "GW1NS-4"
+      "packer_device": "GW1NS-4",
+      "jtag_idcode": "0x0100981b"
     },
     "gw1nsr-lv4cqn48gc6-i5": {
       "architecture": "gowin",
       "part_number": "GW1NSR-LV4CQN48GC6/I5",
       "size": "4k",
       "nextpnr_device": "GW1NSR-LV4CQN48GC6/I5",
-      "packer_device": "GW1NS-4"
+      "packer_device": "GW1NS-4",
+      "jtag_idcode": "0x0100981b"
     },
     "gw1nsr-lv4cqn48gc7-i6": {
       "architecture": "gowin",
       "part_number": "GW1NSR-LV4CQN48GC7/I6",
       "size": "4k",
       "nextpnr_device": "GW1NSR-LV4CQN48GC7/I6",
-      "packer_device": "GW1NS-4"
+      "packer_device": "GW1NS-4",
+      "jtag_idcode": "0x0100981b"
     },
     "gw1nsr-lv4cqn48pc6-i5": {
       "architecture": "gowin",
       "part_number": "GW1NSR-LV4CQN48PC6/I5",
       "size": "4k",
       "nextpnr_device": "GW1NSR-LV4CQN48PC6/I5",
-      "packer_device": "GW1NS-4"
+      "packer_device": "GW1NS-4",
+      "jtag_idcode": "0x0100981b"
     },
     "gw1nsr-lv4cqn48pc7-i6": {
       "architecture": "gowin",
       "part_number": "GW1NSR-LV4CQN48PC7/I6",
       "size": "4k",
       "nextpnr_device": "GW1NSR-LV4CQN48PC7/I6",
-      "packer_device": "GW1NS-4"
+      "packer_device": "GW1NS-4",
+      "jtag_idcode": "0x0100981b"
     },
     "gw1nz-lv1cg25c5-i4": {
       "architecture": "gowin",
       "part_number": "GW1NZ-LV1CG25C5/I4",
       "size": "1k",
       "nextpnr_device": "GW1NZ-LV1CG25C5/I4",
-      "packer_device": "GW1NZ-1"
+      "packer_device": "GW1NZ-1",
+      "jtag_idcode": "0x0100681b"
     },
     "gw1nz-lv1cg25c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1NZ-LV1CG25C6/I5",
       "size": "1k",
       "nextpnr_device": "GW1NZ-LV1CG25C6/I5",
-      "packer_device": "GW1NZ-1"
+      "packer_device": "GW1NZ-1",
+      "jtag_idcode": "0x0100681b"
     },
     "gw1nz-lv1cs16c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1NZ-LV1CS16C6/I5",
       "size": "1k",
       "nextpnr_device": "GW1NZ-LV1CS16C6/I5",
-      "packer_device": "GW1NZ-1"
+      "packer_device": "GW1NZ-1",
+      "jtag_idcode": "0x0100681b"
     },
     "gw1nz-lv1fn24c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1NZ-LV1FN24C6/I5",
       "size": "1k",
       "nextpnr_device": "GW1NZ-LV1FN24C6/I5",
-      "packer_device": "GW1NZ-1"
+      "packer_device": "GW1NZ-1",
+      "jtag_idcode": "0x0100681b"
     },
     "gw1nz-lv1fn32c5-i4": {
       "architecture": "gowin",
       "part_number": "GW1NZ-LV1FN32C5/I4",
       "size": "1k",
       "nextpnr_device": "GW1NZ-LV1FN32C5/I4",
-      "packer_device": "GW1NZ-1"
+      "packer_device": "GW1NZ-1",
+      "jtag_idcode": "0x0100681b"
     },
     "gw1nz-lv1fn32c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1NZ-LV1FN32C6/I5",
       "size": "1k",
       "nextpnr_device": "GW1NZ-LV1FN32C6/I5",
-      "packer_device": "GW1NZ-1"
+      "packer_device": "GW1NZ-1",
+      "jtag_idcode": "0x0100681b"
     },
     "gw1nz-lv1fn32fc5-i4": {
       "architecture": "gowin",
       "part_number": "GW1NZ-LV1FN32FC5/I4",
       "size": "1k",
       "nextpnr_device": "GW1NZ-LV1FN32FC5/I4",
-      "packer_device": "GW1NZ-1"
+      "packer_device": "GW1NZ-1",
+      "jtag_idcode": "0x0100681b"
     },
     "gw1nz-lv1fn32fc6-i5": {
       "architecture": "gowin",
       "part_number": "GW1NZ-LV1FN32FC6/I5",
       "size": "1k",
       "nextpnr_device": "GW1NZ-LV1FN32FC6/I5",
-      "packer_device": "GW1NZ-1"
+      "packer_device": "GW1NZ-1",
+      "jtag_idcode": "0x0100681b"
     },
     "gw1nz-lv1qn48c6-i5": {
       "architecture": "gowin",
       "part_number": "GW1NZ-LV1QN48C6/I5",
       "size": "1k",
       "nextpnr_device": "GW1NZ-LV1QN48C6/I5",
-      "packer_device": "GW1NZ-1"
+      "packer_device": "GW1NZ-1",
+      "jtag_idcode": "0x0100681b"
     },
     "gw1nz-lv1qn48es": {
       "architecture": "gowin",
       "part_number": "GW1NZ-LV1QN48ES",
       "size": "1k",
       "nextpnr_device": "GW1NZ-LV1QN48ES",
-      "packer_device": "GW1NZ-1"
+      "packer_device": "GW1NZ-1",
+      "jtag_idcode": "0x0100681b"
     },
     "gw1nz-zv1cs16i2": {
       "architecture": "gowin",
       "part_number": "GW1NZ-ZV1CS16I2",
       "size": "1k",
       "nextpnr_device": "GW1NZ-ZV1CS16I2",
-      "packer_device": "GW1NZ-1"
+      "packer_device": "GW1NZ-1",
+      "jtag_idcode": "0x0100681b"
     },
     "gw1nz-zv1cs16i3": {
       "architecture": "gowin",
       "part_number": "GW1NZ-ZV1CS16I3",
       "size": "1k",
       "nextpnr_device": "GW1NZ-ZV1CS16I3",
-      "packer_device": "GW1NZ-1"
+      "packer_device": "GW1NZ-1",
+      "jtag_idcode": "0x0100681b"
     },
     "gw1nz-zv1fn32fes": {
       "architecture": "gowin",
       "part_number": "GW1NZ-ZV1FN32FES",
       "size": "1k",
       "nextpnr_device": "GW1NZ-ZV1FN32FES",
-      "packer_device": "GW1NZ-1"
+      "packer_device": "GW1NZ-1",
+      "jtag_idcode": "0x0100681b"
     },
     "gw1nz-zv1fn32fi2": {
       "architecture": "gowin",
       "part_number": "GW1NZ-ZV1FN32FI2",
       "size": "1k",
       "nextpnr_device": "GW1NZ-ZV1FN32FI2",
-      "packer_device": "GW1NZ-1"
+      "packer_device": "GW1NZ-1",
+      "jtag_idcode": "0x0100681b"
     },
     "gw1nz-zv1fn32fi3": {
       "architecture": "gowin",
       "part_number": "GW1NZ-ZV1FN32FI3",
       "size": "1k",
       "nextpnr_device": "GW1NZ-ZV1FN32FI3",
-      "packer_device": "GW1NZ-1"
+      "packer_device": "GW1NZ-1",
+      "jtag_idcode": "0x0100681b"
     },
     "gw1nz-zv1fn32i2": {
       "architecture": "gowin",
       "part_number": "GW1NZ-ZV1FN32I2",
       "size": "1k",
       "nextpnr_device": "GW1NZ-ZV1FN32I2",
-      "packer_device": "GW1NZ-1"
+      "packer_device": "GW1NZ-1",
+      "jtag_idcode": "0x0100681b"
     },
     "gw1nz-zv1fn32i3": {
       "architecture": "gowin",
       "part_number": "GW1NZ-ZV1FN32I3",
       "size": "1k",
       "nextpnr_device": "GW1NZ-ZV1FN32I3",
-      "packer_device": "GW1NZ-1"
+      "packer_device": "GW1NZ-1",
+      "jtag_idcode": "0x0100681b"
     },
     "gw1nz-zv1qn48i2": {
       "architecture": "gowin",
       "part_number": "GW1NZ-ZV1QN48I2",
       "size": "1k",
       "nextpnr_device": "GW1NZ-ZV1QN48I2",
-      "packer_device": "GW1NZ-1"
+      "packer_device": "GW1NZ-1",
+      "jtag_idcode": "0x0100681b"
     },
     "gw1nz-zv1qn48i3": {
       "architecture": "gowin",
       "part_number": "GW1NZ-ZV1QN48I3",
       "size": "1k",
       "nextpnr_device": "GW1NZ-ZV1QN48I3",
-      "packer_device": "GW1NZ-1"
+      "packer_device": "GW1NZ-1",
+      "jtag_idcode": "0x0100681b"
     },
     "gw2a-lv18eq144c7-i6": {
       "architecture": "gowin",
@@ -1130,7 +1274,8 @@
       "nextpnr_device": "GW2A-LV18EQ144C7/I6",
       "nextpnr_family": "GW2A-18",
       "packer_device": "GW2A-18",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18eq144c8-i7": {
       "architecture": "gowin",
@@ -1139,7 +1284,8 @@
       "nextpnr_device": "GW2A-LV18EQ144C8/I7",
       "nextpnr_family": "GW2A-18",
       "packer_device": "GW2A-18",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18mg196c7-i6": {
       "architecture": "gowin",
@@ -1148,7 +1294,8 @@
       "nextpnr_device": "GW2A-LV18MG196C7/I6",
       "nextpnr_family": "GW2A-18",
       "packer_device": "GW2A-18",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18mg196c8-i7": {
       "architecture": "gowin",
@@ -1157,7 +1304,8 @@
       "nextpnr_device": "GW2A-LV18MG196C8/I7",
       "nextpnr_family": "GW2A-18",
       "packer_device": "GW2A-18",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18pg256a6": {
       "architecture": "gowin",
@@ -1166,7 +1314,8 @@
       "nextpnr_device": "GW2A-LV18PG256A6",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18pg256c7-i6": {
       "architecture": "gowin",
@@ -1175,7 +1324,8 @@
       "nextpnr_device": "GW2A-LV18PG256C7/I6",
       "nextpnr_family": "GW2A-18",
       "packer_device": "GW2A-18",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18pg256c8-i7": {
       "architecture": "gowin",
@@ -1184,7 +1334,8 @@
       "nextpnr_device": "GW2A-LV18PG256C8/I7",
       "nextpnr_family": "GW2A-18",
       "packer_device": "GW2A-18",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18pg256c9-i8": {
       "architecture": "gowin",
@@ -1193,7 +1344,8 @@
       "nextpnr_device": "GW2A-LV18PG256C9/I8",
       "nextpnr_family": "GW2A-18",
       "packer_device": "GW2A-18",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18pg256cc7-i6": {
       "architecture": "gowin",
@@ -1202,7 +1354,8 @@
       "nextpnr_device": "GW2A-LV18PG256CC7/I6",
       "nextpnr_family": "GW2A-18",
       "packer_device": "GW2A-18",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18pg256cc8-i7": {
       "architecture": "gowin",
@@ -1211,7 +1364,8 @@
       "nextpnr_device": "GW2A-LV18PG256CC8/I7",
       "nextpnr_family": "GW2A-18",
       "packer_device": "GW2A-18",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18pg256cfc7-i6": {
       "architecture": "gowin",
@@ -1220,7 +1374,8 @@
       "nextpnr_device": "GW2A-LV18PG256CFC7/I6",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18pg256cfc8-i7": {
       "architecture": "gowin",
@@ -1229,7 +1384,8 @@
       "nextpnr_device": "GW2A-LV18PG256CFC8/I7",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18pg256ec8-i7": {
       "architecture": "gowin",
@@ -1238,7 +1394,8 @@
       "nextpnr_device": "GW2A-LV18PG256EC8/I7",
       "nextpnr_family": "GW2A-18",
       "packer_device": "GW2A-18",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18pg256ees": {
       "architecture": "gowin",
@@ -1247,7 +1404,8 @@
       "nextpnr_device": "GW2A-LV18PG256EES",
       "nextpnr_family": "GW2A-18",
       "packer_device": "GW2A-18",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18pg256sc7-i6": {
       "architecture": "gowin",
@@ -1256,7 +1414,8 @@
       "nextpnr_device": "GW2A-LV18PG256SC7/I6",
       "nextpnr_family": "GW2A-18",
       "packer_device": "GW2A-18",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18pg256sc8-i7": {
       "architecture": "gowin",
@@ -1265,7 +1424,8 @@
       "nextpnr_device": "GW2A-LV18PG256SC8/I7",
       "nextpnr_family": "GW2A-18",
       "packer_device": "GW2A-18",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18pg256sfc7-i6": {
       "architecture": "gowin",
@@ -1274,7 +1434,8 @@
       "nextpnr_device": "GW2A-LV18PG256SFC7/I6",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18pg256sfc8-i7": {
       "architecture": "gowin",
@@ -1283,7 +1444,8 @@
       "nextpnr_device": "GW2A-LV18PG256SFC8/I7",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18pg484c7-i6": {
       "architecture": "gowin",
@@ -1292,7 +1454,8 @@
       "nextpnr_device": "GW2A-LV18PG484C7/I6",
       "nextpnr_family": "GW2A-18",
       "packer_device": "GW2A-18",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18pg484c8-i7": {
       "architecture": "gowin",
@@ -1301,7 +1464,8 @@
       "nextpnr_device": "GW2A-LV18PG484C8/I7",
       "nextpnr_family": "GW2A-18",
       "packer_device": "GW2A-18",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18pg484c9-i8": {
       "architecture": "gowin",
@@ -1310,7 +1474,8 @@
       "nextpnr_device": "GW2A-LV18PG484C9/I8",
       "nextpnr_family": "GW2A-18",
       "packer_device": "GW2A-18",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18pg484cc8-i7": {
       "architecture": "gowin",
@@ -1319,7 +1484,8 @@
       "nextpnr_device": "GW2A-LV18PG484CC8/I7",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18qn88a6": {
       "architecture": "gowin",
@@ -1328,7 +1494,8 @@
       "nextpnr_device": "GW2A-LV18QN88A6",
       "nextpnr_family": "GW2A-18",
       "packer_device": "GW2A-18",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18qn88c7-i6": {
       "architecture": "gowin",
@@ -1337,7 +1504,8 @@
       "nextpnr_device": "GW2A-LV18QN88C7/I6",
       "nextpnr_family": "GW2A-18",
       "packer_device": "GW2A-18",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18qn88c8-i7": {
       "architecture": "gowin",
@@ -1346,7 +1514,8 @@
       "nextpnr_device": "GW2A-LV18QN88C8/I7",
       "nextpnr_family": "GW2A-18",
       "packer_device": "GW2A-18",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18ug324c7-i6": {
       "architecture": "gowin",
@@ -1355,7 +1524,8 @@
       "nextpnr_device": "GW2A-LV18UG324C7/I6",
       "nextpnr_family": "GW2A-18",
       "packer_device": "GW2A-18",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18ug324c8-i7": {
       "architecture": "gowin",
@@ -1364,7 +1534,8 @@
       "nextpnr_device": "GW2A-LV18UG324C8/I7",
       "nextpnr_family": "GW2A-18",
       "packer_device": "GW2A-18",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18ug484c7-i6": {
       "architecture": "gowin",
@@ -1373,7 +1544,8 @@
       "nextpnr_device": "GW2A-LV18UG484C7/I6",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2a-lv18ug484c8-i7": {
       "architecture": "gowin",
@@ -1382,7 +1554,8 @@
       "nextpnr_device": "GW2A-LV18UG484C8/I7",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2ar-lv18eq144c7-i6": {
       "architecture": "gowin",
@@ -1391,7 +1564,8 @@
       "nextpnr_device": "GW2AR-LV18EQ144C7/I6",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2ar-lv18eq144c8-i7": {
       "architecture": "gowin",
@@ -1400,7 +1574,8 @@
       "nextpnr_device": "GW2AR-LV18EQ144C8/I7",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2ar-lv18eq144pc7-i6": {
       "architecture": "gowin",
@@ -1409,7 +1584,8 @@
       "nextpnr_device": "GW2AR-LV18EQ144PC7/I6",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2ar-lv18eq144pc8-i7": {
       "architecture": "gowin",
@@ -1418,7 +1594,8 @@
       "nextpnr_device": "GW2AR-LV18EQ144PC8/I7",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2ar-lv18eq144pc9-i8": {
       "architecture": "gowin",
@@ -1427,7 +1604,8 @@
       "nextpnr_device": "GW2AR-LV18EQ144PC9/I8",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2ar-lv18eq144pfc7-i6": {
       "architecture": "gowin",
@@ -1436,7 +1614,8 @@
       "nextpnr_device": "GW2AR-LV18EQ144PFC7/I6",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2ar-lv18eq144pfc8-i7": {
       "architecture": "gowin",
@@ -1445,7 +1624,8 @@
       "nextpnr_device": "GW2AR-LV18EQ144PFC8/I7",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2ar-lv18eq144pfc9-i8": {
       "architecture": "gowin",
@@ -1454,7 +1634,8 @@
       "nextpnr_device": "GW2AR-LV18EQ144PFC9/I8",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2ar-lv18eq176c7-i6": {
       "architecture": "gowin",
@@ -1463,7 +1644,8 @@
       "nextpnr_device": "GW2AR-LV18EQ176C7/I6",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2ar-lv18eq176c8-i7": {
       "architecture": "gowin",
@@ -1472,7 +1654,8 @@
       "nextpnr_device": "GW2AR-LV18EQ176C8/I7",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2ar-lv18qn88c7-i6": {
       "architecture": "gowin",
@@ -1481,7 +1664,8 @@
       "nextpnr_device": "GW2AR-LV18QN88C7/I6",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2ar-lv18qn88c8-i7": {
       "architecture": "gowin",
@@ -1490,7 +1674,8 @@
       "nextpnr_device": "GW2AR-LV18QN88C8/I7",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2ar-lv18qn88pc7-i6": {
       "architecture": "gowin",
@@ -1499,7 +1684,8 @@
       "nextpnr_device": "GW2AR-LV18QN88PC7/I6",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2ar-lv18qn88pc8-i7": {
       "architecture": "gowin",
@@ -1508,7 +1694,8 @@
       "nextpnr_device": "GW2AR-LV18QN88PC8/I7",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2ar-lv18qn88pfc7-i6": {
       "architecture": "gowin",
@@ -1517,7 +1704,8 @@
       "nextpnr_device": "GW2AR-LV18QN88PFC7/I6",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2ar-lv18qn88pfc8-i7": {
       "architecture": "gowin",
@@ -1526,7 +1714,8 @@
       "nextpnr_device": "GW2AR-LV18QN88PFC8/I7",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw2ar-lv18qn88pfc9-i8": {
       "architecture": "gowin",
@@ -1535,7 +1724,8 @@
       "nextpnr_device": "GW2AR-LV18QN88PFC9/I8",
       "nextpnr_family": "GW2A-18C",
       "packer_device": "GW2A-18C",
-      "yosys_family": "gw2a"
+      "yosys_family": "gw2a",
+      "jtag_idcode": "0x0000081b"
     },
     "gw5a-ev25lq100c1-i0": {
       "architecture": "gowin",
@@ -1543,7 +1733,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-EV25LQ100C1/I0",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-ev25lq100c2-i1": {
       "architecture": "gowin",
@@ -1551,7 +1742,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-EV25LQ100C2/I1",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-ev25lq100es": {
       "architecture": "gowin",
@@ -1559,7 +1751,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-EV25LQ100ES",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-ev25mg196sc1-i0": {
       "architecture": "gowin",
@@ -1567,7 +1760,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-EV25MG196SC1/I0",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-ev25mg196sc2-i1": {
       "architecture": "gowin",
@@ -1575,7 +1769,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-EV25MG196SC2/I1",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-ev25mg196ses": {
       "architecture": "gowin",
@@ -1583,7 +1778,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-EV25MG196SES",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-ev25pg256cc1-i0": {
       "architecture": "gowin",
@@ -1591,7 +1787,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-EV25PG256CC1/I0",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-ev25pg256cc2-i1": {
       "architecture": "gowin",
@@ -1599,7 +1796,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-EV25PG256CC2/I1",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-ev25pg256ces": {
       "architecture": "gowin",
@@ -1607,7 +1805,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-EV25PG256CES",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-ev25pg256sc1-i0": {
       "architecture": "gowin",
@@ -1615,7 +1814,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-EV25PG256SC1/I0",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-ev25pg256sc2-i1": {
       "architecture": "gowin",
@@ -1623,7 +1823,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-EV25PG256SC2/I1",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-ev25pg256ses": {
       "architecture": "gowin",
@@ -1631,7 +1832,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-EV25PG256SES",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-ev25ug225sc1-i0": {
       "architecture": "gowin",
@@ -1639,7 +1841,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-EV25UG225SC1/I0",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-ev25ug225sc2-i1": {
       "architecture": "gowin",
@@ -1647,7 +1850,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-EV25UG225SC2/I1",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-ev25ug225ses": {
       "architecture": "gowin",
@@ -1655,7 +1859,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-EV25UG225SES",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-ev25ug256cc1-i0": {
       "architecture": "gowin",
@@ -1663,7 +1868,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-EV25UG256CC1/I0",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-ev25ug256cc2-i1": {
       "architecture": "gowin",
@@ -1671,7 +1877,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-EV25UG256CC2/I1",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-ev25ug256ces": {
       "architecture": "gowin",
@@ -1679,7 +1886,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-EV25UG256CES",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-ev25ug324sc1-i0": {
       "architecture": "gowin",
@@ -1687,7 +1895,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-EV25UG324SC1/I0",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-ev25ug324sc2-i1": {
       "architecture": "gowin",
@@ -1695,7 +1904,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-EV25UG324SC2/I1",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-ev25ug324ses": {
       "architecture": "gowin",
@@ -1703,7 +1913,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-EV25UG324SES",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-lv25lq100c1-i0": {
       "architecture": "gowin",
@@ -1711,7 +1922,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-LV25LQ100C1/I0",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-lv25lq100c2-i1": {
       "architecture": "gowin",
@@ -1719,7 +1931,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-LV25LQ100C2/I1",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-lv25lq144c1-i0": {
       "architecture": "gowin",
@@ -1727,7 +1940,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-LV25LQ144C1/I0",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-lv25lq144c2-i1": {
       "architecture": "gowin",
@@ -1735,7 +1949,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-LV25LQ144C2/I1",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-lv25mg121nc1-i0": {
       "architecture": "gowin",
@@ -1743,7 +1958,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-LV25MG121NC1/I0",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-lv25mg121nc2-i1": {
       "architecture": "gowin",
@@ -1751,7 +1967,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-LV25MG121NC2/I1",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-lv25mg121nes": {
       "architecture": "gowin",
@@ -1759,7 +1976,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-LV25MG121NES",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-lv25mg196sc1-i0": {
       "architecture": "gowin",
@@ -1767,7 +1985,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-LV25MG196SC1/I0",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-lv25mg196sc2-i1": {
       "architecture": "gowin",
@@ -1775,7 +1994,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-LV25MG196SC2/I1",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-lv25pg196sc1-i0": {
       "architecture": "gowin",
@@ -1783,7 +2003,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-LV25PG196SC1/I0",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-lv25pg196sc2-i1": {
       "architecture": "gowin",
@@ -1791,7 +2012,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-LV25PG196SC2/I1",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-lv25pg256a0": {
       "architecture": "gowin",
@@ -1799,7 +2021,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-LV25PG256A0",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-lv25pg256c1-i0": {
       "architecture": "gowin",
@@ -1807,7 +2030,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-LV25PG256C1/I0",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-lv25pg256c2-i1": {
       "architecture": "gowin",
@@ -1815,7 +2039,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-LV25PG256C2/I1",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-lv25pg256sc1-i0": {
       "architecture": "gowin",
@@ -1823,7 +2048,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-LV25PG256SC1/I0",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-lv25pg256sc2-i1": {
       "architecture": "gowin",
@@ -1831,7 +2057,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-LV25PG256SC2/I1",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-lv25ug324c1-i0": {
       "architecture": "gowin",
@@ -1839,7 +2066,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-LV25UG324C1/I0",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-lv25ug324c2-i1": {
       "architecture": "gowin",
@@ -1847,7 +2075,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-LV25UG324C2/I1",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-lv25ug324es": {
       "architecture": "gowin",
@@ -1855,7 +2084,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-LV25UG324ES",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-lv25ug324sc1-i0": {
       "architecture": "gowin",
@@ -1863,7 +2093,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-LV25UG324SC1/I0",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5a-lv25ug324sc2-i1": {
       "architecture": "gowin",
@@ -1871,7 +2102,8 @@
       "size": "25k",
       "nextpnr_device": "GW5A-LV25UG324SC2/I1",
       "packer_device": "GW5A-25A",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001281b"
     },
     "gw5ast-lv138fpg676ac1-i0": {
       "architecture": "gowin",
@@ -1879,7 +2111,8 @@
       "size": "138k",
       "nextpnr_device": "GW5AST-LV138FPG676AC1/I0",
       "packer_device": "GW5AST-138C",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001081b"
     },
     "gw5ast-lv138fpg676ac2-i1": {
       "architecture": "gowin",
@@ -1887,7 +2120,8 @@
       "size": "138k",
       "nextpnr_device": "GW5AST-LV138FPG676AC2/I1",
       "packer_device": "GW5AST-138C",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001081b"
     },
     "gw5ast-lv138pg484ac1-i0": {
       "architecture": "gowin",
@@ -1895,7 +2129,8 @@
       "size": "138k",
       "nextpnr_device": "GW5AST-LV138PG484AC1/I0",
       "packer_device": "GW5AST-138C",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001081b"
     },
     "gw5ast-lv138pg484ac2-i1": {
       "architecture": "gowin",
@@ -1903,7 +2138,8 @@
       "size": "138k",
       "nextpnr_device": "GW5AST-LV138PG484AC2/I1",
       "packer_device": "GW5AST-138C",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001081b"
     },
     "gw5ast-lv138pg676ac1-i0": {
       "architecture": "gowin",
@@ -1911,7 +2147,8 @@
       "size": "138k",
       "nextpnr_device": "GW5AST-LV138PG676AC1/I0",
       "packer_device": "GW5AST-138C",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001081b"
     },
     "gw5ast-lv138pg676ac2-i1": {
       "architecture": "gowin",
@@ -1919,7 +2156,8 @@
       "size": "138k",
       "nextpnr_device": "GW5AST-LV138PG676AC2/I1",
       "packer_device": "GW5AST-138C",
-      "yosys_family": "gw5a"
+      "yosys_family": "gw5a",
+      "jtag_idcode": "0x0001081b"
     },
     "ice40hx1k-cb132": {
       "architecture": "ice40",
@@ -2207,7 +2445,8 @@
       "size": "12k",
       "nextpnr_device": "12k",
       "nextpnr_package": "CABGA256",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x21111043"
     },
     "lfe5u-12f-6bg381c": {
       "architecture": "ecp5",
@@ -2215,7 +2454,8 @@
       "size": "12k",
       "nextpnr_device": "12k",
       "nextpnr_package": "CABGA381",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x21111043"
     },
     "lfe5u-12f-6mg285c": {
       "architecture": "ecp5",
@@ -2223,7 +2463,8 @@
       "size": "12k",
       "nextpnr_device": "12k",
       "nextpnr_package": "CSFBGA285",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x21111043"
     },
     "lfe5u-12f-6tg144c": {
       "architecture": "ecp5",
@@ -2231,7 +2472,8 @@
       "size": "12k",
       "nextpnr_device": "12k",
       "nextpnr_package": "TQFP144",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x21111043"
     },
     "lfe5u-25f-6bg256c": {
       "architecture": "ecp5",
@@ -2239,7 +2481,8 @@
       "size": "25k",
       "nextpnr_device": "25k",
       "nextpnr_package": "CABGA256",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x41111043"
     },
     "lfe5u-25f-6bg381c": {
       "architecture": "ecp5",
@@ -2247,7 +2490,8 @@
       "size": "25k",
       "nextpnr_device": "25k",
       "nextpnr_package": "CABGA381",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x41111043"
     },
     "lfe5u-25f-6mg285c": {
       "architecture": "ecp5",
@@ -2255,7 +2499,8 @@
       "size": "25k",
       "nextpnr_device": "25k",
       "nextpnr_package": "CSFBGA285",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x41111043"
     },
     "lfe5u-25f-6tg144c": {
       "architecture": "ecp5",
@@ -2263,7 +2508,8 @@
       "size": "25k",
       "nextpnr_device": "25k",
       "nextpnr_package": "TQFP144",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x41111043"
     },
     "lfe5u-45f-6bg256c": {
       "architecture": "ecp5",
@@ -2271,7 +2517,8 @@
       "size": "45k",
       "nextpnr_device": "45k",
       "nextpnr_package": "CABGA256",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x41112043"
     },
     "lfe5u-45f-6bg381c": {
       "architecture": "ecp5",
@@ -2279,7 +2526,8 @@
       "size": "45k",
       "nextpnr_device": "45k",
       "nextpnr_package": "CABGA381",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x41112043"
     },
     "lfe5u-45f-6bg554c": {
       "architecture": "ecp5",
@@ -2287,7 +2535,8 @@
       "size": "45k",
       "nextpnr_device": "45k",
       "nextpnr_package": "CABGA554",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x41112043"
     },
     "lfe5u-45f-6mg285c": {
       "architecture": "ecp5",
@@ -2295,7 +2544,8 @@
       "size": "45k",
       "nextpnr_device": "45k",
       "nextpnr_package": "CSFBGA285",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x41112043"
     },
     "lfe5u-45f-6tg144c": {
       "architecture": "ecp5",
@@ -2303,7 +2553,8 @@
       "size": "45k",
       "nextpnr_device": "45k",
       "nextpnr_package": "TQFP144",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x41112043"
     },
     "lfe5u-85f-6bg381c": {
       "architecture": "ecp5",
@@ -2311,7 +2562,8 @@
       "size": "85k",
       "nextpnr_device": "85k",
       "nextpnr_package": "CABGA381",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x41113043"
     },
     "lfe5u-85f-6bg554c": {
       "architecture": "ecp5",
@@ -2319,7 +2571,8 @@
       "size": "85k",
       "nextpnr_device": "85k",
       "nextpnr_package": "CABGA554",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x41113043"
     },
     "lfe5u-85f-6bg756c": {
       "architecture": "ecp5",
@@ -2327,7 +2580,8 @@
       "size": "85k",
       "nextpnr_device": "85k",
       "nextpnr_package": "CABGA756",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x41113043"
     },
     "lfe5u-85f-6mg285c": {
       "architecture": "ecp5",
@@ -2335,7 +2589,8 @@
       "size": "85k",
       "nextpnr_device": "85k",
       "nextpnr_package": "CSFBGA285",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x41113043"
     },
     "lfe5um-25f-6bg256c": {
       "architecture": "ecp5",
@@ -2343,7 +2598,8 @@
       "size": "25k",
       "nextpnr_device": "um-25k",
       "nextpnr_package": "CABGA256",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x01111043"
     },
     "lfe5um-25f-6bg381c": {
       "architecture": "ecp5",
@@ -2351,7 +2607,8 @@
       "size": "25k",
       "nextpnr_device": "um-25k",
       "nextpnr_package": "CABGA381",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x01111043"
     },
     "lfe5um-25f-6mg285c": {
       "architecture": "ecp5",
@@ -2359,7 +2616,8 @@
       "size": "25k",
       "nextpnr_device": "um-25k",
       "nextpnr_package": "CSFBGA285",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x01111043"
     },
     "lfe5um-45f-6bg256c": {
       "architecture": "ecp5",
@@ -2367,7 +2625,8 @@
       "size": "45k",
       "nextpnr_device": "um-45k",
       "nextpnr_package": "CABGA256",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x01112043"
     },
     "lfe5um-45f-6bg381c": {
       "architecture": "ecp5",
@@ -2375,7 +2634,8 @@
       "size": "45k",
       "nextpnr_device": "um-45k",
       "nextpnr_package": "CABGA381",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x01112043"
     },
     "lfe5um-45f-6bg554c": {
       "architecture": "ecp5",
@@ -2383,7 +2643,8 @@
       "size": "45k",
       "nextpnr_device": "um-45k",
       "nextpnr_package": "CABGA554",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x01112043"
     },
     "lfe5um-45f-6mg285c": {
       "architecture": "ecp5",
@@ -2391,7 +2652,8 @@
       "size": "45k",
       "nextpnr_device": "um-45k",
       "nextpnr_package": "CSFBGA285",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x01112043"
     },
     "lfe5um-85f-6bg381c": {
       "architecture": "ecp5",
@@ -2399,7 +2661,8 @@
       "size": "85k",
       "nextpnr_device": "um-85k",
       "nextpnr_package": "CABGA381",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x01113043"
     },
     "lfe5um-85f-6bg554c": {
       "architecture": "ecp5",
@@ -2407,7 +2670,8 @@
       "size": "85k",
       "nextpnr_device": "um-85k",
       "nextpnr_package": "CABGA554",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x01113043"
     },
     "lfe5um-85f-6bg756c": {
       "architecture": "ecp5",
@@ -2415,7 +2679,8 @@
       "size": "85k",
       "nextpnr_device": "um-85k",
       "nextpnr_package": "CABGA756",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x01113043"
     },
     "lfe5um-85f-6mg285c": {
       "architecture": "ecp5",
@@ -2423,7 +2688,8 @@
       "size": "85k",
       "nextpnr_device": "um-85k",
       "nextpnr_package": "CSFBGA285",
-      "nextpnr_speed": "6"
+      "nextpnr_speed": "6",
+      "jtag_idcode": "0x01113043"
     },
     "lfe5um5g-25f-8bg256c": {
       "architecture": "ecp5",
@@ -2431,7 +2697,8 @@
       "size": "25k",
       "nextpnr_device": "um5g-25k",
       "nextpnr_package": "CABGA256",
-      "nextpnr_speed": "8"
+      "nextpnr_speed": "8",
+      "jtag_idcode": "0x81111043"
     },
     "lfe5um5g-25f-8bg381c": {
       "architecture": "ecp5",
@@ -2439,7 +2706,8 @@
       "size": "25k",
       "nextpnr_device": "um5g-25k",
       "nextpnr_package": "CABGA381",
-      "nextpnr_speed": "8"
+      "nextpnr_speed": "8",
+      "jtag_idcode": "0x81111043"
     },
     "lfe5um5g-25f-8mg285c": {
       "architecture": "ecp5",
@@ -2447,7 +2715,8 @@
       "size": "25k",
       "nextpnr_device": "um5g-25k",
       "nextpnr_package": "CSFBGA285",
-      "nextpnr_speed": "8"
+      "nextpnr_speed": "8",
+      "jtag_idcode": "0x81111043"
     },
     "lfe5um5g-45f-8bg256c": {
       "architecture": "ecp5",
@@ -2455,7 +2724,8 @@
       "size": "45k",
       "nextpnr_device": "um5g-45k",
       "nextpnr_package": "CABGA256",
-      "nextpnr_speed": "8"
+      "nextpnr_speed": "8",
+      "jtag_idcode": "0x81112043"
     },
     "lfe5um5g-45f-8bg381c": {
       "architecture": "ecp5",
@@ -2463,7 +2733,8 @@
       "size": "45k",
       "nextpnr_device": "um5g-45k",
       "nextpnr_package": "CABGA381",
-      "nextpnr_speed": "8"
+      "nextpnr_speed": "8",
+      "jtag_idcode": "0x81112043"
     },
     "lfe5um5g-45f-8bg554c": {
       "architecture": "ecp5",
@@ -2471,7 +2742,8 @@
       "size": "45k",
       "nextpnr_device": "um5g-45k",
       "nextpnr_package": "CABGA554",
-      "nextpnr_speed": "8"
+      "nextpnr_speed": "8",
+      "jtag_idcode": "0x81112043"
     },
     "lfe5um5g-45f-8mg285c": {
       "architecture": "ecp5",
@@ -2479,7 +2751,8 @@
       "size": "45k",
       "nextpnr_device": "um5g-45k",
       "nextpnr_package": "CSFBGA285",
-      "nextpnr_speed": "8"
+      "nextpnr_speed": "8",
+      "jtag_idcode": "0x81112043"
     },
     "lfe5um5g-85f-8bg381c": {
       "architecture": "ecp5",
@@ -2487,7 +2760,8 @@
       "size": "85k",
       "nextpnr_device": "um5g-85k",
       "nextpnr_package": "CABGA381",
-      "nextpnr_speed": "8"
+      "nextpnr_speed": "8",
+      "jtag_idcode": "0x81113043"
     },
     "lfe5um5g-85f-8bg554c": {
       "architecture": "ecp5",
@@ -2495,7 +2769,8 @@
       "size": "85k",
       "nextpnr_device": "um5g-85k",
       "nextpnr_package": "CABGA554",
-      "nextpnr_speed": "8"
+      "nextpnr_speed": "8",
+      "jtag_idcode": "0x81113043"
     },
     "lfe5um5g-85f-8bg756c": {
       "architecture": "ecp5",
@@ -2503,7 +2778,8 @@
       "size": "85k",
       "nextpnr_device": "um5g-85k",
       "nextpnr_package": "CABGA756",
-      "nextpnr_speed": "8"
+      "nextpnr_speed": "8",
+      "jtag_idcode": "0x81113043"
     },
     "lfe5um5g-85f-8mg285c": {
       "architecture": "ecp5",
@@ -2511,7 +2787,8 @@
       "size": "85k",
       "nextpnr_device": "um5g-85k",
       "nextpnr_package": "CSFBGA285",
-      "nextpnr_speed": "8"
+      "nextpnr_speed": "8",
+      "jtag_idcode": "0x81113043"
     },
     "xc7a100tcsg324-1": {
       "architecture": "xilinx",
@@ -2519,7 +2796,8 @@
       "size": "100k",
       "nextpnr_device": "xc7a100tcsg324-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03631093"
     },
     "xc7a100tcsg324-2": {
       "architecture": "xilinx",
@@ -2527,7 +2805,8 @@
       "size": "100k",
       "nextpnr_device": "xc7a100tcsg324-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03631093"
     },
     "xc7a100tcsg324-2l": {
       "architecture": "xilinx",
@@ -2535,7 +2814,8 @@
       "size": "100k",
       "nextpnr_device": "xc7a100tcsg324-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03631093"
     },
     "xc7a100tcsg324-3": {
       "architecture": "xilinx",
@@ -2543,7 +2823,8 @@
       "size": "100k",
       "nextpnr_device": "xc7a100tcsg324-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03631093"
     },
     "xc7a100tfgg484-1": {
       "architecture": "xilinx",
@@ -2551,7 +2832,8 @@
       "size": "100k",
       "nextpnr_device": "xc7a100tfgg484-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03631093"
     },
     "xc7a100tfgg484-2": {
       "architecture": "xilinx",
@@ -2559,7 +2841,8 @@
       "size": "100k",
       "nextpnr_device": "xc7a100tfgg484-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03631093"
     },
     "xc7a100tfgg484-2l": {
       "architecture": "xilinx",
@@ -2567,7 +2850,8 @@
       "size": "100k",
       "nextpnr_device": "xc7a100tfgg484-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03631093"
     },
     "xc7a100tfgg484-3": {
       "architecture": "xilinx",
@@ -2575,7 +2859,8 @@
       "size": "100k",
       "nextpnr_device": "xc7a100tfgg484-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03631093"
     },
     "xc7a100tfgg676-1": {
       "architecture": "xilinx",
@@ -2583,7 +2868,8 @@
       "size": "100k",
       "nextpnr_device": "xc7a100tfgg676-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03631093"
     },
     "xc7a100tfgg676-2": {
       "architecture": "xilinx",
@@ -2591,7 +2877,8 @@
       "size": "100k",
       "nextpnr_device": "xc7a100tfgg676-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03631093"
     },
     "xc7a100tfgg676-2l": {
       "architecture": "xilinx",
@@ -2599,7 +2886,8 @@
       "size": "100k",
       "nextpnr_device": "xc7a100tfgg676-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03631093"
     },
     "xc7a100tfgg676-3": {
       "architecture": "xilinx",
@@ -2607,7 +2895,8 @@
       "size": "100k",
       "nextpnr_device": "xc7a100tfgg676-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03631093"
     },
     "xc7a100tftg256-1": {
       "architecture": "xilinx",
@@ -2615,7 +2904,8 @@
       "size": "100k",
       "nextpnr_device": "xc7a100tftg256-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03631093"
     },
     "xc7a100tftg256-2": {
       "architecture": "xilinx",
@@ -2623,7 +2913,8 @@
       "size": "100k",
       "nextpnr_device": "xc7a100tftg256-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03631093"
     },
     "xc7a100tftg256-2l": {
       "architecture": "xilinx",
@@ -2631,7 +2922,8 @@
       "size": "100k",
       "nextpnr_device": "xc7a100tftg256-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03631093"
     },
     "xc7a100tftg256-3": {
       "architecture": "xilinx",
@@ -2639,7 +2931,8 @@
       "size": "100k",
       "nextpnr_device": "xc7a100tftg256-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03631093"
     },
     "xc7a200tfbg484-1": {
       "architecture": "xilinx",
@@ -2647,7 +2940,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tfbg484-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tfbg484-2": {
       "architecture": "xilinx",
@@ -2655,7 +2949,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tfbg484-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tfbg484-2l": {
       "architecture": "xilinx",
@@ -2663,7 +2958,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tfbg484-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tfbg484-3": {
       "architecture": "xilinx",
@@ -2671,7 +2967,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tfbg484-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tfbg676-1": {
       "architecture": "xilinx",
@@ -2679,7 +2976,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tfbg676-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tfbg676-2": {
       "architecture": "xilinx",
@@ -2687,7 +2985,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tfbg676-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tfbg676-2l": {
       "architecture": "xilinx",
@@ -2695,7 +2994,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tfbg676-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tfbg676-3": {
       "architecture": "xilinx",
@@ -2703,7 +3003,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tfbg676-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tfbv484-1": {
       "architecture": "xilinx",
@@ -2711,7 +3012,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tfbv484-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tfbv484-2": {
       "architecture": "xilinx",
@@ -2719,7 +3021,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tfbv484-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tfbv484-2l": {
       "architecture": "xilinx",
@@ -2727,7 +3030,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tfbv484-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tfbv484-3": {
       "architecture": "xilinx",
@@ -2735,7 +3039,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tfbv484-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tfbv676-1": {
       "architecture": "xilinx",
@@ -2743,7 +3048,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tfbv676-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tfbv676-2": {
       "architecture": "xilinx",
@@ -2751,7 +3057,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tfbv676-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tfbv676-2l": {
       "architecture": "xilinx",
@@ -2759,7 +3066,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tfbv676-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tfbv676-3": {
       "architecture": "xilinx",
@@ -2767,7 +3075,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tfbv676-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tffg1156-1": {
       "architecture": "xilinx",
@@ -2775,7 +3084,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tffg1156-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tffg1156-2": {
       "architecture": "xilinx",
@@ -2783,7 +3093,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tffg1156-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tffg1156-2l": {
       "architecture": "xilinx",
@@ -2791,7 +3102,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tffg1156-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tffg1156-3": {
       "architecture": "xilinx",
@@ -2799,7 +3111,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tffg1156-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tffv1156-1": {
       "architecture": "xilinx",
@@ -2807,7 +3120,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tffv1156-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tffv1156-2": {
       "architecture": "xilinx",
@@ -2815,7 +3129,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tffv1156-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tffv1156-2l": {
       "architecture": "xilinx",
@@ -2823,7 +3138,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tffv1156-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tffv1156-3": {
       "architecture": "xilinx",
@@ -2831,7 +3147,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tffv1156-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tsbg484-1": {
       "architecture": "xilinx",
@@ -2839,7 +3156,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tsbg484-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tsbg484-2": {
       "architecture": "xilinx",
@@ -2847,7 +3165,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tsbg484-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tsbg484-2l": {
       "architecture": "xilinx",
@@ -2855,7 +3174,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tsbg484-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tsbg484-3": {
       "architecture": "xilinx",
@@ -2863,7 +3183,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tsbg484-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tsbv484-1": {
       "architecture": "xilinx",
@@ -2871,7 +3192,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tsbv484-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tsbv484-2": {
       "architecture": "xilinx",
@@ -2879,7 +3201,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tsbv484-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tsbv484-2l": {
       "architecture": "xilinx",
@@ -2887,7 +3210,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tsbv484-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a200tsbv484-3": {
       "architecture": "xilinx",
@@ -2895,7 +3219,8 @@
       "size": "200k",
       "nextpnr_device": "xc7a200tsbv484-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x03636093"
     },
     "xc7a35tcpg236-1": {
       "architecture": "xilinx",
@@ -2903,7 +3228,8 @@
       "size": "35k",
       "nextpnr_device": "xc7a35tcpg236-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362d093"
     },
     "xc7a35tcpg236-2": {
       "architecture": "xilinx",
@@ -2911,7 +3237,8 @@
       "size": "35k",
       "nextpnr_device": "xc7a35tcpg236-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362d093"
     },
     "xc7a35tcpg236-2l": {
       "architecture": "xilinx",
@@ -2919,7 +3246,8 @@
       "size": "35k",
       "nextpnr_device": "xc7a35tcpg236-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362d093"
     },
     "xc7a35tcpg236-3": {
       "architecture": "xilinx",
@@ -2927,7 +3255,8 @@
       "size": "35k",
       "nextpnr_device": "xc7a35tcpg236-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362d093"
     },
     "xc7a35tcsg324-1": {
       "architecture": "xilinx",
@@ -2935,7 +3264,8 @@
       "size": "35k",
       "nextpnr_device": "xc7a35tcsg324-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362d093"
     },
     "xc7a35tcsg324-2": {
       "architecture": "xilinx",
@@ -2943,7 +3273,8 @@
       "size": "35k",
       "nextpnr_device": "xc7a35tcsg324-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362d093"
     },
     "xc7a35tcsg324-2l": {
       "architecture": "xilinx",
@@ -2951,7 +3282,8 @@
       "size": "35k",
       "nextpnr_device": "xc7a35tcsg324-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362d093"
     },
     "xc7a35tcsg324-3": {
       "architecture": "xilinx",
@@ -2959,7 +3291,8 @@
       "size": "35k",
       "nextpnr_device": "xc7a35tcsg324-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362d093"
     },
     "xc7a35tcsg325-1": {
       "architecture": "xilinx",
@@ -2967,7 +3300,8 @@
       "size": "35k",
       "nextpnr_device": "xc7a35tcsg325-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362d093"
     },
     "xc7a35tcsg325-2": {
       "architecture": "xilinx",
@@ -2975,7 +3309,8 @@
       "size": "35k",
       "nextpnr_device": "xc7a35tcsg325-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362d093"
     },
     "xc7a35tcsg325-2l": {
       "architecture": "xilinx",
@@ -2983,7 +3318,8 @@
       "size": "35k",
       "nextpnr_device": "xc7a35tcsg325-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362d093"
     },
     "xc7a35tcsg325-3": {
       "architecture": "xilinx",
@@ -2991,7 +3327,8 @@
       "size": "35k",
       "nextpnr_device": "xc7a35tcsg325-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362d093"
     },
     "xc7a35tfgg484-1": {
       "architecture": "xilinx",
@@ -2999,7 +3336,8 @@
       "size": "35k",
       "nextpnr_device": "xc7a35tfgg484-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362d093"
     },
     "xc7a35tfgg484-2": {
       "architecture": "xilinx",
@@ -3007,7 +3345,8 @@
       "size": "35k",
       "nextpnr_device": "xc7a35tfgg484-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362d093"
     },
     "xc7a35tfgg484-2l": {
       "architecture": "xilinx",
@@ -3015,7 +3354,8 @@
       "size": "35k",
       "nextpnr_device": "xc7a35tfgg484-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362d093"
     },
     "xc7a35tfgg484-3": {
       "architecture": "xilinx",
@@ -3023,7 +3363,8 @@
       "size": "35k",
       "nextpnr_device": "xc7a35tfgg484-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362d093"
     },
     "xc7a35tftg256-1": {
       "architecture": "xilinx",
@@ -3031,7 +3372,8 @@
       "size": "35k",
       "nextpnr_device": "xc7a35tftg256-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362d093"
     },
     "xc7a35tftg256-2": {
       "architecture": "xilinx",
@@ -3039,7 +3381,8 @@
       "size": "35k",
       "nextpnr_device": "xc7a35tftg256-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362d093"
     },
     "xc7a35tftg256-2l": {
       "architecture": "xilinx",
@@ -3047,7 +3390,8 @@
       "size": "35k",
       "nextpnr_device": "xc7a35tftg256-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362d093"
     },
     "xc7a35tftg256-3": {
       "architecture": "xilinx",
@@ -3055,7 +3399,8 @@
       "size": "35k",
       "nextpnr_device": "xc7a35tftg256-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362d093"
     },
     "xc7a50tcpg236-1": {
       "architecture": "xilinx",
@@ -3063,7 +3408,8 @@
       "size": "50k",
       "nextpnr_device": "xc7a50tcpg236-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362c093"
     },
     "xc7a50tcpg236-2": {
       "architecture": "xilinx",
@@ -3071,7 +3417,8 @@
       "size": "50k",
       "nextpnr_device": "xc7a50tcpg236-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362c093"
     },
     "xc7a50tcpg236-2l": {
       "architecture": "xilinx",
@@ -3079,7 +3426,8 @@
       "size": "50k",
       "nextpnr_device": "xc7a50tcpg236-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362c093"
     },
     "xc7a50tcpg236-3": {
       "architecture": "xilinx",
@@ -3087,7 +3435,8 @@
       "size": "50k",
       "nextpnr_device": "xc7a50tcpg236-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362c093"
     },
     "xc7a50tcsg324-1": {
       "architecture": "xilinx",
@@ -3095,7 +3444,8 @@
       "size": "50k",
       "nextpnr_device": "xc7a50tcsg324-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362c093"
     },
     "xc7a50tcsg324-2": {
       "architecture": "xilinx",
@@ -3103,7 +3453,8 @@
       "size": "50k",
       "nextpnr_device": "xc7a50tcsg324-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362c093"
     },
     "xc7a50tcsg324-2l": {
       "architecture": "xilinx",
@@ -3111,7 +3462,8 @@
       "size": "50k",
       "nextpnr_device": "xc7a50tcsg324-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362c093"
     },
     "xc7a50tcsg324-3": {
       "architecture": "xilinx",
@@ -3119,7 +3471,8 @@
       "size": "50k",
       "nextpnr_device": "xc7a50tcsg324-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362c093"
     },
     "xc7a50tcsg325-1": {
       "architecture": "xilinx",
@@ -3127,7 +3480,8 @@
       "size": "50k",
       "nextpnr_device": "xc7a50tcsg325-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362c093"
     },
     "xc7a50tcsg325-2": {
       "architecture": "xilinx",
@@ -3135,7 +3489,8 @@
       "size": "50k",
       "nextpnr_device": "xc7a50tcsg325-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362c093"
     },
     "xc7a50tcsg325-2l": {
       "architecture": "xilinx",
@@ -3143,7 +3498,8 @@
       "size": "50k",
       "nextpnr_device": "xc7a50tcsg325-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362c093"
     },
     "xc7a50tcsg325-3": {
       "architecture": "xilinx",
@@ -3151,7 +3507,8 @@
       "size": "50k",
       "nextpnr_device": "xc7a50tcsg325-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362c093"
     },
     "xc7a50tfgg484-1": {
       "architecture": "xilinx",
@@ -3159,7 +3516,8 @@
       "size": "50k",
       "nextpnr_device": "xc7a50tfgg484-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362c093"
     },
     "xc7a50tfgg484-2": {
       "architecture": "xilinx",
@@ -3167,7 +3525,8 @@
       "size": "50k",
       "nextpnr_device": "xc7a50tfgg484-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362c093"
     },
     "xc7a50tfgg484-2l": {
       "architecture": "xilinx",
@@ -3175,7 +3534,8 @@
       "size": "50k",
       "nextpnr_device": "xc7a50tfgg484-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362c093"
     },
     "xc7a50tfgg484-3": {
       "architecture": "xilinx",
@@ -3183,7 +3543,8 @@
       "size": "50k",
       "nextpnr_device": "xc7a50tfgg484-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362c093"
     },
     "xc7a50tftg256-1": {
       "architecture": "xilinx",
@@ -3191,7 +3552,8 @@
       "size": "50k",
       "nextpnr_device": "xc7a50tftg256-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362c093"
     },
     "xc7a50tftg256-2": {
       "architecture": "xilinx",
@@ -3199,7 +3561,8 @@
       "size": "50k",
       "nextpnr_device": "xc7a50tftg256-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362c093"
     },
     "xc7a50tftg256-2l": {
       "architecture": "xilinx",
@@ -3207,7 +3570,8 @@
       "size": "50k",
       "nextpnr_device": "xc7a50tftg256-2L",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362c093"
     },
     "xc7a50tftg256-3": {
       "architecture": "xilinx",
@@ -3215,7 +3579,8 @@
       "size": "50k",
       "nextpnr_device": "xc7a50tftg256-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "artix7"
+      "prjxray_family": "artix7",
+      "jtag_idcode": "0x0362c093"
     },
     "xc7s100fgga484-1": {
       "architecture": "xilinx",
@@ -3223,7 +3588,8 @@
       "size": "100k",
       "nextpnr_device": "xc7s100fgga484-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c7093"
     },
     "xc7s100fgga484-1il": {
       "architecture": "xilinx",
@@ -3231,7 +3597,8 @@
       "size": "100k",
       "nextpnr_device": "xc7s100fgga484-1IL",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c7093"
     },
     "xc7s100fgga484-1q": {
       "architecture": "xilinx",
@@ -3239,7 +3606,8 @@
       "size": "100k",
       "nextpnr_device": "xc7s100fgga484-1Q",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c7093"
     },
     "xc7s100fgga484-2": {
       "architecture": "xilinx",
@@ -3247,7 +3615,8 @@
       "size": "100k",
       "nextpnr_device": "xc7s100fgga484-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c7093"
     },
     "xc7s100fgga676-1": {
       "architecture": "xilinx",
@@ -3255,7 +3624,8 @@
       "size": "100k",
       "nextpnr_device": "xc7s100fgga676-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c7093"
     },
     "xc7s100fgga676-1il": {
       "architecture": "xilinx",
@@ -3263,7 +3633,8 @@
       "size": "100k",
       "nextpnr_device": "xc7s100fgga676-1IL",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c7093"
     },
     "xc7s100fgga676-1q": {
       "architecture": "xilinx",
@@ -3271,7 +3642,8 @@
       "size": "100k",
       "nextpnr_device": "xc7s100fgga676-1Q",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c7093"
     },
     "xc7s100fgga676-2": {
       "architecture": "xilinx",
@@ -3279,7 +3651,8 @@
       "size": "100k",
       "nextpnr_device": "xc7s100fgga676-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c7093"
     },
     "xc7s25csga225-1": {
       "architecture": "xilinx",
@@ -3287,7 +3660,8 @@
       "size": "25k",
       "nextpnr_device": "xc7s25csga225-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c4093"
     },
     "xc7s25csga225-1il": {
       "architecture": "xilinx",
@@ -3295,7 +3669,8 @@
       "size": "25k",
       "nextpnr_device": "xc7s25csga225-1IL",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c4093"
     },
     "xc7s25csga225-1q": {
       "architecture": "xilinx",
@@ -3303,7 +3678,8 @@
       "size": "25k",
       "nextpnr_device": "xc7s25csga225-1Q",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c4093"
     },
     "xc7s25csga225-2": {
       "architecture": "xilinx",
@@ -3311,7 +3687,8 @@
       "size": "25k",
       "nextpnr_device": "xc7s25csga225-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c4093"
     },
     "xc7s25csga324-1": {
       "architecture": "xilinx",
@@ -3319,7 +3696,8 @@
       "size": "25k",
       "nextpnr_device": "xc7s25csga324-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c4093"
     },
     "xc7s25csga324-1il": {
       "architecture": "xilinx",
@@ -3327,7 +3705,8 @@
       "size": "25k",
       "nextpnr_device": "xc7s25csga324-1IL",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c4093"
     },
     "xc7s25csga324-1q": {
       "architecture": "xilinx",
@@ -3335,7 +3714,8 @@
       "size": "25k",
       "nextpnr_device": "xc7s25csga324-1Q",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c4093"
     },
     "xc7s25csga324-2": {
       "architecture": "xilinx",
@@ -3343,7 +3723,8 @@
       "size": "25k",
       "nextpnr_device": "xc7s25csga324-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c4093"
     },
     "xc7s25ftgb196-1": {
       "architecture": "xilinx",
@@ -3351,7 +3732,8 @@
       "size": "25k",
       "nextpnr_device": "xc7s25ftgb196-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c4093"
     },
     "xc7s25ftgb196-1il": {
       "architecture": "xilinx",
@@ -3359,7 +3741,8 @@
       "size": "25k",
       "nextpnr_device": "xc7s25ftgb196-1IL",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c4093"
     },
     "xc7s25ftgb196-1q": {
       "architecture": "xilinx",
@@ -3367,7 +3750,8 @@
       "size": "25k",
       "nextpnr_device": "xc7s25ftgb196-1Q",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c4093"
     },
     "xc7s25ftgb196-2": {
       "architecture": "xilinx",
@@ -3375,7 +3759,8 @@
       "size": "25k",
       "nextpnr_device": "xc7s25ftgb196-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c4093"
     },
     "xc7s50csga324-1": {
       "architecture": "xilinx",
@@ -3383,7 +3768,8 @@
       "size": "50k",
       "nextpnr_device": "xc7s50csga324-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x0362f093"
     },
     "xc7s50csga324-1il": {
       "architecture": "xilinx",
@@ -3391,7 +3777,8 @@
       "size": "50k",
       "nextpnr_device": "xc7s50csga324-1IL",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x0362f093"
     },
     "xc7s50csga324-1q": {
       "architecture": "xilinx",
@@ -3399,7 +3786,8 @@
       "size": "50k",
       "nextpnr_device": "xc7s50csga324-1Q",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x0362f093"
     },
     "xc7s50csga324-2": {
       "architecture": "xilinx",
@@ -3407,7 +3795,8 @@
       "size": "50k",
       "nextpnr_device": "xc7s50csga324-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x0362f093"
     },
     "xc7s50fgga484-1": {
       "architecture": "xilinx",
@@ -3415,7 +3804,8 @@
       "size": "50k",
       "nextpnr_device": "xc7s50fgga484-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x0362f093"
     },
     "xc7s50fgga484-1il": {
       "architecture": "xilinx",
@@ -3423,7 +3813,8 @@
       "size": "50k",
       "nextpnr_device": "xc7s50fgga484-1IL",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x0362f093"
     },
     "xc7s50fgga484-1q": {
       "architecture": "xilinx",
@@ -3431,7 +3822,8 @@
       "size": "50k",
       "nextpnr_device": "xc7s50fgga484-1Q",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x0362f093"
     },
     "xc7s50fgga484-2": {
       "architecture": "xilinx",
@@ -3439,7 +3831,8 @@
       "size": "50k",
       "nextpnr_device": "xc7s50fgga484-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x0362f093"
     },
     "xc7s50ftgb196-1": {
       "architecture": "xilinx",
@@ -3447,7 +3840,8 @@
       "size": "50k",
       "nextpnr_device": "xc7s50ftgb196-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x0362f093"
     },
     "xc7s50ftgb196-1il": {
       "architecture": "xilinx",
@@ -3455,7 +3849,8 @@
       "size": "50k",
       "nextpnr_device": "xc7s50ftgb196-1IL",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x0362f093"
     },
     "xc7s50ftgb196-1q": {
       "architecture": "xilinx",
@@ -3463,7 +3858,8 @@
       "size": "50k",
       "nextpnr_device": "xc7s50ftgb196-1Q",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x0362f093"
     },
     "xc7s50ftgb196-2": {
       "architecture": "xilinx",
@@ -3471,7 +3867,8 @@
       "size": "50k",
       "nextpnr_device": "xc7s50ftgb196-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x0362f093"
     },
     "xc7s75fgga484-1": {
       "architecture": "xilinx",
@@ -3479,7 +3876,8 @@
       "size": "75k",
       "nextpnr_device": "xc7s75fgga484-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c8093"
     },
     "xc7s75fgga484-1il": {
       "architecture": "xilinx",
@@ -3487,7 +3885,8 @@
       "size": "75k",
       "nextpnr_device": "xc7s75fgga484-1IL",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c8093"
     },
     "xc7s75fgga484-1q": {
       "architecture": "xilinx",
@@ -3495,7 +3894,8 @@
       "size": "75k",
       "nextpnr_device": "xc7s75fgga484-1Q",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c8093"
     },
     "xc7s75fgga484-2": {
       "architecture": "xilinx",
@@ -3503,7 +3903,8 @@
       "size": "75k",
       "nextpnr_device": "xc7s75fgga484-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c8093"
     },
     "xc7s75fgga676-1": {
       "architecture": "xilinx",
@@ -3511,7 +3912,8 @@
       "size": "75k",
       "nextpnr_device": "xc7s75fgga676-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c8093"
     },
     "xc7s75fgga676-1il": {
       "architecture": "xilinx",
@@ -3519,7 +3921,8 @@
       "size": "75k",
       "nextpnr_device": "xc7s75fgga676-1IL",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c8093"
     },
     "xc7s75fgga676-1q": {
       "architecture": "xilinx",
@@ -3527,7 +3930,8 @@
       "size": "75k",
       "nextpnr_device": "xc7s75fgga676-1Q",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c8093"
     },
     "xc7s75fgga676-2": {
       "architecture": "xilinx",
@@ -3535,7 +3939,8 @@
       "size": "75k",
       "nextpnr_device": "xc7s75fgga676-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "spartan7"
+      "prjxray_family": "spartan7",
+      "jtag_idcode": "0x037c8093"
     },
     "xc7z007sclg225-1": {
       "architecture": "xilinx",
@@ -3543,7 +3948,8 @@
       "size": "23k",
       "nextpnr_device": "xc7z007sclg225-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x13723093"
     },
     "xc7z007sclg225-2": {
       "architecture": "xilinx",
@@ -3551,7 +3957,8 @@
       "size": "23k",
       "nextpnr_device": "xc7z007sclg225-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x13723093"
     },
     "xc7z007sclg400-1": {
       "architecture": "xilinx",
@@ -3559,7 +3966,8 @@
       "size": "23k",
       "nextpnr_device": "xc7z007sclg400-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x13723093"
     },
     "xc7z007sclg400-2": {
       "architecture": "xilinx",
@@ -3567,7 +3975,8 @@
       "size": "23k",
       "nextpnr_device": "xc7z007sclg400-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x13723093"
     },
     "xc7z010clg225-1": {
       "architecture": "xilinx",
@@ -3575,7 +3984,8 @@
       "size": "28k",
       "nextpnr_device": "xc7z010clg225-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x03722093"
     },
     "xc7z010clg225-2": {
       "architecture": "xilinx",
@@ -3583,7 +3993,8 @@
       "size": "28k",
       "nextpnr_device": "xc7z010clg225-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x03722093"
     },
     "xc7z010clg225-3": {
       "architecture": "xilinx",
@@ -3591,7 +4002,8 @@
       "size": "28k",
       "nextpnr_device": "xc7z010clg225-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x03722093"
     },
     "xc7z010clg400-1": {
       "architecture": "xilinx",
@@ -3599,7 +4011,8 @@
       "size": "28k",
       "nextpnr_device": "xc7z010clg400-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x03722093"
     },
     "xc7z010clg400-2": {
       "architecture": "xilinx",
@@ -3607,7 +4020,8 @@
       "size": "28k",
       "nextpnr_device": "xc7z010clg400-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x03722093"
     },
     "xc7z010clg400-3": {
       "architecture": "xilinx",
@@ -3615,7 +4029,8 @@
       "size": "28k",
       "nextpnr_device": "xc7z010clg400-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x03722093"
     },
     "xc7z020clg400-1": {
       "architecture": "xilinx",
@@ -3623,7 +4038,8 @@
       "size": "85k",
       "nextpnr_device": "xc7z020clg400-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x03727093"
     },
     "xc7z020clg400-2": {
       "architecture": "xilinx",
@@ -3631,7 +4047,8 @@
       "size": "85k",
       "nextpnr_device": "xc7z020clg400-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x03727093"
     },
     "xc7z020clg400-3": {
       "architecture": "xilinx",
@@ -3639,7 +4056,8 @@
       "size": "85k",
       "nextpnr_device": "xc7z020clg400-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x03727093"
     },
     "xc7z020clg484-1": {
       "architecture": "xilinx",
@@ -3647,7 +4065,8 @@
       "size": "85k",
       "nextpnr_device": "xc7z020clg484-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x03727093"
     },
     "xc7z020clg484-2": {
       "architecture": "xilinx",
@@ -3655,7 +4074,8 @@
       "size": "85k",
       "nextpnr_device": "xc7z020clg484-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x03727093"
     },
     "xc7z020clg484-3": {
       "architecture": "xilinx",
@@ -3663,7 +4083,8 @@
       "size": "85k",
       "nextpnr_device": "xc7z020clg484-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x03727093"
     },
     "xc7z030fbg484-1": {
       "architecture": "xilinx",
@@ -3671,7 +4092,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030fbg484-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030fbg484-2": {
       "architecture": "xilinx",
@@ -3679,7 +4101,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030fbg484-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030fbg484-3": {
       "architecture": "xilinx",
@@ -3687,7 +4110,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030fbg484-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030fbg676-1": {
       "architecture": "xilinx",
@@ -3695,7 +4119,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030fbg676-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030fbg676-2": {
       "architecture": "xilinx",
@@ -3703,7 +4128,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030fbg676-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030fbg676-3": {
       "architecture": "xilinx",
@@ -3711,7 +4137,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030fbg676-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030fbv484-1": {
       "architecture": "xilinx",
@@ -3719,7 +4146,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030fbv484-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030fbv484-2": {
       "architecture": "xilinx",
@@ -3727,7 +4155,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030fbv484-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030fbv484-3": {
       "architecture": "xilinx",
@@ -3735,7 +4164,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030fbv484-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030fbv676-1": {
       "architecture": "xilinx",
@@ -3743,7 +4173,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030fbv676-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030fbv676-2": {
       "architecture": "xilinx",
@@ -3751,7 +4182,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030fbv676-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030fbv676-3": {
       "architecture": "xilinx",
@@ -3759,7 +4191,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030fbv676-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030ffg676-1": {
       "architecture": "xilinx",
@@ -3767,7 +4200,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030ffg676-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030ffg676-2": {
       "architecture": "xilinx",
@@ -3775,7 +4209,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030ffg676-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030ffg676-3": {
       "architecture": "xilinx",
@@ -3783,7 +4218,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030ffg676-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030ffv676-1": {
       "architecture": "xilinx",
@@ -3791,7 +4227,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030ffv676-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030ffv676-2": {
       "architecture": "xilinx",
@@ -3799,7 +4236,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030ffv676-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030ffv676-3": {
       "architecture": "xilinx",
@@ -3807,7 +4245,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030ffv676-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030sbg485-1": {
       "architecture": "xilinx",
@@ -3815,7 +4254,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030sbg485-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030sbg485-2": {
       "architecture": "xilinx",
@@ -3823,7 +4263,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030sbg485-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030sbg485-3": {
       "architecture": "xilinx",
@@ -3831,7 +4272,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030sbg485-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030sbv485-1": {
       "architecture": "xilinx",
@@ -3839,7 +4281,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030sbv485-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030sbv485-2": {
       "architecture": "xilinx",
@@ -3847,7 +4290,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030sbv485-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z030sbv485-3": {
       "architecture": "xilinx",
@@ -3855,7 +4299,8 @@
       "size": "125k",
       "nextpnr_device": "xc7z030sbv485-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x1372c093"
     },
     "xc7z035fbg676-1": {
       "architecture": "xilinx",
@@ -4007,7 +4452,8 @@
       "size": "350k",
       "nextpnr_device": "xc7z045fbg676-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x23731093"
     },
     "xc7z045fbg676-2": {
       "architecture": "xilinx",
@@ -4015,7 +4461,8 @@
       "size": "350k",
       "nextpnr_device": "xc7z045fbg676-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x23731093"
     },
     "xc7z045fbg676-3": {
       "architecture": "xilinx",
@@ -4023,7 +4470,8 @@
       "size": "350k",
       "nextpnr_device": "xc7z045fbg676-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x23731093"
     },
     "xc7z045fbv676-1": {
       "architecture": "xilinx",
@@ -4031,7 +4479,8 @@
       "size": "350k",
       "nextpnr_device": "xc7z045fbv676-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x23731093"
     },
     "xc7z045fbv676-2": {
       "architecture": "xilinx",
@@ -4039,7 +4488,8 @@
       "size": "350k",
       "nextpnr_device": "xc7z045fbv676-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x23731093"
     },
     "xc7z045fbv676-3": {
       "architecture": "xilinx",
@@ -4047,7 +4497,8 @@
       "size": "350k",
       "nextpnr_device": "xc7z045fbv676-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x23731093"
     },
     "xc7z045ffg676-1": {
       "architecture": "xilinx",
@@ -4055,7 +4506,8 @@
       "size": "350k",
       "nextpnr_device": "xc7z045ffg676-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x23731093"
     },
     "xc7z045ffg676-2": {
       "architecture": "xilinx",
@@ -4063,7 +4515,8 @@
       "size": "350k",
       "nextpnr_device": "xc7z045ffg676-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x23731093"
     },
     "xc7z045ffg676-3": {
       "architecture": "xilinx",
@@ -4071,7 +4524,8 @@
       "size": "350k",
       "nextpnr_device": "xc7z045ffg676-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x23731093"
     },
     "xc7z045ffg900-1": {
       "architecture": "xilinx",
@@ -4079,7 +4533,8 @@
       "size": "350k",
       "nextpnr_device": "xc7z045ffg900-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x23731093"
     },
     "xc7z045ffg900-2": {
       "architecture": "xilinx",
@@ -4087,7 +4542,8 @@
       "size": "350k",
       "nextpnr_device": "xc7z045ffg900-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x23731093"
     },
     "xc7z045ffg900-3": {
       "architecture": "xilinx",
@@ -4095,7 +4551,8 @@
       "size": "350k",
       "nextpnr_device": "xc7z045ffg900-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x23731093"
     },
     "xc7z045ffv676-1": {
       "architecture": "xilinx",
@@ -4103,7 +4560,8 @@
       "size": "350k",
       "nextpnr_device": "xc7z045ffv676-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x23731093"
     },
     "xc7z045ffv676-2": {
       "architecture": "xilinx",
@@ -4111,7 +4569,8 @@
       "size": "350k",
       "nextpnr_device": "xc7z045ffv676-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x23731093"
     },
     "xc7z045ffv676-3": {
       "architecture": "xilinx",
@@ -4119,7 +4578,8 @@
       "size": "350k",
       "nextpnr_device": "xc7z045ffv676-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x23731093"
     },
     "xc7z045ffv900-1": {
       "architecture": "xilinx",
@@ -4127,7 +4587,8 @@
       "size": "350k",
       "nextpnr_device": "xc7z045ffv900-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x23731093"
     },
     "xc7z045ffv900-2": {
       "architecture": "xilinx",
@@ -4135,7 +4596,8 @@
       "size": "350k",
       "nextpnr_device": "xc7z045ffv900-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x23731093"
     },
     "xc7z045ffv900-3": {
       "architecture": "xilinx",
@@ -4143,7 +4605,8 @@
       "size": "350k",
       "nextpnr_device": "xc7z045ffv900-3",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x23731093"
     },
     "xc7z100ffg1156-1": {
       "architecture": "xilinx",
@@ -4151,7 +4614,8 @@
       "size": "444k",
       "nextpnr_device": "xc7z100ffg1156-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x03736093"
     },
     "xc7z100ffg1156-2": {
       "architecture": "xilinx",
@@ -4159,7 +4623,8 @@
       "size": "444k",
       "nextpnr_device": "xc7z100ffg1156-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x03736093"
     },
     "xc7z100ffg900-1": {
       "architecture": "xilinx",
@@ -4167,7 +4632,8 @@
       "size": "444k",
       "nextpnr_device": "xc7z100ffg900-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x03736093"
     },
     "xc7z100ffg900-2": {
       "architecture": "xilinx",
@@ -4175,7 +4641,8 @@
       "size": "444k",
       "nextpnr_device": "xc7z100ffg900-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x03736093"
     },
     "xc7z100ffv1156-1": {
       "architecture": "xilinx",
@@ -4183,7 +4650,8 @@
       "size": "444k",
       "nextpnr_device": "xc7z100ffv1156-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x03736093"
     },
     "xc7z100ffv1156-2": {
       "architecture": "xilinx",
@@ -4191,7 +4659,8 @@
       "size": "444k",
       "nextpnr_device": "xc7z100ffv1156-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x03736093"
     },
     "xc7z100ffv900-1": {
       "architecture": "xilinx",
@@ -4199,7 +4668,8 @@
       "size": "444k",
       "nextpnr_device": "xc7z100ffv900-1",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x03736093"
     },
     "xc7z100ffv900-2": {
       "architecture": "xilinx",
@@ -4207,7 +4677,8 @@
       "size": "444k",
       "nextpnr_device": "xc7z100ffv900-2",
       "yosys_arch": "xc7",
-      "prjxray_family": "zynq7"
+      "prjxray_family": "zynq7",
+      "jtag_idcode": "0x03736093"
     }
   }
 }

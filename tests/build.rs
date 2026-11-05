@@ -920,3 +920,94 @@ async fn verbose_prints_more_but_gives_the_same_result() {
     );
     assert_eq!(results[0].resources_usage, results[1].resources_usage);
 }
+
+/// Before programming over JTAG, program_board reads the connected FPGA's ID
+/// code with openFPGALoader --detect, and refuses another FPGA before
+/// anything is written. Uses a fake openFPGALoader.
+#[tokio::test]
+async fn program_board_refuses_a_board_with_another_fpga() {
+    let state = engine().await;
+    let tmp = tempfile::tempdir().unwrap();
+    let src = tmp.path().canonicalize().unwrap().join("proj");
+    std::fs::create_dir(&src).unwrap();
+    let from = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/designs/blinky-xilinx");
+    for f in ["main.v", "main.xdc"] {
+        std::fs::copy(from.join(f), src.join(f)).unwrap();
+    }
+    let ram =
+        json!({"board": "arty-a7-35t", "board_variant": "usb-ram", "constraint_file": "main.xdc"});
+    build_it(&state, &src, ram).await.unwrap();
+    let folder = src.join("_build");
+
+    // The fake prints detect.txt for --detect, and logs every run.
+    let bin = tmp.path().join("bin");
+    std::fs::create_dir(&bin).unwrap();
+    let log = tmp.path().join("runs.txt");
+    let detect = tmp.path().join("detect.txt");
+    let script = bin.join("openFPGALoader");
+    std::fs::write(
+        &script,
+        format!(
+            "#!/bin/sh\necho \"$@\" >> {log}\ncase \"$*\" in *--detect*) cat {detect};; esac\n",
+            log = log.display(),
+            detect = detect.display()
+        ),
+    )
+    .unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    let arty = usb("Digilent USB Device", Some("210319AFEF8F"), 4);
+    let program = |fpga: &str| {
+        std::fs::write(&detect, fpga).unwrap();
+        let _ = std::fs::remove_file(&log);
+        let state = &state;
+        let input = program_input(&folder, json!({"device": arty.id}));
+        let devices = vec![arty.clone()];
+        let bin = bin.clone();
+        async move {
+            program_board::run_with_programmers(
+                state,
+                input,
+                &call(),
+                move || Ok(devices),
+                Some(&bin),
+            )
+            .await
+        }
+    };
+    let a35 = "index 0:\n\tidcode 0x362d093\n\tmanufacturer xilinx\n\tfamily artix a7 35t\n\tmodel  xc7a35\n\tirlength 6\n";
+
+    // The right FPGA: detect, then program.
+    let out = program(a35).await.unwrap();
+    let runs = std::fs::read_to_string(&log).unwrap();
+    let runs: Vec<&str> = runs.lines().collect();
+    assert_eq!(runs.len(), 2, "{runs:?}");
+    assert_eq!(
+        runs[0],
+        "--force-terminal-mode --board arty_a7_35t --busdev-num 250:4 --detect"
+    );
+    assert!(runs[1].ends_with("hardware.bit"), "{}", runs[1]);
+    assert_eq!(out.commands.len(), 2, "both runs are in commands");
+
+    // An Arty A7-100T: refused after detect, nothing written.
+    let a100 = a35
+        .replace("0x362d093", "0x3631093")
+        .replace("xc7a35", "xc7a100");
+    let err = program(&a100).await.unwrap_err();
+    assert_eq!(err.category, Category::Setup);
+    assert!(
+        err.message.contains("has XC7A100 (ID code 0x03631093)"),
+        "{}",
+        err.message
+    );
+    assert!(
+        err.message.contains("Arty A7-100T"),
+        "suggests the matching board: {}",
+        err.message
+    );
+    let runs = std::fs::read_to_string(&log).unwrap();
+    assert_eq!(runs.lines().count(), 1, "only detect ran: {runs}");
+}

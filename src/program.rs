@@ -8,8 +8,8 @@ use std::sync::OnceLock;
 
 use regex::Regex;
 
-use crate::catalog::{self, Variant};
-use crate::devices::Device;
+use crate::catalog::{self, Architecture, FpgaDefinition, Variant};
+use crate::devices::{self, Device};
 use crate::errors::{ActionCode, Category, ToolError};
 
 /// The executable in the toolchain package for each programmer ID.
@@ -24,10 +24,13 @@ pub fn programmer_executable(programmer: &str) -> Option<&'static str> {
 }
 
 /// Whether a programming command tells the programmer which device to open:
-/// by bus and device number, or by a serial number that no other connected
+/// by bus and device number, by USB port path, or by a serial number that no other connected
 /// device with the same USB IDs has.
 pub fn names_the_device(template: &str, devices: &[Device], device: &Device) -> bool {
     if template.contains("${BUS}") && template.contains("${DEV}") {
+        return true;
+    }
+    if template.contains("${PORT}") && devices::has_port_path(device) {
         return true;
     }
     template.contains("${SERIAL}")
@@ -87,19 +90,7 @@ pub fn expand(
         .map_err(|e| ToolError::request(format!("Bad programming command: {e}.")))?;
     let mut out = Vec::new();
     for word in template.split_whitespace() {
-        let mut w = word
-            .replace("${VID}", &device.vid)
-            .replace("${PID}", &device.pid)
-            .replace("${BUS}", &device.bus.to_string())
-            .replace("${DEV}", &device.device.to_string());
-        if w.contains("${SERIAL}") {
-            let serial = device.serial_number.as_deref().ok_or_else(|| {
-                ToolError::setup(
-                    "The device has no serial number, which the programming command needs.",
-                )
-            })?;
-            w = w.replace("${SERIAL}", serial);
-        }
+        let mut w = fill(word, device)?;
         if w.contains("${BITSTREAM}") {
             let path = bitstream.to_string_lossy();
             w = w.replace("${BITSTREAM}", &path);
@@ -107,6 +98,32 @@ pub fn expand(
         out.push(OsString::from(w));
     }
     Ok(out)
+}
+
+/// Fills in the device's variables in one word of a template.
+fn fill(word: &str, device: &Device) -> Result<String, ToolError> {
+    let mut w = word
+        .replace("${VID}", &device.vid)
+        .replace("${PID}", &device.pid)
+        .replace("${BUS}", &device.bus.to_string())
+        .replace("${DEV}", &device.device.to_string());
+    if w.contains("${SERIAL}") {
+        let serial = device.serial_number.as_deref().ok_or_else(|| {
+            ToolError::setup(
+                "The device has no serial number, which the programming command needs.",
+            )
+        })?;
+        w = w.replace("${SERIAL}", serial);
+    }
+    if w.contains("${PORT}") {
+        if !devices::has_port_path(device) {
+            return Err(ToolError::setup(
+                "The device's USB port path is unknown, which the programming command needs.",
+            ));
+        }
+        w = w.replace("${PORT}", &device.location);
+    }
+    Ok(w)
 }
 
 /// The program and arguments to run: the variant's programmer with its
@@ -214,6 +231,171 @@ pub fn command(
             Ok((program, words))
         }
     }
+}
+
+/// The openFPGALoader options that choose the connection, with whether each
+/// takes a value. The FPGA check's --detect command keeps only these from
+/// the variant's command, so it can't write anything.
+const CONNECTION_OPTIONS: &[(&str, bool)] = &[
+    ("--board", true),
+    ("-b", true),
+    ("--cable", true),
+    ("-c", true),
+    ("--busdev-num", true),
+    ("--vid", true),
+    ("--pid", true),
+    ("--pins", true),
+    ("--freq", true),
+    ("--ftdi-channel", true),
+    ("--cable-index", true),
+    ("--usb-serial-num", true),
+    ("--ftdi-serial", true),
+    ("--index-chain", true),
+    ("--invert-read-edge", false),
+    ("--force-terminal-mode", false),
+];
+
+/// Whether the engine checks the connected FPGA's ID code before programming
+/// with this variant: openFPGALoader over JTAG (not iCE40, which it programs
+/// through the flash, and not DFU or SPI modes), for an FPGA with a
+/// jtag_idcode.
+pub fn checks_fpga(variant: &Variant, fpga: &FpgaDefinition) -> bool {
+    variant.programmer == "openfpgaloader"
+        && fpga.architecture != Architecture::Ice40
+        && fpga.jtag_idcode.is_some()
+        && !variant
+            .args
+            .split_whitespace()
+            .any(|w| matches!(w, "--dfu" | "--spi" | "--xvc" | "--passive-serial"))
+}
+
+/// The arguments of openFPGALoader's --detect run for the FPGA check: the
+/// variant's connection options only, then --detect.
+pub fn detect_args(variant: &Variant, device: &Device) -> Result<Vec<OsString>, ToolError> {
+    let words: Vec<&str> = variant.args.split_whitespace().collect();
+    let mut kept = Vec::new();
+    let mut i = 0;
+    while i < words.len() {
+        let w = words[i];
+        let option = CONNECTION_OPTIONS
+            .iter()
+            .find(|(name, _)| w == *name || w.starts_with(&format!("{name}=")));
+        if let Some((name, takes_value)) = option {
+            kept.push(w);
+            if *takes_value && w == *name && i + 1 < words.len() {
+                kept.push(words[i + 1]);
+                i += 1;
+            }
+        }
+        i += 1;
+    }
+    let mut args = Vec::new();
+    for w in kept {
+        args.push(OsString::from(fill(w, device)?));
+    }
+    args.push(OsString::from("--detect"));
+    Ok(args)
+}
+
+/// An FPGA that openFPGALoader's --detect found.
+#[derive(Debug, Clone, PartialEq)]
+pub struct DetectedFpga {
+    pub idcode: u32,
+    /// openFPGALoader's model name, such as xc7a35.
+    pub model: Option<String>,
+}
+
+/// Reads the FPGAs from openFPGALoader's --detect output: one block per
+/// device on the JTAG chain, "index 0:", then tab-indented "idcode 0x...",
+/// "manufacturer", "family", "model" and "irlength" lines. Other devices on
+/// the chain, such as a Zynq's processor, have a "type" line instead and
+/// aren't FPGAs. An "Unknown device with IDCODE: 0x..." error counts as an
+/// FPGA without a model.
+pub fn parse_detect(output: &str) -> Vec<DetectedFpga> {
+    let mut found = Vec::new();
+    let mut current: Option<(u32, Option<String>, bool)> = None;
+    let finish = |c: Option<(u32, Option<String>, bool)>, found: &mut Vec<DetectedFpga>| {
+        if let Some((idcode, model, false)) = c {
+            found.push(DetectedFpga { idcode, model });
+        }
+    };
+    for line in output.lines() {
+        let t = line.trim();
+        if t.starts_with("index ") && t.ends_with(':') {
+            finish(current.take(), &mut found);
+        } else if let Some(rest) = t.strip_prefix("idcode") {
+            let hex = rest.trim().trim_start_matches("0x");
+            if let Ok(code) = u32::from_str_radix(hex, 16) {
+                finish(current.take(), &mut found);
+                current = Some((code, None, false));
+            }
+        } else if let Some(rest) = t.strip_prefix("model") {
+            if let Some(c) = current.as_mut() {
+                c.1 = Some(rest.trim().to_string());
+            }
+        } else if t.starts_with("type") {
+            if let Some(c) = current.as_mut() {
+                c.2 = true;
+            }
+        } else if let Some(pos) = t.find("Unknown device with IDCODE: 0x") {
+            let hex: String = t[pos + 30..]
+                .chars()
+                .take_while(char::is_ascii_hexdigit)
+                .collect();
+            if let Ok(code) = u32::from_str_radix(&hex, 16) {
+                found.push(DetectedFpga {
+                    idcode: code,
+                    model: None,
+                });
+            }
+        }
+    }
+    finish(current.take(), &mut found);
+    found
+}
+
+/// Checks that the FPGA found is the build's. `others` names the boards
+/// with the found FPGA, to suggest.
+pub fn check_fpga(
+    found: &[DetectedFpga],
+    fpga: &FpgaDefinition,
+    board_name: &str,
+    others: impl Fn(u32) -> Vec<String>,
+) -> Result<(), ToolError> {
+    let Some(want) = fpga.jtag_idcode.as_deref().and_then(catalog::parse_idcode) else {
+        return Ok(());
+    };
+    if found.iter().any(|f| f.idcode == want) {
+        return Ok(());
+    }
+    let Some(first) = found.first() else {
+        return Err(ToolError::setup(format!(
+            "No FPGA was found on the device chosen for the {board_name}, so nothing was written."
+        ))
+        .with_action(
+            ActionCode::ConnectBoard,
+            format!("Connect the {board_name} and make sure it is powered, then retry."),
+        ));
+    };
+    let name = match &first.model {
+        Some(m) => format!("{} (ID code 0x{:08x})", m.to_uppercase(), first.idcode),
+        None => format!("an FPGA with ID code 0x{:08x}", first.idcode),
+    };
+    let mut message = format!(
+        "The connected board has {name}, but the build is for the {board_name}, which has {} (ID code 0x{want:08x}). Nothing was written.",
+        fpga.part_number
+    );
+    let boards = others(first.idcode);
+    if !boards.is_empty() {
+        message.push_str(&format!(
+            " Boards with that FPGA that the device could be: {}.",
+            boards.join(", ")
+        ));
+    }
+    Err(ToolError::setup(message).with_action(
+        ActionCode::ConnectBoard,
+        format!("Connect the {board_name}, or build for the board that is connected, then retry."),
+    ))
 }
 
 fn percent_re() -> &'static Regex {
@@ -484,6 +666,152 @@ mod tests {
             .is_err()
         );
         assert!(check_alone("-d ${VID}:${PID} -D ${BITSTREAM}", &both, &nano, "x").is_err());
+    }
+
+    // openFPGALoader 1.2.0's --detect output, in the format its main.cpp
+    // prints (an Arty A7-35T, and a Zynq chain with its processor first).
+    const DETECT_ARTY: &str = "index 0:\n\tidcode 0x362d093\n\tmanufacturer xilinx\n\tfamily artix a7 35t\n\tmodel  xc7a35\n\tirlength 6\n";
+    const DETECT_ZYNQ: &str = "index 0:\n\tidcode   0x4ba00477\n\ttype     ARM cortex A9\n\tirlength 4\nindex 1:\n\tidcode 0x3727093\n\tmanufacturer xilinx\n\tfamily zynq\n\tmodel  xc7z020\n\tirlength 6\n";
+
+    #[test]
+    fn detect_output_lists_the_fpgas() {
+        assert_eq!(
+            parse_detect(DETECT_ARTY),
+            [DetectedFpga {
+                idcode: 0x0362d093,
+                model: Some("xc7a35".into())
+            }]
+        );
+        assert_eq!(
+            parse_detect(DETECT_ZYNQ),
+            [DetectedFpga {
+                idcode: 0x03727093,
+                model: Some("xc7z020".into())
+            }]
+        );
+        assert_eq!(
+            parse_detect(
+                "Unknown device with IDCODE: 0x0362c093 (manufacturer: 0x049 (xilinx), part: 0x62 vers: 0x0"
+            ),
+            [DetectedFpga {
+                idcode: 0x0362c093,
+                model: None
+            }]
+        );
+        assert!(parse_detect("JTAG init failed with: no device found\n").is_empty());
+    }
+
+    #[test]
+    fn the_fpga_check_runs_detect_with_the_connection_options_only() {
+        let c = catalog::builtin();
+        let d = device("0403", "6010", Some("Digilent USB Device"), None, 9);
+        let words = |board: &str, i: usize| -> Vec<String> {
+            let v = &c.boards[board].variants[i];
+            assert!(
+                checks_fpga(v, &c.fpgas[&c.boards[board].fpga_id]),
+                "{board}"
+            );
+            detect_args(v, &d)
+                .unwrap()
+                .into_iter()
+                .map(|a| a.into_string().unwrap())
+                .collect()
+        };
+        // Arty A7-35T, flash: --write-flash, --verify and the bitstream go.
+        assert_eq!(
+            words("arty-a7-35t", 0).join(" "),
+            "--force-terminal-mode --board arty_a7_35t --busdev-num 1:9 --detect"
+        );
+        // A cable, --pins and the vid/pid stay; -v, --file-type bin and
+        // --unprotect-flash go.
+        let icepi = c.boards["icepi-zero"].variants[0].args.clone();
+        assert!(icepi.contains("--write-flash"), "{icepi}");
+        assert_eq!(
+            words("icepi-zero", 0).join(" "),
+            "--force-terminal-mode -c ft231X --pins=7:3:5:6 --busdev-num 1:9 --detect"
+        );
+        assert_eq!(
+            words("icesugar-pro", 0).join(" "),
+            "--force-terminal-mode -c cmsisdap --vid 0x0403 --pid 0x6010 --detect"
+        );
+        // Not checked: iCE40 (programmed through the flash), other
+        // programmers, and FPGAs without an ID code.
+        let alhambra = &c.boards["alhambra-ii"];
+        assert!(!checks_fpga(
+            &alhambra.variants[0],
+            &c.fpgas[&alhambra.fpga_id]
+        ));
+        let orangecrab = &c.boards["orangecrab-r02-25f"];
+        assert!(!checks_fpga(
+            &orangecrab.variants[0],
+            &c.fpgas[&orangecrab.fpga_id]
+        ));
+        let arty = &c.boards["arty-a7-35t"];
+        let no_code = FpgaDefinition {
+            jtag_idcode: None,
+            ..c.fpgas[&arty.fpga_id].clone()
+        };
+        assert!(!checks_fpga(&arty.variants[0], &no_code));
+    }
+
+    #[test]
+    fn the_fpga_check_refuses_another_fpga() {
+        let c = catalog::builtin();
+        let fpga = &c.fpgas[&c.boards["arty-a7-35t"].fpga_id];
+        let none = |_| vec![];
+        assert!(check_fpga(&parse_detect(DETECT_ARTY), fpga, "Arty A7-35T", none).is_ok());
+
+        // An Arty A7-100T connected for a 35T build.
+        let a100 = parse_detect(
+            &DETECT_ARTY
+                .replace("0x362d093", "0x3631093")
+                .replace("xc7a35", "xc7a100"),
+        );
+        let e = check_fpga(&a100, fpga, "Arty A7-35T", |code| {
+            assert_eq!(code, 0x03631093);
+            vec!["Arty A7-100T".into()]
+        })
+        .unwrap_err();
+        assert_eq!(e.category, Category::Setup);
+        assert_eq!(e.action.as_ref().unwrap().code, ActionCode::ConnectBoard);
+        assert_eq!(
+            e.message,
+            "The connected board has XC7A100 (ID code 0x03631093), but the build is for the Arty A7-35T, which has XC7A35T-1CSG324 (ID code 0x0362d093). Nothing was written. Boards with that FPGA that the device could be: Arty A7-100T."
+        );
+
+        // A chip openFPGALoader doesn't know, and no FPGA at all.
+        let unknown =
+            parse_detect("Unknown device with IDCODE: 0x12345093 (manufacturer: 0x049 (xilinx)");
+        let e = check_fpga(&unknown, fpga, "Arty A7-35T", none).unwrap_err();
+        assert!(
+            e.message
+                .starts_with("The connected board has an FPGA with ID code 0x12345093,"),
+            "{}",
+            e.message
+        );
+        let e = check_fpga(&[], fpga, "Arty A7-35T", none).unwrap_err();
+        assert!(e.message.starts_with("No FPGA was found"), "{}", e.message);
+    }
+
+    #[test]
+    fn port_paths_name_the_device() {
+        let nano = device("1d50", "6130", Some("OrangeCrab DFU"), None, 3);
+        let twin = device("1d50", "6130", Some("OrangeCrab DFU"), None, 4);
+        let dfu = "-d ${VID}:${PID} -p ${PORT} -a 0 -D ${BITSTREAM}";
+        assert!(check_alone(dfu, &[nano.clone(), twin], &nano, "OrangeCrab").is_ok());
+        let args = expand(dfu, &nano, Path::new("/b/hardware.bit")).unwrap();
+        assert_eq!(args[3], "1-3");
+        // Without port numbers the location is the bus and address, which
+        // dfu-util's --path can't take.
+        let mut no_ports = nano.clone();
+        no_ports.location = "1-a3".into();
+        assert!(!devices::has_port_path(&no_ports));
+        assert_eq!(
+            expand(dfu, &no_ports, Path::new("/b"))
+                .unwrap_err()
+                .category,
+            Category::Setup
+        );
     }
 
     #[test]

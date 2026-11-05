@@ -24,8 +24,10 @@ impl EngineTool for ProgramBoard {
         the build succeeded. The board comes from the build, so it takes the build folder and \
         the device to program: the id of a device from list_devices whose boards include the \
         build's board (ask the user when several do). A device that isn't connected anymore is a \
-        setup error with connect_board; list the devices again. Most boards are programmed to \
-        flash, so the design stays after power-off.";
+        setup error with connect_board; list the devices again. On ECP5, Gowin and Xilinx \
+        boards it first reads the connected FPGA's ID code and refuses a different FPGA, such as \
+        a board of another size than the build's, before writing anything. Most boards are \
+        programmed to flash, so the design stays after power-off.";
     const READ_ONLY: bool = false;
     const OPEN_WORLD: bool = true;
     type Input = ProgramBoardInput;
@@ -45,7 +47,7 @@ pub struct ProgramBoardInput {
     /// A custom programmer command that replaces the board's default one,
     /// for a custom setup. Its first word is a program from the
     /// toolchain package, such as openFPGALoader, or an absolute path. It may
-    /// use ${VID}, ${PID}, ${BUS}, ${DEV}, ${SERIAL} and must use
+    /// use ${VID}, ${PID}, ${BUS}, ${DEV}, ${SERIAL}, ${PORT} and must use
     /// ${BITSTREAM}.
     #[serde(default)]
     pub programmer_command: Option<String>,
@@ -97,6 +99,18 @@ pub async fn run_with(
     call: &Call,
     scan: impl FnOnce() -> Result<Vec<Device>, ToolError>,
 ) -> Result<ProgramBoardOutput, ToolError> {
+    run_with_programmers(state, input, call, scan, None).await
+}
+
+/// As run_with, with the programmers taken from `programmers` instead of the
+/// toolchain package when given, so tests can use fake programmers.
+pub async fn run_with_programmers(
+    state: &EngineState,
+    input: ProgramBoardInput,
+    call: &Call,
+    scan: impl FnOnce() -> Result<Vec<Device>, ToolError>,
+    programmers: Option<&std::path::Path>,
+) -> Result<ProgramBoardOutput, ToolError> {
     let (folder, record) = read_build(&input.build_folder)?;
     let bitstream = folder.join(&record.result.bitstream);
     if !bitstream.is_file() {
@@ -110,7 +124,8 @@ pub async fn run_with(
     let custom = input.programmer_command.as_deref();
 
     let needed = state.packages.needing_install(&[TOOLCHAIN])?;
-    let steps = if custom.is_some() { 2 } else { 3 };
+    let checks_fpga = custom.is_none() && program::checks_fpga(variant, &board.fpga);
+    let steps = if custom.is_some() { 2 } else { 3 } + usize::from(checks_fpga);
     let phases = Phases::new(call.progress.clone(), needed.len() + steps);
     state
         .packages
@@ -122,7 +137,10 @@ pub async fn run_with(
         .get(TOOLCHAIN)
         .cloned()
         .ok_or_else(|| ToolError::engine(format!("{TOOLCHAIN} isn't in the manifest.")))?;
-    let bin = state.packages.package_dir(&spec).join("bin");
+    let bin = match programmers {
+        Some(dir) => dir.to_path_buf(),
+        None => state.packages.package_dir(&spec).join("bin"),
+    };
 
     // Say how the board will be programmed (not for a custom command, which
     // may do anything), and any note for users, such as holding a button.
@@ -150,6 +168,10 @@ pub async fn run_with(
         &device,
         &board.name,
     )?;
+    if checks_fpga {
+        phases.start("Checking FPGA");
+        check_fpga(board, &device, &folder, &bin, call).await?;
+    }
     let (program, args) =
         program::command(variant, custom, &device, &bitstream, &bin, input.verbose)?;
     let programmer = match custom {
@@ -221,6 +243,84 @@ pub async fn run_with(
             format!("Reinstall the {TOOLCHAIN} package, which may be damaged."),
         )),
     }
+}
+
+/// Reads the connected FPGA's ID code with openFPGALoader's --detect, using
+/// only the variant's connection options, and refuses a different FPGA
+/// before anything is written (docs/requirements.md, Wrong size).
+async fn check_fpga(
+    board: &crate::board::ResolvedBoard,
+    device: &Device,
+    folder: &std::path::Path,
+    bin: &std::path::Path,
+    call: &Call,
+) -> Result<(), ToolError> {
+    let exe = bin.join("openFPGALoader");
+    let args = program::detect_args(&board.variant, device)?;
+    call.output
+        .command("openFPGALoader", &command_line(&exe, &args));
+    call.commands
+        .push(crate::commands::record(&exe, &args, folder, bin));
+    let on_line = |line: &str| {
+        call.output
+            .line("openFPGALoader", OutputLevel::of(line), line)
+    };
+    let run = run_tool_with(&exe, &args, folder, bin, &call.cancel, &on_line).await;
+    let r = match run {
+        Ok(r) => r,
+        Err(RunError::Cancelled) => {
+            return Err(ToolError::cancelled("Programming was cancelled."));
+        }
+        Err(RunError::Spawn(e)) => {
+            return Err(ToolError::new(
+                Category::Tool,
+                format!("Can't start {}: {e}", exe.display()),
+            )
+            .with_action(
+                ActionCode::InstallPackages,
+                format!("Reinstall the {TOOLCHAIN} package, which may be damaged."),
+            ));
+        }
+    };
+    let found = program::parse_detect(&r.output);
+    if !r.status.success() && found.is_empty() {
+        let mut err = program::failure(
+            "openFPGALoader",
+            &board.name,
+            &r.output,
+            &r.status.to_string(),
+        );
+        if err.category == Category::Tool {
+            err.message = format!(
+                "openFPGALoader couldn't read the FPGA's ID code on the {} ({}), so nothing was written.",
+                board.name, r.status
+            );
+        }
+        return Err(err);
+    }
+    program::check_fpga(&found, &board.fpga, &board.name, |code| {
+        boards_with_fpga(code, device)
+    })
+}
+
+/// The catalog boards with the FPGA of this ID code whose USB filters the
+/// device matches, by name.
+fn boards_with_fpga(code: u32, device: &Device) -> Vec<String> {
+    let catalog = crate::catalog::builtin();
+    catalog
+        .boards
+        .values()
+        .filter(|b| {
+            catalog
+                .fpgas
+                .get(&b.fpga_id)
+                .and_then(|f| f.jtag_idcode.as_deref())
+                .and_then(crate::catalog::parse_idcode)
+                == Some(code)
+                && b.variants.iter().any(|v| devices::matches(device, &v.usb))
+        })
+        .map(|b| b.description.clone())
+        .collect()
 }
 
 pub async fn run(
