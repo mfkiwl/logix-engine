@@ -147,6 +147,9 @@ pub const FACTORY_DEFAULT_NAMES: &[&str] = &[
     "FT230X Basic UART",
     "DAPLink CMSIS-DAP",
     "CMSIS-DAP",
+    // Sipeed's debugger firmware (the Tang Nano 9K's, and maybe others'):
+    // nothing in it names a board or even the vendor.
+    "JTAG Debugger",
 ];
 
 /// Whether a product name is a USB chip's factory default.
@@ -605,7 +608,8 @@ pub mod tests {
         );
         assert!(!ids(&m).contains(&"icezum".to_string()), "another name");
 
-        // A real Tang Nano 9K: its debugger reports "JTAG Debugger".
+        // A real Tang Nano 9K: its debugger reports "JTAG Debugger", a
+        // generic name, so the 9K is a possible match, not a strong one.
         let nano9k = device(
             "0403",
             "6010",
@@ -615,7 +619,7 @@ pub mod tests {
         );
         let m = board_matches(&nano9k, &boards);
         assert_eq!(m[0].board, "sipeed-tang-nano-9k");
-        assert_eq!(m[0].best_level(), MatchLevel::Strong);
+        assert_eq!(m[0].best_level(), MatchLevel::Possible);
 
         // Both iCESugar-Pro variants, and not the other iCESugar boards.
         let pro = device(
