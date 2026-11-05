@@ -452,6 +452,7 @@ The project relies heavily on AI-generated tests to catch regressions, since hum
 
 ## Open questions
 
+- Which more frontend logic to move into the engine (the Logix IDE is the reference frontend; see CLAUDE.md, A reference for frontends). Candidates from the IDE, 2026-11-05: choosing a board variant from dimension values (the IDE's `variant_id`: the first variant with all chosen values), a device's name for people (product, else manufacturer, else its USB IDs), the strongest matches of a device versus the weaker ones to count (the IDE's `likelyBoards` and `otherBoards`), and the plain summary of a test run. Each should move only if it doesn't depend on a frontend's own model.
 - Whether to publish the catalog as its own package, so boards can be added without a new engine binary. For now the catalog lives in the engine repo's `catalog/` folder and is built into the engine.
 - Whether to move more boards to openFPGALoader, which would simplify packages and testing. Its DFU support may cover the dfu-util boards, but each moved board must be tested on hardware.
 - Whether to offer flash on the ULX3S: some boards have a DFU bootloader at the start of the flash, which a JTAG flash write (`-f`) would overwrite. openFPGALoader's `ulx3s_dfu` board writes through that bootloader instead, but only on boards that have it.
