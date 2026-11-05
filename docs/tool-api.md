@@ -709,7 +709,7 @@ Programs a bitstream into the board it was built for, on the device the host cho
 
 **How it runs:** the engine reads the board from the build record, finds the chosen device and checks it (still connected on the same USB port with the same USB IDs and serial number; matching the build variant's USB filter; and, when the command doesn't name the device by bus and device number or by a serial number only it has, no other connected device with its USB IDs, since the programmer would open the first one), checks the FPGA when it can (see Wrong FPGA below), fills in the variant's argument template, splitting it into words first so paths with spaces stay whole, and runs the programmer in the build folder. Progress has the phases "Finding device", "Checking FPGA" (when the FPGA is checked), "Writing flash" (or "Writing RAM") and "Verifying", with percentages read from the programmer's output. With `programmer_command` the phases are "Finding device" and "Programming", without percentages. A programmer that fails because the device is missing or can't be opened gives a setup error with `connect_board` or `fix_device_permissions`; other failures are tool failures with the programmer's output in `details`. The build record's board checksum is checked first, so a damaged record is a request error.
 
-**Wrong FPGA:** before writing over JTAG with openFPGALoader (ECP5, Gowin and Xilinx boards), the engine runs openFPGALoader with `--detect` and only the variant's connection options, such as `--board`, `-c` and `--busdev-num`, so that run can't write anything. It compares the FPGA's ID code with the build FPGA's `jtag_idcode`. A different FPGA, such as an Arty A7-100T connected for an Arty A7-35T build, is a setup error with `connect_board` that names both FPGAs and the catalog boards with the connected FPGA that the device most likely is (those with the highest confidence, as `list_devices` rates them), and nothing is written. The detect run is in `commands`. There is no check for iCE40 boards (programmed through their flash, so the programmer never reads the FPGA's ID), other programmers, a `programmer_command`, or an FPGA without a `jtag_idcode`. The ID code identifies the chip, so a board that uses the same chip as another size, such as an iCE40 HX4K used as an 8k, can't be told apart by it.
+**Wrong FPGA:** before writing over JTAG with openFPGALoader (ECP5, Gowin and Xilinx boards), the engine runs openFPGALoader with `--detect` and only the variant's connection options, such as `--board`, `-c` and `--busdev-num`, so that run can't write anything. It compares the FPGA's ID code with the build FPGA's `jtag_idcode`. A different FPGA, such as an Arty A7-100T connected for an Arty A7-35T build, is a setup error with `connect_board` that names both FPGAs and the catalog boards with the connected FPGA that the device most likely is (those at its strongest match level, as `list_devices` rates them), and nothing is written. The detect run is in `commands`. There is no check for iCE40 boards (programmed through their flash, so the programmer never reads the FPGA's ID), other programmers, a `programmer_command`, or an FPGA without a `jtag_idcode`. The ID code identifies the chip, so a board that uses the same chip as another size, such as an iCE40 HX4K used as an 8k, can't be told apart by it.
 
 **Flash or RAM:** the build's variant decides whether the bitstream goes to flash, where it stays after power-off, or to RAM, where it is lost at power-off (its `memory` value; boards that offer both have a choice, made when building). The write phase is "Writing flash" or "Writing RAM".
 
@@ -738,13 +738,19 @@ Programs a bitstream into the board it was built for, on the device the host cho
 
 Lists the connected USB devices, each with an `id` for `program_board` and the boards it may be. The Logix Engine reads USB devices with libusb, built into the engine, the same library the programmers use, so the bus and device numbers mean the same to both. Devices are sorted by vendor ID, product ID, bus and device number.
 
-**Matching.** A device matches a variant's USB filter when its USB IDs are equal and, when the filter has `product_regex` or `serial_regex`, its product name or serial number contains a match for it. The engine matches every device against every catalog board and the request's `custom_boards` on each call, so a host's own boards count as soon as it sends them. Each device lists the boards it matches, best first: by their best board variant's confidence, then catalog boards before custom ones, then by board ID. A custom board may have a catalog board's ID; both are listed, the custom one with `custom: true`, and the host decides which it means.
+**Matching.** A device matches a variant's USB filter when its USB IDs are equal and, when the filter has `product_regex` or `serial_regex`, its product name or serial number contains a match for it. The engine matches every device against every catalog board and the request's `custom_boards` on each call, so a host's own boards count as soon as it sends them. Each device lists the boards it matches, strongest first: by their best board variant's match level, then catalog boards before custom ones, then by board ID. A custom board may have a catalog board's ID; both are listed, the custom one with `custom: true`, and the host decides which it means.
 
-**Confidence.** A number from 1 to 3: how sure the engine is that the device is that board in a board variant, given for each board variant the device fits, since board variants can have different USB filters. Hosts use the rating of the board variant they mean, such as the build's or the one the user selected. Higher is surer, and 3 is always the highest. Hosts compare it, such as to pre-select a device at 3 or to show low matches only on request; they don't need to know how it is rated, which may improve between engine versions (the current rules are in the [requirements](requirements.md#device-selection)). Several boards can have the same confidence for one device, such as the two OrangeCrab sizes, and no rating proves which board is connected: boards the catalog doesn't know can report the same names.
+**Match levels.** Each board variant a device fits has a `match` level, since board variants can have different USB filters. Hosts use the level of the board variant they mean, such as the build's or the one the user selected. The levels say what the match means for the user, not why it matched:
+
+- `strong`: the device is very likely this board.
+- `possible`: it could be this board, but a few other boards look the same.
+- `weak`: it fits, but so do many other boards, such as boards with a common USB chip.
+
+Hosts show the level, in their own words, and compare levels (weak < possible < strong), such as to name the strongest matches and only count the weak ones. How the Logix Engine decides a level is internal: it changes between engine versions without notice, so hosts must never infer the cause of a match or rely on a level staying the same. Several boards can have the same level for one device, such as the two OrangeCrab sizes, and no level proves which board is connected: boards the catalog doesn't know can look the same.
 
 **For a build.** Upload is the common case: with `build_folder`, a host doesn't need the build's board ID or board variant. It programs the only device listed, or asks the user when there are several, and when none is listed it says the board isn't connected, mentioning any `unreachable` device as a possible cause.
 
-**Unreachable devices.** A device the engine sees but can't open, because of missing permissions or a missing driver, can't be programmed and its names can't be read, so it isn't in `devices`. When its USB IDs fit a board, it is listed in `unreachable` with those boards (every board variant at confidence 1, since names are unknown) and the action that makes it usable: `install_drivers` on Windows, `fix_device_permissions` elsewhere. Other devices the engine can't open are left out.
+**Unreachable devices.** A device the engine sees but can't open, because of missing permissions or a missing driver, can't be programmed and its names can't be read, so it isn't in `devices`. When its USB IDs fit a board, it is listed in `unreachable` with those boards (every board variant `weak`, since its names are unknown) and the action that makes it usable: `install_drivers` on Windows, `fix_device_permissions` elsewhere. Other devices the engine can't open are left out.
 
 **Device IDs.** An `id` names the device on this computer for a short time: it is made from where the device is plugged in and what it is, so it stays valid while the device stays on the same USB port, even when it is plugged in again, and survives an engine restart. IDs differ between platforms and computers. Hosts must treat them as opaque, never parse or build them, and list the devices again before asking the user to choose.
 
@@ -753,14 +759,14 @@ Lists the connected USB devices, each with an `id` for `program_board` and the b
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
 | `custom_boards` | map of board definitions | No | The host's own boards, by board ID, in the catalog format (the FPGA as `fpga_id` or `fpga`), matched as well as the catalog's. Omitted means none |
-| `build_folder` | build folder path | No | A successful build's folder. When given, only the devices that fit the build's board in its board variant are listed, in `devices` and `unreachable`, each with `build_confidence`, best first: the devices `program_board` can program that build into. The board comes from the build record, so it works for custom boards too |
+| `build_folder` | build folder path | No | A successful build's folder. When given, only the devices that fit the build's board in its board variant are listed, in `devices` and `unreachable`, each with `build_match`, strongest first: the devices `program_board` can program that build into. The board comes from the build record, so it works for custom boards too |
 
 **Table 12.** list_devices tool outputs
 
 | Field | Type | Description |
 | --- | --- | --- |
 | `devices` | list of devices | The connected devices the engine can open. See device fields in Table 13 |
-| `unreachable` | list of objects | Optional. Devices that can't be opened and whose USB IDs fit a board: `kind`, `vid`, `pid`, `bus`, `device`, `boards` (as in Table 13), `action`, the fix (see Table 5), and `build_confidence` with `build_folder` |
+| `unreachable` | list of objects | Optional. Devices that can't be opened and whose USB IDs fit a board: `kind`, `vid`, `pid`, `bus`, `device`, `boards` (as in Table 13), `action`, the fix (see Table 5), and `build_match` with `build_folder` |
 
 **Table 13.** Device fields
 
@@ -772,8 +778,8 @@ Lists the connected USB devices, each with an `id` for `program_board` and the b
 | `manufacturer`, `product` | text | Names reported by the device, when available |
 | `serial_number` | text | Serial number, when available |
 | `bus`, `device` | integer | USB bus and device number, for USB devices. The device number changes when the device is plugged in again |
-| `build_confidence` | integer | Only with `build_folder`. How sure the engine is that the device is the build's board in the build's board variant, 1 to 3, as for `boards` (1 for an unreachable device) |
-| `boards` | list of objects | Optional, omitted when empty. The boards the device may be, best first, each with `board` (its ID), `custom` (true for a board from `custom_boards`, omitted otherwise) and `variants` (the board's variants this device fits, in the board's order, each with `id`, the variant's ID, and its own `confidence`) |
+| `build_match` | enum | Only with `build_folder`. How well the device matches the build's board in the build's board variant: `strong`, `possible` or `weak`, as for `boards` (`weak` for an unreachable device) |
+| `boards` | list of objects | Optional, omitted when empty. The boards the device may be, best first, each with `board` (its ID), `custom` (true for a board from `custom_boards`, omitted otherwise) and `variants` (the board's variants this device fits, in the board's order, each with `id`, the variant's ID, and its own `match` level) |
 
 **Errors:** setup errors with `install_drivers` or `fix_device_permissions` when devices cannot be scanned. Request errors for an invalid custom board, or a build folder without a build record from a successful build. Engine errors.
 
@@ -788,8 +794,8 @@ Lists the connected USB devices, each with an `id` for `program_board` and the b
       "manufacturer": "AlhambraBits", "product": "Alhambra II v1.0A",
       "serial_number": "FTATANKC", "bus": 1, "device": 7,
       "boards": [
-        { "board": "alhambra-ii", "variants": [{ "id": "usb-flash", "confidence": 3 }] },
-        { "board": "alchitry-au", "variants": [{ "id": "usb-flash", "confidence": 1 }, { "id": "usb-ram", "confidence": 1 }] }
+        { "board": "alhambra-ii", "variants": [{ "id": "usb-flash", "match": "strong" }] },
+        { "board": "alchitry-au", "variants": [{ "id": "usb-flash", "match": "weak" }, { "id": "usb-ram", "match": "weak" }] }
       ]
     }
   ]
@@ -1037,7 +1043,7 @@ The Logix Engine was designed together with the Logix IDE, and its tools map to 
 ### Show whether the board is connected
 
 1. Call `list_devices` every few seconds while the status is on screen, and pause while a task uses the board. The Logix Engine has no device-change notification, so the frontend polls.
-2. Look for the selected board and board variant in each device's `boards`. Show "possibly connected" when a device fits, and "not connected" when none does. No USB match proves which board is plugged in, since different boards can look the same, so the Logix IDE never claims more than "possibly"; a frontend can compare `confidence` to order or highlight matches.
+2. Look for the selected board and board variant in each device's `boards`. Show "connected" when a device fits, and "not connected" when none does; Upload then checks. A frontend can use the `match` levels to order the boards a device may be, naming the strongest and counting the weak ones, but no USB match proves which board is plugged in.
 3. When no device fits but `unreachable` has one, show its `action` instead, such as fixing device permissions. A device seen but not usable is a common reason a board "isn't found".
 4. Device IDs stay the same while a device stays on its USB port, so a selection survives polling and replugging into the same port.
 
@@ -1045,7 +1051,7 @@ The Logix Engine was designed together with the Logix IDE, and its tools map to 
 
 1. Call `build`. If it fails, show its diagnostics and stop; `program_board` never builds.
 2. Call `list_devices` with the build folder. It lists only devices that fit the build's board and board variant, so the frontend never needs the board ID here.
-3. One device: use it. Several: ask the user, with any device at `build_confidence` 3 pre-selected. None: say the board isn't connected, and mention any `unreachable` device and its action.
+3. One device: use it. Several: ask the user, with a `strong` `build_match` device pre-selected when there is exactly one. None: say the board isn't connected, and mention any `unreachable` device and its action.
 4. Call `program_board` with the build folder and the chosen device `id`.
 5. On `connect_board` or `disconnect_devices`, list the devices again and let the user retry. Never build or guess a device ID.
 

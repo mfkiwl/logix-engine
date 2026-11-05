@@ -47,12 +47,11 @@ pub struct Device {
     /// for a device that is no known board.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub boards: Vec<BoardMatch>,
-    /// How sure the engine is that the device is the board of the given
-    /// build, in the build's variant, from 1 to 3 as in boards. Present
-    /// only when list_devices was given a build_folder.
+    /// How well the device matches the given build's board in the build's
+    /// variant: strong, possible or weak, as in boards. Present only when
+    /// list_devices was given a build_folder.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[schemars(range(min = 1, max = 3))]
-    pub build_confidence: Option<u8>,
+    pub build_match: Option<MatchLevel>,
     /// Where the device is plugged in, such as 1-2.3 (bus, then ports).
     #[serde(skip)]
     #[schemars(skip)]
@@ -84,19 +83,19 @@ pub struct BoardMatch {
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub custom: bool,
     /// The board's variants this device fits, in the board's order, each
-    /// with its own confidence. Use the confidence of the variant you mean,
+    /// with its own match level. Use the level of the variant you mean,
     /// such as the build's.
     pub variants: Vec<VariantMatch>,
 }
 
 impl BoardMatch {
-    /// The highest confidence of the board's variants, for sorting.
-    pub fn best_confidence(&self) -> u8 {
+    /// The strongest match level of the board's variants, for sorting.
+    pub fn best_level(&self) -> MatchLevel {
         self.variants
             .iter()
-            .map(|v| v.confidence)
+            .map(|v| v.level)
             .max()
-            .unwrap_or(0)
+            .unwrap_or(MatchLevel::Weak)
     }
 }
 
@@ -106,23 +105,34 @@ impl BoardMatch {
 pub struct VariantMatch {
     /// The variant's ID within the board, such as usb-flash.
     pub id: String,
-    /// How sure the engine is that the device is the board in this variant,
-    /// from 1 to 3: higher is surer, and 3 is always the highest. Compare it,
-    /// such as to pre-select a device at 3; how the engine rates may improve
-    /// between versions. No rating proves which board is connected, and
-    /// several boards can have the same one.
-    #[schemars(range(min = 1, max = 3))]
-    pub confidence: u8,
+    /// How well the device matches the board in this variant: strong,
+    /// possible or weak. See MatchLevel.
+    #[serde(rename = "match")]
+    pub level: MatchLevel,
 }
 
-/// The highest confidence: the device reports a name or serial number
-/// specific to the board.
-pub const CONFIDENCE_HIGH: u8 = 3;
-/// The board's name pattern matched, but the name is a USB chip's factory
-/// default, which many boards report.
-pub const CONFIDENCE_MEDIUM: u8 = 2;
-/// Only the USB IDs matched, or the device's names can't be read.
-pub const CONFIDENCE_LOW: u8 = 1;
+/// How well a device matches a board, by what it means for the user, not
+/// by its cause. The criteria are internal to the engine and change
+/// without notice, so hosts must not infer why a device matched; they may
+/// only show the level and compare levels (weak < possible < strong). No
+/// level proves which board is connected.
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
+)]
+#[serde(rename_all = "lowercase")]
+pub enum MatchLevel {
+    /// The device fits the board, but so do many other boards.
+    Weak,
+    /// The device could be the board, but a few other boards look the
+    /// same.
+    Possible,
+    /// The device is very likely the board.
+    Strong,
+}
+
+/// When a device matches boards only by their USB IDs, and at most this
+/// many, they are possible matches rather than weak ones.
+const FEW_BOARDS: usize = 3;
 
 /// Product names that USB chips report out of the factory, which many boards
 /// keep. A match on one of these says little about the board.
@@ -147,20 +157,22 @@ pub fn is_factory_default_name(name: &str) -> bool {
         .any(|d| d.eq_ignore_ascii_case(name))
 }
 
-/// How sure a match of a device to a variant's filter is (the device
-/// matches it): high for a matched serial pattern or a board-specific name,
-/// medium for a matched factory default name, low for USB IDs only.
-pub fn confidence(device: &Device, filter: &UsbFilter) -> u8 {
+/// The level of a device's match to a variant's filter, on its own
+/// (`board_matches` then considers all of the device's matches): strong for
+/// a matched serial pattern or a board-specific name, possible for a
+/// matched factory default name, weak for USB IDs only or a device whose
+/// names can't be read. Internal criteria: hosts only see the level.
+pub fn match_level(device: &Device, filter: &UsbFilter) -> MatchLevel {
     if !device.reachable {
-        return CONFIDENCE_LOW;
+        return MatchLevel::Weak;
     }
     if filter.serial_regex.is_some() {
-        return CONFIDENCE_HIGH;
+        return MatchLevel::Strong;
     }
     match (&filter.product_regex, &device.product) {
-        (Some(_), Some(name)) if is_factory_default_name(name) => CONFIDENCE_MEDIUM,
-        (Some(_), Some(_)) => CONFIDENCE_HIGH,
-        _ => CONFIDENCE_LOW,
+        (Some(_), Some(name)) if is_factory_default_name(name) => MatchLevel::Possible,
+        (Some(_), Some(_)) => MatchLevel::Strong,
+        _ => MatchLevel::Weak,
     }
 }
 
@@ -180,17 +192,16 @@ pub struct UnreachableDevice {
     pub bus: u8,
     /// USB device number on its bus.
     pub device: u8,
-    /// The boards whose USB IDs it has. Every variant's confidence is the
-    /// lowest, 1, since its names can't be read.
+    /// The boards whose USB IDs it has. Every match is weak, since its
+    /// names can't be read.
     pub boards: Vec<BoardMatch>,
     /// What makes the device usable, such as fix_device_permissions.
     pub action: Action,
-    /// The confidence that it is the given build's board, always 1 since
-    /// its names can't be read. Present only when list_devices was given a
+    /// How well it matches the given build's board: always weak, since its
+    /// names can't be read. Present only when list_devices was given a
     /// build_folder.
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[schemars(range(min = 1, max = 3))]
-    pub build_confidence: Option<u8>,
+    pub build_match: Option<MatchLevel>,
 }
 
 /// A board to match devices against: its ID, whether it came from the
@@ -293,7 +304,7 @@ impl Device {
             bus,
             device,
             boards: Vec::new(),
-            build_confidence: None,
+            build_match: None,
             location,
             reachable,
         }
@@ -330,12 +341,23 @@ pub fn matches(device: &Device, filter: &UsbFilter) -> bool {
         && fits(&filter.serial_regex, &device.serial_number)
 }
 
-/// The boards a device may be, best first: by their best variant's
-/// confidence, then catalog boards before custom ones, then by board ID.
-/// Each variant has its own confidence. For a device the engine can't open,
-/// only the USB IDs are compared (its names are unknown), so every match is
-/// low.
+/// The boards a device may be, best first: by their best variant's match
+/// level, then catalog boards before custom ones, then by board ID. Each
+/// variant has its own level. For a device the engine can't open, only the
+/// USB IDs are compared (its names are unknown), so every match is weak.
+/// When an open device matches only by USB IDs, and only a few boards, those
+/// matches are possible rather than weak.
 pub fn board_matches(device: &Device, boards: &[Candidate]) -> Vec<BoardMatch> {
+    board_matches_and_promotion(device, boards).0
+}
+
+/// As board_matches, and whether the device's weak matches were raised to
+/// possible (few boards share its USB IDs), so a level computed apart, such
+/// as a build's, can be raised the same way.
+pub fn board_matches_and_promotion(
+    device: &Device,
+    boards: &[Candidate],
+) -> (Vec<BoardMatch>, bool) {
     let mut out = Vec::new();
     for b in boards {
         let mut variants = Vec::new();
@@ -346,10 +368,9 @@ pub fn board_matches(device: &Device, boards: &[Candidate]) -> Vec<BoardMatch> {
                 same_ids(device, &c.usb)
             };
             if hit {
-                let confidence = confidence(device, &c.usb);
                 variants.push(VariantMatch {
                     id: c.id.clone(),
-                    confidence,
+                    level: match_level(device, &c.usb),
                 });
             }
         }
@@ -361,10 +382,21 @@ pub fn board_matches(device: &Device, boards: &[Candidate]) -> Vec<BoardMatch> {
             });
         }
     }
+    let promoted = device.reachable
+        && !out.is_empty()
+        && out.len() <= FEW_BOARDS
+        && out.iter().all(|m| m.best_level() == MatchLevel::Weak);
+    if promoted {
+        for m in &mut out {
+            for v in &mut m.variants {
+                v.level = MatchLevel::Possible;
+            }
+        }
+    }
     out.sort_by(|a, b| {
-        (b.best_confidence(), a.custom, &a.board).cmp(&(a.best_confidence(), b.custom, &b.board))
+        (b.best_level(), a.custom, &a.board).cmp(&(a.best_level(), b.custom, &b.board))
     });
-    out
+    (out, promoted)
 }
 
 /// What makes a device the engine can't open usable, on this platform.
@@ -549,7 +581,7 @@ pub mod tests {
     }
 
     #[test]
-    fn matching_boards_with_confidence() {
+    fn matching_boards_with_levels() {
         let catalog = crate::catalog::builtin();
         let boards: Vec<Candidate> = catalog
             .boards
@@ -565,8 +597,8 @@ pub mod tests {
         let alhambra = device("0403", "6010", Some("Alhambra II v1.0A"), Some("FT1"), 3);
         let m = board_matches(&alhambra, &boards);
         assert_eq!(m[0].board, "alhambra-ii");
-        assert_eq!(m[0].best_confidence(), CONFIDENCE_HIGH);
-        assert!(m[1..].iter().all(|m| m.best_confidence() == CONFIDENCE_LOW));
+        assert_eq!(m[0].best_level(), MatchLevel::Strong);
+        assert!(m[1..].iter().all(|m| m.best_level() == MatchLevel::Weak));
         assert!(
             ids(&m).contains(&"alchitry-au".to_string()),
             "a generic FTDI filter"
@@ -583,7 +615,7 @@ pub mod tests {
         );
         let m = board_matches(&nano9k, &boards);
         assert_eq!(m[0].board, "sipeed-tang-nano-9k");
-        assert_eq!(m[0].best_confidence(), CONFIDENCE_HIGH);
+        assert_eq!(m[0].best_level(), MatchLevel::Strong);
 
         // Both iCESugar-Pro variants, and not the other iCESugar boards.
         let pro = device(
@@ -596,32 +628,62 @@ pub mod tests {
         let m = board_matches(&pro, &boards);
         assert_eq!(ids(&m), ["icesugar-pro"]);
         assert_eq!(m[0].variants.len(), 2);
-        assert_eq!(m[0].best_confidence(), CONFIDENCE_HIGH, "a serial pattern");
+        assert_eq!(m[0].best_level(), MatchLevel::Strong, "a serial pattern");
 
-        // A factory default name: medium for the boards that expect it,
-        // before the low ones; a board-specific name in the same pattern
-        // is high.
+        // A factory default name: possible for the boards that expect it,
+        // before the weak ones; a board-specific name in the same pattern
+        // is strong.
         let ftdi = device("0403", "6010", Some("Dual RS232-HS"), None, 4);
         let m = board_matches(&ftdi, &boards);
         let go = m.iter().find(|m| m.board == "go-board").unwrap();
-        assert_eq!(go.best_confidence(), CONFIDENCE_MEDIUM);
-        assert_eq!(m[0].best_confidence(), CONFIDENCE_MEDIUM);
-        assert_eq!(m.last().unwrap().best_confidence(), CONFIDENCE_LOW);
+        assert_eq!(go.best_level(), MatchLevel::Possible);
+        assert_eq!(m[0].best_level(), MatchLevel::Possible);
+        assert_eq!(m.last().unwrap().best_level(), MatchLevel::Weak);
         let icebreaker = device("0403", "6010", Some("iCEBreaker V1.0e"), None, 5);
         let m = board_matches(&icebreaker, &boards);
         assert_eq!(
-            (m[0].board.as_str(), m[0].best_confidence()),
-            ("icebreaker", CONFIDENCE_HIGH)
+            (m[0].board.as_str(), m[0].best_level()),
+            ("icebreaker", MatchLevel::Strong)
         );
 
-        // Can't be opened: every board with these USB IDs, as chip.
+        // Can't be opened: every board with these USB IDs, weak, even when
+        // only a few boards have them.
         let mut locked = pro.clone();
         locked.reachable = false;
         let m = board_matches(&locked, &boards);
         assert_eq!(ids(&m), ["icesugar-1-5", "icesugar-nano", "icesugar-pro"]);
-        assert!(m.iter().all(|m| m.best_confidence() == CONFIDENCE_LOW));
+        assert!(m.iter().all(|m| m.best_level() == MatchLevel::Weak));
 
         assert!(board_matches(&device("1234", "5678", None, None, 1), &boards).is_empty());
+
+        // USB IDs only, shared by a few boards: possible; by many: weak.
+        let few: Vec<UsbFilter> = (0..FEW_BOARDS).map(|_| filter(None)).collect();
+        let variants: Vec<Vec<Variant>> = few
+            .iter()
+            .map(|f| {
+                vec![Variant {
+                    usb: f.clone(),
+                    ..catalog.boards["alhambra-ii"].variants[0].clone()
+                }]
+            })
+            .collect();
+        let names: Vec<String> = (0..FEW_BOARDS + 1).map(|i| format!("b{i}")).collect();
+        let candidates = |n: usize| -> Vec<Candidate> {
+            (0..n)
+                .map(|i| Candidate {
+                    id: &names[i],
+                    custom: true,
+                    variants: &variants[i % variants.len()],
+                })
+                .collect()
+        };
+        let plain = device("0403", "6010", Some("Something"), None, 6);
+        let (m, promoted) = board_matches_and_promotion(&plain, &candidates(FEW_BOARDS));
+        assert!(promoted);
+        assert!(m.iter().all(|m| m.best_level() == MatchLevel::Possible));
+        let (m, promoted) = board_matches_and_promotion(&plain, &candidates(FEW_BOARDS + 1));
+        assert!(!promoted);
+        assert!(m.iter().all(|m| m.best_level() == MatchLevel::Weak));
     }
 
     #[test]

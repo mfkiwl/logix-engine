@@ -3214,7 +3214,7 @@
   },
   {
     "name": "list_devices",
-    "description": "Lists the USB devices connected to this computer, with their USB IDs, names and serial numbers, and for each the boards it may be: catalog boards, and the request's custom_boards, best first, each with a confidence from 1 to 3 (higher is surer; 3 is the highest) and the variants it fits. program_board needs the id of one of these devices. Given a build_folder, it lists only the devices that fit that build's board and variant, best first, each with its build_confidence: program the only one, or ask the user when there are several. Devices that need a driver or permissions first are listed apart, under unreachable, with the fix.",
+    "description": "Lists the USB devices connected to this computer, with their USB IDs, names and serial numbers, and for each the boards it may be: catalog boards, and the request's custom_boards, best first, each with the variants it fits and how well it matches: strong (very likely this board), possible (a few other boards look the same) or weak (many boards fit). Show the level as it is: how the engine decides it is internal and changes without notice. program_board needs the id of one of these devices. Given a build_folder, it lists only the devices that fit that build's board and variant, best first, each with its build_match: program the only one, or ask the user when there are several. Devices that need a driver or permissions first are listed apart, under unreachable, with the fix.",
     "inputSchema": {
       "$defs": {
         "Architecture": {
@@ -3461,7 +3461,7 @@
       "properties": {
         "build_folder": {
           "default": null,
-          "description": "The build folder of a successful build, as an absolute path. When\ngiven, only devices that fit the build's board in its variant are\nlisted (in devices and unreachable), each with build_confidence, best\nfirst: the devices program_board can program that build into. The\nbuild's board comes from its build record, custom boards included.",
+          "description": "The build folder of a successful build, as an absolute path. When\ngiven, only devices that fit the build's board in its variant are\nlisted (in devices and unreachable), each with build_match, best\nfirst: the devices program_board can program that build into. The\nbuild's board comes from its build record, custom boards included.",
           "type": [
             "string",
             "null"
@@ -3541,7 +3541,7 @@
               "type": "boolean"
             },
             "variants": {
-              "description": "The board's variants this device fits, in the board's order, each\nwith its own confidence. Use the confidence of the variant you mean,\nsuch as the build's.",
+              "description": "The board's variants this device fits, in the board's order, each\nwith its own match level. Use the level of the variant you mean,\nsuch as the build's.",
               "items": {
                 "$ref": "#/$defs/VariantMatch"
               },
@@ -3565,14 +3565,16 @@
               },
               "type": "array"
             },
-            "build_confidence": {
-              "description": "How sure the engine is that the device is the board of the given\nbuild, in the build's variant, from 1 to 3 as in boards. Present\nonly when list_devices was given a build_folder.",
-              "maximum": 3,
-              "minimum": 1,
-              "type": [
-                "integer",
-                "null"
-              ]
+            "build_match": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/MatchLevel"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "How well the device matches the given build's board in the build's\nvariant: strong, possible or weak, as in boards. Present only when\nlist_devices was given a build_folder."
             },
             "bus": {
               "description": "USB bus number.",
@@ -3643,6 +3645,26 @@
             }
           ]
         },
+        "MatchLevel": {
+          "description": "How well a device matches a board, by what it means for the user, not\nby its cause. The criteria are internal to the engine and change\nwithout notice, so hosts must not infer why a device matched; they may\nonly show the level and compare levels (weak < possible < strong). No\nlevel proves which board is connected.",
+          "oneOf": [
+            {
+              "const": "weak",
+              "description": "The device fits the board, but so do many other boards.",
+              "type": "string"
+            },
+            {
+              "const": "possible",
+              "description": "The device could be the board, but a few other boards look the\nsame.",
+              "type": "string"
+            },
+            {
+              "const": "strong",
+              "description": "The device is very likely the board.",
+              "type": "string"
+            }
+          ]
+        },
         "UnreachableDevice": {
           "additionalProperties": false,
           "description": "A device the engine sees but can't open, so it can't read its names or\nprogram it: it needs a driver or permissions first. Listed only when its\nUSB IDs fit a board.",
@@ -3652,20 +3674,22 @@
               "description": "What makes the device usable, such as fix_device_permissions."
             },
             "boards": {
-              "description": "The boards whose USB IDs it has. Every variant's confidence is the\nlowest, 1, since its names can't be read.",
+              "description": "The boards whose USB IDs it has. Every match is weak, since its\nnames can't be read.",
               "items": {
                 "$ref": "#/$defs/BoardMatch"
               },
               "type": "array"
             },
-            "build_confidence": {
-              "description": "The confidence that it is the given build's board, always 1 since\nits names can't be read. Present only when list_devices was given a\nbuild_folder.",
-              "maximum": 3,
-              "minimum": 1,
-              "type": [
-                "integer",
-                "null"
-              ]
+            "build_match": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/MatchLevel"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "How well it matches the given build's board: always weak, since its\nnames can't be read. Present only when list_devices was given a\nbuild_folder."
             },
             "bus": {
               "description": "USB bus number.",
@@ -3707,20 +3731,18 @@
           "additionalProperties": false,
           "description": "A variant of a board that a device fits.",
           "properties": {
-            "confidence": {
-              "description": "How sure the engine is that the device is the board in this variant,\nfrom 1 to 3: higher is surer, and 3 is always the highest. Compare it,\nsuch as to pre-select a device at 3; how the engine rates may improve\nbetween versions. No rating proves which board is connected, and\nseveral boards can have the same one.",
-              "maximum": 3,
-              "minimum": 1,
-              "type": "integer"
-            },
             "id": {
               "description": "The variant's ID within the board, such as usb-flash.",
               "type": "string"
+            },
+            "match": {
+              "$ref": "#/$defs/MatchLevel",
+              "description": "How well the device matches the board in this variant: strong,\npossible or weak. See MatchLevel."
             }
           },
           "required": [
             "id",
-            "confidence"
+            "match"
           ],
           "type": "object"
         }
@@ -3808,7 +3830,7 @@
               "type": "boolean"
             },
             "variants": {
-              "description": "The board's variants this device fits, in the board's order, each\nwith its own confidence. Use the confidence of the variant you mean,\nsuch as the build's.",
+              "description": "The board's variants this device fits, in the board's order, each\nwith its own match level. Use the level of the variant you mean,\nsuch as the build's.",
               "items": {
                 "$ref": "#/$defs/VariantMatch"
               },
@@ -3871,14 +3893,16 @@
               },
               "type": "array"
             },
-            "build_confidence": {
-              "description": "How sure the engine is that the device is the board of the given\nbuild, in the build's variant, from 1 to 3 as in boards. Present\nonly when list_devices was given a build_folder.",
-              "maximum": 3,
-              "minimum": 1,
-              "type": [
-                "integer",
-                "null"
-              ]
+            "build_match": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/MatchLevel"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "How well the device matches the given build's board in the build's\nvariant: strong, possible or weak, as in boards. Present only when\nlist_devices was given a build_folder."
             },
             "bus": {
               "description": "USB bus number.",
@@ -3949,24 +3973,42 @@
             }
           ]
         },
+        "MatchLevel": {
+          "description": "How well a device matches a board, by what it means for the user, not\nby its cause. The criteria are internal to the engine and change\nwithout notice, so hosts must not infer why a device matched; they may\nonly show the level and compare levels (weak < possible < strong). No\nlevel proves which board is connected.",
+          "oneOf": [
+            {
+              "const": "weak",
+              "description": "The device fits the board, but so do many other boards.",
+              "type": "string"
+            },
+            {
+              "const": "possible",
+              "description": "The device could be the board, but a few other boards look the\nsame.",
+              "type": "string"
+            },
+            {
+              "const": "strong",
+              "description": "The device is very likely the board.",
+              "type": "string"
+            }
+          ]
+        },
         "VariantMatch": {
           "additionalProperties": false,
           "description": "A variant of a board that a device fits.",
           "properties": {
-            "confidence": {
-              "description": "How sure the engine is that the device is the board in this variant,\nfrom 1 to 3: higher is surer, and 3 is always the highest. Compare it,\nsuch as to pre-select a device at 3; how the engine rates may improve\nbetween versions. No rating proves which board is connected, and\nseveral boards can have the same one.",
-              "maximum": 3,
-              "minimum": 1,
-              "type": "integer"
-            },
             "id": {
               "description": "The variant's ID within the board, such as usb-flash.",
               "type": "string"
+            },
+            "match": {
+              "$ref": "#/$defs/MatchLevel",
+              "description": "How well the device matches the board in this variant: strong,\npossible or weak. See MatchLevel."
             }
           },
           "required": [
             "id",
-            "confidence"
+            "match"
           ],
           "type": "object"
         }

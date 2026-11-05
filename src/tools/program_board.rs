@@ -304,36 +304,37 @@ async fn check_fpga(
 }
 
 /// The catalog boards with the FPGA of this ID code that the device most
-/// likely is: of those whose USB filters it matches, the ones with the
-/// highest confidence, as list_devices rates them.
+/// likely is: of those it matches, the ones at its strongest match level,
+/// as list_devices rates them.
 pub fn boards_with_fpga(code: u32, device: &Device) -> Vec<String> {
     let catalog = crate::catalog::builtin();
-    let rated: Vec<(u8, &str)> = catalog
+    let candidates: Vec<devices::Candidate> = catalog
         .boards
-        .values()
-        .filter(|b| {
-            catalog
-                .fpgas
-                .get(&b.fpga_id)
-                .and_then(|f| f.jtag_idcode.as_deref())
-                .and_then(crate::catalog::parse_idcode)
-                == Some(code)
-        })
-        .filter_map(|b| {
-            let best = b
-                .variants
-                .iter()
-                .filter(|v| devices::matches(device, &v.usb))
-                .map(|v| devices::confidence(device, &v.usb))
-                .max()?;
-            Some((best, b.description.as_str()))
+        .iter()
+        .map(|(id, b)| devices::Candidate {
+            id,
+            custom: false,
+            variants: &b.variants,
         })
         .collect();
-    let top = rated.iter().map(|(c, _)| *c).max().unwrap_or(0);
-    rated
+    let has_fpga = |board: &str| {
+        catalog
+            .boards
+            .get(board)
+            .and_then(|b| catalog.fpgas.get(&b.fpga_id))
+            .and_then(|f| f.jtag_idcode.as_deref())
+            .and_then(crate::catalog::parse_idcode)
+            == Some(code)
+    };
+    let rated: Vec<_> = devices::board_matches(device, &candidates)
         .into_iter()
-        .filter(|(c, _)| *c == top)
-        .map(|(_, name)| name.to_string())
+        .filter(|m| has_fpga(&m.board))
+        .collect();
+    let top = rated.iter().map(|m| m.best_level()).max();
+    rated
+        .iter()
+        .filter(|m| Some(m.best_level()) == top)
+        .map(|m| catalog.boards[&m.board].description.clone())
         .collect()
 }
 

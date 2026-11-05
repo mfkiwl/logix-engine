@@ -8,7 +8,7 @@ use serde::{Deserialize, Serialize};
 use super::EngineTool;
 use crate::board::BoardInputDefinition;
 use crate::catalog;
-use crate::devices::{self, Candidate, Device, UnreachableDevice};
+use crate::devices::{self, Candidate, Device, MatchLevel, UnreachableDevice};
 use crate::errors::ToolError;
 use crate::state::EngineState;
 
@@ -18,11 +18,13 @@ impl EngineTool for ListDevices {
     const NAME: &'static str = "list_devices";
     const DESCRIPTION: &'static str = "Lists the USB devices connected to this computer, with \
         their USB IDs, names and serial numbers, and for each the boards it may be: catalog \
-        boards, and the request's custom_boards, best first, each with a confidence from 1 to 3 \
-        (higher is surer; 3 is the highest) and the variants it fits. \
+        boards, and the request's custom_boards, best first, each with the variants it fits and \
+        how well it matches: strong (very likely this board), possible (a few other boards look \
+        the same) or weak (many boards fit). Show the level as it is: how the engine decides it \
+        is internal and changes without notice. \
         program_board needs the id of one of these devices. Given a build_folder, it lists only \
         the devices that fit that build's board and variant, best first, each with its \
-        build_confidence: program the only one, or ask the user when there are several. \
+        build_match: program the only one, or ask the user when there are several. \
         Devices that need a driver or permissions first are listed apart, under unreachable, \
         with the fix.";
     const READ_ONLY: bool = true;
@@ -43,7 +45,7 @@ pub struct ListDevicesInput {
     pub custom_boards: BTreeMap<String, BoardInputDefinition>,
     /// The build folder of a successful build, as an absolute path. When
     /// given, only devices that fit the build's board in its variant are
-    /// listed (in devices and unreachable), each with build_confidence, best
+    /// listed (in devices and unreachable), each with build_match, best
     /// first: the devices program_board can program that build into. The
     /// build's board comes from its build record, custom boards included.
     #[serde(default)]
@@ -113,7 +115,7 @@ pub fn run_with(
         unreachable: Vec::new(),
     };
     for mut d in scan()? {
-        let build_confidence = match &build_usb {
+        let build_level = match &build_usb {
             None => None,
             Some(usb) => {
                 let fits = if d.reachable {
@@ -124,15 +126,23 @@ pub fn run_with(
                 if !fits {
                     continue;
                 }
-                Some(devices::confidence(&d, usb))
+                Some(devices::match_level(&d, usb))
             }
         };
-        let matches = devices::board_matches(&d, &boards);
+        let (matches, promoted) = devices::board_matches_and_promotion(&d, &boards);
+        // The build's level is raised as the device's other matches are.
+        let build_match = build_level.map(|l| {
+            if promoted && l == MatchLevel::Weak {
+                MatchLevel::Possible
+            } else {
+                l
+            }
+        });
         if d.reachable {
             d.boards = matches;
-            d.build_confidence = build_confidence;
+            d.build_match = build_match;
             out.devices.push(d);
-        } else if !matches.is_empty() || build_confidence.is_some() {
+        } else if !matches.is_empty() || build_match.is_some() {
             out.unreachable.push(UnreachableDevice {
                 kind: d.kind,
                 vid: d.vid,
@@ -141,14 +151,14 @@ pub fn run_with(
                 device: d.device,
                 boards: matches,
                 action: devices::unreachable_action(),
-                build_confidence,
+                build_match,
             });
         }
     }
     if build_usb.is_some() {
         // Best first; the sort is stable, so equal ones keep the USB order.
         out.devices
-            .sort_by_key(|d| std::cmp::Reverse(d.build_confidence));
+            .sort_by_key(|d| std::cmp::Reverse(d.build_match));
     }
     Ok(out)
 }
@@ -161,7 +171,6 @@ pub fn run(_state: &EngineState, input: ListDevicesInput) -> Result<ListDevicesO
 mod tests {
     use super::*;
     use crate::devices::tests::device;
-    use crate::devices::{CONFIDENCE_HIGH, CONFIDENCE_LOW};
     use serde_json::json;
 
     fn list(
@@ -193,13 +202,13 @@ mod tests {
         let bootloader = first(0).unwrap();
         // Two boards share the OrangeCrab bootloader's name: both named.
         assert_eq!(bootloader.board, "orangecrab-r02-25f");
-        assert_eq!(bootloader.best_confidence(), CONFIDENCE_HIGH);
+        assert_eq!(bootloader.best_level(), MatchLevel::Strong);
         assert_eq!(out.devices[0].boards[1].board, "orangecrab-r02-85f");
         assert_eq!(
             bootloader.variants,
             [crate::devices::VariantMatch {
                 id: "bootloader-flash".into(),
-                confidence: CONFIDENCE_HIGH,
+                level: MatchLevel::Strong,
             }]
         );
         // The FT232H adapter: the ButterStick's adapter variants, among others.
@@ -208,9 +217,9 @@ mod tests {
             .iter()
             .find(|m| m.board == "butterstick-r10-2g-85k")
             .unwrap();
-        assert_eq!(butterstick.best_confidence(), CONFIDENCE_LOW);
+        assert_eq!(butterstick.best_level(), MatchLevel::Weak);
         assert_eq!(butterstick.variants[0].id, "ft232h-ram");
-        assert_eq!(butterstick.variants[0].confidence, CONFIDENCE_LOW);
+        assert_eq!(butterstick.variants[0].level, MatchLevel::Weak);
         assert!(out.devices[2].boards.is_empty());
         assert!(out.unreachable.is_empty());
     }
@@ -236,7 +245,7 @@ mod tests {
         let named: Vec<_> = out.devices[0]
             .boards
             .iter()
-            .filter(|m| m.best_confidence() == CONFIDENCE_HIGH)
+            .filter(|m| m.best_level() == MatchLevel::Strong)
             .map(|m| (m.board.as_str(), m.custom))
             .collect();
         assert_eq!(named, [("alhambra-ii", false), ("alhambra-ii", true)]);
@@ -258,7 +267,7 @@ mod tests {
     }
 
     #[test]
-    fn each_variant_has_its_own_confidence() {
+    fn each_variant_has_its_own_level() {
         let config = |memory: &str, usb: serde_json::Value| {
             json!({
                 "id": format!("usb-{memory}"), "connection": "usb", "memory": memory,
@@ -285,9 +294,15 @@ mod tests {
         let rated: Vec<_> = mine
             .variants
             .iter()
-            .map(|v| (v.id.as_str(), v.confidence))
+            .map(|v| (v.id.as_str(), v.level))
             .collect();
-        assert_eq!(rated, [("usb-flash", 2), ("usb-ram", CONFIDENCE_LOW)]);
+        assert_eq!(
+            rated,
+            [
+                ("usb-flash", MatchLevel::Possible),
+                ("usb-ram", MatchLevel::Weak)
+            ]
+        );
     }
 
     #[test]
@@ -302,11 +317,7 @@ mod tests {
         let u = &out.unreachable[0];
         assert_eq!((u.vid.as_str(), u.pid.as_str()), ("0403", "6010"));
         assert!(u.boards.iter().any(|m| m.board == "alhambra-ii"));
-        assert!(
-            u.boards
-                .iter()
-                .all(|m| m.best_confidence() == CONFIDENCE_LOW)
-        );
+        assert!(u.boards.iter().all(|m| m.best_level() == MatchLevel::Weak));
         assert_eq!(u.action, devices::unreachable_action());
         let v = serde_json::to_value(&out).unwrap();
         assert!(
@@ -314,8 +325,12 @@ mod tests {
             "can't be programmed"
         );
         assert!(
-            v["unreachable"][0]["boards"][0].get("confidence").is_none(),
+            v["unreachable"][0]["boards"][0].get("match").is_none(),
             "per variant only"
+        );
+        assert_eq!(
+            v["unreachable"][0]["boards"][0]["variants"][0]["match"],
+            "weak"
         );
     }
 }

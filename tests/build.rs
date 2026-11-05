@@ -652,7 +652,7 @@ async fn clean_build_removes_a_folder_of_build_folders() {
 // ----- list_devices and program_board, with fake device lists. Programming
 // real boards is checked by hand on hardware.
 
-use logix_engine::devices::{CONFIDENCE_HIGH, Device};
+use logix_engine::devices::{Device, MatchLevel};
 use logix_engine::errors::ActionCode;
 use logix_engine::tools::{list_devices, program_board};
 
@@ -687,8 +687,8 @@ fn list_devices_names_the_boards_each_device_may_be() {
     let out = list_devices::run_with(Default::default(), || Ok(devices.clone())).unwrap();
     let best = &out.devices[0].boards[0];
     assert_eq!(
-        (best.board.as_str(), best.variants[0].confidence),
-        ("alhambra-ii", CONFIDENCE_HIGH)
+        (best.board.as_str(), best.variants[0].level),
+        ("alhambra-ii", MatchLevel::Strong)
     );
     assert!(
         out.devices[1]
@@ -725,12 +725,12 @@ async fn list_devices_for_a_build_lists_only_the_devices_that_fit() {
     let fit: Vec<_> = out
         .devices
         .iter()
-        .map(|d| (d.product.as_deref().unwrap(), d.build_confidence))
+        .map(|d| (d.product.as_deref().unwrap(), d.build_match))
         .collect();
-    assert_eq!(fit, [("Alhambra II v1.0A", Some(CONFIDENCE_HIGH))]);
+    assert_eq!(fit, [("Alhambra II v1.0A", Some(MatchLevel::Strong))]);
     assert!(!out.devices[0].boards.is_empty(), "still all its boards");
     assert_eq!(out.unreachable.len(), 1);
-    assert_eq!(out.unreachable[0].build_confidence, Some(1));
+    assert_eq!(out.unreachable[0].build_match, Some(MatchLevel::Weak));
 }
 
 #[tokio::test]
