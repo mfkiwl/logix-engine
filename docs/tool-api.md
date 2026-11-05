@@ -15,7 +15,7 @@ The Logix Engine is a program, `logix-engine`, that a host runs and talks to. It
 
 1. **Launch.** The host starts the Logix Engine as a child process, with command-line arguments such as `--engine-folder` (see Command line). For an AI agent, this launch command is part of the agent app's MCP server settings.
 2. **Channel.** The host writes requests to the engine's standard input and reads responses from its standard output. Each message is one JSON-RPC 2.0 document on a single line.
-3. **Handshake.** The host sends `initialize`, and the two sides agree on an MCP protocol version (the Logix Engine accepts 2026-07-28 and 2025-11-25). The engine's reply carries its name and version, the website URL, and short instructions for AI agents: what the engine does, that requests are self-contained, the error model, and links to this document and Command line on GitHub, so an agent can find the full reference.
+3. **Handshake.** The host sends `initialize`, and the two sides agree on an MCP protocol version (the Logix Engine accepts 2026-07-28 and 2025-11-25). The engine's reply carries its name and version, the website URL, and short instructions for AI agents: what the engine does, that requests are self-contained, the error model, a short form of the Default project model, and links to this document and Command line on GitHub, so an agent can find the full reference.
 4. **Discovery.** The host calls `tools/list` and gets every tool's name, description, input schema and output schema. An AI agent reads these to decide what to call; an application can rely on this document instead.
 5. **Calls.** The host calls `tools/call` with a tool's name and its arguments as a JSON object. The response carries the tool's result as JSON in `structuredContent`, or an error object when `isError` is true.
 6. **Notifications.** While a tool runs, the engine can send one-way messages that need no reply: progress, and live tool output when the host asks for it. The host can also send a cancel notification to stop a call.
@@ -1001,6 +1001,24 @@ Output:
   ]
 }
 ```
+
+## Default project model
+
+The Logix Engine doesn't impose a project model: each frontend organizes designs its own way, and requests name every folder and file. When there is no frontend with its own model, such as an AI agent starting a design from scratch, the engine suggests this one. Use it only for a new project, or a folder without a layout of its own.
+
+- **One folder** holds the project, with every file at its top level.
+- **`project.json`** holds the request values that would otherwise have to be remembered between sessions, under their request field names:
+
+  ```json
+  { "board": "alhambra-ii", "board_variant": "usb-flash", "top_module": "main" }
+  ```
+
+  `board` is anything the `board` field takes: a catalog ID, or a full definition for a board that isn't in the catalog. `board_variant` is optional: without it, requests use the board's first variant. Copy the values into each request. The engine never reads this file.
+- **`main.v`** holds the top module, `main`, or **`main.sv`** for SystemVerilog. Other source files sit next to it.
+- **One constraint file,** `pinout` with the extension of the FPGA's format: `pinout.pcf` (iCE40), `pinout.lpf` (ECP5), `pinout.cst` (Gowin) or `pinout.xdc` (Xilinx). `get_catalog` gives the board's FPGA.
+- **Testbenches** are named `<name>_tb.v` or `<name>_tb.sv`, next to the code they test (see Writing testbenches).
+- **GTKWave layouts** are named `<testbench>.gtkw`, next to the testbench, such as `main_tb.gtkw`, and passed as `layout_file`, so a layout the user saves is kept.
+- **`_build`** inside the project folder is the build folder. It is disposable (see Folders), so add it to `.gitignore` in a git repository.
 
 ## Recipes for frontend developers
 

@@ -29,7 +29,11 @@ const INSTRUCTIONS: &str = "Logix Engine builds and tests FPGA designs and progr
     tools that it installs and runs itself. Every request is self-contained: it names its own \
     board, source folder, source files and build folder, as absolute paths. Errors come back as \
     data with a category (design, setup, request, tool, engine or cancelled), a message and, \
-    when there is one, a suggested action. Full reference, including how to launch the engine and \
+    when there is one, a suggested action. For a new project with no layout of its own, use the \
+    default project model: one folder with project.json (board, board_variant, top_module), \
+    main.v, a pinout constraint file, <name>_tb.v testbenches and a _build build folder, as \
+    https://github.com/openlogix/logix-engine/blob/main/docs/tool-api.md#default-project-model \
+    describes. Full reference, including how to launch the engine and \
     write your own client: tool API https://github.com/openlogix/logix-engine/blob/main/docs/tool-api.md, \
     command line https://github.com/openlogix/logix-engine/blob/main/docs/command-line.md.";
 
@@ -118,7 +122,7 @@ impl ServerHandler for EngineServer {
 mod tests {
     use super::INSTRUCTIONS;
 
-    /// Every docs link in the instructions points to a file in this repo's docs folder.
+    /// Every docs link in the instructions points to a file, and heading, in this repo's docs.
     #[test]
     fn instructions_link_to_existing_docs() {
         let prefix = "https://github.com/openlogix/logix-engine/blob/main/";
@@ -126,10 +130,27 @@ mod tests {
             .split_whitespace()
             .filter_map(|word| word.trim_end_matches([',', '.']).strip_prefix(prefix))
             .collect();
-        assert_eq!(links, ["docs/tool-api.md", "docs/command-line.md"]);
+        assert_eq!(
+            links,
+            [
+                "docs/tool-api.md#default-project-model",
+                "docs/tool-api.md",
+                "docs/command-line.md"
+            ]
+        );
         for link in links {
-            let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(link);
-            assert!(path.is_file(), "{link} doesn't exist");
+            let (file, anchor) = link.split_once('#').unwrap_or((link, ""));
+            let path = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join(file);
+            let text =
+                std::fs::read_to_string(&path).unwrap_or_else(|_| panic!("{file} doesn't exist"));
+            if !anchor.is_empty() {
+                // GitHub's anchor for a heading: lowercase, spaces to dashes.
+                let found = text.lines().any(|line| {
+                    line.strip_prefix("## ")
+                        .is_some_and(|h| h.to_lowercase().replace(' ', "-") == anchor)
+                });
+                assert!(found, "{file} has no heading for #{anchor}");
+            }
         }
     }
 }
