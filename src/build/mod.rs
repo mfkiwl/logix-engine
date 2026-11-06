@@ -355,7 +355,7 @@ pub fn inputs_checksum(
     let mut key = serde_json::json!({
         "engine_version": crate::state::ENGINE_VERSION,
         "toolchain": [TOOLCHAIN, toolchain_version],
-        "board": req.board,
+        "board": req.board.build_key(),
         "top_module": req.top_module,
         "source_files": req.source_files,
         "constraint_file": req.constraint_file,
@@ -541,6 +541,19 @@ pub async fn build(
         && req.build_folder.join(&record.result.bitstream).is_file()
     {
         log::info!("Build in {} is up to date", req.build_folder.display());
+        // The same bitstream, but the board may differ in what doesn't
+        // change it, such as its variant or name: keep the request's, which
+        // program_board uses.
+        if record.board.checksum() != req.board.checksum() {
+            write_record(
+                &req.build_folder,
+                &BuildRecord {
+                    board_checksum: req.board.checksum(),
+                    board: req.board.clone(),
+                    ..record.clone()
+                },
+            )?;
+        }
         let mut result = record.result;
         result.up_to_date = true;
         return Ok(result);
@@ -664,10 +677,14 @@ pub async fn build(
         board: req.board.clone(),
         result: result.clone(),
     };
-    let json = serde_json::to_string_pretty(&record).unwrap_or_default() + "\n";
-    fs::write(out.join(RECORD), json).map_err(|e| io_error("write the build record", e))?;
+    write_record(out, &record)?;
     log::info!("Build in {} done", out.display());
     Ok(result)
+}
+
+fn write_record(build_folder: &Path, record: &BuildRecord) -> Result<(), ToolError> {
+    let json = serde_json::to_string_pretty(record).unwrap_or_default() + "\n";
+    fs::write(build_folder.join(RECORD), json).map_err(|e| io_error("write the build record", e))
 }
 
 #[cfg(test)]

@@ -108,9 +108,23 @@ The `board` field is a board ID: a catalog ID, such as `"icestick"`, or the ID o
 - **Format.** Each custom board is a board definition in the catalog format with its `id`: `description`, the FPGA as `fpga_id` (a catalog ID) or as a full FPGA definition in `fpga` (exactly one of them), and its `variants`, written out in full, with their USB filters. A board copied from `get_catalog` (adding its `id`, and its FPGA, and the variants' `usb` filters, which `get_catalog` leaves out) can be sent back as is; `dimensions` are ignored.
 - **Replacing catalog boards.** A custom board with a catalog board's ID replaces that catalog board for the request: for building, matching devices and listing.
 - **Checked everywhere.** Every tool checks the whole list, so a bad list, such as an ID used twice, an unknown FPGA ID or an invalid variant, is a request error in every tool, whichever board the request selects.
-- **Send the same list to every tool.** The engine keeps nothing between requests. A build's board is kept in its build record. `program_board` looks up the build's board ID again in its request (`custom_boards` first, else the catalog) and refuses the upload when that definition differs from the build's: build again. Only that one board counts, and only its definition, not where it comes from, so a custom board identical to the catalog board is the same board, and changes to other boards don't matter.
+- **Send the same list to every tool.** The engine keeps nothing between requests. A build's board is kept in its build record. `program_board` looks up the build's board again in its request and refuses the upload only when the bitstream no longer fits it (see What counts as the same board below); changes to other boards never matter.
 
-Tools that take a board also take an optional `board_variant`, the ID of one of the board's variants. The build record keeps the chosen variant, and a different board variant always means a full rebuild, like a different board, even when the choice can't change the bitstream, such as flash or RAM. `program_board` programs with the variant in the build record, so the upload always matches the build.
+Tools that take a board also take an optional `board_variant`, the ID of one of the board's variants. The build record keeps the chosen board and variant for `program_board`.
+
+**What counts as the same board.** Builds and uploads compare only what the bitstream depends on: the FPGA's settings for the build tools. Everything else about a board can change after a build without a rebuild.
+
+| Board field | Compared | Why |
+| --- | --- | --- |
+| FPGA `architecture`, `nextpnr_device`, `nextpnr_package`, `nextpnr_speed`, `nextpnr_family`, `packer_device`, `yosys_family`, `yosys_arch`, `prjxray_family` | Yes | The build tools use them: a change makes another bitstream. `build` rebuilds, and `program_board` refuses an older build (build again) |
+| Board `id` and where the board comes from (the catalog or `custom_boards`) | No | A board identical to another, under any ID, builds the same bitstream. `program_board` uses the build's board ID only to look the board up again |
+| Board `description` | No | A name for people |
+| FPGA `part_number` and `size` | No | Names for people and messages |
+| FPGA `jtag_idcode` | No | Used only when programming, to check the connected FPGA: `program_board` uses the current value |
+| Variant: which one (`board_variant`), and its `connection`, `memory`, `programmer`, `args` and `usb` filter | No | They only say how the board is programmed: a build for another variant is up to date, and `program_board` programs with the current definition of the build's variant |
+| Variant `tested` and `user_notes`, and `dimensions` | No | Information for people |
+
+The other build inputs, such as the sources, the options, the toolchain and the engine version, still count as before (see build). `program_board` looks up the build's board ID and variant ID in its own request (`custom_boards` first, else the catalog) and programs with what it finds; a board or variant that is gone, or a different FPGA setting from the table, is a request error: build again.
 
 ### Results and errors
 

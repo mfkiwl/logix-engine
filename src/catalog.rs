@@ -205,6 +205,26 @@ pub struct FpgaDefinition {
     pub jtag_idcode: Option<String>,
 }
 
+impl FpgaDefinition {
+    /// What the build depends on: the settings the synthesis, place and
+    /// route and packing tools use. Names (part number, size) and the JTAG
+    /// ID code don't change the bitstream, so changing them doesn't
+    /// rebuild.
+    pub fn build_key(&self) -> serde_json::Value {
+        serde_json::json!({
+            "architecture": self.architecture,
+            "nextpnr_device": self.nextpnr_device,
+            "nextpnr_package": self.nextpnr_package,
+            "nextpnr_speed": self.nextpnr_speed,
+            "nextpnr_family": self.nextpnr_family,
+            "packer_device": self.packer_device,
+            "yosys_family": self.yosys_family,
+            "yosys_arch": self.yosys_arch,
+            "prjxray_family": self.prjxray_family,
+        })
+    }
+}
+
 /// Reads a JTAG ID code written as 0x and 8 lowercase hex digits, such as
 /// 0x0362d093.
 pub fn parse_idcode(code: &str) -> Option<u32> {

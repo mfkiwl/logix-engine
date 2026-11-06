@@ -124,10 +124,9 @@ pub async fn run_with_programmers(
             bitstream.display()
         )));
     }
-    let board = &record.board;
+    let board = &upload_board(&record.board, &input.custom_boards, &input.build_folder)?;
     let variant = &board.variant;
     let custom = input.programmer_command.as_deref();
-    check_same_board(board, &input.custom_boards, &input.build_folder)?;
 
     let needed = state.packages.needing_install(&[TOOLCHAIN])?;
     let checks_fpga = custom.is_none() && program::checks_fpga(variant, &board.fpga);
@@ -251,21 +250,24 @@ pub async fn run_with_programmers(
     }
 }
 
-/// Checks that the build's board is still the board its ID names in this
-/// request (the request's custom_boards, else the catalog), so an upload
-/// never uses a board definition the build wasn't made with.
-pub fn check_same_board(
-    board: &crate::board::ResolvedBoard,
+/// The board to program a build with: the build's board ID and variant, as
+/// this request defines them now (its custom_boards, else the catalog), so
+/// programming uses the current way to program the board, such as fixed
+/// programmer arguments, without a rebuild. Refused only when the
+/// bitstream doesn't fit it anymore: another FPGA build setting, or the
+/// board or variant is gone.
+pub fn upload_board(
+    built: &crate::board::ResolvedBoard,
     custom: &[crate::board::CustomBoard],
     build_folder: &str,
-) -> Result<(), ToolError> {
+) -> Result<crate::board::ResolvedBoard, ToolError> {
     crate::board::check_custom_boards(custom)?;
-    // Build records from before board IDs were kept: nothing to compare.
-    let Some(id) = &board.board_id else {
-        return Ok(());
+    // Build records from before board IDs were kept: the record's board.
+    let Some(id) = &built.board_id else {
+        return Ok(built.clone());
     };
-    match crate::board::resolve(id, &Some(board.variant.id.clone()), custom) {
-        Ok(now) if now.checksum() == board.checksum() => Ok(()),
+    match crate::board::resolve(id, &Some(built.variant.id.clone()), custom) {
+        Ok(now) if now.build_key() == built.build_key() => Ok(now),
         _ => Err(ToolError::request(format!(
             "The board {id} in this request (from custom_boards, else the catalog) isn't the one {build_folder} was built for. Send the custom_boards the build had, or run build again."
         ))),

@@ -233,12 +233,13 @@ async fn builds_an_ecp5_design() {
     assert_eq!(out.timing.len(), 1, "{:?}", out.timing);
     assert_eq!(clock_names(&out), ["CLK"], "{:?}", out.timing);
 
-    // Another variant always rebuilds, even one that only changes how the
-    // board is programmed; the build record keeps it for program_board.
+    // Another variant changes only how the board is programmed, not the
+    // bitstream: up to date, and the build record keeps the new variant for
+    // program_board.
     let ram = json!({"board": "icesugar-pro", "constraint_file": "main.lpf",
                      "board_variant": "usb-ram"});
     assert!(
-        !build_it(&state, &src, ram.clone())
+        build_it(&state, &src, ram.clone())
             .await
             .unwrap()
             .up_to_date
@@ -1078,11 +1079,28 @@ async fn program_board_refuses_a_board_with_another_fpga() {
     upload(mine.clone(), json!([my_arty.clone()]))
         .await
         .unwrap();
-    // The list left out, or the board changed since the build: refused,
-    // nothing run.
+    // What doesn't change the bitstream may change after the build: the
+    // upload uses the board as the request has it now, such as new
+    // programmer arguments.
+    let mut renamed = my_arty.clone();
+    renamed["description"] = json!("Renamed");
+    renamed["variants"][1]["user_notes"] = json!("A new note.");
+    renamed["variants"][1]["args"] = json!(format!(
+        "{} --skip-reset",
+        my_arty["variants"][1]["args"].as_str().unwrap()
+    ));
+    assert_eq!(renamed["variants"][1]["id"], json!("usb-ram"));
+    upload(mine.clone(), json!([renamed])).await.unwrap();
+    let runs = std::fs::read_to_string(&log).unwrap();
+    assert!(
+        runs.lines().last().unwrap().contains("--skip-reset"),
+        "{runs}"
+    );
+    // The list left out, or the board's FPGA changed since the build:
+    // refused, nothing run.
     for custom in [json!([]), {
         let mut changed = my_arty.clone();
-        changed["description"] = json!("Changed");
+        changed["fpga_id"] = json!("xc7a100tcsg324-1");
         json!([changed])
     }] {
         let err = upload(mine.clone(), custom).await.unwrap_err();
@@ -1100,10 +1118,11 @@ async fn program_board_refuses_a_board_with_another_fpga() {
         "constraint_file": "main.xdc", "build_folder": same_folder});
     build_it(&state, &src, same_build).await.unwrap();
     upload(same_folder, json!([])).await.unwrap();
-    // A catalog build, with a custom board now replacing its ID: refused.
+    // A catalog build, with a custom board of another FPGA now replacing
+    // its ID: refused.
     let mut over = my_arty.clone();
     over["id"] = json!("arty-a7-35t");
-    over["description"] = json!("Changed");
+    over["fpga_id"] = json!("xc7a100tcsg324-1");
     let err = upload(folder.clone(), json!([over])).await.unwrap_err();
     assert_eq!(err.category, Category::Request);
 }

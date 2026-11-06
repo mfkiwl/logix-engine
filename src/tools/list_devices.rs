@@ -78,14 +78,16 @@ pub fn run_with(
         })
         .collect();
 
+    // The build's board as program_board will program it.
     let build_usb = match &input.build_folder {
-        Some(folder) => Some(
-            super::program_board::read_build(folder)?
-                .1
-                .board
-                .variant
-                .usb,
-        ),
+        Some(folder) => {
+            let built = super::program_board::read_build(folder)?.1.board;
+            Some(
+                super::program_board::upload_board(&built, &input.custom_boards, folder)?
+                    .variant
+                    .usb,
+            )
+        }
         None => None,
     };
     let mut out = ListDevicesOutput {

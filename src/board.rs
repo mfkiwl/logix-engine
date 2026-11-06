@@ -157,8 +157,16 @@ pub struct ResolvedBoard {
 }
 
 impl ResolvedBoard {
+    /// What the build depends on: the FPGA's tool settings only. The board's
+    /// name, notes, tested flag and its variant (how it's programmed) don't
+    /// change the bitstream, so changing them never rebuilds.
+    pub fn build_key(&self) -> serde_json::Value {
+        self.fpga.build_key()
+    }
+
     /// SHA-256 of the board as JSON, which is stable: struct fields and map
-    /// keys have a fixed order.
+    /// keys have a fixed order. It guards the build record against damage;
+    /// whether a build or an upload still fits uses `build_key`.
     pub fn checksum(&self) -> String {
         let json = serde_json::to_string(self).unwrap_or_default();
         hex::encode(Sha256::digest(json.as_bytes()))
@@ -269,13 +277,13 @@ mod tests {
         assert_eq!(cable.variant.usb.pid, "6014");
         // Every variant has the board's FPGA.
         assert_eq!(dfu.fpga, cable.fpga);
-        // Memory changes only the programming, and still the checksum, so
-        // the build starts over.
+        // Memory changes only the programming, not the build.
         let flash = catalog_board("icesugar-pro", &None).unwrap();
         let ram = catalog_board("icesugar-pro", &pick("usb-ram")).unwrap();
         assert_eq!(flash.fpga, ram.fpga);
         assert_ne!(flash.variant.args, ram.variant.args);
-        assert_ne!(flash.checksum(), ram.checksum());
+        assert_eq!(flash.build_key(), ram.build_key());
+        assert_ne!(flash.checksum(), ram.checksum(), "the record keeps it");
         assert_eq!(ram.name, "Icesugar Pro (RAM)");
         // An unknown variant is a request error that lists the variants.
         let e = catalog_board("butterstick-r10-2g-85k", &pick("bootloader-ram")).unwrap_err();
@@ -385,6 +393,25 @@ mod tests {
         let from_list = resolve("icesugar-pro", &ram, std::slice::from_ref(&same)).unwrap();
         let from_catalog = catalog_board("icesugar-pro", &ram).unwrap();
         assert_eq!(from_list.checksum(), from_catalog.checksum());
+    }
+
+    #[test]
+    fn only_the_fpga_tool_settings_change_the_build() {
+        let base = catalog_board("arty-a7-35t", &None).unwrap();
+        let same = |f: &dyn Fn(&mut ResolvedBoard)| {
+            let mut b = base.clone();
+            f(&mut b);
+            b.build_key() == base.build_key()
+        };
+        assert!(same(&|b| b.description = "Renamed".into()));
+        assert!(same(&|b| b.fpga.part_number = "X".into()));
+        assert!(same(&|b| b.fpga.size = "1k".into()));
+        assert!(same(&|b| b.fpga.jtag_idcode = None));
+        assert!(same(&|b| b.variant.args = "--other".into()));
+        assert!(same(&|b| b.variant.tested = false));
+        assert!(!same(&|b| b.fpga.nextpnr_device = "xc7a100tcsg324-1".into()));
+        assert!(!same(&|b| b.fpga.prjxray_family = Some("spartan7".into())));
+        assert!(!same(&|b| b.fpga.architecture = catalog::Architecture::Ecp5));
     }
 
     #[test]
