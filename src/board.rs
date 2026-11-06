@@ -1,7 +1,7 @@
 //! Boards in requests (docs/tool-api.md, Board specification): every tool
 //! that deals with boards names one by ID (`board`) and takes the same
-//! optional map of the host's own boards (`custom_boards`), by ID, in the
-//! catalog's format. A custom board with a catalog board's ID replaces that
+//! optional custom boards file (`custom_boards_file`, read by
+//! `custom_boards`): the host's own boards by ID, in the catalog's format. A custom board with a catalog board's ID replaces that
 //! board for the request. The chosen board is resolved into a complete
 //! board, which the build record keeps.
 
@@ -61,24 +61,6 @@ pub struct KnownBoard<'a> {
     pub variants: &'a [Variant],
 }
 
-/// Checks the request's custom boards: valid IDs, exactly one of fpga_id
-/// and fpga, a known FPGA ID, and valid variants. Every tool checks all of
-/// them, so a bad one fails the same way everywhere.
-pub fn check_custom_boards(custom: &CustomBoards) -> Result<(), ToolError> {
-    for (id, b) in custom {
-        let fail = |e: String| ToolError::request(format!("custom_boards: {id}: {e}"));
-        if !catalog::is_catalog_id(id) {
-            return Err(ToolError::request(format!(
-                "custom_boards: {id:?} isn't a board ID: use lowercase letters, digits and hyphens."
-            )));
-        }
-        custom_fpga(b).map_err(|e| fail(e.message))?;
-        catalog::validate_variants(&b.variants)
-            .map_err(|e| fail(format!("invalid board definition: {e}.")))?;
-    }
-    Ok(())
-}
-
 /// A custom board's FPGA: its catalog ID and definition.
 fn custom_fpga(b: &CustomBoard) -> Result<(Option<String>, FpgaDefinition), ToolError> {
     match (&b.fpga_id, &b.fpga) {
@@ -94,7 +76,8 @@ fn custom_fpga(b: &CustomBoard) -> Result<(Option<String>, FpgaDefinition), Tool
 
 /// Every board a request knows, by ID: the catalog's, with the request's
 /// custom boards replacing catalog boards of the same ID and added to the
-/// rest. The custom boards must have passed `check_custom_boards`.
+/// rest. The custom boards come from `custom_boards::load`, which checks
+/// them.
 pub fn known_boards(custom: &CustomBoards) -> BTreeMap<&str, KnownBoard<'_>> {
     let c = catalog::builtin();
     let mut all: BTreeMap<&str, KnownBoard<'_>> = c
@@ -200,14 +183,13 @@ fn configure(
 }
 
 /// Resolves the board named `id`, and its variant: one of the request's
-/// custom boards (checked here), else a catalog board. Unknown IDs, bad
+/// custom boards (from `custom_boards::load`), else a catalog board. Unknown IDs, bad
 /// custom boards and variants the board doesn't have are request errors.
 pub fn resolve(
     id: &str,
     variant: &VariantInput,
     custom: &CustomBoards,
 ) -> Result<ResolvedBoard, ToolError> {
-    check_custom_boards(custom)?;
     if let Some(b) = custom.get(id) {
         let (fpga_id, fpga) = custom_fpga(b)?;
         let (variant, name) = configure(&b.description, &b.variants, variant)?;
@@ -222,7 +204,7 @@ pub fn resolve(
     }
     let b = catalog::builtin().boards.get(id).ok_or_else(|| {
         ToolError::request(format!(
-            "{id:?} isn't a board in the catalog or in custom_boards. Use get_catalog to list the boards, or add the board to custom_boards."
+            "{id:?} isn't a board in the catalog or in the custom boards file. Use get_catalog to list the boards, or add the board to the file custom_boards_file names."
         ))
     })?;
     let (variant, name) = configure(&b.description, &b.variants, variant)?;
@@ -265,7 +247,11 @@ mod tests {
         assert_eq!(b.name, "Alhambra II");
         assert_eq!(b.variant.id, "usb-flash");
         let err = catalog_board("nope", &None).unwrap_err();
-        assert!(err.message.contains("custom_boards"), "{}", err.message);
+        assert!(
+            err.message.contains("custom boards file"),
+            "{}",
+            err.message
+        );
     }
 
     #[test]
@@ -342,23 +328,6 @@ mod tests {
             b3.checksum(),
             catalog_board("alhambra-ii", &None).unwrap().checksum()
         );
-    }
-
-    #[test]
-    fn bad_custom_boards_fail_every_request() {
-        let ok = custom(json!({"fpga_id": "ice40up5k-sg48"}));
-        let check = |list: CustomBoards| resolve("alhambra-ii", &None, &list).unwrap_err().message;
-        // Neither or both FPGA fields.
-        assert!(check(boards([("x", custom(json!({})))])).contains("exactly one"));
-        // A bad variant.
-        let mut bad = ok.clone();
-        bad.variants[0].programmer = "tinyprog".into();
-        assert!(check(boards([("mine", bad)])).contains("custom_boards: mine:"));
-        // A bad ID.
-        assert!(check(boards([("Bad ID", ok.clone())])).contains("isn't a board ID"));
-        // An unknown FPGA.
-        let unknown = custom(json!({"fpga_id": "nope"}));
-        assert!(check(boards([("y", unknown)])).contains("isn't an FPGA"));
     }
 
     #[test]

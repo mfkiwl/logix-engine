@@ -41,7 +41,7 @@ impl EngineTool for Test {
 #[serde(deny_unknown_fields)]
 pub struct TestInput {
     /// The target board's ID: a catalog ID such as alhambra-ii (get_catalog
-    /// lists them), or the ID of one of custom_boards. It selects the FPGA's
+    /// lists them), or the ID of a board in custom_boards_file. It selects the FPGA's
     /// primitive models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for
     /// Gowin or PLLE2_BASE for Xilinx.
     #[schemars(pattern(r"^[a-z0-9-]+$"))]
@@ -51,12 +51,14 @@ pub struct TestInput {
     /// the board's first variant, its default.
     #[serde(default)]
     pub board_variant: Option<String>,
-    /// The host's own boards, by board ID, in the catalog's format.
-    /// board can name one of them; one with a catalog board's ID replaces
-    /// that board in this request. Send the same boards to every tool.
-    /// Omitted means none.
+    /// The host's own boards: the absolute path of a JSON file that maps
+    /// board IDs to definitions in the catalog's format. board can name one
+    /// of them; one with a catalog board's ID replaces that board in this
+    /// request. Problems in the file come back as a request error with a
+    /// diagnostic for each, at line and column. Send the same file to every
+    /// tool. Omitted means none.
     #[serde(default)]
-    pub custom_boards: crate::board::CustomBoards,
+    pub custom_boards_file: Option<String>,
     /// The folder with the design files, as an absolute path. The testbenches
     /// run in it, so they read data files, such as with $readmemh, relative
     /// to it.
@@ -190,7 +192,7 @@ pub async fn run(
     let sources: Sources = check_sources(
         &input.board,
         &input.board_variant,
-        &input.custom_boards,
+        input.custom_boards_file.as_deref(),
         &input.source_folder,
         input.source_files,
         input.testbench_files,

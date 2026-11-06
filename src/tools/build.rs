@@ -39,7 +39,7 @@ impl EngineTool for Build {
 #[serde(deny_unknown_fields)]
 pub struct BuildInput {
     /// The target board's ID: a catalog ID such as alhambra-ii (get_catalog
-    /// lists them), or the ID of one of custom_boards.
+    /// lists them), or the ID of a board in custom_boards_file.
     #[schemars(pattern(r"^[a-z0-9-]+$"))]
     pub board: String,
     /// The board variant: the ID of one of the board's variants, which
@@ -47,12 +47,14 @@ pub struct BuildInput {
     /// the board's first variant, its default.
     #[serde(default)]
     pub board_variant: Option<String>,
-    /// The host's own boards, by board ID, in the catalog's format.
-    /// board can name one of them; one with a catalog board's ID replaces
-    /// that board in this request. Send the same boards to every tool.
-    /// Omitted means none.
+    /// The host's own boards: the absolute path of a JSON file that maps
+    /// board IDs to definitions in the catalog's format. board can name one
+    /// of them; one with a catalog board's ID replaces that board in this
+    /// request. Problems in the file come back as a request error with a
+    /// diagnostic for each, at line and column. Send the same file to every
+    /// tool. Omitted means none.
     #[serde(default)]
-    pub custom_boards: crate::board::CustomBoards,
+    pub custom_boards_file: Option<String>,
     /// Name of the top-level module, such as main.
     pub top_module: String,
     /// The folder with the design files, as an absolute path.
@@ -212,10 +214,11 @@ pub fn check_build_folder(build_folder: &str, src: &Path) -> Result<PathBuf, Too
 
 /// Checks the request and turns it into a BuildRequest.
 pub fn check(input: BuildInput) -> Result<BuildRequest, ToolError> {
-    let board = board::resolve(&input.board, &input.board_variant, &input.custom_boards)?;
     check_top_module(&input.top_module)?;
     check_defines(&input.defines)?;
     let src = check_source_folder(&input.source_folder)?;
+    let custom = crate::custom_boards::load(input.custom_boards_file.as_deref(), Some(&src))?;
+    let board = board::resolve(&input.board, &input.board_variant, &custom)?;
     if input.source_files.is_empty() {
         return Err(ToolError::request("source_files is empty."));
     }

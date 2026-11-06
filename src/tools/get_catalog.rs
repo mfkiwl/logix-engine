@@ -20,7 +20,7 @@ impl EngineTool for GetCatalog {
         the board of other tools, or to see a board's FPGA and how it is programmed. Each \
         section is returned only when asked for: {\"boards\": {\"fetch\": true}} returns all \
         boards, and {\"boards\": {\"fetch\": true, \"ids\": [\"alhambra-ii\"]}} only the listed \
-        ones. Boards include the request's custom_boards, marked custom, a custom board \
+        ones. Boards include those of the request's custom_boards_file, marked custom, a custom board \
         replacing the catalog board with its ID. The architectures section gives each FPGA family's name for people and the \
         extension of its pin constraint files. Board descriptions are the boards' names for \
         people.";
@@ -43,12 +43,14 @@ pub struct GetCatalogInput {
     /// Omitted means none.
     #[serde(default)]
     pub architectures: Option<CatalogQuery>,
-    /// The host's own boards, by board ID, in the catalog's format.
-    /// When boards are fetched, they are returned with the catalog's, with
-    /// custom true; one with a catalog board's ID replaces that board. ids
-    /// can name them. Send the same boards to every tool. Omitted means none.
+    /// The host's own boards: the absolute path of a JSON file that maps
+    /// board IDs to definitions in the catalog's format. board can name one
+    /// of them; one with a catalog board's ID replaces that board in this
+    /// request. Problems in the file come back as a request error with a
+    /// diagnostic for each, at line and column. Send the same file to every
+    /// tool. Omitted means none.
     #[serde(default)]
-    pub custom_boards: crate::board::CustomBoards,
+    pub custom_boards_file: Option<String>,
 }
 
 /// An FPGA architecture (family), as FPGA definitions name it.
@@ -103,7 +105,7 @@ pub struct CatalogBoard {
     pub dimensions: Vec<Dimension>,
     /// The ways the board can be programmed, the board's default first.
     pub variants: Vec<CatalogVariant>,
-    /// True for a board from the request's custom_boards, omitted for
+    /// True for a board from the request's custom_boards_file, omitted for
     /// catalog boards.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub custom: bool,
@@ -209,8 +211,8 @@ pub fn run(_state: &EngineState, input: GetCatalogInput) -> Result<GetCatalogOut
 }
 
 fn answer(input: GetCatalogInput) -> Result<GetCatalogOutput, ToolError> {
-    crate::board::check_custom_boards(&input.custom_boards)?;
-    let known: BTreeMap<String, CatalogBoard> = crate::board::known_boards(&input.custom_boards)
+    let custom = crate::custom_boards::load(input.custom_boards_file.as_deref(), None)?;
+    let known: BTreeMap<String, CatalogBoard> = crate::board::known_boards(&custom)
         .iter()
         .map(|(id, b)| (id.to_string(), b.into()))
         .collect();
@@ -262,9 +264,11 @@ mod tests {
         });
         let mut over = mine.clone();
         over["description"] = json!("My Alhambra");
+        let (_tmp, file) =
+            crate::custom_boards::test_file(&json!({"mine": mine, "alhambra-ii": over}));
         let out = ask(json!({
             "boards": {"fetch": true, "ids": ["mine", "alhambra-ii", "icestick"]},
-            "custom_boards": {"mine": mine, "alhambra-ii": over}
+            "custom_boards_file": file
         }))
         .unwrap();
         let b = &out.boards["mine"];
@@ -279,10 +283,12 @@ mod tests {
         assert!(json["boards"]["icestick"].get("custom").is_none());
         assert!(json["boards"]["icestick"].get("fpga").is_none());
         assert!(json["boards"]["mine"]["variants"][0].get("usb").is_none());
-        // A bad board is a request error.
-        let e =
-            ask(json!({"custom_boards": {"x": {"description": "x", "variants": []}}})).unwrap_err();
-        assert!(e.message.starts_with("custom_boards: x:"), "{}", e.message);
+        // A bad board is a request error, with a diagnostic at its line.
+        let (_tmp2, bad) =
+            crate::custom_boards::test_file(&json!({"x": {"description": "x", "variants": []}}));
+        let e = ask(json!({"custom_boards_file": bad})).unwrap_err();
+        assert_eq!(e.category, crate::errors::Category::Request);
+        assert_eq!(e.diagnostics[0].line, Some(2), "{:?}", e.diagnostics);
     }
 
     #[test]

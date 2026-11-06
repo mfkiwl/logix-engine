@@ -409,7 +409,7 @@ pub fn is_catalog_id(s: &str) -> bool {
             .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == b'-')
 }
 
-fn is_usb_id(s: &str) -> bool {
+pub fn is_usb_id(s: &str) -> bool {
     s.len() == 4 && s.bytes().all(|c| matches!(c, b'0'..=b'9' | b'a'..=b'f'))
 }
 

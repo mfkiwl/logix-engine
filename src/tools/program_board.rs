@@ -55,11 +55,14 @@ pub struct ProgramBoardInput {
     /// the logs. Not applied to a programmer_command. Defaults to false.
     #[serde(default)]
     pub verbose: bool,
-    /// The host's own boards, as sent to build: the build's board must
-    /// still be the same here, else the upload is refused (build again).
-    /// Send the same boards to every tool. Omitted means none.
+    /// The host's own boards: the absolute path of a JSON file that maps
+    /// board IDs to definitions in the catalog's format. board can name one
+    /// of them; one with a catalog board's ID replaces that board in this
+    /// request. Problems in the file come back as a request error with a
+    /// diagnostic for each, at line and column. Send the same file to every
+    /// tool. Omitted means none.
     #[serde(default)]
-    pub custom_boards: crate::board::CustomBoards,
+    pub custom_boards_file: Option<String>,
 }
 
 /// What was programmed.
@@ -124,7 +127,8 @@ pub async fn run_with_programmers(
             bitstream.display()
         )));
     }
-    let board = &upload_board(&record.board, &input.custom_boards, &input.build_folder)?;
+    let custom = crate::custom_boards::load(input.custom_boards_file.as_deref(), None)?;
+    let board = &upload_board(&record.board, &custom, &input.build_folder)?;
     let variant = &board.variant;
     let custom = input.programmer_command.as_deref();
 
@@ -251,7 +255,7 @@ pub async fn run_with_programmers(
 }
 
 /// The board to program a build with: the build's board ID and variant, as
-/// this request defines them now (its custom_boards, else the catalog), so
+/// this request defines them now (its custom boards file, else the catalog), so
 /// programming uses the current way to program the board, such as fixed
 /// programmer arguments, without a rebuild. Refused only when the
 /// bitstream doesn't fit it anymore: another FPGA build setting, or the
@@ -261,7 +265,6 @@ pub fn upload_board(
     custom: &crate::board::CustomBoards,
     build_folder: &str,
 ) -> Result<crate::board::ResolvedBoard, ToolError> {
-    crate::board::check_custom_boards(custom)?;
     // Build records from before board IDs were kept: the record's board.
     let Some(id) = &built.board_id else {
         return Ok(built.clone());
@@ -269,7 +272,7 @@ pub fn upload_board(
     match crate::board::resolve(id, &Some(built.variant.id.clone()), custom) {
         Ok(now) if now.build_key() == built.build_key() => Ok(now),
         _ => Err(ToolError::request(format!(
-            "The board {id} in this request (from custom_boards, else the catalog) isn't the one {build_folder} was built for. Send the custom_boards the build had, or run build again."
+            "The board {id} in this request (from custom_boards_file, else the catalog) isn't the one {build_folder} was built for. Send the custom boards file the build had, or run build again."
         ))),
     }
 }

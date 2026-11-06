@@ -14,7 +14,7 @@ impl EngineTool for ListDevices {
     const NAME: &'static str = "list_devices";
     const DESCRIPTION: &'static str = "Lists the USB devices connected to this computer, with \
         their USB IDs, names and serial numbers, and for each the boards it may be: catalog \
-        boards and the request's custom_boards, best first, each with the variants it fits and \
+        boards and the request's custom_boards_file, best first, each with the variants it fits and \
         how well it matches: strong (very likely this board), possible (a few other boards look \
         the same) or weak (many boards fit). Show the level as it is: how the engine decides it \
         is internal and changes without notice. \
@@ -33,12 +33,14 @@ impl EngineTool for ListDevices {
 #[derive(Debug, Default, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ListDevicesInput {
-    /// The host's own boards, in the catalog's format, each with its id.
-    /// Devices are matched against them too; matches name them with custom
-    /// true. One with a catalog board's ID replaces that board. Send the
-    /// same list to every tool. Omitted means none.
+    /// The host's own boards: the absolute path of a JSON file that maps
+    /// board IDs to definitions in the catalog's format. board can name one
+    /// of them; one with a catalog board's ID replaces that board in this
+    /// request. Problems in the file come back as a request error with a
+    /// diagnostic for each, at line and column. Send the same file to every
+    /// tool. Omitted means none.
     #[serde(default)]
-    pub custom_boards: crate::board::CustomBoards,
+    pub custom_boards_file: Option<String>,
     /// The build folder of a successful build, as an absolute path. When
     /// given, only devices that fit the build's board in its variant are
     /// listed (in devices and unreachable), each with build_match, best
@@ -67,8 +69,8 @@ pub fn run_with(
     input: ListDevicesInput,
     scan: impl FnOnce() -> Result<Vec<Device>, ToolError>,
 ) -> Result<ListDevicesOutput, ToolError> {
-    crate::board::check_custom_boards(&input.custom_boards)?;
-    let known = crate::board::known_boards(&input.custom_boards);
+    let custom = crate::custom_boards::load(input.custom_boards_file.as_deref(), None)?;
+    let known = crate::board::known_boards(&custom);
     let boards: Vec<Candidate> = known
         .values()
         .map(|b| Candidate {
@@ -83,7 +85,7 @@ pub fn run_with(
         Some(folder) => {
             let built = super::program_board::read_build(folder)?.1.board;
             Some(
-                super::program_board::upload_board(&built, &input.custom_boards, folder)?
+                super::program_board::upload_board(&built, &custom, folder)?
                     .variant
                     .usb,
             )
@@ -218,7 +220,8 @@ mod tests {
             }})
         };
         let alhambra = || vec![device("0403", "6010", Some("Alhambra II"), None, 3)];
-        let out = list(json!({"custom_boards": mine("mine")}), alhambra()).unwrap();
+        let (_t1, file) = crate::custom_boards::test_file(&mine("mine"));
+        let out = list(json!({"custom_boards_file": file}), alhambra()).unwrap();
         let strong: Vec<_> = out.devices[0]
             .boards
             .iter()
@@ -227,7 +230,8 @@ mod tests {
             .collect();
         assert_eq!(strong, [("alhambra-ii", false), ("mine", true)]);
         // One with a catalog board's ID replaces it.
-        let out = list(json!({"custom_boards": mine("alhambra-ii")}), alhambra()).unwrap();
+        let (_t2, file) = crate::custom_boards::test_file(&mine("alhambra-ii"));
+        let out = list(json!({"custom_boards_file": file}), alhambra()).unwrap();
         let named: Vec<_> = out.devices[0]
             .boards
             .iter()
@@ -236,11 +240,10 @@ mod tests {
             .collect();
         assert_eq!(named, [true]);
         // A bad list is a request error.
-        let e = list(
-            json!({"custom_boards": {"Bad ID": {"description": "x", "fpga_id": "x", "variants": []}}}),
-            vec![],
-        )
-        .unwrap_err();
+        let (_t3, bad) = crate::custom_boards::test_file(
+            &json!({"Bad ID": {"description": "x", "fpga_id": "x", "variants": []}}),
+        );
+        let e = list(json!({"custom_boards_file": bad}), vec![]).unwrap_err();
         assert_eq!(e.category, crate::errors::Category::Request);
     }
 

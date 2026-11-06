@@ -37,7 +37,7 @@ impl EngineTool for Lint {
 #[serde(deny_unknown_fields)]
 pub struct LintInput {
     /// The target board's ID: a catalog ID such as alhambra-ii (get_catalog
-    /// lists them), or the ID of one of custom_boards. It selects the FPGA's
+    /// lists them), or the ID of a board in custom_boards_file. It selects the FPGA's
     /// primitive models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for
     /// Gowin or PLLE2_BASE for Xilinx.
     #[schemars(pattern(r"^[a-z0-9-]+$"))]
@@ -47,12 +47,14 @@ pub struct LintInput {
     /// the board's first variant, its default.
     #[serde(default)]
     pub board_variant: Option<String>,
-    /// The host's own boards, by board ID, in the catalog's format.
-    /// board can name one of them; one with a catalog board's ID replaces
-    /// that board in this request. Send the same boards to every tool.
-    /// Omitted means none.
+    /// The host's own boards: the absolute path of a JSON file that maps
+    /// board IDs to definitions in the catalog's format. board can name one
+    /// of them; one with a catalog board's ID replaces that board in this
+    /// request. Problems in the file come back as a request error with a
+    /// diagnostic for each, at line and column. Send the same file to every
+    /// tool. Omitted means none.
     #[serde(default)]
-    pub custom_boards: crate::board::CustomBoards,
+    pub custom_boards_file: Option<String>,
     /// Name of the top-level module, such as main. When omitted, Verilator
     /// checks every module that no other module uses.
     #[serde(default)]
@@ -111,16 +113,17 @@ pub struct LintOutput {
 pub fn check_sources(
     board: &str,
     variant: &crate::board::VariantInput,
-    custom_boards: &crate::board::CustomBoards,
+    custom_boards_file: Option<&str>,
     source_folder: &str,
     source_files: Vec<String>,
     testbench_files: Vec<String>,
     defines: BTreeMap<String, String>,
     verbose: bool,
 ) -> Result<Sources, ToolError> {
-    let board = board::resolve(board, variant, custom_boards)?;
     check_defines(&defines)?;
     let src = check_source_folder(source_folder)?;
+    let custom = crate::custom_boards::load(custom_boards_file, Some(&src))?;
+    let board = board::resolve(board, variant, &custom)?;
     if source_files.is_empty() {
         return Err(ToolError::request("source_files is empty."));
     }
@@ -156,7 +159,7 @@ pub fn check(input: LintInput) -> Result<LintRequest, ToolError> {
         sources: check_sources(
             &input.board,
             &input.board_variant,
-            &input.custom_boards,
+            input.custom_boards_file.as_deref(),
             &input.source_folder,
             input.source_files,
             input.testbench_files,
