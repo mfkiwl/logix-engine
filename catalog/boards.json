@@ -358,7 +358,7 @@
           "connection": "bootloader",
           "memory": "flash",
           "programmer": "dfu-util",
-          "args": "-d ${VID}:${PID} -p ${PORT} -a 0 -D ${BITSTREAM} --reset",
+          "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM} --reset",
           "usb": {
             "vid": "1209",
             "pid": "5af1",
@@ -1048,7 +1048,7 @@
           "connection": "bootloader",
           "memory": "flash",
           "programmer": "dfu-util",
-          "args": "-d ${VID}:${PID} -p ${PORT} -a 0 -D ${BITSTREAM}",
+          "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM}",
           "usb": {
             "vid": "1209",
             "pid": "5bf0",
@@ -1167,7 +1167,7 @@
           "connection": "bootloader",
           "memory": "flash",
           "programmer": "dfu-util",
-          "args": "-d ${VID}:${PID} -p ${PORT} -a 0 -D ${BITSTREAM}",
+          "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM}",
           "usb": {
             "vid": "1d50",
             "pid": "6146",
@@ -1187,7 +1187,7 @@
           "connection": "bootloader",
           "memory": "flash",
           "programmer": "dfu-util",
-          "args": "-d ${VID}:${PID} -p ${PORT} -a 0 -D ${BITSTREAM}",
+          "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM}",
           "usb": {
             "vid": "1d50",
             "pid": "6146",
@@ -1598,7 +1598,7 @@
           "connection": "bootloader",
           "memory": "flash",
           "programmer": "dfu-util",
-          "args": "-d ${VID}:${PID} -p ${PORT} -a 0 -D ${BITSTREAM}",
+          "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM}",
           "usb": {
             "vid": "1209",
             "pid": "5af0",
@@ -1618,7 +1618,7 @@
           "connection": "bootloader",
           "memory": "flash",
           "programmer": "dfu-util",
-          "args": "-d ${VID}:${PID} -p ${PORT} -a 0 -D ${BITSTREAM}",
+          "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM}",
           "usb": {
             "vid": "1209",
             "pid": "5af0",
@@ -1638,7 +1638,7 @@
           "connection": "bootloader",
           "memory": "flash",
           "programmer": "dfu-util",
-          "args": "-d ${VID}:${PID} -p ${PORT} -a 0 -D ${BITSTREAM} --reset",
+          "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM} --reset",
           "usb": {
             "vid": "1209",
             "pid": "b1c0",
@@ -1854,7 +1854,7 @@
           "connection": "bootloader",
           "memory": "flash",
           "programmer": "dfu-util",
-          "args": "-d ${VID}:${PID} -p ${PORT} -a 0 -D ${BITSTREAM}",
+          "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM}",
           "usb": {
             "vid": "1d50",
             "pid": "6146",
@@ -1874,7 +1874,7 @@
           "connection": "bootloader",
           "memory": "flash",
           "programmer": "dfu-util",
-          "args": "-d ${VID}:${PID} -p ${PORT} -a 0 -D ${BITSTREAM}",
+          "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM}",
           "usb": {
             "vid": "1d50",
             "pid": "6146",

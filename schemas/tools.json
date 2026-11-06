@@ -850,7 +850,7 @@
           "description": "One way to program a board: its connection and memory, and how to\nprogram the board that way.",
           "properties": {
             "args": {
-              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\n${PORT} with its USB port path (such as 1-2.3, as dfu-util's -p\ntakes it), and ${BITSTREAM} with the bitstream path.",
+              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL_NUM} with its serial number,\n${USB_PATH} with its USB port path (such as 1-2.3, as dfu-util's -p\ntakes it), and ${BITSTREAM} with the bitstream path.",
               "type": "string"
             },
             "connection": {
@@ -1328,7 +1328,7 @@
           "description": "One way to program a board: its connection and memory, and how to\nprogram the board that way.",
           "properties": {
             "args": {
-              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\n${PORT} with its USB port path (such as 1-2.3, as dfu-util's -p\ntakes it), and ${BITSTREAM} with the bitstream path.",
+              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL_NUM} with its serial number,\n${USB_PATH} with its USB port path (such as 1-2.3, as dfu-util's -p\ntakes it), and ${BITSTREAM} with the bitstream path.",
               "type": "string"
             },
             "connection": {
@@ -1899,7 +1899,7 @@
           "description": "One way to program a board: its connection and memory, and how to\nprogram the board that way.",
           "properties": {
             "args": {
-              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\n${PORT} with its USB port path (such as 1-2.3, as dfu-util's -p\ntakes it), and ${BITSTREAM} with the bitstream path.",
+              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL_NUM} with its serial number,\n${USB_PATH} with its USB port path (such as 1-2.3, as dfu-util's -p\ntakes it), and ${BITSTREAM} with the bitstream path.",
               "type": "string"
             },
             "connection": {
@@ -2912,7 +2912,7 @@
           "description": "One way to program a board: its connection and memory, and how to\nprogram the board that way.",
           "properties": {
             "args": {
-              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\n${PORT} with its USB port path (such as 1-2.3, as dfu-util's -p\ntakes it), and ${BITSTREAM} with the bitstream path.",
+              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL_NUM} with its serial number,\n${USB_PATH} with its USB port path (such as 1-2.3, as dfu-util's -p\ntakes it), and ${BITSTREAM} with the bitstream path.",
               "type": "string"
             },
             "connection": {
@@ -3525,7 +3525,7 @@
           "description": "One way to program a board: its connection and memory, and how to\nprogram the board that way.",
           "properties": {
             "args": {
-              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\n${PORT} with its USB port path (such as 1-2.3, as dfu-util's -p\ntakes it), and ${BITSTREAM} with the bitstream path.",
+              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL_NUM} with its serial number,\n${USB_PATH} with its USB port path (such as 1-2.3, as dfu-util's -p\ntakes it), and ${BITSTREAM} with the bitstream path.",
               "type": "string"
             },
             "connection": {
@@ -3914,7 +3914,7 @@
         },
         "programmer_command": {
           "default": null,
-          "description": "A custom programmer command that replaces the board's default one,\nfor a custom setup. Its first word is a program from the\ntoolchain package, such as openFPGALoader, or an absolute path. It may\nuse ${VID}, ${PID}, ${BUS}, ${DEV}, ${SERIAL}, ${PORT} and must use\n${BITSTREAM}.",
+          "description": "A custom programmer command that replaces the board's default one,\nfor a custom setup. Its first word is a program from the\ntoolchain package, such as openFPGALoader, or an absolute path. It may\nuse ${VID}, ${PID}, ${BUS}, ${DEV}, ${SERIAL_NUM}, ${USB_PATH} and must use\n${BITSTREAM}.",
           "type": [
             "string",
             "null"

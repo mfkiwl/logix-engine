@@ -30,10 +30,10 @@ pub fn names_the_device(template: &str, devices: &[Device], device: &Device) -> 
     if template.contains("${BUS}") && template.contains("${DEV}") {
         return true;
     }
-    if template.contains("${PORT}") && devices::has_port_path(device) {
+    if template.contains("${USB_PATH}") && devices::has_port_path(device) {
         return true;
     }
-    template.contains("${SERIAL}")
+    template.contains("${SERIAL_NUM}")
         && device.serial_number.is_some()
         && !devices.iter().any(|d| {
             d.location != device.location
@@ -107,21 +107,21 @@ fn fill(word: &str, device: &Device) -> Result<String, ToolError> {
         .replace("${PID}", &device.pid)
         .replace("${BUS}", &device.bus.to_string())
         .replace("${DEV}", &device.device.to_string());
-    if w.contains("${SERIAL}") {
+    if w.contains("${SERIAL_NUM}") {
         let serial = device.serial_number.as_deref().ok_or_else(|| {
             ToolError::setup(
                 "The device has no serial number, which the programming command needs.",
             )
         })?;
-        w = w.replace("${SERIAL}", serial);
+        w = w.replace("${SERIAL_NUM}", serial);
     }
-    if w.contains("${PORT}") {
+    if w.contains("${USB_PATH}") {
         if !devices::has_port_path(device) {
             return Err(ToolError::setup(
                 "The device's USB port path is unknown, which the programming command needs.",
             ));
         }
-        w = w.replace("${PORT}", &device.location);
+        w = w.replace("${USB_PATH}", &device.location);
     }
     Ok(w)
 }
@@ -503,7 +503,7 @@ mod tests {
     fn templates_expand_per_word() {
         let d = device("0403", "6010", Some("Alhambra II"), Some("A1"), 7);
         let args = expand(
-            "--vid ${VID} --pid ${PID} --busdev-num ${BUS}:${DEV} -s ${SERIAL} ${BITSTREAM}",
+            "--vid ${VID} --pid ${PID} --busdev-num ${BUS}:${DEV} -s ${SERIAL_NUM} ${BITSTREAM}",
             &d,
             Path::new("/my proj/_build/hardware.bin"),
         )
@@ -525,7 +525,7 @@ mod tests {
         );
         let no_serial = device("0403", "6010", None, None, 7);
         assert_eq!(
-            expand("-s ${SERIAL} ${BITSTREAM}", &no_serial, Path::new("/b"))
+            expand("-s ${SERIAL_NUM} ${BITSTREAM}", &no_serial, Path::new("/b"))
                 .unwrap_err()
                 .category,
             Category::Setup
@@ -654,11 +654,11 @@ mod tests {
 
         // Bus and device number, or a serial number only this device has.
         assert!(check_alone("--busdev-num ${BUS}:${DEV} ${BITSTREAM}", &both, &nano, "x").is_ok());
-        assert!(check_alone("-s ${SERIAL} ${BITSTREAM}", &both, &nano, "x").is_ok());
+        assert!(check_alone("-s ${SERIAL_NUM} ${BITSTREAM}", &both, &nano, "x").is_ok());
         let twin = device("1d50", "602b", Some("DAPLink CMSIS-DAP"), Some("0720"), 6);
         assert!(
             check_alone(
-                "-s ${SERIAL} ${BITSTREAM}",
+                "-s ${SERIAL_NUM} ${BITSTREAM}",
                 &[nano.clone(), twin],
                 &nano,
                 "x"
@@ -797,7 +797,7 @@ mod tests {
     fn port_paths_name_the_device() {
         let nano = device("1d50", "6130", Some("OrangeCrab DFU"), None, 3);
         let twin = device("1d50", "6130", Some("OrangeCrab DFU"), None, 4);
-        let dfu = "-d ${VID}:${PID} -p ${PORT} -a 0 -D ${BITSTREAM}";
+        let dfu = "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM}";
         assert!(check_alone(dfu, &[nano.clone(), twin], &nano, "OrangeCrab").is_ok());
         let args = expand(dfu, &nano, Path::new("/b/hardware.bit")).unwrap();
         assert_eq!(args[3], "1-3");

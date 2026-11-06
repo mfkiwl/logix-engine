@@ -47,7 +47,7 @@ pub struct ProgramBoardInput {
     /// A custom programmer command that replaces the board's default one,
     /// for a custom setup. Its first word is a program from the
     /// toolchain package, such as openFPGALoader, or an absolute path. It may
-    /// use ${VID}, ${PID}, ${BUS}, ${DEV}, ${SERIAL}, ${PORT} and must use
+    /// use ${VID}, ${PID}, ${BUS}, ${DEV}, ${SERIAL_NUM}, ${USB_PATH} and must use
     /// ${BITSTREAM}.
     #[serde(default)]
     pub programmer_command: Option<String>,

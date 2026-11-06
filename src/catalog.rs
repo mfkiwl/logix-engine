@@ -12,8 +12,15 @@ use serde::{Deserialize, Serialize};
 pub const PROGRAMMERS: &[&str] = &["openfpgaloader", "iceprog", "dfu-util", "icesprog"];
 
 /// The variables a programming variant's argument template may use.
-pub const TEMPLATE_VARIABLES: &[&str] =
-    &["VID", "PID", "BUS", "DEV", "SERIAL", "PORT", "BITSTREAM"];
+pub const TEMPLATE_VARIABLES: &[&str] = &[
+    "VID",
+    "PID",
+    "BUS",
+    "DEV",
+    "SERIAL_NUM",
+    "USB_PATH",
+    "BITSTREAM",
+];
 
 /// A board: its FPGA and its variants. A board is a name: two boards with
 /// different names are unrelated, even when their hardware is identical, as
@@ -91,8 +98,8 @@ pub struct Variant {
     pub programmer: String,
     /// The programmer's arguments, as a template. The engine replaces
     /// ${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,
-    /// product ID, bus and device number, ${SERIAL} with its serial number,
-    /// ${PORT} with its USB port path (such as 1-2.3, as dfu-util's -p
+    /// product ID, bus and device number, ${SERIAL_NUM} with its serial number,
+    /// ${USB_PATH} with its USB port path (such as 1-2.3, as dfu-util's -p
     /// takes it), and ${BITSTREAM} with the bitstream path.
     pub args: String,
     /// The USB filter that finds the board's device.
@@ -851,7 +858,7 @@ mod tests {
             for c in &b.variants {
                 if c.programmer == "dfu-util" {
                     assert!(
-                        c.args.contains("-p ${PORT}"),
+                        c.args.contains("-p ${USB_PATH}"),
                         "{name} {:?}: {}",
                         c.id,
                         c.args
@@ -1099,6 +1106,9 @@ mod tests {
         assert!(check_template("-d d:${BUS}/${DEV} ${BITSTREAM}").is_ok());
         assert!(check_template("--vid ${VID}").is_err());
         assert!(check_template("${BIN_FILE}").is_err());
+        // Renamed before the first release, so they read as USB terms.
+        assert!(check_template("-p ${PORT} ${BITSTREAM}").is_err());
+        assert!(check_template("-s ${SERIAL} ${BITSTREAM}").is_err());
         assert!(check_template("${BITSTREAM").is_err());
     }
 
