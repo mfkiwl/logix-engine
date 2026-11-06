@@ -43,12 +43,12 @@ pub struct GetCatalogInput {
     /// Omitted means none.
     #[serde(default)]
     pub architectures: Option<CatalogQuery>,
-    /// The host's own boards, in the catalog's format, each with its id.
+    /// The host's own boards, by board ID, in the catalog's format.
     /// When boards are fetched, they are returned with the catalog's, with
     /// custom true; one with a catalog board's ID replaces that board. ids
-    /// can name them. Send the same list to every tool. Omitted means none.
+    /// can name them. Send the same boards to every tool. Omitted means none.
     #[serde(default)]
-    pub custom_boards: Vec<crate::board::CustomBoard>,
+    pub custom_boards: crate::board::CustomBoards,
 }
 
 /// An FPGA architecture (family), as FPGA definitions name it.
@@ -253,7 +253,7 @@ mod tests {
             answer(input)
         };
         let mine = json!({
-            "id": "mine", "description": "My board",
+            "description": "My board",
             "fpga": {"architecture": "ice40", "part_number": "X", "size": "1k",
                      "nextpnr_device": "hx1k", "nextpnr_package": "tq144"},
             "variants": [{"id": "usb-flash", "connection": "usb", "memory": "flash",
@@ -261,11 +261,10 @@ mod tests {
                 "usb": {"vid": "0403", "pid": "6010"}, "tested": false}]
         });
         let mut over = mine.clone();
-        over["id"] = json!("alhambra-ii");
         over["description"] = json!("My Alhambra");
         let out = ask(json!({
             "boards": {"fetch": true, "ids": ["mine", "alhambra-ii", "icestick"]},
-            "custom_boards": [mine, over]
+            "custom_boards": {"mine": mine, "alhambra-ii": over}
         }))
         .unwrap();
         let b = &out.boards["mine"];
@@ -280,9 +279,9 @@ mod tests {
         assert!(json["boards"]["icestick"].get("custom").is_none());
         assert!(json["boards"]["icestick"].get("fpga").is_none());
         assert!(json["boards"]["mine"]["variants"][0].get("usb").is_none());
-        // A bad list is a request error.
-        let e = ask(json!({"custom_boards": [{"id": "x", "description": "x", "variants": []}]}))
-            .unwrap_err();
+        // A bad board is a request error.
+        let e =
+            ask(json!({"custom_boards": {"x": {"description": "x", "variants": []}}})).unwrap_err();
         assert!(e.message.starts_with("custom_boards: x:"), "{}", e.message);
     }
 

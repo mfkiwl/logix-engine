@@ -70,7 +70,7 @@ The Type columns in this document use these logical types. Each maps to a JSON t
 | build folder path | string | An absolute path that satisfies the path keyword rules |
 | catalog ID | string | Lowercase letters, digits and hyphens |
 | board ID | string | A board's ID: a catalog ID, or the `id` of one of the request's `custom_boards` |
-| custom boards | list of objects | The host's own boards: board definitions, each with its `id` (lowercase letters, digits and hyphens), and the FPGA as `fpga_id` or as a full FPGA definition in `fpga`. See Board specification |
+| custom boards | map of board definitions | The host's own boards, by board ID (lowercase letters, digits and hyphens): board definitions with the FPGA as `fpga_id` or as a full FPGA definition in `fpga`. See Board specification |
 | board definition | object | A board entry in the catalog format: its `description`, its FPGA as `fpga_id`, its `variants` (a list of variants, the first being the default) and, in `get_catalog` results, its `dimensions`. Every board has the two standard dimensions, `connection` then `memory`, with values the engine defines: connection `usb` (the board's own USB port, through the programmer chip on the board), `bootloader` (its USB port in bootloader mode), the external JTAG adapters `ft2232h`, `ft232h`, `cmsis-dap` and `usb-blaster`, or `unspecified` (not known; shown as "USB"); memory `flash` (kept at power-off) or `ram` (lost at power-off). `dimensions` lists each with the values the board's variants use, in the engine's order, for showing the choices: a dimension has an `id`, a `label` for people (such as "Memory") and its `values`, each with an `id` (such as `ram`), a `label` (such as "RAM") and `help` text. It is derived by the engine, so inputs may leave it out (it is ignored). A dimension with one value is a fact about the board rather than a choice. Versions of a board with any signal on a different pin are different boards, and a board sold in several FPGA sizes is one board per size |
 | variant | object | One way to program a board, in a board definition's `variants`: its `id` within the board, such as `usb-flash` or `ft232h-ram` (catalog boards use `<connection>-<memory>`), its `connection` and `memory` values, and how to program the board that way. It names the programmer to run, such as `openfpgaloader`, and gives the full argument template for it, with variables such as `${VID}`, `${PID}`, `${BUS}`, `${DEV}`, `${SERIAL_NUM}`, `${USB_PATH}` (the device's USB port path, such as `1-2.3`, as dfu-util's `-p` takes it) and `${BITSTREAM}`, and the USB filter that finds the device: `vid`, `pid`, an optional `product_regex`, a regular expression the device's product name must match, for boards that share USB IDs, an optional `serial_regex`, a regular expression the device's serial number must match, for boards that share USB IDs and product names but whose serial numbers tell them apart, and an optional `release`, the device's release number (USB `bcdDevice`, four lowercase hex digits, such as `0500`), for boards that share USB IDs but whose USB chips differ, such as a board debugger that acts like an FTDI FT2232C/D (`0500`) rather than an FT2232H (`0700`). The engine maps the programmer name to its executable and the package that provides it, so there are no separate programmer definitions. The supported programmers are `openfpgaloader`, `iceprog`, `dfu-util` and `icesprog`, all from the toolchain package. Catalog variants also have `tested` and optional `user_notes` (see Catalog contents under the get_catalog tool); in requests, `tested` is required and `user_notes` ignored. IDs are unique within a board, and no two variants have the same connection and memory. Variants differ only in how the board is programmed: they all have the board's FPGA and the same pin file (every LED, button and clock on the same pin), so the same project works with each |
 | board variant | string | The ID of one of a board's variants, such as `"ft232h-ram"`, in requests. Omitted means the board's first variant, its default. An ID the board doesn't have is a request error that lists the board's variants |
@@ -103,12 +103,28 @@ Operations that work on a design take these fields. Paths are absolute unless no
 
 ### Board specification
 
-The `board` field is a board ID: a catalog ID, such as `"icestick"`, or the ID of one of the host's own boards. Every tool that deals with boards (`build`, `lint`, `test`, `simulate`, `program_board`, `list_devices` and `get_catalog`) takes the same optional `custom_boards` list, which is independent of the board a request selects:
+The `board` field is a board ID: a catalog ID, such as `"icestick"`, or the ID of one of the host's own boards. Every tool that deals with boards (`build`, `lint`, `test`, `simulate`, `program_board`, `list_devices` and `get_catalog`) takes the same optional `custom_boards` map, which is independent of the board a request selects:
 
-- **Format.** Each custom board is a board definition in the catalog format with its `id`: `description`, the FPGA as `fpga_id` (a catalog ID) or as a full FPGA definition in `fpga` (exactly one of them), and its `variants`, written out in full, with their USB filters. A board copied from `get_catalog` (adding its `id`, and its FPGA, and the variants' `usb` filters, which `get_catalog` leaves out) can be sent back as is; `dimensions` are ignored.
+- **Format.** A map from board ID to board definition, the same shape as the catalog's boards. Each definition has `description`, the FPGA as `fpga_id` (a catalog ID) or as a full FPGA definition in `fpga` (exactly one of them), and its `variants`, written out in full, with their USB filters. An entry of the engine's catalog file can be copied as is; one from `get_catalog` needs its variants' `usb` filters added, which `get_catalog` leaves out. `dimensions` are ignored.
+
+  ```json
+  "custom_boards": {
+    "my-tang-nano-9k": {
+      "description": "My Tang Nano 9K",
+      "fpga_id": "gw1nr-lv9qn88pc6-i5",
+      "variants": [{
+        "id": "usb-flash", "connection": "usb", "memory": "flash",
+        "programmer": "openfpgaloader",
+        "args": "--force-terminal-mode --verify -b tangnano9k -f --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+        "usb": {"vid": "0403", "pid": "6010", "product_regex": "^JTAG Debugger$", "release": "0500"},
+        "tested": true
+      }]
+    }
+  }
+  ```
 - **Replacing catalog boards.** A custom board with a catalog board's ID replaces that catalog board for the request: for building, matching devices and listing.
-- **Checked everywhere.** Every tool checks the whole list, so a bad list, such as an ID used twice, an unknown FPGA ID or an invalid variant, is a request error in every tool, whichever board the request selects.
-- **Send the same list to every tool.** The engine keeps nothing between requests. A build's board is kept in its build record. `program_board` looks up the build's board again in its request and refuses the upload only when the bitstream no longer fits it (see What counts as the same board below); changes to other boards never matter.
+- **Checked everywhere.** Every tool checks every custom board, so a bad one, such as an invalid ID, an unknown FPGA ID or an invalid variant, is a request error in every tool, whichever board the request selects.
+- **Send the same boards to every tool.** The engine keeps nothing between requests. A build's board is kept in its build record. `program_board` looks up the build's board again in its request and refuses the upload only when the bitstream no longer fits it (see What counts as the same board below); changes to other boards never matter.
 
 Tools that take a board also take an optional `board_variant`, the ID of one of the board's variants. The build record keeps the chosen board and variant for `program_board`.
 
@@ -760,7 +776,7 @@ Programs a bitstream into the board it was built for, on the device the host cho
 | `programmer` | catalog ID | The programmer that was used, such as `openfpgaloader`, or `custom` when `programmer_command` was given |
 | `commands` | list of commands | The programs this call ran, in order, so they can be run again without the engine. See Commands |
 
-**Errors:** setup errors with `connect_board` when the chosen device isn't connected anymore or another device is on its port (list the devices again), when the connected FPGA isn't the build's (see Wrong FPGA), or when the programmer doesn't find it (for a dfu-util board, also when it isn't in its bootloader mode); `disconnect_devices` when the command can't name the device and other connected devices have its USB IDs (icesprog, openFPGALoader with only `--board` or `-c`, such as for USB-Blaster and CMSIS-DAP adapters), or when the programmer itself can't tell them apart; `fix_device_permissions` or `install_drivers` when the device can't be opened. Request errors when `device` isn't a device ID, when the device doesn't match the board's USB filter, when the build folder has no build record, for an invalid `custom_boards` list, or when the build's board isn't the same anymore. Other request errors, tool failures, engine errors and cancellation.
+**Errors:** setup errors with `connect_board` when the chosen device isn't connected anymore or another device is on its port (list the devices again), when the connected FPGA isn't the build's (see Wrong FPGA), or when the programmer doesn't find it (for a dfu-util board, also when it isn't in its bootloader mode); `disconnect_devices` when the command can't name the device and other connected devices have its USB IDs (icesprog, openFPGALoader with only `--board` or `-c`, such as for USB-Blaster and CMSIS-DAP adapters), or when the programmer itself can't tell them apart; `fix_device_permissions` or `install_drivers` when the device can't be opened. Request errors when `device` isn't a device ID, when the device doesn't match the board's USB filter, when the build folder has no build record, for an invalid custom board, or when the build's board isn't the same anymore. Other request errors, tool failures, engine errors and cancellation.
 
 ## list_devices tool
 
@@ -809,7 +825,7 @@ Hosts show the level, in their own words, and compare levels (weak < possible < 
 | `build_match` | enum | Only with `build_folder`. How well the device matches the build's board in the build's board variant: `strong`, `possible` or `weak`, as for `boards` (`weak` for an unreachable device) |
 | `boards` | list of objects | Optional, omitted when empty. The boards the device may be, best first, each with `board` (its ID), `custom` (true for a board from `custom_boards`, omitted otherwise) and `variants` (the board's variants this device fits, in the board's order, each with `id`, the variant's ID, and its own `match` level) |
 
-**Errors:** setup errors with `install_drivers` or `fix_device_permissions` when devices cannot be scanned. Request errors for an invalid `custom_boards` list, or a build folder without a build record from a successful build. Engine errors.
+**Errors:** setup errors with `install_drivers` or `fix_device_permissions` when devices cannot be scanned. Request errors for an invalid custom board, or a build folder without a build record from a successful build. Engine errors.
 
 **Example**
 
@@ -1122,7 +1138,7 @@ Logic that every frontend would need and that doesn't depend on a frontend's own
 
 - Fill a board picker from `get_catalog` with `boards.fetch`, `fpgas.fetch` and `architectures.fetch` true: group boards by their FPGA's `architecture`, with the architecture's `label` and `order`, and use its `constraint_extension` for the board's pin file.
 - Show each board's `dimensions` labels and help as the board variant choices, and its `tested` and `user_notes` where the user picks.
-- A user's own boards are custom boards: keep them with the project, list them with the catalog's by sending them to `get_catalog`, and send the same `custom_boards` list with every request, whatever board is selected.
+- A user's own boards are custom boards: keep them with the project, list them with the catalog's by sending them to `get_catalog`, and send the same `custom_boards` with every request, whatever board is selected.
 
 ### Format an unsaved editor buffer
 

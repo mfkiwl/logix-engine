@@ -57,12 +57,12 @@ pub struct SimulateInput {
     /// the board's first variant, its default.
     #[serde(default)]
     pub board_variant: Option<String>,
-    /// The host's own boards, in the catalog's format, each with its id.
+    /// The host's own boards, by board ID, in the catalog's format.
     /// board can name one of them; one with a catalog board's ID replaces
-    /// that board in this request. Send the same list to every tool.
+    /// that board in this request. Send the same boards to every tool.
     /// Omitted means none.
     #[serde(default)]
-    pub custom_boards: Vec<crate::board::CustomBoard>,
+    pub custom_boards: crate::board::CustomBoards,
     /// The folder with the design files, as an absolute path. The testbench
     /// runs in it, so it reads data files, such as with $readmemh, relative
     /// to it.

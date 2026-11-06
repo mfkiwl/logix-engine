@@ -1,6 +1,6 @@
 //! Boards in requests (docs/tool-api.md, Board specification): every tool
 //! that deals with boards names one by ID (`board`) and takes the same
-//! optional list of the host's own boards (`custom_boards`), in the
+//! optional map of the host's own boards (`custom_boards`), by ID, in the
 //! catalog's format. A custom board with a catalog board's ID replaces that
 //! board for the request. The chosen board is resolved into a complete
 //! board, which the build record keeps.
@@ -14,17 +14,17 @@ use sha2::{Digest, Sha256};
 use crate::catalog::{self, Dimension, FpgaDefinition, Variant};
 use crate::errors::ToolError;
 
-/// One of the host's own boards, in the catalog's format, with its ID.
-/// Like a catalog entry, except that the FPGA can be given either as
-/// fpga_id or as a full fpga definition.
+/// The host's own boards, by board ID (lowercase letters, digits and
+/// hyphens), as board names them in requests, in the catalog's format. A
+/// catalog board's ID replaces that catalog board in the request.
+pub type CustomBoards = BTreeMap<String, CustomBoard>;
+
+/// One of the host's own boards, in the catalog's format. Like a catalog
+/// entry, except that the FPGA can be given either as fpga_id or as a full
+/// fpga definition.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct CustomBoard {
-    /// The board's ID (lowercase letters, digits and hyphens), as board
-    /// names it in requests. A catalog board's ID replaces that catalog
-    /// board in this request.
-    #[schemars(pattern(r"^[a-z0-9-]+$"))]
-    pub id: String,
     /// The board's name for people.
     pub description: String,
     /// The board's FPGA as a catalog ID, such as ice40hx4k-tq144-8k. Give
@@ -61,21 +61,16 @@ pub struct KnownBoard<'a> {
     pub variants: &'a [Variant],
 }
 
-/// Checks the request's custom boards: valid, distinct IDs, exactly one of
-/// fpga_id and fpga, a known FPGA ID, and valid variants. Every tool checks
-/// the whole list, so a bad list fails the same way everywhere.
-pub fn check_custom_boards(custom: &[CustomBoard]) -> Result<(), ToolError> {
-    let mut seen = std::collections::BTreeSet::new();
-    for b in custom {
-        let fail = |e: String| ToolError::request(format!("custom_boards: {}: {e}", b.id));
-        if !catalog::is_catalog_id(&b.id) {
+/// Checks the request's custom boards: valid IDs, exactly one of fpga_id
+/// and fpga, a known FPGA ID, and valid variants. Every tool checks all of
+/// them, so a bad one fails the same way everywhere.
+pub fn check_custom_boards(custom: &CustomBoards) -> Result<(), ToolError> {
+    for (id, b) in custom {
+        let fail = |e: String| ToolError::request(format!("custom_boards: {id}: {e}"));
+        if !catalog::is_catalog_id(id) {
             return Err(ToolError::request(format!(
-                "custom_boards: {:?} isn't a board ID: use lowercase letters, digits and hyphens.",
-                b.id
+                "custom_boards: {id:?} isn't a board ID: use lowercase letters, digits and hyphens."
             )));
-        }
-        if !seen.insert(b.id.as_str()) {
-            return Err(fail("the ID is used twice.".into()));
         }
         custom_fpga(b).map_err(|e| fail(e.message))?;
         catalog::validate_variants(&b.variants)
@@ -100,7 +95,7 @@ fn custom_fpga(b: &CustomBoard) -> Result<(Option<String>, FpgaDefinition), Tool
 /// Every board a request knows, by ID: the catalog's, with the request's
 /// custom boards replacing catalog boards of the same ID and added to the
 /// rest. The custom boards must have passed `check_custom_boards`.
-pub fn known_boards(custom: &[CustomBoard]) -> BTreeMap<&str, KnownBoard<'_>> {
+pub fn known_boards(custom: &CustomBoards) -> BTreeMap<&str, KnownBoard<'_>> {
     let c = catalog::builtin();
     let mut all: BTreeMap<&str, KnownBoard<'_>> = c
         .boards
@@ -119,14 +114,14 @@ pub fn known_boards(custom: &[CustomBoard]) -> BTreeMap<&str, KnownBoard<'_>> {
             ))
         })
         .collect();
-    for b in custom {
+    for (id, b) in custom {
         let Ok((_, fpga)) = custom_fpga(b) else {
             continue;
         };
         all.insert(
-            &b.id,
+            id,
             KnownBoard {
-                id: &b.id,
+                id,
                 custom: true,
                 description: &b.description,
                 fpga_id: b.fpga_id.as_deref(),
@@ -210,10 +205,10 @@ fn configure(
 pub fn resolve(
     id: &str,
     variant: &VariantInput,
-    custom: &[CustomBoard],
+    custom: &CustomBoards,
 ) -> Result<ResolvedBoard, ToolError> {
     check_custom_boards(custom)?;
-    if let Some(b) = custom.iter().find(|b| b.id == id) {
+    if let Some(b) = custom.get(id) {
         let (fpga_id, fpga) = custom_fpga(b)?;
         let (variant, name) = configure(&b.description, &b.variants, variant)?;
         return Ok(ResolvedBoard {
@@ -251,7 +246,14 @@ mod tests {
     }
 
     fn catalog_board(id: &str, variant: &VariantInput) -> Result<ResolvedBoard, ToolError> {
-        resolve(id, variant, &[])
+        resolve(id, variant, &CustomBoards::new())
+    }
+
+    /// Custom boards by ID.
+    fn boards<const N: usize>(list: [(&str, CustomBoard); N]) -> CustomBoards {
+        list.into_iter()
+            .map(|(id, b)| (id.to_string(), b))
+            .collect()
     }
 
     #[test]
@@ -296,9 +298,8 @@ mod tests {
         );
     }
 
-    pub(crate) fn custom(id: &str, fpga: serde_json::Value) -> CustomBoard {
+    pub(crate) fn custom(fpga: serde_json::Value) -> CustomBoard {
         let mut v = json!({
-            "id": id,
             "description": "My board",
             "variants": [{
                 "id": "usb-flash", "connection": "usb", "memory": "flash",
@@ -316,18 +317,15 @@ mod tests {
 
     #[test]
     fn custom_boards() {
-        let by_id = custom("mine", json!({"fpga_id": "ice40up5k-sg48"}));
-        let b = resolve("mine", &None, std::slice::from_ref(&by_id)).unwrap();
+        let by_id = custom(json!({"fpga_id": "ice40up5k-sg48"}));
+        let b = resolve("mine", &None, &boards([("mine", by_id.clone())])).unwrap();
         assert_eq!(b.fpga.nextpnr_device, "up5k");
         assert_eq!(b.board_id.as_deref(), Some("mine"));
-        let inline = custom(
-            "inline",
-            json!({"fpga": {
-                "architecture": "ice40", "part_number": "X", "size": "1k",
-                "nextpnr_device": "hx1k", "nextpnr_package": "tq144"
-            }}),
-        );
-        let list = [by_id.clone(), inline];
+        let inline = custom(json!({"fpga": {
+            "architecture": "ice40", "part_number": "X", "size": "1k",
+            "nextpnr_device": "hx1k", "nextpnr_package": "tq144"
+        }}));
+        let list = boards([("mine", by_id), ("inline", inline)]);
         let b2 = resolve("inline", &None, &list).unwrap();
         assert_eq!(b2.fpga.package(), "tq144");
         assert_eq!(b2.fpga_id, None);
@@ -337,8 +335,8 @@ mod tests {
             catalog_board("alhambra-ii", &None).unwrap()
         );
         // A custom board replaces the catalog board with its ID.
-        let over = custom("alhambra-ii", json!({"fpga_id": "ice40up5k-sg48"}));
-        let b3 = resolve("alhambra-ii", &None, &[over]).unwrap();
+        let over = boards([("alhambra-ii", custom(json!({"fpga_id": "ice40up5k-sg48"})))]);
+        let b3 = resolve("alhambra-ii", &None, &over).unwrap();
         assert_eq!(b3.description, "My board");
         assert_ne!(
             b3.checksum(),
@@ -348,30 +346,28 @@ mod tests {
 
     #[test]
     fn bad_custom_boards_fail_every_request() {
-        let ok = custom("mine", json!({"fpga_id": "ice40up5k-sg48"}));
-        let check = |list: &[CustomBoard]| resolve("alhambra-ii", &None, list).unwrap_err().message;
+        let ok = custom(json!({"fpga_id": "ice40up5k-sg48"}));
+        let check = |list: CustomBoards| resolve("alhambra-ii", &None, &list).unwrap_err().message;
         // Neither or both FPGA fields.
-        assert!(check(&[custom("x", json!({}))]).contains("exactly one"));
+        assert!(check(boards([("x", custom(json!({})))])).contains("exactly one"));
         // A bad variant.
         let mut bad = ok.clone();
         bad.variants[0].programmer = "tinyprog".into();
-        assert!(check(&[bad]).contains("custom_boards: mine:"));
-        // Twice the same ID, and a bad ID.
-        assert!(check(&[ok.clone(), ok.clone()]).contains("twice"));
-        let mut bad_id = ok.clone();
-        bad_id.id = "Bad ID".into();
-        assert!(check(&[bad_id]).contains("isn't a board ID"));
+        assert!(check(boards([("mine", bad)])).contains("custom_boards: mine:"));
+        // A bad ID.
+        assert!(check(boards([("Bad ID", ok.clone())])).contains("isn't a board ID"));
         // An unknown FPGA.
-        assert!(check(&[custom("y", json!({"fpga_id": "nope"}))]).contains("isn't an FPGA"));
+        let unknown = custom(json!({"fpga_id": "nope"}));
+        assert!(check(boards([("y", unknown)])).contains("isn't an FPGA"));
     }
 
     #[test]
     fn a_board_copied_from_the_catalog_can_be_sent_back() {
-        let mut copied = serde_json::to_value(&catalog::builtin().boards["icesugar-pro"]).unwrap();
+        // The catalog file's entry, as is, under any ID.
+        let copied = serde_json::to_value(&catalog::builtin().boards["icesugar-pro"]).unwrap();
         assert!(copied.get("dimensions").is_some());
-        copied["id"] = json!("my-sugar");
         let b: CustomBoard = serde_json::from_value(copied).unwrap();
-        let r = resolve("my-sugar", &pick("usb-ram"), &[b]).unwrap();
+        let r = resolve("my-sugar", &pick("usb-ram"), &boards([("my-sugar", b)])).unwrap();
         assert_eq!(r.variant.memory, "ram");
     }
 
@@ -382,7 +378,6 @@ mod tests {
         let c = catalog::builtin();
         let b = &c.boards["icesugar-pro"];
         let same = CustomBoard {
-            id: "icesugar-pro".into(),
             description: b.description.clone(),
             fpga_id: Some(b.fpga_id.clone()),
             fpga: None,
@@ -390,7 +385,7 @@ mod tests {
             variants: b.variants.clone(),
         };
         let ram = pick("usb-ram");
-        let from_list = resolve("icesugar-pro", &ram, std::slice::from_ref(&same)).unwrap();
+        let from_list = resolve("icesugar-pro", &ram, &boards([("icesugar-pro", same)])).unwrap();
         let from_catalog = catalog_board("icesugar-pro", &ram).unwrap();
         assert_eq!(from_list.checksum(), from_catalog.checksum());
     }
@@ -416,10 +411,10 @@ mod tests {
 
     #[test]
     fn known_boards_put_custom_boards_first() {
-        let list = [
-            custom("mine", json!({"fpga_id": "ice40up5k-sg48"})),
-            custom("alhambra-ii", json!({"fpga_id": "ice40up5k-sg48"})),
-        ];
+        let list = boards([
+            ("mine", custom(json!({"fpga_id": "ice40up5k-sg48"}))),
+            ("alhambra-ii", custom(json!({"fpga_id": "ice40up5k-sg48"}))),
+        ]);
         let all = known_boards(&list);
         assert!(all["mine"].custom);
         assert!(all["alhambra-ii"].custom, "replaced");

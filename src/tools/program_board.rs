@@ -57,9 +57,9 @@ pub struct ProgramBoardInput {
     pub verbose: bool,
     /// The host's own boards, as sent to build: the build's board must
     /// still be the same here, else the upload is refused (build again).
-    /// Send the same list to every tool. Omitted means none.
+    /// Send the same boards to every tool. Omitted means none.
     #[serde(default)]
-    pub custom_boards: Vec<crate::board::CustomBoard>,
+    pub custom_boards: crate::board::CustomBoards,
 }
 
 /// What was programmed.
@@ -258,7 +258,7 @@ pub async fn run_with_programmers(
 /// board or variant is gone.
 pub fn upload_board(
     built: &crate::board::ResolvedBoard,
-    custom: &[crate::board::CustomBoard],
+    custom: &crate::board::CustomBoards,
     build_folder: &str,
 ) -> Result<crate::board::ResolvedBoard, ToolError> {
     crate::board::check_custom_boards(custom)?;

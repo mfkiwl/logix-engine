@@ -38,7 +38,7 @@ pub struct ListDevicesInput {
     /// true. One with a catalog board's ID replaces that board. Send the
     /// same list to every tool. Omitted means none.
     #[serde(default)]
-    pub custom_boards: Vec<crate::board::CustomBoard>,
+    pub custom_boards: crate::board::CustomBoards,
     /// The build folder of a successful build, as an absolute path. When
     /// given, only devices that fit the build's board in its variant are
     /// listed (in devices and unreachable), each with build_match, best
@@ -207,18 +207,18 @@ mod tests {
     #[test]
     fn custom_boards_are_matched_too() {
         let mine = |id: &str| {
-            json!({
-                "id": id, "description": "My Alhambra", "fpga_id": "ice40hx4k-tq144-8k",
+            json!({id: {
+                "description": "My Alhambra", "fpga_id": "ice40hx4k-tq144-8k",
                 "variants": [{
                     "id": "usb-flash", "connection": "usb", "memory": "flash",
                     "programmer": "iceprog", "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
                     "usb": {"vid": "0403", "pid": "6010", "product_regex": "^Alhambra"},
                     "tested": true
                 }]
-            })
+            }})
         };
         let alhambra = || vec![device("0403", "6010", Some("Alhambra II"), None, 3)];
-        let out = list(json!({"custom_boards": [mine("mine")]}), alhambra()).unwrap();
+        let out = list(json!({"custom_boards": mine("mine")}), alhambra()).unwrap();
         let strong: Vec<_> = out.devices[0]
             .boards
             .iter()
@@ -227,7 +227,7 @@ mod tests {
             .collect();
         assert_eq!(strong, [("alhambra-ii", false), ("mine", true)]);
         // One with a catalog board's ID replaces it.
-        let out = list(json!({"custom_boards": [mine("alhambra-ii")]}), alhambra()).unwrap();
+        let out = list(json!({"custom_boards": mine("alhambra-ii")}), alhambra()).unwrap();
         let named: Vec<_> = out.devices[0]
             .boards
             .iter()
@@ -237,7 +237,7 @@ mod tests {
         assert_eq!(named, [true]);
         // A bad list is a request error.
         let e = list(
-            json!({"custom_boards": [{"id": "Bad ID", "description": "x", "fpga_id": "x", "variants": []}]}),
+            json!({"custom_boards": {"Bad ID": {"description": "x", "fpga_id": "x", "variants": []}}}),
             vec![],
         )
         .unwrap_err();

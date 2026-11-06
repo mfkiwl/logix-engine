@@ -564,7 +564,6 @@ async fn a_custom_board_works() {
     let state = engine().await;
     let (_tmp, src) = project();
     let mine = json!({
-        "id": "my-alhambra",
         "description": "My Alhambra II copy",
         "fpga": {
             "architecture": "ice40", "part_number": "ICE40HX4K-TQ144", "size": "8k",
@@ -579,7 +578,7 @@ async fn a_custom_board_works() {
     let out = build_it(
         &state,
         &src,
-        json!({"board": "my-alhambra", "custom_boards": [mine]}),
+        json!({"board": "my-alhambra", "custom_boards": {"my-alhambra": mine}}),
     )
     .await
     .unwrap();
@@ -1050,9 +1049,9 @@ async fn program_board_refuses_a_board_with_another_fpga() {
 
     // Custom boards: the upload uses the board the build was made with,
     // never another definition with its ID.
-    let mut my_arty =
+    // The catalog's entry, as is: a custom board under any ID.
+    let my_arty =
         serde_json::to_value(&logix_engine::catalog::builtin().boards["arty-a7-35t"]).unwrap();
-    my_arty["id"] = json!("my-arty");
     let upload = |folder: PathBuf, custom: Value| {
         let _ = std::fs::remove_file(&log);
         let state = &state;
@@ -1073,10 +1072,10 @@ async fn program_board_refuses_a_board_with_another_fpga() {
     std::fs::write(&detect, a35).unwrap();
     let mine = src.join("_build_mine");
     let custom_build = json!({"board": "my-arty", "board_variant": "usb-ram",
-        "custom_boards": [my_arty.clone()],
+        "custom_boards": {"my-arty": my_arty.clone()},
         "constraint_file": "main.xdc", "build_folder": mine});
     build_it(&state, &src, custom_build).await.unwrap();
-    upload(mine.clone(), json!([my_arty.clone()]))
+    upload(mine.clone(), json!({"my-arty": my_arty.clone()}))
         .await
         .unwrap();
     // What doesn't change the bitstream may change after the build: the
@@ -1090,7 +1089,9 @@ async fn program_board_refuses_a_board_with_another_fpga() {
         my_arty["variants"][1]["args"].as_str().unwrap()
     ));
     assert_eq!(renamed["variants"][1]["id"], json!("usb-ram"));
-    upload(mine.clone(), json!([renamed])).await.unwrap();
+    upload(mine.clone(), json!({"my-arty": renamed}))
+        .await
+        .unwrap();
     let runs = std::fs::read_to_string(&log).unwrap();
     assert!(
         runs.lines().last().unwrap().contains("--skip-reset"),
@@ -1098,10 +1099,10 @@ async fn program_board_refuses_a_board_with_another_fpga() {
     );
     // The list left out, or the board's FPGA changed since the build:
     // refused, nothing run.
-    for custom in [json!([]), {
+    for custom in [json!({}), {
         let mut changed = my_arty.clone();
         changed["fpga_id"] = json!("xc7a100tcsg324-1");
-        json!([changed])
+        json!({"my-arty": changed})
     }] {
         let err = upload(mine.clone(), custom).await.unwrap_err();
         assert_eq!(err.category, Category::Request);
@@ -1110,20 +1111,20 @@ async fn program_board_refuses_a_board_with_another_fpga() {
     }
     // Built with an exact copy of the catalog board under its ID, then
     // uploaded without the list: the same board, so it goes ahead.
-    let mut same = my_arty.clone();
-    same["id"] = json!("arty-a7-35t");
+    let same = my_arty.clone();
     let same_folder = src.join("_build_same");
     let same_build = json!({"board": "arty-a7-35t", "board_variant": "usb-ram",
-        "custom_boards": [same],
+        "custom_boards": {"arty-a7-35t": same},
         "constraint_file": "main.xdc", "build_folder": same_folder});
     build_it(&state, &src, same_build).await.unwrap();
-    upload(same_folder, json!([])).await.unwrap();
+    upload(same_folder, json!({})).await.unwrap();
     // A catalog build, with a custom board of another FPGA now replacing
     // its ID: refused.
     let mut over = my_arty.clone();
-    over["id"] = json!("arty-a7-35t");
     over["fpga_id"] = json!("xc7a100tcsg324-1");
-    let err = upload(folder.clone(), json!([over])).await.unwrap_err();
+    let err = upload(folder.clone(), json!({"arty-a7-35t": over}))
+        .await
+        .unwrap_err();
     assert_eq!(err.category, Category::Request);
 }
 

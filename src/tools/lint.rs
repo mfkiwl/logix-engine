@@ -47,12 +47,12 @@ pub struct LintInput {
     /// the board's first variant, its default.
     #[serde(default)]
     pub board_variant: Option<String>,
-    /// The host's own boards, in the catalog's format, each with its id.
+    /// The host's own boards, by board ID, in the catalog's format.
     /// board can name one of them; one with a catalog board's ID replaces
-    /// that board in this request. Send the same list to every tool.
+    /// that board in this request. Send the same boards to every tool.
     /// Omitted means none.
     #[serde(default)]
-    pub custom_boards: Vec<crate::board::CustomBoard>,
+    pub custom_boards: crate::board::CustomBoards,
     /// Name of the top-level module, such as main. When omitted, Verilator
     /// checks every module that no other module uses.
     #[serde(default)]
@@ -111,7 +111,7 @@ pub struct LintOutput {
 pub fn check_sources(
     board: &str,
     variant: &crate::board::VariantInput,
-    custom_boards: &[crate::board::CustomBoard],
+    custom_boards: &crate::board::CustomBoards,
     source_folder: &str,
     source_files: Vec<String>,
     testbench_files: Vec<String>,

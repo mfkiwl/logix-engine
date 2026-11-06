@@ -298,7 +298,7 @@
         },
         "CustomBoard": {
           "additionalProperties": false,
-          "description": "One of the host's own boards, in the catalog's format, with its ID.\nLike a catalog entry, except that the FPGA can be given either as\nfpga_id or as a full fpga definition.",
+          "description": "One of the host's own boards, in the catalog's format. Like a catalog\nentry, except that the FPGA can be given either as fpga_id or as a full\nfpga definition.",
           "properties": {
             "description": {
               "description": "The board's name for people.",
@@ -322,11 +322,6 @@
                 "null"
               ]
             },
-            "id": {
-              "description": "The board's ID (lowercase letters, digits and hyphens), as board\nnames it in requests. A catalog board's ID replaces that catalog\nboard in this request.",
-              "pattern": "^[a-z0-9-]+$",
-              "type": "string"
-            },
             "variants": {
               "description": "The ways the board can be programmed, as in the catalog. The first is\nthe default.",
               "items": {
@@ -336,7 +331,6 @@
             }
           },
           "required": [
-            "id",
             "description",
             "variants"
           ],
@@ -550,12 +544,12 @@
           "description": "Which boards to return. Omitted means none."
         },
         "custom_boards": {
-          "default": [],
-          "description": "The host's own boards, in the catalog's format, each with its id.\nWhen boards are fetched, they are returned with the catalog's, with\ncustom true; one with a catalog board's ID replaces that board. ids\ncan name them. Send the same list to every tool. Omitted means none.",
-          "items": {
+          "additionalProperties": {
             "$ref": "#/$defs/CustomBoard"
           },
-          "type": "array"
+          "default": {},
+          "description": "The host's own boards, by board ID, in the catalog's format.\nWhen boards are fetched, they are returned with the catalog's, with\ncustom true; one with a catalog board's ID replaces that board. ids\ncan name them. Send the same boards to every tool. Omitted means none.",
+          "type": "object"
         },
         "fpgas": {
           "anyOf": [
@@ -941,7 +935,7 @@
         },
         "CustomBoard": {
           "additionalProperties": false,
-          "description": "One of the host's own boards, in the catalog's format, with its ID.\nLike a catalog entry, except that the FPGA can be given either as\nfpga_id or as a full fpga definition.",
+          "description": "One of the host's own boards, in the catalog's format. Like a catalog\nentry, except that the FPGA can be given either as fpga_id or as a full\nfpga definition.",
           "properties": {
             "description": {
               "description": "The board's name for people.",
@@ -965,11 +959,6 @@
                 "null"
               ]
             },
-            "id": {
-              "description": "The board's ID (lowercase letters, digits and hyphens), as board\nnames it in requests. A catalog board's ID replaces that catalog\nboard in this request.",
-              "pattern": "^[a-z0-9-]+$",
-              "type": "string"
-            },
             "variants": {
               "description": "The ways the board can be programmed, as in the catalog. The first is\nthe default.",
               "items": {
@@ -979,7 +968,6 @@
             }
           },
           "required": [
-            "id",
             "description",
             "variants"
           ],
@@ -1184,12 +1172,12 @@
           ]
         },
         "custom_boards": {
-          "default": [],
-          "description": "The host's own boards, in the catalog's format, each with its id.\nboard can name one of them; one with a catalog board's ID replaces\nthat board in this request. Send the same list to every tool.\nOmitted means none.",
-          "items": {
+          "additionalProperties": {
             "$ref": "#/$defs/CustomBoard"
           },
-          "type": "array"
+          "default": {},
+          "description": "The host's own boards, by board ID, in the catalog's format.\nboard can name one of them; one with a catalog board's ID replaces\nthat board in this request. Send the same boards to every tool.\nOmitted means none.",
+          "type": "object"
         },
         "defines": {
           "additionalProperties": {
@@ -1420,7 +1408,7 @@
         },
         "CustomBoard": {
           "additionalProperties": false,
-          "description": "One of the host's own boards, in the catalog's format, with its ID.\nLike a catalog entry, except that the FPGA can be given either as\nfpga_id or as a full fpga definition.",
+          "description": "One of the host's own boards, in the catalog's format. Like a catalog\nentry, except that the FPGA can be given either as fpga_id or as a full\nfpga definition.",
           "properties": {
             "description": {
               "description": "The board's name for people.",
@@ -1444,11 +1432,6 @@
                 "null"
               ]
             },
-            "id": {
-              "description": "The board's ID (lowercase letters, digits and hyphens), as board\nnames it in requests. A catalog board's ID replaces that catalog\nboard in this request.",
-              "pattern": "^[a-z0-9-]+$",
-              "type": "string"
-            },
             "variants": {
               "description": "The ways the board can be programmed, as in the catalog. The first is\nthe default.",
               "items": {
@@ -1458,7 +1441,6 @@
             }
           },
           "required": [
-            "id",
             "description",
             "variants"
           ],
@@ -1667,12 +1649,12 @@
           "type": "string"
         },
         "custom_boards": {
-          "default": [],
-          "description": "The host's own boards, in the catalog's format, each with its id.\nboard can name one of them; one with a catalog board's ID replaces\nthat board in this request. Send the same list to every tool.\nOmitted means none.",
-          "items": {
+          "additionalProperties": {
             "$ref": "#/$defs/CustomBoard"
           },
-          "type": "array"
+          "default": {},
+          "description": "The host's own boards, by board ID, in the catalog's format.\nboard can name one of them; one with a catalog board's ID replaces\nthat board in this request. Send the same boards to every tool.\nOmitted means none.",
+          "type": "object"
         },
         "defines": {
           "additionalProperties": {
@@ -1992,7 +1974,7 @@
         },
         "CustomBoard": {
           "additionalProperties": false,
-          "description": "One of the host's own boards, in the catalog's format, with its ID.\nLike a catalog entry, except that the FPGA can be given either as\nfpga_id or as a full fpga definition.",
+          "description": "One of the host's own boards, in the catalog's format. Like a catalog\nentry, except that the FPGA can be given either as fpga_id or as a full\nfpga definition.",
           "properties": {
             "description": {
               "description": "The board's name for people.",
@@ -2016,11 +1998,6 @@
                 "null"
               ]
             },
-            "id": {
-              "description": "The board's ID (lowercase letters, digits and hyphens), as board\nnames it in requests. A catalog board's ID replaces that catalog\nboard in this request.",
-              "pattern": "^[a-z0-9-]+$",
-              "type": "string"
-            },
             "variants": {
               "description": "The ways the board can be programmed, as in the catalog. The first is\nthe default.",
               "items": {
@@ -2030,7 +2007,6 @@
             }
           },
           "required": [
-            "id",
             "description",
             "variants"
           ],
@@ -2239,12 +2215,12 @@
           "type": "string"
         },
         "custom_boards": {
-          "default": [],
-          "description": "The host's own boards, in the catalog's format, each with its id.\nboard can name one of them; one with a catalog board's ID replaces\nthat board in this request. Send the same list to every tool.\nOmitted means none.",
-          "items": {
+          "additionalProperties": {
             "$ref": "#/$defs/CustomBoard"
           },
-          "type": "array"
+          "default": {},
+          "description": "The host's own boards, by board ID, in the catalog's format.\nboard can name one of them; one with a catalog board's ID replaces\nthat board in this request. Send the same boards to every tool.\nOmitted means none.",
+          "type": "object"
         },
         "defines": {
           "additionalProperties": {
@@ -3006,7 +2982,7 @@
         },
         "CustomBoard": {
           "additionalProperties": false,
-          "description": "One of the host's own boards, in the catalog's format, with its ID.\nLike a catalog entry, except that the FPGA can be given either as\nfpga_id or as a full fpga definition.",
+          "description": "One of the host's own boards, in the catalog's format. Like a catalog\nentry, except that the FPGA can be given either as fpga_id or as a full\nfpga definition.",
           "properties": {
             "description": {
               "description": "The board's name for people.",
@@ -3030,11 +3006,6 @@
                 "null"
               ]
             },
-            "id": {
-              "description": "The board's ID (lowercase letters, digits and hyphens), as board\nnames it in requests. A catalog board's ID replaces that catalog\nboard in this request.",
-              "pattern": "^[a-z0-9-]+$",
-              "type": "string"
-            },
             "variants": {
               "description": "The ways the board can be programmed, as in the catalog. The first is\nthe default.",
               "items": {
@@ -3044,7 +3015,6 @@
             }
           },
           "required": [
-            "id",
             "description",
             "variants"
           ],
@@ -3257,12 +3227,12 @@
           "type": "string"
         },
         "custom_boards": {
-          "default": [],
-          "description": "The host's own boards, in the catalog's format, each with its id.\nboard can name one of them; one with a catalog board's ID replaces\nthat board in this request. Send the same list to every tool.\nOmitted means none.",
-          "items": {
+          "additionalProperties": {
             "$ref": "#/$defs/CustomBoard"
           },
-          "type": "array"
+          "default": {},
+          "description": "The host's own boards, by board ID, in the catalog's format.\nboard can name one of them; one with a catalog board's ID replaces\nthat board in this request. Send the same boards to every tool.\nOmitted means none.",
+          "type": "object"
         },
         "defines": {
           "additionalProperties": {
@@ -3634,7 +3604,7 @@
         },
         "CustomBoard": {
           "additionalProperties": false,
-          "description": "One of the host's own boards, in the catalog's format, with its ID.\nLike a catalog entry, except that the FPGA can be given either as\nfpga_id or as a full fpga definition.",
+          "description": "One of the host's own boards, in the catalog's format. Like a catalog\nentry, except that the FPGA can be given either as fpga_id or as a full\nfpga definition.",
           "properties": {
             "description": {
               "description": "The board's name for people.",
@@ -3658,11 +3628,6 @@
                 "null"
               ]
             },
-            "id": {
-              "description": "The board's ID (lowercase letters, digits and hyphens), as board\nnames it in requests. A catalog board's ID replaces that catalog\nboard in this request.",
-              "pattern": "^[a-z0-9-]+$",
-              "type": "string"
-            },
             "variants": {
               "description": "The ways the board can be programmed, as in the catalog. The first is\nthe default.",
               "items": {
@@ -3672,7 +3637,6 @@
             }
           },
           "required": [
-            "id",
             "description",
             "variants"
           ],
@@ -3872,12 +3836,12 @@
           ]
         },
         "custom_boards": {
-          "default": [],
-          "description": "The host's own boards, in the catalog's format, each with its id.\nDevices are matched against them too; matches name them with custom\ntrue. One with a catalog board's ID replaces that board. Send the\nsame list to every tool. Omitted means none.",
-          "items": {
+          "additionalProperties": {
             "$ref": "#/$defs/CustomBoard"
           },
-          "type": "array"
+          "default": {},
+          "description": "The host's own boards, in the catalog's format, each with its id.\nDevices are matched against them too; matches name them with custom\ntrue. One with a catalog board's ID replaces that board. Send the\nsame list to every tool. Omitted means none.",
+          "type": "object"
         }
       },
       "title": "ListDevicesInput",
@@ -4214,7 +4178,7 @@
         },
         "CustomBoard": {
           "additionalProperties": false,
-          "description": "One of the host's own boards, in the catalog's format, with its ID.\nLike a catalog entry, except that the FPGA can be given either as\nfpga_id or as a full fpga definition.",
+          "description": "One of the host's own boards, in the catalog's format. Like a catalog\nentry, except that the FPGA can be given either as fpga_id or as a full\nfpga definition.",
           "properties": {
             "description": {
               "description": "The board's name for people.",
@@ -4238,11 +4202,6 @@
                 "null"
               ]
             },
-            "id": {
-              "description": "The board's ID (lowercase letters, digits and hyphens), as board\nnames it in requests. A catalog board's ID replaces that catalog\nboard in this request.",
-              "pattern": "^[a-z0-9-]+$",
-              "type": "string"
-            },
             "variants": {
               "description": "The ways the board can be programmed, as in the catalog. The first is\nthe default.",
               "items": {
@@ -4252,7 +4211,6 @@
             }
           },
           "required": [
-            "id",
             "description",
             "variants"
           ],
@@ -4448,12 +4406,12 @@
           "type": "string"
         },
         "custom_boards": {
-          "default": [],
-          "description": "The host's own boards, as sent to build: the build's board must\nstill be the same here, else the upload is refused (build again).\nSend the same list to every tool. Omitted means none.",
-          "items": {
+          "additionalProperties": {
             "$ref": "#/$defs/CustomBoard"
           },
-          "type": "array"
+          "default": {},
+          "description": "The host's own boards, as sent to build: the build's board must\nstill be the same here, else the upload is refused (build again).\nSend the same boards to every tool. Omitted means none.",
+          "type": "object"
         },
         "device": {
           "description": "The device to program: the id of a device from list_devices, such as\none whose boards include the build's board. It must still be\nconnected and match the board's USB filter.",
