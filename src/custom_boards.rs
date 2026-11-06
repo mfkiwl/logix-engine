@@ -95,7 +95,8 @@ fn problems(name: &str, diagnostics: Vec<Diagnostic>) -> ToolError {
     };
     let more = match diagnostics.len() {
         1 => String::new(),
-        n => format!(" ({} more problems)", n - 1),
+        2 => " (and 1 more problem)".to_string(),
+        n => format!(" (and {} more problems)", n - 1),
     };
     let mut e = ToolError::request(format!(
         "The custom boards file has problems. {place}: {}{more}",
@@ -341,6 +342,12 @@ mod tests {
             .replace("\"0403\"", "\"04G3\"")
             .replace("ice40up5k-sg48", "nope")
             .replace("\"iceprog\"", "\"tinyprog\"");
+        let e = parse(&bad, "custom-boards.json").unwrap_err();
+        assert!(
+            e.message.ends_with(" (and 2 more problems)"),
+            "{}",
+            e.message
+        );
         let d = diags(&bad);
         assert_eq!(d.len(), 3, "{d:?}");
         // fpga_id's value, line 4.
