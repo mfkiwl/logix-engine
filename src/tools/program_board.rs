@@ -267,7 +267,7 @@ pub fn check_same_board(
     match crate::board::resolve(id, &Some(board.variant.id.clone()), custom) {
         Ok(now) if now.checksum() == board.checksum() => Ok(()),
         _ => Err(ToolError::request(format!(
-            "The board {id} isn't the same as when {build_folder} was built: custom_boards or the engine's catalog changed. Send the custom_boards the build had, or run build again."
+            "The board {id} in this request (from custom_boards, else the catalog) isn't the one {build_folder} was built for. Send the custom_boards the build had, or run build again."
         ))),
     }
 }

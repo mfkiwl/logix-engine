@@ -1090,6 +1090,16 @@ async fn program_board_refuses_a_board_with_another_fpga() {
         assert!(err.message.contains("run build again"), "{}", err.message);
         assert!(!log.exists());
     }
+    // Built with an exact copy of the catalog board under its ID, then
+    // uploaded without the list: the same board, so it goes ahead.
+    let mut same = my_arty.clone();
+    same["id"] = json!("arty-a7-35t");
+    let same_folder = src.join("_build_same");
+    let same_build = json!({"board": "arty-a7-35t", "board_variant": "usb-ram",
+        "custom_boards": [same],
+        "constraint_file": "main.xdc", "build_folder": same_folder});
+    build_it(&state, &src, same_build).await.unwrap();
+    upload(same_folder, json!([])).await.unwrap();
     // A catalog build, with a custom board now replacing its ID: refused.
     let mut over = my_arty.clone();
     over["id"] = json!("arty-a7-35t");

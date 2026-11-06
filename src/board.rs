@@ -144,9 +144,6 @@ pub struct ResolvedBoard {
     /// The board's ID. Optional only so older build records still read.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub board_id: Option<String>,
-    /// True when the board came from the request's custom_boards.
-    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
-    pub custom: bool,
     pub description: String,
     /// The board's name with its variant, for messages, such as
     /// "Icesugar Pro (RAM)".
@@ -213,7 +210,6 @@ pub fn resolve(
         let (variant, name) = configure(&b.description, &b.variants, variant)?;
         return Ok(ResolvedBoard {
             board_id: Some(id.to_string()),
-            custom: true,
             description: b.description.clone(),
             name,
             fpga_id,
@@ -229,7 +225,6 @@ pub fn resolve(
     let (variant, name) = configure(&b.description, &b.variants, variant)?;
     Ok(ResolvedBoard {
         board_id: Some(id.to_string()),
-        custom: false,
         description: b.description.clone(),
         name,
         fpga: fpga_by_id(&b.fpga_id)?,
@@ -255,7 +250,6 @@ mod tests {
     fn catalog_id() {
         let b = catalog_board("alhambra-ii", &None).unwrap();
         assert_eq!(b.board_id.as_deref(), Some("alhambra-ii"));
-        assert!(!b.custom);
         assert_eq!(b.fpga.nextpnr_device, "hx8k");
         // One value per dimension here, so the name doesn't mention them.
         assert_eq!(b.name, "Alhambra II");
@@ -317,7 +311,6 @@ mod tests {
         let by_id = custom("mine", json!({"fpga_id": "ice40up5k-sg48"}));
         let b = resolve("mine", &None, std::slice::from_ref(&by_id)).unwrap();
         assert_eq!(b.fpga.nextpnr_device, "up5k");
-        assert!(b.custom);
         assert_eq!(b.board_id.as_deref(), Some("mine"));
         let inline = custom(
             "inline",
@@ -331,11 +324,13 @@ mod tests {
         assert_eq!(b2.fpga.package(), "tq144");
         assert_eq!(b2.fpga_id, None);
         // The list doesn't change catalog boards it doesn't name.
-        assert!(!resolve("alhambra-ii", &None, &list).unwrap().custom);
+        assert_eq!(
+            resolve("alhambra-ii", &None, &list).unwrap(),
+            catalog_board("alhambra-ii", &None).unwrap()
+        );
         // A custom board replaces the catalog board with its ID.
         let over = custom("alhambra-ii", json!({"fpga_id": "ice40up5k-sg48"}));
         let b3 = resolve("alhambra-ii", &None, &[over]).unwrap();
-        assert!(b3.custom);
         assert_eq!(b3.description, "My board");
         assert_ne!(
             b3.checksum(),
@@ -370,6 +365,26 @@ mod tests {
         let b: CustomBoard = serde_json::from_value(copied).unwrap();
         let r = resolve("my-sugar", &pick("usb-ram"), &[b]).unwrap();
         assert_eq!(r.variant.memory, "ram");
+    }
+
+    #[test]
+    fn a_custom_board_identical_to_the_catalog_board_is_the_same_board() {
+        // As a host would send it: the catalog's board with its ID and
+        // FPGA ID, the variants written out in full.
+        let c = catalog::builtin();
+        let b = &c.boards["icesugar-pro"];
+        let same = CustomBoard {
+            id: "icesugar-pro".into(),
+            description: b.description.clone(),
+            fpga_id: Some(b.fpga_id.clone()),
+            fpga: None,
+            dimensions: Vec::new(),
+            variants: b.variants.clone(),
+        };
+        let ram = pick("usb-ram");
+        let from_list = resolve("icesugar-pro", &ram, std::slice::from_ref(&same)).unwrap();
+        let from_catalog = catalog_board("icesugar-pro", &ram).unwrap();
+        assert_eq!(from_list.checksum(), from_catalog.checksum());
     }
 
     #[test]

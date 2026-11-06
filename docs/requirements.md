@@ -360,7 +360,7 @@ The built-in catalog is fixed for each engine version. Hosts extend or override 
 - **Reading the catalog.** Hosts can read the full catalog through an engine request, with their custom boards listed among its boards.
 - **Self-contained requests.** The engine never looks up or merges definitions from files. A request alone determines which board, FPGA and board variant are used.
 - **Errors.** The host reports problems in its own definition files, with file and line. The engine checks the whole list in every tool and reports an invalid one as a request error.
-- **Uploads match builds.** A build record keeps the board it was built for; `program_board` refuses an upload when the request's boards no longer give that board under its ID.
+- **Uploads match builds.** A build record keeps the board it was built for; `program_board` refuses an upload when the board the request's boards give under that ID has a different definition. Only that board's definition counts, not where it comes from (decided 2026-11-06).
 - **Stable format.** The definition format is part of the tool API and follows the rule that it never breaks.
 - **Catalog fixes.** A fix to the catalog needs an engine release. Until then, a host can send a corrected board with the catalog board's ID in its custom boards.
 
