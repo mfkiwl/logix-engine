@@ -13,6 +13,7 @@ pub mod lint;
 pub mod list_devices;
 pub mod make_board_file;
 pub mod program_board;
+pub mod share_board_file;
 pub mod simulate;
 pub mod test;
 
@@ -124,6 +125,7 @@ pub fn all_definitions() -> Vec<Tool> {
         definition::<list_devices::ListDevices>(),
         definition::<make_board_file::MakeBoardFile>(),
         definition::<program_board::ProgramBoard>(),
+        definition::<share_board_file::ShareBoardFile>(),
     ]
 }
 
@@ -195,6 +197,7 @@ pub async fn call(
     use list_devices::ListDevices;
     use make_board_file::MakeBoardFile;
     use program_board::ProgramBoard;
+    use share_board_file::ShareBoardFile;
     use simulate::Simulate;
     use test::Test;
     let result = match name {
@@ -254,6 +257,10 @@ pub async fn call(
         )),
         ListDevices::NAME => to_call_result(with_commands(
             parse_input::<ListDevices>(arguments).and_then(|i| list_devices::run(state, i)),
+            call,
+        )),
+        ShareBoardFile::NAME => to_call_result(with_commands(
+            parse_input::<ShareBoardFile>(arguments).and_then(|i| share_board_file::run(state, i)),
             call,
         )),
         MakeBoardFile::NAME => to_call_result(with_commands(

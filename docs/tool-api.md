@@ -727,6 +727,7 @@ Programs a bitstream into the board it was built for, on the device the host cho
 | `device` | text | Yes | The device to program: the `id` of a device from `list_devices`. It is opaque and short-lived: it stays valid while the device stays on the same USB port |
 | `programmer_command` | text | No | A custom command template that replaces the variant's whole command. Its first word is a program from the toolchain package, such as `openFPGALoader`, or an absolute path. It uses the same variables as argument templates and must use `${BITSTREAM}` |
 | `verbose` | boolean | No | Let the programmer print more detail. Not applied to a `programmer_command`. Defaults to false |
+| `board_file` | board file | No | The board file the build was made with, when it was, sent unchanged. A board file the build wasn't made with is a request error, and nothing runs |
 
 **Table 10.** program_board tool outputs
 
@@ -735,6 +736,7 @@ Programs a bitstream into the board it was built for, on the device the host cho
 | `device` | device | The device that was programmed. See device fields in Table 13 |
 | `programmer` | catalog ID | The programmer that was used, such as `openfpgaloader`, or `custom` when `programmer_command` was given |
 | `commands` | list of commands | The programs this call ran, in order, so they can be run again without the engine. See Commands |
+| `board_file` | board file | Only when the request had one: the board file, recording that this board variant works (with the FPGA ID code the upload confirmed, on boards checked over JTAG), once per variant, without dates. Save it in place of the old one. Not recorded for a `programmer_command` |
 
 **Errors:** setup errors with `connect_board` when the chosen device isn't connected anymore or another device is on its port (list the devices again), when the connected FPGA isn't the build's (see Wrong FPGA), or when the programmer doesn't find it (for a dfu-util board, also when it isn't in its bootloader mode); `disconnect_devices` when the command can't name the device and other connected devices have its USB IDs (icesprog, openFPGALoader with only `--board` or `-c`, such as for USB-Blaster and CMSIS-DAP adapters), or when the programmer itself can't tell them apart; `fix_device_permissions` or `install_drivers` when the device can't be opened. Request errors when `device` isn't a device ID, when the device doesn't match the board's USB filter, or when the build folder has no build record. Other request errors, tool failures, engine errors and cancellation.
 
@@ -830,6 +832,26 @@ The engine side of the **Board Wizard**: for a device that `list_devices` doesn'
 | `notes` | list of text | Optional, omitted when empty. Things the user should know, such as that the device reports no product name, or that another connected device has the same serial number; show them as they are |
 
 **Errors:** request errors for an unknown board, a device that can't be that board, or `pin_serial_number` on a device without a serial number. Setup errors when the device is gone or can't be opened (as for `program_board`). Engine errors.
+
+## share_board_file tool
+
+Returns a board file's report, for the user to share with the Logix Engine's maintainers so the catalog can learn the board, as text to paste into a new GitHub issue (a GitHub account is needed). The report holds what the board's device reports (USB IDs, release, manufacturer and product names, and its serial number only as a shape, even when the board is pinned by it), the catalog board it was made from, the name the user gave it, and the board variants that uploads confirmed. The frontend shows the text, with a Copy button and a link to `new_issue_url`, before anything is shared. The engine sends nothing anywhere.
+
+**Table 37.** share_board_file tool inputs
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `board_file` | board file | Yes | The board file, sent unchanged |
+
+**Table 38.** share_board_file tool outputs
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `title` | text | The issue's title |
+| `body` | text | The issue's body, in Markdown |
+| `new_issue_url` | text | The page that opens a new issue in the engine's repo |
+
+**Errors:** request errors for a damaged board file. Engine errors.
 
 ## get_catalog tool
 
@@ -1130,6 +1152,8 @@ Logic that every frontend would need and that doesn't depend on a frontend's own
 - Offer it on a device whose matches don't include the user's board, or only weakly, with a plain verb such as "Set Up This Board…". Let the user pick the catalog board it is (a picker from `get_catalog`), and optionally name it and pin it by serial number when identical boards are connected.
 - Call `make_board_file` with the device's `id` and the board, show its `notes`, and save `board_file` in the project as it is: never read or change it.
 - From then on, send the file as the project's `board`, and in `board_files` of `list_devices` and `get_catalog`, so the board shows in pickers and matches its device by name.
+- Send it as `board_file` to `program_board` too, and save the `board_file` that comes back: it records the board variants that worked.
+- Offer "Share this board" after a successful upload: show `share_board_file`'s `title` and `body` with a Copy button and a link to `new_issue_url`.
 
 ### Format an unsaved editor buffer
 

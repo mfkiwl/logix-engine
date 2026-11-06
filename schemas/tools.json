@@ -4024,6 +4024,15 @@
       "additionalProperties": false,
       "description": "Which build to program, and into which device.",
       "properties": {
+        "board_file": {
+          "additionalProperties": true,
+          "default": null,
+          "description": "The board file the build was made with, when it was made with one,\nsent unchanged. After a successful upload it comes back in the\noutput's board_file, recording that this variant works: save that.",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
         "build_folder": {
           "description": "The build folder of a successful build, as an absolute path.",
           "type": "string"
@@ -4255,6 +4264,14 @@
       "additionalProperties": false,
       "description": "What was programmed.",
       "properties": {
+        "board_file": {
+          "additionalProperties": true,
+          "description": "The request's board_file, recording this successful upload: save it\nin place of the old one. Omitted when the request had none.",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
         "commands": {
           "description": "The programs this call ran, in order, each with the exact command and\na shell line that runs it again without the engine, such as for a bug\nreport to the tool's developers.",
           "items": {
@@ -4283,6 +4300,58 @@
       "readOnlyHint": false,
       "destructiveHint": false,
       "openWorldHint": true
+    }
+  },
+  {
+    "name": "share_board_file",
+    "description": "Returns a board file's report, for the user to share with the Logix Engine's maintainers so the catalog can learn the board: a title and a body to paste into a new GitHub issue at new_issue_url (a GitHub account is needed). Show the text, with a way to copy it and open the link, before anything is shared: it holds what the board's device reports (its serial number only as a shape), the catalog board it was made from, and the ways of programming it that worked. The engine sends nothing anywhere.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "description": "The board file to report.",
+      "properties": {
+        "board_file": {
+          "additionalProperties": true,
+          "description": "The board file, as make_board_file or program_board returned it,\nsent unchanged.",
+          "type": "object"
+        }
+      },
+      "required": [
+        "board_file"
+      ],
+      "title": "ShareBoardFileInput",
+      "type": "object"
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "description": "The report.",
+      "properties": {
+        "body": {
+          "description": "The issue's body, in Markdown.",
+          "type": "string"
+        },
+        "new_issue_url": {
+          "description": "The page that opens a new issue, to paste the title and body into.",
+          "type": "string"
+        },
+        "title": {
+          "description": "The issue's title.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "body",
+        "new_issue_url"
+      ],
+      "title": "ShareBoardFileOutput",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false
     }
   }
 ]

@@ -55,6 +55,12 @@ pub struct ProgramBoardInput {
     /// the logs. Not applied to a programmer_command. Defaults to false.
     #[serde(default)]
     pub verbose: bool,
+    /// The board file the build was made with, when it was made with one,
+    /// sent unchanged. After a successful upload it comes back in the
+    /// output's board_file, recording that this variant works: save that.
+    #[serde(default)]
+    #[schemars(with = "Option<serde_json::Map<String, serde_json::Value>>")]
+    pub board_file: Option<serde_json::Value>,
 }
 
 /// What was programmed.
@@ -70,6 +76,11 @@ pub struct ProgramBoardOutput {
     /// a shell line that runs it again without the engine, such as for a bug
     /// report to the tool's developers.
     pub commands: Vec<crate::commands::CommandRecord>,
+    /// The request's board_file, recording this successful upload: save it
+    /// in place of the old one. Omitted when the request had none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(with = "Option<serde_json::Map<String, serde_json::Value>>")]
+    pub board_file: Option<serde_json::Value>,
 }
 
 /// The checked build folder and its build record, from a successful build.
@@ -122,6 +133,25 @@ pub async fn run_with_programmers(
     let board = &record.board;
     let variant = &board.variant;
     let custom = input.programmer_command.as_deref();
+    let mut board_file = match &input.board_file {
+        None => None,
+        Some(v) => {
+            let file = crate::board_file::BoardFile::from_value(v).map_err(|mut e| {
+                e.message = format!("board_file: {}", e.message);
+                e
+            })?;
+            let spec = crate::board::BoardSpec::File(Box::new(file.clone()));
+            let same =
+                crate::board::resolve(&spec, &Some(variant.id.clone())).is_ok_and(|b| b == *board);
+            if !same {
+                return Err(ToolError::request(format!(
+                    "board_file: this board file isn't the board the build in {} was made with. Send the board file the project builds with, or none.",
+                    input.build_folder
+                )));
+            }
+            Some(file)
+        }
+    };
 
     let needed = state.packages.needing_install(&[TOOLCHAIN])?;
     let checks_fpga = custom.is_none() && program::checks_fpga(variant, &board.fpga);
@@ -221,10 +251,20 @@ pub async fn run_with_programmers(
             {
                 call.output.message(&done);
             }
+            // A custom command says nothing about the board's own way.
+            if custom.is_none()
+                && let Some(file) = board_file.as_mut()
+            {
+                let confirmed = checks_fpga
+                    .then_some(board.fpga.jtag_idcode.as_deref())
+                    .flatten();
+                file.record_upload(&variant.id, confirmed);
+            }
             Ok(ProgramBoardOutput {
                 device,
                 programmer,
                 commands: call.commands.take(),
+                board_file: board_file.map(|f| f.to_value()),
             })
         }
         Ok(r) => Err(program::failure(

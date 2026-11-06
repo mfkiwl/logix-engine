@@ -264,6 +264,27 @@ impl BoardFile {
         Ok(file)
     }
 
+    /// Records a successful upload with a variant: once per variant, with
+    /// the FPGA ID code the upload confirmed, when it did. No dates or
+    /// counts, which would tell when the user works if the project is
+    /// published.
+    pub fn record_upload(&mut self, variant: &str, fpga_idcode: Option<&str>) {
+        let engine = crate::state::ENGINE_VERSION.to_string();
+        match self.verified.iter_mut().find(|v| v.variant == variant) {
+            Some(v) => {
+                if v.fpga_idcode.is_none() && fpga_idcode.is_some() {
+                    v.fpga_idcode = fpga_idcode.map(String::from);
+                    v.engine = engine;
+                }
+            }
+            None => self.verified.push(Verified {
+                variant: variant.into(),
+                engine,
+                fpga_idcode: fpga_idcode.map(String::from),
+            }),
+        }
+    }
+
     pub fn to_value(&self) -> serde_json::Value {
         serde_json::to_value(self).unwrap_or_default()
     }
@@ -382,6 +403,32 @@ mod tests {
         let e = make(&mouse, &[], "arty-a7-100t", None, false).unwrap_err();
         assert!(e.message.contains("Choose another board"), "{}", e.message);
         assert!(make(&ft232h, &[], "nope", None, false).is_err());
+    }
+
+    #[test]
+    fn uploads_are_recorded_once_per_variant() {
+        let mut f = make(&arty(), &[], "arty-a7-100t", None, false)
+            .unwrap()
+            .file;
+        f.record_upload("usb-ram", None);
+        f.record_upload("usb-ram", None);
+        assert_eq!(f.verified.len(), 1);
+        assert_eq!(f.verified[0].fpga_idcode, None);
+        f.record_upload("usb-ram", Some("0x03631093"));
+        f.record_upload("usb-flash", Some("0x03631093"));
+        let v: Vec<_> = f
+            .verified
+            .iter()
+            .map(|v| (v.variant.as_str(), v.fpga_idcode.as_deref()))
+            .collect();
+        assert_eq!(
+            v,
+            [
+                ("usb-ram", Some("0x03631093")),
+                ("usb-flash", Some("0x03631093"))
+            ]
+        );
+        assert_eq!(BoardFile::from_value(&f.to_value()).unwrap(), f);
     }
 
     #[test]

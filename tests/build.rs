@@ -1063,6 +1063,50 @@ async fn program_board_refuses_a_board_with_another_fpga() {
     );
     let runs = std::fs::read_to_string(&log).unwrap();
     assert_eq!(runs.lines().count(), 1, "only detect ran: {runs}");
+
+    // Board files: the upload is recorded in the file the build was made
+    // with, with the FPGA the check confirmed.
+    let file = logix_engine::board_file::make(&arty, &[], "arty-a7-35t", None, false)
+        .unwrap()
+        .file;
+    let upload = |folder: PathBuf| {
+        let _ = std::fs::remove_file(&log);
+        let state = &state;
+        let input = program_input(
+            &folder,
+            json!({"device": arty.id, "board_file": file.to_value()}),
+        );
+        let devices = vec![arty.clone()];
+        let bin = bin.clone();
+        async move {
+            program_board::run_with_programmers(
+                state,
+                input,
+                &call(),
+                move || Ok(devices),
+                Some(&bin),
+            )
+            .await
+        }
+    };
+    std::fs::write(&detect, a35).unwrap();
+    // Not the board this build was made with: refused, nothing run.
+    let err = upload(folder.clone()).await.unwrap_err();
+    assert_eq!(err.category, Category::Request);
+    assert!(err.message.starts_with("board_file:"), "{}", err.message);
+    assert!(!log.exists());
+    // Built with the board file: recorded.
+    let mine = src.join("_build_mine");
+    let with_file = json!({"board": file.to_value(), "board_variant": "usb-ram",
+        "constraint_file": "main.xdc", "build_folder": mine});
+    build_it(&state, &src, with_file).await.unwrap();
+    let out = upload(mine).await.unwrap();
+    let saved = out.board_file.unwrap();
+    assert_eq!(
+        saved["verified"],
+        json!([{"variant": "usb-ram", "engine": logix_engine::state::ENGINE_VERSION, "fpga_idcode": "0x0362d093"}])
+    );
+    assert_eq!(saved["id"], json!(file.id));
 }
 
 /// The wrong-FPGA error suggests only the boards the device most likely is,
