@@ -39,7 +39,8 @@ impl EngineTool for Build {
 #[serde(deny_unknown_fields)]
 pub struct BuildInput {
     /// The target board: a catalog ID such as alhambra-ii (get_catalog lists
-    /// them), or a full board definition.
+    /// them), a board file from make_board_file (pass it unchanged), or a
+    /// full board definition.
     pub board: BoardSpec,
     /// The board variant: the ID of one of the board's variants, which
     /// get_catalog lists, such as usb-ram or ft232h-flash. Omitted means

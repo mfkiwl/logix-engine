@@ -580,6 +580,33 @@ async fn a_full_board_definition_works() {
     assert!(src.join("_build").join(out.bitstream).exists());
 }
 
+/// A board file from make_board_file builds like its catalog board.
+#[tokio::test]
+async fn a_board_file_works() {
+    let state = engine().await;
+    let (_tmp, src) = project();
+    let mut device = logix_engine::devices::Device::usb(
+        "0403".into(),
+        "6010".into(),
+        Some("AlhambraBits".into()),
+        Some("Alhambra II v1.0A".into()),
+        Some("FTATANKC".into()),
+        1,
+        7,
+        "1-2".into(),
+        true,
+    );
+    device.release = Some("0700".into());
+    let file =
+        logix_engine::board_file::make(&device, &[], "alhambra-ii", Some("My Alhambra"), false)
+            .unwrap()
+            .file;
+    let out = build_it(&state, &src, json!({"board": file.to_value()}))
+        .await
+        .unwrap();
+    assert!(src.join("_build").join(out.bitstream).exists());
+}
+
 #[tokio::test]
 async fn progress_and_cancel() {
     #[derive(Default)]

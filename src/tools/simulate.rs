@@ -48,7 +48,8 @@ fn default_true() -> bool {
 #[serde(deny_unknown_fields)]
 pub struct SimulateInput {
     /// The target board: a catalog ID such as alhambra-ii (get_catalog lists
-    /// them), or a full board definition. It selects the FPGA's primitive
+    /// them), a board file from make_board_file (pass it unchanged), or a
+    /// full board definition. It selects the FPGA's primitive
     /// models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE
     /// for Xilinx.
     pub board: BoardSpec,

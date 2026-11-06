@@ -43,6 +43,12 @@ pub struct ListDevicesInput {
     /// boards; matches name them with custom true. Omitted means none.
     #[serde(default)]
     pub custom_boards: BTreeMap<String, BoardInputDefinition>,
+    /// Board files, as make_board_file returned them, sent unchanged.
+    /// Devices are matched against their boards too; matches name them by
+    /// the board file's board ID, with custom true. Omitted means none.
+    #[serde(default)]
+    #[schemars(with = "Vec<serde_json::Map<String, serde_json::Value>>")]
+    pub board_files: Vec<serde_json::Value>,
     /// The build folder of a successful build, as an absolute path. When
     /// given, only devices that fit the build's board in its variant are
     /// listed (in devices and unreachable), each with build_match, best
@@ -85,6 +91,7 @@ pub fn run_with(
         })?;
         custom.push((id, b));
     }
+    let files = crate::board_file::read_all(&input.board_files)?;
     let mut boards: Vec<Candidate> = catalog::builtin()
         .boards
         .iter()
@@ -98,6 +105,11 @@ pub fn run_with(
         id,
         custom: true,
         variants: &b.variants,
+    }));
+    boards.extend(files.iter().map(|f| Candidate {
+        id: &f.id,
+        custom: true,
+        variants: &f.variants,
     }));
 
     let build_usb = match &input.build_folder {
@@ -222,6 +234,34 @@ mod tests {
         assert_eq!(butterstick.variants[0].level, MatchLevel::Weak);
         assert!(out.devices[2].boards.is_empty());
         assert!(out.unreachable.is_empty());
+    }
+
+    #[test]
+    fn board_files_are_matched_too() {
+        let d = device(
+            "0403",
+            "6010",
+            Some("Digilent USB Device"),
+            Some("210319AB51BBA"),
+            4,
+        );
+        let file = crate::board_file::make(&d, &[], "arty-a7-100t", None, false)
+            .unwrap()
+            .file;
+        let out = list(json!({"board_files": [file.to_value()]}), vec![d.clone()]).unwrap();
+        let mine = out.devices[0]
+            .boards
+            .iter()
+            .find(|m| m.board == file.id)
+            .unwrap();
+        assert!(mine.custom);
+        assert_eq!(mine.best_level(), MatchLevel::Strong);
+        // Another device with other names isn't that board.
+        let other = device("0403", "6010", Some("Alhambra II v1.0A"), None, 5);
+        let out = list(json!({"board_files": [file.to_value()]}), vec![other]).unwrap();
+        assert!(!out.devices[0].boards.iter().any(|m| m.board == file.id));
+        let e = list(json!({"board_files": [{"logix_board_file": 1}]}), vec![]).unwrap_err();
+        assert!(e.message.starts_with("board_files[0]:"), "{}", e.message);
     }
 
     #[test]

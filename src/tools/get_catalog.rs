@@ -41,6 +41,13 @@ pub struct GetCatalogInput {
     /// Omitted means none.
     #[serde(default)]
     pub architectures: Option<CatalogQuery>,
+    /// Board files, as make_board_file returned them, sent unchanged. When
+    /// boards are fetched, their boards are returned too, by their board
+    /// IDs, with custom true, so a board picker shows them with the
+    /// catalog's. Omitted means none.
+    #[serde(default)]
+    #[schemars(with = "Vec<serde_json::Map<String, serde_json::Value>>")]
+    pub board_files: Vec<serde_json::Value>,
 }
 
 /// An FPGA architecture (family), as FPGA definitions name it.
@@ -89,6 +96,10 @@ pub struct CatalogBoard {
     pub dimensions: Vec<Dimension>,
     /// The ways the board can be programmed, the board's default first.
     pub variants: Vec<CatalogVariant>,
+    /// True for a board from one of the request's board_files, omitted for
+    /// catalog boards.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub custom: bool,
 }
 
 /// One way to program a catalog board. Which USB devices are the board is
@@ -140,6 +151,7 @@ impl From<&BoardDefinition> for CatalogBoard {
             fpga_id: b.fpga_id.clone(),
             dimensions: b.dimensions.clone(),
             variants: b.variants.iter().map(Into::into).collect(),
+            custom: false,
         }
     }
 }
@@ -185,13 +197,39 @@ fn select<T: Clone>(
 }
 
 pub fn run(_state: &EngineState, input: GetCatalogInput) -> Result<GetCatalogOutput, ToolError> {
+    answer(input)
+}
+
+fn answer(input: GetCatalogInput) -> Result<GetCatalogOutput, ToolError> {
     let c = catalog::builtin();
+    let files = crate::board_file::read_all(&input.board_files)?;
+    let fetch_boards = input.boards.as_ref().is_some_and(|q| q.fetch);
+    let mut boards: BTreeMap<String, CatalogBoard> = select("boards", &c.boards, input.boards)?
+        .iter()
+        .map(|(id, b)| (id.clone(), b.into()))
+        .collect();
+    let mut fpgas = select("fpgas", &c.fpgas, input.fpgas)?;
+    if fetch_boards {
+        for f in &files {
+            boards.insert(
+                f.id.clone(),
+                CatalogBoard {
+                    description: f.name.clone(),
+                    fpga_id: f.fpga_id.clone(),
+                    dimensions: catalog::derive_dimensions(&f.variants),
+                    variants: f.variants.iter().map(Into::into).collect(),
+                    custom: true,
+                },
+            );
+            // A board file's FPGA, for grouping, when this catalog lacks it.
+            if !fpgas.is_empty() && !c.fpgas.contains_key(&f.fpga_id) {
+                fpgas.insert(f.fpga_id.clone(), f.fpga.clone());
+            }
+        }
+    }
     Ok(GetCatalogOutput {
-        boards: select("boards", &c.boards, input.boards)?
-            .iter()
-            .map(|(id, b)| (id.clone(), b.into()))
-            .collect(),
-        fpgas: select("fpgas", &c.fpgas, input.fpgas)?,
+        boards,
+        fpgas,
         architectures: select("architectures", &architectures(), input.architectures)?,
     })
 }
@@ -219,6 +257,39 @@ fn architectures() -> BTreeMap<String, ArchitectureInfo> {
 mod tests {
     use super::*;
     use crate::catalog::Architecture;
+
+    #[test]
+    fn board_files_join_the_boards() {
+        let d = crate::devices::tests::device("0403", "6010", Some("Digilent USB Device"), None, 4);
+        let file = crate::board_file::make(&d, &[], "arty-a7-100t", Some("My Arty"), false)
+            .unwrap()
+            .file;
+        let ask = |boards: bool| {
+            let input: GetCatalogInput = serde_json::from_value(serde_json::json!({
+                "boards": {"fetch": boards, "ids": ["alhambra-ii"]},
+                "board_files": [file.to_value()]
+            }))
+            .unwrap();
+            answer(input).unwrap()
+        };
+        let out = ask(true);
+        let mine = &out.boards[&file.id];
+        assert_eq!(mine.description, "My Arty");
+        assert!(mine.custom);
+        assert_eq!(mine.fpga_id, "xc7a100tcsg324-1");
+        assert_eq!(mine.dimensions[1].values.len(), 2, "flash and RAM");
+        assert!(!out.boards["alhambra-ii"].custom);
+        let json = serde_json::to_value(&out).unwrap();
+        assert!(json["boards"]["alhambra-ii"].get("custom").is_none());
+        assert!(json["boards"][&file.id]["variants"][0].get("usb").is_none());
+        // Only when boards are fetched.
+        assert!(ask(false).boards.is_empty());
+        // A bad file is a request error that names it.
+        let input: GetCatalogInput =
+            serde_json::from_value(serde_json::json!({"board_files": [{"x": 1}]})).unwrap();
+        let e = answer(input).unwrap_err();
+        assert!(e.message.starts_with("board_files[0]:"), "{}", e.message);
+    }
 
     #[test]
     fn architectures_have_labels_and_pin_file_extensions() {

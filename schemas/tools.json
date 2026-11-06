@@ -287,6 +287,15 @@
           ],
           "description": "Which FPGA architectures (families) to return, by ID, such as ice40.\nOmitted means none."
         },
+        "board_files": {
+          "default": [],
+          "description": "Board files, as make_board_file returned them, sent unchanged. When\nboards are fetched, their boards are returned too, by their board\nIDs, with custom true, so a board picker shows them with the\ncatalog's. Omitted means none.",
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "type": "array"
+        },
         "boards": {
           "anyOf": [
             {
@@ -374,6 +383,10 @@
           "additionalProperties": false,
           "description": "A catalog board, as get_catalog returns it.",
           "properties": {
+            "custom": {
+              "description": "True for a board from one of the request's board_files, omitted for\ncatalog boards.",
+              "type": "boolean"
+            },
             "description": {
               "description": "The board's name for people, such as \"Alhambra II\".",
               "type": "string"
@@ -711,11 +724,16 @@
               "type": "string"
             },
             {
+              "additionalProperties": true,
+              "description": "A board file, as make_board_file returned it: pass it unchanged.",
+              "type": "object"
+            },
+            {
               "$ref": "#/$defs/BoardInputDefinition",
               "description": "A full board definition, for boards that aren't in the catalog."
             }
           ],
-          "description": "A board: a catalog ID, or a full definition."
+          "description": "A board: a catalog ID, a board file, or a full definition."
         },
         "FpgaDefinition": {
           "additionalProperties": false,
@@ -904,7 +922,7 @@
       "properties": {
         "board": {
           "$ref": "#/$defs/BoardSpec",
-          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE\nfor Xilinx."
+          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), a board file from make_board_file (pass it unchanged), or a\nfull board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE\nfor Xilinx."
         },
         "board_variant": {
           "default": null,
@@ -1189,11 +1207,16 @@
               "type": "string"
             },
             {
+              "additionalProperties": true,
+              "description": "A board file, as make_board_file returned it: pass it unchanged.",
+              "type": "object"
+            },
+            {
               "$ref": "#/$defs/BoardInputDefinition",
               "description": "A full board definition, for boards that aren't in the catalog."
             }
           ],
-          "description": "A board: a catalog ID, or a full definition."
+          "description": "A board: a catalog ID, a board file, or a full definition."
         },
         "FpgaDefinition": {
           "additionalProperties": false,
@@ -1382,7 +1405,7 @@
       "properties": {
         "board": {
           "$ref": "#/$defs/BoardSpec",
-          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE\nfor Xilinx."
+          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), a board file from make_board_file (pass it unchanged), or a\nfull board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE\nfor Xilinx."
         },
         "board_variant": {
           "default": null,
@@ -1760,11 +1783,16 @@
               "type": "string"
             },
             {
+              "additionalProperties": true,
+              "description": "A board file, as make_board_file returned it: pass it unchanged.",
+              "type": "object"
+            },
+            {
               "$ref": "#/$defs/BoardInputDefinition",
               "description": "A full board definition, for boards that aren't in the catalog."
             }
           ],
-          "description": "A board: a catalog ID, or a full definition."
+          "description": "A board: a catalog ID, a board file, or a full definition."
         },
         "FpgaDefinition": {
           "additionalProperties": false,
@@ -1953,7 +1981,7 @@
       "properties": {
         "board": {
           "$ref": "#/$defs/BoardSpec",
-          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE\nfor Xilinx."
+          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), a board file from make_board_file (pass it unchanged), or a\nfull board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE\nfor Xilinx."
         },
         "board_variant": {
           "default": null,
@@ -2773,11 +2801,16 @@
               "type": "string"
             },
             {
+              "additionalProperties": true,
+              "description": "A board file, as make_board_file returned it: pass it unchanged.",
+              "type": "object"
+            },
+            {
               "$ref": "#/$defs/BoardInputDefinition",
               "description": "A full board definition, for boards that aren't in the catalog."
             }
           ],
-          "description": "A board: a catalog ID, or a full definition."
+          "description": "A board: a catalog ID, a board file, or a full definition."
         },
         "FpgaDefinition": {
           "additionalProperties": false,
@@ -2966,7 +2999,7 @@
       "properties": {
         "board": {
           "$ref": "#/$defs/BoardSpec",
-          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), or a full board definition."
+          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), a board file from make_board_file (pass it unchanged), or a\nfull board definition."
         },
         "board_variant": {
           "default": null,
@@ -3577,6 +3610,15 @@
       "additionalProperties": false,
       "description": "Optionally, the host's own boards to match the devices against, besides\nthe catalog's, and a build whose board the devices must fit.",
       "properties": {
+        "board_files": {
+          "default": [],
+          "description": "Board files, as make_board_file returned them, sent unchanged.\nDevices are matched against their boards too; matches name them by\nthe board file's board ID, with custom true. Omitted means none.",
+          "items": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "type": "array"
+        },
         "build_folder": {
           "default": null,
           "description": "The build folder of a successful build, as an absolute path. When\ngiven, only devices that fit the build's board in its variant are\nlisted (in devices and unreachable), each with build_match, best\nfirst: the devices program_board can program that build into. The\nbuild's board comes from its build record, custom boards included.",
@@ -3888,6 +3930,84 @@
         "devices"
       ],
       "title": "ListDevicesOutput",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
+    "name": "make_board_file",
+    "description": "Makes a board file: the user's own board, from a connected device and the catalog board the user says it is, for a device that list_devices doesn't match to that board, or only weakly (the Board Wizard). The board file is for the frontend to store, typically in the project, and to send back unchanged as the board of build, lint, test and simulate, and in board_files of list_devices and get_catalog: never read or change its contents, which only the engine understands and may change between versions. It matches only devices like this one, and with pin_serial_number only this exact device, to tell identical boards apart. Show the notes to the user. Nothing is written to disk.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "description": "The device, and the board it is.",
+      "properties": {
+        "board": {
+          "description": "The catalog board the user says the device is, such as\narty-a7-100t. get_catalog lists them.",
+          "pattern": "^[a-z0-9-]+$",
+          "type": "string"
+        },
+        "device": {
+          "description": "The device's ID, from list_devices.",
+          "type": "string"
+        },
+        "name": {
+          "default": null,
+          "description": "The board's name for people, such as \"My Arty\". Omitted means the\ncatalog board's name with \"(my board)\".",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "pin_serial_number": {
+          "default": false,
+          "description": "Match only this exact device, by its serial number, to tell it apart\nfrom identical boards connected at the same time. The board file then\nholds the serial number. Defaults to false.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "device",
+        "board"
+      ],
+      "title": "MakeBoardFileInput",
+      "type": "object"
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "description": "The board file.",
+      "properties": {
+        "board_file": {
+          "additionalProperties": true,
+          "description": "The board file, to store and send back unchanged. Its contents are\nthe engine's own.",
+          "type": "object"
+        },
+        "board_id": {
+          "description": "The board's ID, as results name it, such as arty-a7-100t-3f9a2c. The\nsame device and board give the same ID.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The board's name for people.",
+          "type": "string"
+        },
+        "notes": {
+          "description": "Things the user should know, such as that the device has no product\nname, to show as they are.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "board_file",
+        "board_id",
+        "name"
+      ],
+      "title": "MakeBoardFileOutput",
       "type": "object"
     },
     "annotations": {

@@ -9,12 +9,17 @@ use sha2::{Digest, Sha256};
 use crate::catalog::{self, Dimension, FpgaDefinition, Variant};
 use crate::errors::ToolError;
 
-/// A board: a catalog ID, or a full definition.
+/// A board: a catalog ID, a board file, or a full definition.
 #[derive(Debug, Clone, PartialEq, Serialize, JsonSchema)]
 #[serde(untagged)]
 pub enum BoardSpec {
     /// A board's catalog ID, such as alhambra-ii. get_catalog lists them.
     Id(#[schemars(pattern(r"^[a-z0-9-]+$"))] String),
+    /// A board file, as make_board_file returned it: pass it unchanged.
+    File(
+        #[schemars(with = "serde_json::Map<String, serde_json::Value>")]
+        Box<crate::board_file::BoardFile>,
+    ),
     /// A full board definition, for boards that aren't in the catalog.
     Definition(Box<BoardInputDefinition>),
 }
@@ -53,11 +58,16 @@ impl<'de> Deserialize<'de> for BoardSpec {
         let v = serde_json::Value::deserialize(d)?;
         match v {
             serde_json::Value::String(s) => Ok(BoardSpec::Id(s)),
+            serde_json::Value::Object(ref o) if o.contains_key("logix_board_file") => {
+                crate::board_file::BoardFile::from_value(&v)
+                    .map(|f| BoardSpec::File(Box::new(f)))
+                    .map_err(|e| serde::de::Error::custom(e.message))
+            }
             serde_json::Value::Object(_) => serde_json::from_value(v)
                 .map(|b| BoardSpec::Definition(Box::new(b)))
                 .map_err(|e| serde::de::Error::custom(format!("board definition: {e}"))),
             _ => Err(serde::de::Error::custom(
-                "board must be a catalog ID string or a board definition object",
+                "board must be a catalog ID string, a board file or a board definition object",
             )),
         }
     }
@@ -141,6 +151,17 @@ pub fn resolve(spec: &BoardSpec, variant: &VariantInput) -> Result<ResolvedBoard
                 variant,
             })
         }
+        BoardSpec::File(f) => {
+            let (variant, name) = configure(&f.name, &f.variants, variant)?;
+            Ok(ResolvedBoard {
+                board_id: None,
+                description: f.name.clone(),
+                name,
+                fpga_id: Some(f.fpga_id.clone()),
+                fpga: f.fpga.clone(),
+                variant,
+            })
+        }
         BoardSpec::Definition(d) => {
             let (fpga_id, fpga) = match (&d.fpga_id, &d.fpga) {
                 (Some(id), None) => (Some(id.clone()), fpga_by_id(id)?),
@@ -186,6 +207,29 @@ mod tests {
 
     fn pick(v: &str) -> VariantInput {
         Some(v.to_string())
+    }
+
+    #[test]
+    fn board_file() {
+        let d = crate::devices::tests::device("0403", "6010", Some("Digilent USB Device"), None, 4);
+        let file = crate::board_file::make(&d, &[], "arty-a7-100t", Some("My Arty"), false)
+            .unwrap()
+            .file;
+        let spec = parse(file.to_value()).unwrap();
+        let b = resolve(&spec, &pick("usb-ram")).unwrap();
+        assert_eq!(b.description, "My Arty");
+        assert_eq!(b.name, "My Arty (RAM)");
+        assert_eq!(b.board_id, None);
+        assert_eq!(b.fpga.part_number, file.fpga.part_number);
+        assert_eq!(
+            b.variant.usb.product_regex.as_deref(),
+            Some("^Digilent USB Device$")
+        );
+        // A damaged file says so.
+        let mut bad = file.to_value();
+        bad["variants"] = json!([]);
+        let e = parse(bad).unwrap_err();
+        assert!(e.contains("damaged"), "{e}");
     }
 
     #[test]
