@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use super::build::{check_defines, check_source_file, check_source_folder, check_top_module};
 use super::{Call, EngineTool};
-use crate::board::{self, BoardSpec};
+use crate::board;
 use crate::errors::{Diagnostic, ToolError};
 use crate::sim::Sources;
 use crate::sim::lint::{self, LintRequest};
@@ -36,17 +36,23 @@ impl EngineTool for Lint {
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct LintInput {
-    /// The target board: a catalog ID such as alhambra-ii (get_catalog lists
-    /// them), a board file from make_board_file (pass it unchanged), or a
-    /// full board definition. It selects the FPGA's primitive
-    /// models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE
-    /// for Xilinx.
-    pub board: BoardSpec,
+    /// The target board's ID: a catalog ID such as alhambra-ii (get_catalog
+    /// lists them), or the ID of one of custom_boards. It selects the FPGA's
+    /// primitive models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for
+    /// Gowin or PLLE2_BASE for Xilinx.
+    #[schemars(pattern(r"^[a-z0-9-]+$"))]
+    pub board: String,
     /// The board variant: the ID of one of the board's variants, which
     /// get_catalog lists, such as usb-ram or ft232h-flash. Omitted means
     /// the board's first variant, its default.
     #[serde(default)]
     pub board_variant: Option<String>,
+    /// The host's own boards, in the catalog's format, each with its id.
+    /// board can name one of them; one with a catalog board's ID replaces
+    /// that board in this request. Send the same list to every tool.
+    /// Omitted means none.
+    #[serde(default)]
+    pub custom_boards: Vec<crate::board::CustomBoard>,
     /// Name of the top-level module, such as main. When omitted, Verilator
     /// checks every module that no other module uses.
     #[serde(default)]
@@ -101,16 +107,18 @@ pub struct LintOutput {
 /// Checks the source fields lint, test and simulate share: the board, the
 /// source folder, the design files and the testbenches. A file may be
 /// listed only once.
+#[allow(clippy::too_many_arguments)]
 pub fn check_sources(
-    board: &BoardSpec,
+    board: &str,
     variant: &crate::board::VariantInput,
+    custom_boards: &[crate::board::CustomBoard],
     source_folder: &str,
     source_files: Vec<String>,
     testbench_files: Vec<String>,
     defines: BTreeMap<String, String>,
     verbose: bool,
 ) -> Result<Sources, ToolError> {
-    let board = board::resolve(board, variant)?;
+    let board = board::resolve(board, variant, custom_boards)?;
     check_defines(&defines)?;
     let src = check_source_folder(source_folder)?;
     if source_files.is_empty() {
@@ -148,6 +156,7 @@ pub fn check(input: LintInput) -> Result<LintRequest, ToolError> {
         sources: check_sources(
             &input.board,
             &input.board_variant,
+            &input.custom_boards,
             &input.source_folder,
             input.source_files,
             input.testbench_files,

@@ -9,7 +9,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::{Call, EngineTool};
-use crate::board::{self, BoardSpec};
+use crate::board;
 use crate::build::{self, BuildRequest, parse::ResourceUsage};
 use crate::errors::{Diagnostic, ToolError};
 use crate::paths;
@@ -38,15 +38,21 @@ impl EngineTool for Build {
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct BuildInput {
-    /// The target board: a catalog ID such as alhambra-ii (get_catalog lists
-    /// them), a board file from make_board_file (pass it unchanged), or a
-    /// full board definition.
-    pub board: BoardSpec,
+    /// The target board's ID: a catalog ID such as alhambra-ii (get_catalog
+    /// lists them), or the ID of one of custom_boards.
+    #[schemars(pattern(r"^[a-z0-9-]+$"))]
+    pub board: String,
     /// The board variant: the ID of one of the board's variants, which
     /// get_catalog lists, such as usb-ram or ft232h-flash. Omitted means
     /// the board's first variant, its default.
     #[serde(default)]
     pub board_variant: Option<String>,
+    /// The host's own boards, in the catalog's format, each with its id.
+    /// board can name one of them; one with a catalog board's ID replaces
+    /// that board in this request. Send the same list to every tool.
+    /// Omitted means none.
+    #[serde(default)]
+    pub custom_boards: Vec<crate::board::CustomBoard>,
     /// Name of the top-level module, such as main.
     pub top_module: String,
     /// The folder with the design files, as an absolute path.
@@ -206,7 +212,7 @@ pub fn check_build_folder(build_folder: &str, src: &Path) -> Result<PathBuf, Too
 
 /// Checks the request and turns it into a BuildRequest.
 pub fn check(input: BuildInput) -> Result<BuildRequest, ToolError> {
-    let board = board::resolve(&input.board, &input.board_variant)?;
+    let board = board::resolve(&input.board, &input.board_variant, &input.custom_boards)?;
     check_top_module(&input.top_module)?;
     check_defines(&input.defines)?;
     let src = check_source_folder(&input.source_folder)?;
@@ -254,10 +260,9 @@ pub async fn run(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::board::BoardSpec;
 
     fn board(id: &str) -> board::ResolvedBoard {
-        board::resolve(&BoardSpec::Id(id.to_string()), &Default::default()).unwrap()
+        board::resolve(id, &Default::default(), &[]).unwrap()
     }
 
     #[test]

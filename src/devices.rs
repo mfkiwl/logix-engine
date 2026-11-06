@@ -79,11 +79,11 @@ pub enum DeviceKind {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct BoardMatch {
-    /// The board's ID: a catalog ID, or a board file's board ID when custom
-    /// is true.
+    /// The board's ID: a catalog ID, or a custom board's ID when custom is
+    /// true.
     pub board: String,
-    /// True when the board is from one of the request's board_files rather
-    /// than the catalog.
+    /// True when the board is one of the request's custom_boards rather
+    /// than the catalog's.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub custom: bool,
     /// The board's variants this device fits, in the board's order, each

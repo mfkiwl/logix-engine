@@ -55,12 +55,11 @@ pub struct ProgramBoardInput {
     /// the logs. Not applied to a programmer_command. Defaults to false.
     #[serde(default)]
     pub verbose: bool,
-    /// The board file the build was made with, when it was made with one,
-    /// sent unchanged. After a successful upload it comes back in the
-    /// output's board_file, recording that this variant works: save that.
+    /// The host's own boards, as sent to build: the build's board must
+    /// still be the same here, else the upload is refused (build again).
+    /// Send the same list to every tool. Omitted means none.
     #[serde(default)]
-    #[schemars(with = "Option<serde_json::Map<String, serde_json::Value>>")]
-    pub board_file: Option<serde_json::Value>,
+    pub custom_boards: Vec<crate::board::CustomBoard>,
 }
 
 /// What was programmed.
@@ -76,11 +75,6 @@ pub struct ProgramBoardOutput {
     /// a shell line that runs it again without the engine, such as for a bug
     /// report to the tool's developers.
     pub commands: Vec<crate::commands::CommandRecord>,
-    /// The request's board_file, recording this successful upload: save it
-    /// in place of the old one. Omitted when the request had none.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    #[schemars(with = "Option<serde_json::Map<String, serde_json::Value>>")]
-    pub board_file: Option<serde_json::Value>,
 }
 
 /// The checked build folder and its build record, from a successful build.
@@ -133,25 +127,7 @@ pub async fn run_with_programmers(
     let board = &record.board;
     let variant = &board.variant;
     let custom = input.programmer_command.as_deref();
-    let mut board_file = match &input.board_file {
-        None => None,
-        Some(v) => {
-            let file = crate::board_file::BoardFile::from_value(v).map_err(|mut e| {
-                e.message = format!("board_file: {}", e.message);
-                e
-            })?;
-            let spec = crate::board::BoardSpec::File(Box::new(file.clone()));
-            let same =
-                crate::board::resolve(&spec, &Some(variant.id.clone())).is_ok_and(|b| b == *board);
-            if !same {
-                return Err(ToolError::request(format!(
-                    "board_file: this board file isn't the board the build in {} was made with. Send the board file the project builds with, or none.",
-                    input.build_folder
-                )));
-            }
-            Some(file)
-        }
-    };
+    check_same_board(board, &input.custom_boards, &input.build_folder)?;
 
     let needed = state.packages.needing_install(&[TOOLCHAIN])?;
     let checks_fpga = custom.is_none() && program::checks_fpga(variant, &board.fpga);
@@ -251,20 +227,10 @@ pub async fn run_with_programmers(
             {
                 call.output.message(&done);
             }
-            // A custom command says nothing about the board's own way.
-            if custom.is_none()
-                && let Some(file) = board_file.as_mut()
-            {
-                let confirmed = checks_fpga
-                    .then_some(board.fpga.jtag_idcode.as_deref())
-                    .flatten();
-                file.record_upload(&variant.id, confirmed);
-            }
             Ok(ProgramBoardOutput {
                 device,
                 programmer,
                 commands: call.commands.take(),
-                board_file: board_file.map(|f| f.to_value()),
             })
         }
         Ok(r) => Err(program::failure(
@@ -282,6 +248,27 @@ pub async fn run_with_programmers(
             ActionCode::InstallPackages,
             format!("Reinstall the {TOOLCHAIN} package, which may be damaged."),
         )),
+    }
+}
+
+/// Checks that the build's board is still the board its ID names in this
+/// request (the request's custom_boards, else the catalog), so an upload
+/// never uses a board definition the build wasn't made with.
+pub fn check_same_board(
+    board: &crate::board::ResolvedBoard,
+    custom: &[crate::board::CustomBoard],
+    build_folder: &str,
+) -> Result<(), ToolError> {
+    crate::board::check_custom_boards(custom)?;
+    // Build records from before board IDs were kept: nothing to compare.
+    let Some(id) = &board.board_id else {
+        return Ok(());
+    };
+    match crate::board::resolve(id, &Some(board.variant.id.clone()), custom) {
+        Ok(now) if now.checksum() == board.checksum() => Ok(()),
+        _ => Err(ToolError::request(format!(
+            "The board {id} isn't the same as when {build_folder} was built: custom_boards or the engine's catalog changed. Send the custom_boards the build had, or run build again."
+        ))),
     }
 }
 

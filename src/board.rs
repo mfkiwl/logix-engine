@@ -1,34 +1,30 @@
-//! The "board specification" input type (docs/tool-api.md): a catalog ID, or
-//! a full board definition whose FPGA is a catalog ID or a full definition.
-//! It is resolved into a complete board, which the build record keeps.
+//! Boards in requests (docs/tool-api.md, Board specification): every tool
+//! that deals with boards names one by ID (`board`) and takes the same
+//! optional list of the host's own boards (`custom_boards`), in the
+//! catalog's format. A custom board with a catalog board's ID replaces that
+//! board for the request. The chosen board is resolved into a complete
+//! board, which the build record keeps.
+
+use std::collections::BTreeMap;
 
 use schemars::JsonSchema;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 use crate::catalog::{self, Dimension, FpgaDefinition, Variant};
 use crate::errors::ToolError;
 
-/// A board: a catalog ID, a board file, or a full definition.
-#[derive(Debug, Clone, PartialEq, Serialize, JsonSchema)]
-#[serde(untagged)]
-pub enum BoardSpec {
-    /// A board's catalog ID, such as alhambra-ii. get_catalog lists them.
-    Id(#[schemars(pattern(r"^[a-z0-9-]+$"))] String),
-    /// A board file, as make_board_file returned it: pass it unchanged.
-    File(
-        #[schemars(with = "serde_json::Map<String, serde_json::Value>")]
-        Box<crate::board_file::BoardFile>,
-    ),
-    /// A full board definition, for boards that aren't in the catalog.
-    Definition(Box<BoardInputDefinition>),
-}
-
-/// A board definition in a request. Like a catalog entry, except that the
-/// FPGA can be given either as fpga_id or as a full fpga definition.
+/// One of the host's own boards, in the catalog's format, with its ID.
+/// Like a catalog entry, except that the FPGA can be given either as
+/// fpga_id or as a full fpga definition.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
-pub struct BoardInputDefinition {
+pub struct CustomBoard {
+    /// The board's ID (lowercase letters, digits and hyphens), as board
+    /// names it in requests. A catalog board's ID replaces that catalog
+    /// board in this request.
+    #[schemars(pattern(r"^[a-z0-9-]+$"))]
+    pub id: String,
     /// The board's name for people.
     pub description: String,
     /// The board's FPGA as a catalog ID, such as ice40hx4k-tq144-8k. Give
@@ -39,7 +35,7 @@ pub struct BoardInputDefinition {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub fpga: Option<FpgaDefinition>,
     /// Ignored: the engine derives the dimensions from the variants. Here
-    /// so a definition copied from get_catalog can be sent back as is.
+    /// so a board copied from get_catalog can be sent back as is.
     #[serde(default, skip_serializing)]
     #[schemars(skip)]
     pub dimensions: Vec<Dimension>,
@@ -52,33 +48,105 @@ pub struct BoardInputDefinition {
 /// None means the board's first variant, its default.
 pub type VariantInput = Option<String>;
 
-// A clearer error than serde's "did not match any variant".
-impl<'de> Deserialize<'de> for BoardSpec {
-    fn deserialize<D: Deserializer<'de>>(d: D) -> Result<Self, D::Error> {
-        let v = serde_json::Value::deserialize(d)?;
-        match v {
-            serde_json::Value::String(s) => Ok(BoardSpec::Id(s)),
-            serde_json::Value::Object(ref o) if o.contains_key("logix_board_file") => {
-                crate::board_file::BoardFile::from_value(&v)
-                    .map(|f| BoardSpec::File(Box::new(f)))
-                    .map_err(|e| serde::de::Error::custom(e.message))
-            }
-            serde_json::Value::Object(_) => serde_json::from_value(v)
-                .map(|b| BoardSpec::Definition(Box::new(b)))
-                .map_err(|e| serde::de::Error::custom(format!("board definition: {e}"))),
-            _ => Err(serde::de::Error::custom(
-                "board must be a catalog ID string, a board file or a board definition object",
-            )),
+/// A board as matching and listing need it: the catalog's, or a custom one.
+#[derive(Debug, Clone)]
+pub struct KnownBoard<'a> {
+    pub id: &'a str,
+    pub custom: bool,
+    pub description: &'a str,
+    /// The FPGA's catalog ID, when it is one.
+    pub fpga_id: Option<&'a str>,
+    /// The FPGA definition (from the catalog for a catalog ID).
+    pub fpga: FpgaDefinition,
+    pub variants: &'a [Variant],
+}
+
+/// Checks the request's custom boards: valid, distinct IDs, exactly one of
+/// fpga_id and fpga, a known FPGA ID, and valid variants. Every tool checks
+/// the whole list, so a bad list fails the same way everywhere.
+pub fn check_custom_boards(custom: &[CustomBoard]) -> Result<(), ToolError> {
+    let mut seen = std::collections::BTreeSet::new();
+    for b in custom {
+        let fail = |e: String| ToolError::request(format!("custom_boards: {}: {e}", b.id));
+        if !catalog::is_catalog_id(&b.id) {
+            return Err(ToolError::request(format!(
+                "custom_boards: {:?} isn't a board ID: use lowercase letters, digits and hyphens.",
+                b.id
+            )));
         }
+        if !seen.insert(b.id.as_str()) {
+            return Err(fail("the ID is used twice.".into()));
+        }
+        custom_fpga(b).map_err(|e| fail(e.message))?;
+        catalog::validate_variants(&b.variants)
+            .map_err(|e| fail(format!("invalid board definition: {e}.")))?;
     }
+    Ok(())
+}
+
+/// A custom board's FPGA: its catalog ID and definition.
+fn custom_fpga(b: &CustomBoard) -> Result<(Option<String>, FpgaDefinition), ToolError> {
+    match (&b.fpga_id, &b.fpga) {
+        (Some(id), None) => Ok((Some(id.clone()), fpga_by_id(id)?)),
+        (None, Some(f)) => {
+            f.validate()
+                .map_err(|e| ToolError::request(format!("invalid FPGA definition: {e}.")))?;
+            Ok((None, f.clone()))
+        }
+        _ => Err(ToolError::request("give exactly one of fpga_id and fpga.")),
+    }
+}
+
+/// Every board a request knows, by ID: the catalog's, with the request's
+/// custom boards replacing catalog boards of the same ID and added to the
+/// rest. The custom boards must have passed `check_custom_boards`.
+pub fn known_boards(custom: &[CustomBoard]) -> BTreeMap<&str, KnownBoard<'_>> {
+    let c = catalog::builtin();
+    let mut all: BTreeMap<&str, KnownBoard<'_>> = c
+        .boards
+        .iter()
+        .filter_map(|(id, b)| {
+            Some((
+                id.as_str(),
+                KnownBoard {
+                    id,
+                    custom: false,
+                    description: &b.description,
+                    fpga_id: Some(&b.fpga_id),
+                    fpga: c.fpgas.get(&b.fpga_id)?.clone(),
+                    variants: &b.variants,
+                },
+            ))
+        })
+        .collect();
+    for b in custom {
+        let Ok((_, fpga)) = custom_fpga(b) else {
+            continue;
+        };
+        all.insert(
+            &b.id,
+            KnownBoard {
+                id: &b.id,
+                custom: true,
+                description: &b.description,
+                fpga_id: b.fpga_id.as_deref(),
+                fpga,
+                variants: &b.variants,
+            },
+        );
+    }
+    all
 }
 
 /// A board with everything spelled out: what a build used.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub struct ResolvedBoard {
-    /// The board's catalog ID, when it came from the catalog.
+    /// The board's ID. Optional only so older build records still read.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub board_id: Option<String>,
+    /// True when the board came from the request's custom_boards.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub custom: bool,
     pub description: String,
     /// The board's name with its variant, for messages, such as
     /// "Icesugar Pro (RAM)".
@@ -131,65 +199,43 @@ fn configure(
     Ok((v.clone(), name))
 }
 
-/// Resolves a board input and its variant against the catalog. Unknown IDs,
-/// bad definitions and variants the board doesn't have are request errors.
-pub fn resolve(spec: &BoardSpec, variant: &VariantInput) -> Result<ResolvedBoard, ToolError> {
-    match spec {
-        BoardSpec::Id(id) => {
-            let b = catalog::builtin().boards.get(id).ok_or_else(|| {
-                ToolError::request(format!(
-                    "{id:?} isn't a board in the catalog. Use get_catalog to list the boards, or give a full board definition."
-                ))
-            })?;
-            let (variant, name) = configure(&b.description, &b.variants, variant)?;
-            Ok(ResolvedBoard {
-                board_id: Some(id.clone()),
-                description: b.description.clone(),
-                name,
-                fpga: fpga_by_id(&b.fpga_id)?,
-                fpga_id: Some(b.fpga_id.clone()),
-                variant,
-            })
-        }
-        BoardSpec::File(f) => {
-            let (variant, name) = configure(&f.name, &f.variants, variant)?;
-            Ok(ResolvedBoard {
-                board_id: None,
-                description: f.name.clone(),
-                name,
-                fpga_id: Some(f.fpga_id.clone()),
-                fpga: f.fpga.clone(),
-                variant,
-            })
-        }
-        BoardSpec::Definition(d) => {
-            let (fpga_id, fpga) = match (&d.fpga_id, &d.fpga) {
-                (Some(id), None) => (Some(id.clone()), fpga_by_id(id)?),
-                (None, Some(f)) => {
-                    f.validate().map_err(|e| {
-                        ToolError::request(format!("Invalid FPGA definition: {e}."))
-                    })?;
-                    (None, f.clone())
-                }
-                _ => {
-                    return Err(ToolError::request(
-                        "A board definition needs exactly one of fpga_id and fpga.",
-                    ));
-                }
-            };
-            catalog::validate_variants(&d.variants)
-                .map_err(|e| ToolError::request(format!("Invalid board definition: {e}.")))?;
-            let (variant, name) = configure(&d.description, &d.variants, variant)?;
-            Ok(ResolvedBoard {
-                board_id: None,
-                description: d.description.clone(),
-                name,
-                fpga_id,
-                fpga,
-                variant,
-            })
-        }
+/// Resolves the board named `id`, and its variant: one of the request's
+/// custom boards (checked here), else a catalog board. Unknown IDs, bad
+/// custom boards and variants the board doesn't have are request errors.
+pub fn resolve(
+    id: &str,
+    variant: &VariantInput,
+    custom: &[CustomBoard],
+) -> Result<ResolvedBoard, ToolError> {
+    check_custom_boards(custom)?;
+    if let Some(b) = custom.iter().find(|b| b.id == id) {
+        let (fpga_id, fpga) = custom_fpga(b)?;
+        let (variant, name) = configure(&b.description, &b.variants, variant)?;
+        return Ok(ResolvedBoard {
+            board_id: Some(id.to_string()),
+            custom: true,
+            description: b.description.clone(),
+            name,
+            fpga_id,
+            fpga,
+            variant,
+        });
     }
+    let b = catalog::builtin().boards.get(id).ok_or_else(|| {
+        ToolError::request(format!(
+            "{id:?} isn't a board in the catalog or in custom_boards. Use get_catalog to list the boards, or add the board to custom_boards."
+        ))
+    })?;
+    let (variant, name) = configure(&b.description, &b.variants, variant)?;
+    Ok(ResolvedBoard {
+        board_id: Some(id.to_string()),
+        custom: false,
+        description: b.description.clone(),
+        name,
+        fpga: fpga_by_id(&b.fpga_id)?,
+        fpga_id: Some(b.fpga_id.clone()),
+        variant,
+    })
 }
 
 #[cfg(test)]
@@ -197,74 +243,48 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    fn parse(v: serde_json::Value) -> Result<BoardSpec, String> {
-        serde_json::from_value(v).map_err(|e| e.to_string())
-    }
-
-    fn id(s: &str) -> BoardSpec {
-        BoardSpec::Id(s.into())
-    }
-
     fn pick(v: &str) -> VariantInput {
         Some(v.to_string())
     }
 
-    #[test]
-    fn board_file() {
-        let d = crate::devices::tests::device("0403", "6010", Some("Digilent USB Device"), None, 4);
-        let file = crate::board_file::make(&d, &[], "arty-a7-100t", Some("My Arty"), false)
-            .unwrap()
-            .file;
-        let spec = parse(file.to_value()).unwrap();
-        let b = resolve(&spec, &pick("usb-ram")).unwrap();
-        assert_eq!(b.description, "My Arty");
-        assert_eq!(b.name, "My Arty (RAM)");
-        assert_eq!(b.board_id, None);
-        assert_eq!(b.fpga.part_number, file.fpga.part_number);
-        assert_eq!(
-            b.variant.usb.product_regex.as_deref(),
-            Some("^Digilent USB Device$")
-        );
-        // A damaged file says so.
-        let mut bad = file.to_value();
-        bad["variants"] = json!([]);
-        let e = parse(bad).unwrap_err();
-        assert!(e.contains("damaged"), "{e}");
+    fn catalog_board(id: &str, variant: &VariantInput) -> Result<ResolvedBoard, ToolError> {
+        resolve(id, variant, &[])
     }
 
     #[test]
     fn catalog_id() {
-        let b = resolve(&parse(json!("alhambra-ii")).unwrap(), &None).unwrap();
+        let b = catalog_board("alhambra-ii", &None).unwrap();
         assert_eq!(b.board_id.as_deref(), Some("alhambra-ii"));
+        assert!(!b.custom);
         assert_eq!(b.fpga.nextpnr_device, "hx8k");
         // One value per dimension here, so the name doesn't mention them.
         assert_eq!(b.name, "Alhambra II");
         assert_eq!(b.variant.id, "usb-flash");
-        let err = resolve(&parse(json!("nope")).unwrap(), &None).unwrap_err();
-        assert!(err.message.contains("get_catalog"), "{}", err.message);
+        let err = catalog_board("nope", &None).unwrap_err();
+        assert!(err.message.contains("custom_boards"), "{}", err.message);
     }
 
     #[test]
     fn board_variants_are_picked_by_id() {
         // The default is the first variant.
-        let dfu = resolve(&id("butterstick-r10-2g-85k"), &None).unwrap();
+        let dfu = catalog_board("butterstick-r10-2g-85k", &None).unwrap();
         assert_eq!(dfu.variant.id, "bootloader-flash");
         assert_eq!(dfu.name, "butterstick r1.0 (USB bootloader, Flash)");
-        let cable = resolve(&id("butterstick-r10-2g-85k"), &pick("ft232h-ram")).unwrap();
+        let cable = catalog_board("butterstick-r10-2g-85k", &pick("ft232h-ram")).unwrap();
         assert_eq!(cable.variant.programmer, "openfpgaloader");
         assert_eq!(cable.variant.usb.pid, "6014");
         // Every variant has the board's FPGA.
         assert_eq!(dfu.fpga, cable.fpga);
         // Memory changes only the programming, and still the checksum, so
         // the build starts over.
-        let flash = resolve(&id("icesugar-pro"), &None).unwrap();
-        let ram = resolve(&id("icesugar-pro"), &pick("usb-ram")).unwrap();
+        let flash = catalog_board("icesugar-pro", &None).unwrap();
+        let ram = catalog_board("icesugar-pro", &pick("usb-ram")).unwrap();
         assert_eq!(flash.fpga, ram.fpga);
         assert_ne!(flash.variant.args, ram.variant.args);
         assert_ne!(flash.checksum(), ram.checksum());
         assert_eq!(ram.name, "Icesugar Pro (RAM)");
         // An unknown variant is a request error that lists the variants.
-        let e = resolve(&id("butterstick-r10-2g-85k"), &pick("bootloader-ram")).unwrap_err();
+        let e = catalog_board("butterstick-r10-2g-85k", &pick("bootloader-ram")).unwrap_err();
         assert_eq!(e.category, crate::errors::Category::Request);
         assert!(
             e.message
@@ -274,8 +294,9 @@ mod tests {
         );
     }
 
-    fn custom(fpga: serde_json::Value) -> serde_json::Value {
+    pub(crate) fn custom(id: &str, fpga: serde_json::Value) -> CustomBoard {
         let mut v = json!({
+            "id": id,
             "description": "My board",
             "variants": [{
                 "id": "usb-flash", "connection": "usb", "memory": "flash",
@@ -288,46 +309,79 @@ mod tests {
         for (k, val) in fpga.as_object().unwrap() {
             v[k] = val.clone();
         }
-        v
+        serde_json::from_value(v).unwrap()
     }
 
     #[test]
-    fn full_definitions() {
-        let by_id = resolve(
-            &parse(custom(json!({"fpga_id": "ice40up5k-sg48"}))).unwrap(),
-            &None,
-        )
-        .unwrap();
-        assert_eq!(by_id.fpga.nextpnr_device, "up5k");
-        let inline = resolve(
-            &parse(custom(json!({"fpga": {
+    fn custom_boards() {
+        let by_id = custom("mine", json!({"fpga_id": "ice40up5k-sg48"}));
+        let b = resolve("mine", &None, std::slice::from_ref(&by_id)).unwrap();
+        assert_eq!(b.fpga.nextpnr_device, "up5k");
+        assert!(b.custom);
+        assert_eq!(b.board_id.as_deref(), Some("mine"));
+        let inline = custom(
+            "inline",
+            json!({"fpga": {
                 "architecture": "ice40", "part_number": "X", "size": "1k",
                 "nextpnr_device": "hx1k", "nextpnr_package": "tq144"
-            }})))
-            .unwrap(),
-            &None,
-        )
-        .unwrap();
-        assert_eq!(inline.fpga.package(), "tq144");
-        assert_ne!(by_id.checksum(), inline.checksum());
-        // Neither or both.
-        assert!(resolve(&parse(custom(json!({}))).unwrap(), &None).is_err());
-        // A bad variant.
-        let mut bad = custom(json!({"fpga_id": "ice40up5k-sg48"}));
-        bad["variants"][0]["programmer"] = json!("tinyprog");
-        assert!(resolve(&parse(bad).unwrap(), &None).is_err());
-        // A definition copied from get_catalog, dimensions and all, is fine.
-        let mut copied = serde_json::to_value(&catalog::builtin().boards["icesugar-pro"]).unwrap();
-        assert!(copied.get("dimensions").is_some());
-        copied["fpga_id"] = json!("lfe5u-25f-6bg256c");
-        let b = resolve(&parse(copied).unwrap(), &pick("usb-ram")).unwrap();
-        assert_eq!(b.variant.memory, "ram");
+            }}),
+        );
+        let list = [by_id.clone(), inline];
+        let b2 = resolve("inline", &None, &list).unwrap();
+        assert_eq!(b2.fpga.package(), "tq144");
+        assert_eq!(b2.fpga_id, None);
+        // The list doesn't change catalog boards it doesn't name.
+        assert!(!resolve("alhambra-ii", &None, &list).unwrap().custom);
+        // A custom board replaces the catalog board with its ID.
+        let over = custom("alhambra-ii", json!({"fpga_id": "ice40up5k-sg48"}));
+        let b3 = resolve("alhambra-ii", &None, &[over]).unwrap();
+        assert!(b3.custom);
+        assert_eq!(b3.description, "My board");
+        assert_ne!(
+            b3.checksum(),
+            catalog_board("alhambra-ii", &None).unwrap().checksum()
+        );
     }
 
     #[test]
-    fn clear_parse_errors() {
-        assert!(parse(json!(5)).unwrap_err().contains("catalog ID string"));
-        let err = parse(json!({"description": "x"})).unwrap_err();
-        assert!(err.contains("board definition"), "{err}");
+    fn bad_custom_boards_fail_every_request() {
+        let ok = custom("mine", json!({"fpga_id": "ice40up5k-sg48"}));
+        let check = |list: &[CustomBoard]| resolve("alhambra-ii", &None, list).unwrap_err().message;
+        // Neither or both FPGA fields.
+        assert!(check(&[custom("x", json!({}))]).contains("exactly one"));
+        // A bad variant.
+        let mut bad = ok.clone();
+        bad.variants[0].programmer = "tinyprog".into();
+        assert!(check(&[bad]).contains("custom_boards: mine:"));
+        // Twice the same ID, and a bad ID.
+        assert!(check(&[ok.clone(), ok.clone()]).contains("twice"));
+        let mut bad_id = ok.clone();
+        bad_id.id = "Bad ID".into();
+        assert!(check(&[bad_id]).contains("isn't a board ID"));
+        // An unknown FPGA.
+        assert!(check(&[custom("y", json!({"fpga_id": "nope"}))]).contains("isn't an FPGA"));
+    }
+
+    #[test]
+    fn a_board_copied_from_the_catalog_can_be_sent_back() {
+        let mut copied = serde_json::to_value(&catalog::builtin().boards["icesugar-pro"]).unwrap();
+        assert!(copied.get("dimensions").is_some());
+        copied["id"] = json!("my-sugar");
+        let b: CustomBoard = serde_json::from_value(copied).unwrap();
+        let r = resolve("my-sugar", &pick("usb-ram"), &[b]).unwrap();
+        assert_eq!(r.variant.memory, "ram");
+    }
+
+    #[test]
+    fn known_boards_put_custom_boards_first() {
+        let list = [
+            custom("mine", json!({"fpga_id": "ice40up5k-sg48"})),
+            custom("alhambra-ii", json!({"fpga_id": "ice40up5k-sg48"})),
+        ];
+        let all = known_boards(&list);
+        assert!(all["mine"].custom);
+        assert!(all["alhambra-ii"].custom, "replaced");
+        assert!(!all["icestick"].custom);
+        assert_eq!(all.len(), catalog::builtin().boards.len() + 1);
     }
 }

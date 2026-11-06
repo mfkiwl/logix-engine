@@ -6,7 +6,6 @@
 #![allow(clippy::result_large_err)]
 
 pub mod board;
-pub mod board_file;
 pub mod build;
 pub mod catalog;
 pub mod commands;

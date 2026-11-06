@@ -245,9 +245,34 @@
   },
   {
     "name": "get_catalog",
-    "description": "Returns board and FPGA definitions from the engine's read-only catalog. Use it to find a board's catalog ID, such as alhambra-ii, to pass as the board of other tools, or to see a board's FPGA and how it is programmed. Each section is returned only when asked for: {\"boards\": {\"fetch\": true}} returns all boards, and {\"boards\": {\"fetch\": true, \"ids\": [\"alhambra-ii\"]}} only the listed ones. The architectures section gives each FPGA family's name for people and the extension of its pin constraint files. Board descriptions are the boards' names for people.",
+    "description": "Returns board and FPGA definitions from the engine's read-only catalog. Use it to find a board's catalog ID, such as alhambra-ii, to pass as the board of other tools, or to see a board's FPGA and how it is programmed. Each section is returned only when asked for: {\"boards\": {\"fetch\": true}} returns all boards, and {\"boards\": {\"fetch\": true, \"ids\": [\"alhambra-ii\"]}} only the listed ones. Boards include the request's custom_boards, marked custom, a custom board replacing the catalog board with its ID. The architectures section gives each FPGA family's name for people and the extension of its pin constraint files. Board descriptions are the boards' names for people.",
     "inputSchema": {
       "$defs": {
+        "Architecture": {
+          "description": "FPGA families.",
+          "oneOf": [
+            {
+              "const": "ice40",
+              "description": "Lattice iCE40.",
+              "type": "string"
+            },
+            {
+              "const": "ecp5",
+              "description": "Lattice ECP5.",
+              "type": "string"
+            },
+            {
+              "const": "gowin",
+              "description": "Gowin (GW1N, GW2A and GW5A).",
+              "type": "string"
+            },
+            {
+              "const": "xilinx",
+              "description": "AMD/Xilinx 7 Series (Artix-7, Spartan-7 and Zynq-7000).",
+              "type": "string"
+            }
+          ]
+        },
         "CatalogQuery": {
           "additionalProperties": false,
           "description": "Selects entries from one catalog section.",
@@ -270,6 +295,232 @@
             }
           },
           "type": "object"
+        },
+        "CustomBoard": {
+          "additionalProperties": false,
+          "description": "One of the host's own boards, in the catalog's format, with its ID.\nLike a catalog entry, except that the FPGA can be given either as\nfpga_id or as a full fpga definition.",
+          "properties": {
+            "description": {
+              "description": "The board's name for people.",
+              "type": "string"
+            },
+            "fpga": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/FpgaDefinition"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The board's FPGA as a full definition. Give either fpga_id or fpga."
+            },
+            "fpga_id": {
+              "description": "The board's FPGA as a catalog ID, such as ice40hx4k-tq144-8k. Give\neither fpga_id or fpga.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "id": {
+              "description": "The board's ID (lowercase letters, digits and hyphens), as board\nnames it in requests. A catalog board's ID replaces that catalog\nboard in this request.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
+            "variants": {
+              "description": "The ways the board can be programmed, as in the catalog. The first is\nthe default.",
+              "items": {
+                "$ref": "#/$defs/Variant"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "id",
+            "description",
+            "variants"
+          ],
+          "type": "object"
+        },
+        "FpgaDefinition": {
+          "additionalProperties": false,
+          "description": "An FPGA: its architecture, part and toolchain parameters.",
+          "properties": {
+            "architecture": {
+              "$ref": "#/$defs/Architecture",
+              "description": "The FPGA family: ice40, ecp5, gowin or xilinx."
+            },
+            "jtag_idcode": {
+              "description": "The FPGA's JTAG ID code, such as 0x0362d093, as openFPGALoader's\n--detect reports it. Before programming over JTAG, the engine reads\nthe connected FPGA's ID code and refuses to program a different\nFPGA, such as a board of another size than the build's. It\nidentifies the chip, not the size a board uses it as, so FPGAs made\nfrom the same chip share it. ECP5, Gowin and Xilinx only, optional:\nwithout it there is no check.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "nextpnr_device": {
+              "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5,\nGW1NR-LV9QN88PC6/I5 for Gowin or xc7a35tcsg324-1 for Xilinx.",
+              "type": "string"
+            },
+            "nextpnr_family": {
+              "description": "The device family nextpnr uses, such as GW1N-9C, when nextpnr can't\ntell it from nextpnr_device. Gowin only, optional.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "nextpnr_package": {
+              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5. Required for iCE40 and ECP5; Gowin and Xilinx have none,\nsince their nextpnr_device names the package.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "nextpnr_speed": {
+              "description": "The speed grade nextpnr uses, such as 6. ECP5 only, where it's\nrequired.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "packer_device": {
+              "description": "The device the bitstream packer (gowin_pack) uses, such as GW1N-9C.\nGowin only, where it's required.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "part_number": {
+              "description": "The vendor's part number, such as ICE40HX4K-TQ144.",
+              "type": "string"
+            },
+            "prjxray_family": {
+              "description": "The FPGA family's folder in the Project X-Ray database, which the\nbitstream tools read, such as artix7, spartan7 or zynq7. Xilinx\nonly, where it's required.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "size": {
+              "description": "The device size, such as 8k.",
+              "type": "string"
+            },
+            "yosys_arch": {
+              "description": "The architecture yosys synthesizes for (synth_xilinx -arch), such\nas xc7. Xilinx only, where it's required.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "yosys_family": {
+              "description": "The family yosys synthesizes for, such as gw2a. Gowin only,\noptional: omitted means yosys's default, the GW1N family.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "architecture",
+            "part_number",
+            "size",
+            "nextpnr_device"
+          ],
+          "type": "object"
+        },
+        "UsbFilter": {
+          "additionalProperties": false,
+          "description": "Which USB devices are this board.",
+          "properties": {
+            "pid": {
+              "description": "USB product ID, four lowercase hex digits, such as 6010.",
+              "pattern": "^[0-9a-f]{4}$",
+              "type": "string"
+            },
+            "product_regex": {
+              "description": "A regular expression the device's product name must match, when\nseveral boards share the same USB IDs. Omitted means any product name.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "release": {
+              "description": "The device's release number (USB bcdDevice), four lowercase hex\ndigits, such as 0500, that the device must report, for boards that\nshare USB IDs but differ in it. On FTDI chips, and on board debuggers\nthat act like them, it tells the chip type: 0700 for an FT2232H, 0500\nfor an FT2232C/D or a debugger that acts like one. Omitted means any\nrelease.",
+              "pattern": "^[0-9a-f]{4}$",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "serial_regex": {
+              "description": "A regular expression the device's serial number must match, for\nboards that share USB IDs and product names but have serial numbers\nthat tell them apart. Omitted means any serial number.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "vid": {
+              "description": "USB vendor ID, four lowercase hex digits, such as 0403.",
+              "pattern": "^[0-9a-f]{4}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "vid",
+            "pid"
+          ],
+          "type": "object"
+        },
+        "Variant": {
+          "additionalProperties": false,
+          "description": "One way to program a board: its connection and memory, and how to\nprogram the board that way.",
+          "properties": {
+            "args": {
+              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL_NUM} with its serial number,\n${USB_PATH} with its USB port path (such as 1-2.3, as dfu-util's -p\ntakes it), and ${BITSTREAM} with the bitstream path.",
+              "type": "string"
+            },
+            "connection": {
+              "description": "How the computer reaches the board: usb, bootloader, ft2232h,\nft232h, cmsis-dap, usb-blaster or unspecified (see the dimensions).",
+              "type": "string"
+            },
+            "id": {
+              "description": "The variant's ID within its board, such as usb-flash or ft232h-ram:\nwhat board_variant names in requests. Catalog boards use\n<connection>-<memory>.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
+            "memory": {
+              "description": "Where the design goes: flash (kept at power-off) or ram (lost at\npower-off).",
+              "type": "string"
+            },
+            "programmer": {
+              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
+              "type": "string"
+            },
+            "tested": {
+              "description": "Whether programming this way is known to work: tested on the board,\nor used unchanged in a tool that relies on it. False for ways that\nhaven't been tried on hardware, such as a board moved to a different\nprogrammer.",
+              "type": "boolean"
+            },
+            "usb": {
+              "$ref": "#/$defs/UsbFilter",
+              "description": "The USB filter that finds the board's device."
+            },
+            "user_notes": {
+              "description": "Warnings and missing information for users, such as a USB filter that\nalso matches other boards or a step needed before programming.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "connection",
+            "memory",
+            "programmer",
+            "args",
+            "usb",
+            "tested"
+          ],
+          "type": "object"
         }
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -287,15 +538,6 @@
           ],
           "description": "Which FPGA architectures (families) to return, by ID, such as ice40.\nOmitted means none."
         },
-        "board_files": {
-          "default": [],
-          "description": "Board files, as make_board_file returned them, sent unchanged. When\nboards are fetched, their boards are returned too, by their board\nIDs, with custom true, so a board picker shows them with the\ncatalog's. Omitted means none.",
-          "items": {
-            "additionalProperties": true,
-            "type": "object"
-          },
-          "type": "array"
-        },
         "boards": {
           "anyOf": [
             {
@@ -306,6 +548,14 @@
             }
           ],
           "description": "Which boards to return. Omitted means none."
+        },
+        "custom_boards": {
+          "default": [],
+          "description": "The host's own boards, in the catalog's format, each with its id.\nWhen boards are fetched, they are returned with the catalog's, with\ncustom true; one with a catalog board's ID replaces that board. ids\ncan name them. Send the same list to every tool. Omitted means none.",
+          "items": {
+            "$ref": "#/$defs/CustomBoard"
+          },
+          "type": "array"
         },
         "fpgas": {
           "anyOf": [
@@ -384,7 +634,7 @@
           "description": "A catalog board, as get_catalog returns it.",
           "properties": {
             "custom": {
-              "description": "True for a board from one of the request's board_files, omitted for\ncatalog boards.",
+              "description": "True for a board from the request's custom_boards, omitted for\ncatalog boards.",
               "type": "boolean"
             },
             "description": {
@@ -398,9 +648,23 @@
               },
               "type": "array"
             },
+            "fpga": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/FpgaDefinition"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The board's FPGA definition, only for a custom board whose FPGA isn't\nin the catalog."
+            },
             "fpga_id": {
-              "description": "The board's FPGA, as a catalog ID of the fpgas section, such as\nice40hx4k-tq144-8k. Every variant uses it.",
-              "type": "string"
+              "description": "The board's FPGA, as a catalog ID of the fpgas section, such as\nice40hx4k-tq144-8k. Every variant uses it. Omitted for a custom\nboard whose FPGA isn't in the catalog: see fpga.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "variants": {
               "description": "The ways the board can be programmed, the board's default first.",
@@ -412,7 +676,6 @@
           },
           "required": [
             "description",
-            "fpga_id",
             "dimensions",
             "variants"
           ],
@@ -676,9 +939,9 @@
             }
           ]
         },
-        "BoardInputDefinition": {
+        "CustomBoard": {
           "additionalProperties": false,
-          "description": "A board definition in a request. Like a catalog entry, except that the\nFPGA can be given either as fpga_id or as a full fpga definition.",
+          "description": "One of the host's own boards, in the catalog's format, with its ID.\nLike a catalog entry, except that the FPGA can be given either as\nfpga_id or as a full fpga definition.",
           "properties": {
             "description": {
               "description": "The board's name for people.",
@@ -702,6 +965,11 @@
                 "null"
               ]
             },
+            "id": {
+              "description": "The board's ID (lowercase letters, digits and hyphens), as board\nnames it in requests. A catalog board's ID replaces that catalog\nboard in this request.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
             "variants": {
               "description": "The ways the board can be programmed, as in the catalog. The first is\nthe default.",
               "items": {
@@ -711,29 +979,11 @@
             }
           },
           "required": [
+            "id",
             "description",
             "variants"
           ],
           "type": "object"
-        },
-        "BoardSpec": {
-          "anyOf": [
-            {
-              "description": "A board's catalog ID, such as alhambra-ii. get_catalog lists them.",
-              "pattern": "^[a-z0-9-]+$",
-              "type": "string"
-            },
-            {
-              "additionalProperties": true,
-              "description": "A board file, as make_board_file returned it: pass it unchanged.",
-              "type": "object"
-            },
-            {
-              "$ref": "#/$defs/BoardInputDefinition",
-              "description": "A full board definition, for boards that aren't in the catalog."
-            }
-          ],
-          "description": "A board: a catalog ID, a board file, or a full definition."
         },
         "FpgaDefinition": {
           "additionalProperties": false,
@@ -921,8 +1171,9 @@
       "description": "What to lint.",
       "properties": {
         "board": {
-          "$ref": "#/$defs/BoardSpec",
-          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), a board file from make_board_file (pass it unchanged), or a\nfull board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE\nfor Xilinx."
+          "description": "The target board's ID: a catalog ID such as alhambra-ii (get_catalog\nlists them), or the ID of one of custom_boards. It selects the FPGA's\nprimitive models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for\nGowin or PLLE2_BASE for Xilinx.",
+          "pattern": "^[a-z0-9-]+$",
+          "type": "string"
         },
         "board_variant": {
           "default": null,
@@ -931,6 +1182,14 @@
             "string",
             "null"
           ]
+        },
+        "custom_boards": {
+          "default": [],
+          "description": "The host's own boards, in the catalog's format, each with its id.\nboard can name one of them; one with a catalog board's ID replaces\nthat board in this request. Send the same list to every tool.\nOmitted means none.",
+          "items": {
+            "$ref": "#/$defs/CustomBoard"
+          },
+          "type": "array"
         },
         "defines": {
           "additionalProperties": {
@@ -1159,9 +1418,9 @@
             }
           ]
         },
-        "BoardInputDefinition": {
+        "CustomBoard": {
           "additionalProperties": false,
-          "description": "A board definition in a request. Like a catalog entry, except that the\nFPGA can be given either as fpga_id or as a full fpga definition.",
+          "description": "One of the host's own boards, in the catalog's format, with its ID.\nLike a catalog entry, except that the FPGA can be given either as\nfpga_id or as a full fpga definition.",
           "properties": {
             "description": {
               "description": "The board's name for people.",
@@ -1185,6 +1444,11 @@
                 "null"
               ]
             },
+            "id": {
+              "description": "The board's ID (lowercase letters, digits and hyphens), as board\nnames it in requests. A catalog board's ID replaces that catalog\nboard in this request.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
             "variants": {
               "description": "The ways the board can be programmed, as in the catalog. The first is\nthe default.",
               "items": {
@@ -1194,29 +1458,11 @@
             }
           },
           "required": [
+            "id",
             "description",
             "variants"
           ],
           "type": "object"
-        },
-        "BoardSpec": {
-          "anyOf": [
-            {
-              "description": "A board's catalog ID, such as alhambra-ii. get_catalog lists them.",
-              "pattern": "^[a-z0-9-]+$",
-              "type": "string"
-            },
-            {
-              "additionalProperties": true,
-              "description": "A board file, as make_board_file returned it: pass it unchanged.",
-              "type": "object"
-            },
-            {
-              "$ref": "#/$defs/BoardInputDefinition",
-              "description": "A full board definition, for boards that aren't in the catalog."
-            }
-          ],
-          "description": "A board: a catalog ID, a board file, or a full definition."
         },
         "FpgaDefinition": {
           "additionalProperties": false,
@@ -1404,8 +1650,9 @@
       "description": "Which testbenches to run.",
       "properties": {
         "board": {
-          "$ref": "#/$defs/BoardSpec",
-          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), a board file from make_board_file (pass it unchanged), or a\nfull board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE\nfor Xilinx."
+          "description": "The target board's ID: a catalog ID such as alhambra-ii (get_catalog\nlists them), or the ID of one of custom_boards. It selects the FPGA's\nprimitive models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for\nGowin or PLLE2_BASE for Xilinx.",
+          "pattern": "^[a-z0-9-]+$",
+          "type": "string"
         },
         "board_variant": {
           "default": null,
@@ -1418,6 +1665,14 @@
         "build_folder": {
           "description": "Where the compiled testbenches and their waveforms go, as an absolute\npath. One of its last two folder names must contain \"build\", such as\n/home/user/proj/_build. It is created if needed.",
           "type": "string"
+        },
+        "custom_boards": {
+          "default": [],
+          "description": "The host's own boards, in the catalog's format, each with its id.\nboard can name one of them; one with a catalog board's ID replaces\nthat board in this request. Send the same list to every tool.\nOmitted means none.",
+          "items": {
+            "$ref": "#/$defs/CustomBoard"
+          },
+          "type": "array"
         },
         "defines": {
           "additionalProperties": {
@@ -1735,9 +1990,9 @@
             }
           ]
         },
-        "BoardInputDefinition": {
+        "CustomBoard": {
           "additionalProperties": false,
-          "description": "A board definition in a request. Like a catalog entry, except that the\nFPGA can be given either as fpga_id or as a full fpga definition.",
+          "description": "One of the host's own boards, in the catalog's format, with its ID.\nLike a catalog entry, except that the FPGA can be given either as\nfpga_id or as a full fpga definition.",
           "properties": {
             "description": {
               "description": "The board's name for people.",
@@ -1761,6 +2016,11 @@
                 "null"
               ]
             },
+            "id": {
+              "description": "The board's ID (lowercase letters, digits and hyphens), as board\nnames it in requests. A catalog board's ID replaces that catalog\nboard in this request.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
             "variants": {
               "description": "The ways the board can be programmed, as in the catalog. The first is\nthe default.",
               "items": {
@@ -1770,29 +2030,11 @@
             }
           },
           "required": [
+            "id",
             "description",
             "variants"
           ],
           "type": "object"
-        },
-        "BoardSpec": {
-          "anyOf": [
-            {
-              "description": "A board's catalog ID, such as alhambra-ii. get_catalog lists them.",
-              "pattern": "^[a-z0-9-]+$",
-              "type": "string"
-            },
-            {
-              "additionalProperties": true,
-              "description": "A board file, as make_board_file returned it: pass it unchanged.",
-              "type": "object"
-            },
-            {
-              "$ref": "#/$defs/BoardInputDefinition",
-              "description": "A full board definition, for boards that aren't in the catalog."
-            }
-          ],
-          "description": "A board: a catalog ID, a board file, or a full definition."
         },
         "FpgaDefinition": {
           "additionalProperties": false,
@@ -1980,8 +2222,9 @@
       "description": "Which testbench to simulate, and how to show it.",
       "properties": {
         "board": {
-          "$ref": "#/$defs/BoardSpec",
-          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), a board file from make_board_file (pass it unchanged), or a\nfull board definition. It selects the FPGA's primitive\nmodels, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE\nfor Xilinx."
+          "description": "The target board's ID: a catalog ID such as alhambra-ii (get_catalog\nlists them), or the ID of one of custom_boards. It selects the FPGA's\nprimitive models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for\nGowin or PLLE2_BASE for Xilinx.",
+          "pattern": "^[a-z0-9-]+$",
+          "type": "string"
         },
         "board_variant": {
           "default": null,
@@ -1994,6 +2237,14 @@
         "build_folder": {
           "description": "Where the compiled testbench and its waveform go, as an absolute path.\nOne of its last two folder names must contain \"build\", such as\n/home/user/proj/_build. It is created if needed.",
           "type": "string"
+        },
+        "custom_boards": {
+          "default": [],
+          "description": "The host's own boards, in the catalog's format, each with its id.\nboard can name one of them; one with a catalog board's ID replaces\nthat board in this request. Send the same list to every tool.\nOmitted means none.",
+          "items": {
+            "$ref": "#/$defs/CustomBoard"
+          },
+          "type": "array"
         },
         "defines": {
           "additionalProperties": {
@@ -2753,9 +3004,9 @@
             }
           ]
         },
-        "BoardInputDefinition": {
+        "CustomBoard": {
           "additionalProperties": false,
-          "description": "A board definition in a request. Like a catalog entry, except that the\nFPGA can be given either as fpga_id or as a full fpga definition.",
+          "description": "One of the host's own boards, in the catalog's format, with its ID.\nLike a catalog entry, except that the FPGA can be given either as\nfpga_id or as a full fpga definition.",
           "properties": {
             "description": {
               "description": "The board's name for people.",
@@ -2779,6 +3030,11 @@
                 "null"
               ]
             },
+            "id": {
+              "description": "The board's ID (lowercase letters, digits and hyphens), as board\nnames it in requests. A catalog board's ID replaces that catalog\nboard in this request.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
             "variants": {
               "description": "The ways the board can be programmed, as in the catalog. The first is\nthe default.",
               "items": {
@@ -2788,29 +3044,11 @@
             }
           },
           "required": [
+            "id",
             "description",
             "variants"
           ],
           "type": "object"
-        },
-        "BoardSpec": {
-          "anyOf": [
-            {
-              "description": "A board's catalog ID, such as alhambra-ii. get_catalog lists them.",
-              "pattern": "^[a-z0-9-]+$",
-              "type": "string"
-            },
-            {
-              "additionalProperties": true,
-              "description": "A board file, as make_board_file returned it: pass it unchanged.",
-              "type": "object"
-            },
-            {
-              "$ref": "#/$defs/BoardInputDefinition",
-              "description": "A full board definition, for boards that aren't in the catalog."
-            }
-          ],
-          "description": "A board: a catalog ID, a board file, or a full definition."
         },
         "FpgaDefinition": {
           "additionalProperties": false,
@@ -2998,8 +3236,9 @@
       "description": "What to build, and where.",
       "properties": {
         "board": {
-          "$ref": "#/$defs/BoardSpec",
-          "description": "The target board: a catalog ID such as alhambra-ii (get_catalog lists\nthem), a board file from make_board_file (pass it unchanged), or a\nfull board definition."
+          "description": "The target board's ID: a catalog ID such as alhambra-ii (get_catalog\nlists them), or the ID of one of custom_boards.",
+          "pattern": "^[a-z0-9-]+$",
+          "type": "string"
         },
         "board_variant": {
           "default": null,
@@ -3016,6 +3255,14 @@
         "constraint_file": {
           "description": "The constraint file, relative to the source folder: .pcf for iCE40,\n.lpf for ECP5, .cst for Gowin, .xdc for Xilinx. Another extension is\nrefused, since each family's tools read only their own format.",
           "type": "string"
+        },
+        "custom_boards": {
+          "default": [],
+          "description": "The host's own boards, in the catalog's format, each with its id.\nboard can name one of them; one with a catalog board's ID replaces\nthat board in this request. Send the same list to every tool.\nOmitted means none.",
+          "items": {
+            "$ref": "#/$defs/CustomBoard"
+          },
+          "type": "array"
         },
         "defines": {
           "additionalProperties": {
@@ -3357,28 +3604,280 @@
   },
   {
     "name": "list_devices",
-    "description": "Lists the USB devices connected to this computer, with their USB IDs, names and serial numbers, and for each the boards it may be: catalog boards, and the boards of the request's board_files, best first, each with the variants it fits and how well it matches: strong (very likely this board), possible (a few other boards look the same) or weak (many boards fit). Show the level as it is: how the engine decides it is internal and changes without notice. program_board needs the id of one of these devices. Given a build_folder, it lists only the devices that fit that build's board and variant, best first, each with its build_match: program the only one, or ask the user when there are several. Devices that need a driver or permissions first are listed apart, under unreachable, with the fix.",
+    "description": "Lists the USB devices connected to this computer, with their USB IDs, names and serial numbers, and for each the boards it may be: catalog boards and the request's custom_boards, best first, each with the variants it fits and how well it matches: strong (very likely this board), possible (a few other boards look the same) or weak (many boards fit). Show the level as it is: how the engine decides it is internal and changes without notice. program_board needs the id of one of these devices. Given a build_folder, it lists only the devices that fit that build's board and variant, best first, each with its build_match: program the only one, or ask the user when there are several. Devices that need a driver or permissions first are listed apart, under unreachable, with the fix.",
     "inputSchema": {
+      "$defs": {
+        "Architecture": {
+          "description": "FPGA families.",
+          "oneOf": [
+            {
+              "const": "ice40",
+              "description": "Lattice iCE40.",
+              "type": "string"
+            },
+            {
+              "const": "ecp5",
+              "description": "Lattice ECP5.",
+              "type": "string"
+            },
+            {
+              "const": "gowin",
+              "description": "Gowin (GW1N, GW2A and GW5A).",
+              "type": "string"
+            },
+            {
+              "const": "xilinx",
+              "description": "AMD/Xilinx 7 Series (Artix-7, Spartan-7 and Zynq-7000).",
+              "type": "string"
+            }
+          ]
+        },
+        "CustomBoard": {
+          "additionalProperties": false,
+          "description": "One of the host's own boards, in the catalog's format, with its ID.\nLike a catalog entry, except that the FPGA can be given either as\nfpga_id or as a full fpga definition.",
+          "properties": {
+            "description": {
+              "description": "The board's name for people.",
+              "type": "string"
+            },
+            "fpga": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/FpgaDefinition"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The board's FPGA as a full definition. Give either fpga_id or fpga."
+            },
+            "fpga_id": {
+              "description": "The board's FPGA as a catalog ID, such as ice40hx4k-tq144-8k. Give\neither fpga_id or fpga.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "id": {
+              "description": "The board's ID (lowercase letters, digits and hyphens), as board\nnames it in requests. A catalog board's ID replaces that catalog\nboard in this request.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
+            "variants": {
+              "description": "The ways the board can be programmed, as in the catalog. The first is\nthe default.",
+              "items": {
+                "$ref": "#/$defs/Variant"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "id",
+            "description",
+            "variants"
+          ],
+          "type": "object"
+        },
+        "FpgaDefinition": {
+          "additionalProperties": false,
+          "description": "An FPGA: its architecture, part and toolchain parameters.",
+          "properties": {
+            "architecture": {
+              "$ref": "#/$defs/Architecture",
+              "description": "The FPGA family: ice40, ecp5, gowin or xilinx."
+            },
+            "jtag_idcode": {
+              "description": "The FPGA's JTAG ID code, such as 0x0362d093, as openFPGALoader's\n--detect reports it. Before programming over JTAG, the engine reads\nthe connected FPGA's ID code and refuses to program a different\nFPGA, such as a board of another size than the build's. It\nidentifies the chip, not the size a board uses it as, so FPGAs made\nfrom the same chip share it. ECP5, Gowin and Xilinx only, optional:\nwithout it there is no check.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "nextpnr_device": {
+              "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5,\nGW1NR-LV9QN88PC6/I5 for Gowin or xc7a35tcsg324-1 for Xilinx.",
+              "type": "string"
+            },
+            "nextpnr_family": {
+              "description": "The device family nextpnr uses, such as GW1N-9C, when nextpnr can't\ntell it from nextpnr_device. Gowin only, optional.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "nextpnr_package": {
+              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5. Required for iCE40 and ECP5; Gowin and Xilinx have none,\nsince their nextpnr_device names the package.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "nextpnr_speed": {
+              "description": "The speed grade nextpnr uses, such as 6. ECP5 only, where it's\nrequired.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "packer_device": {
+              "description": "The device the bitstream packer (gowin_pack) uses, such as GW1N-9C.\nGowin only, where it's required.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "part_number": {
+              "description": "The vendor's part number, such as ICE40HX4K-TQ144.",
+              "type": "string"
+            },
+            "prjxray_family": {
+              "description": "The FPGA family's folder in the Project X-Ray database, which the\nbitstream tools read, such as artix7, spartan7 or zynq7. Xilinx\nonly, where it's required.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "size": {
+              "description": "The device size, such as 8k.",
+              "type": "string"
+            },
+            "yosys_arch": {
+              "description": "The architecture yosys synthesizes for (synth_xilinx -arch), such\nas xc7. Xilinx only, where it's required.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "yosys_family": {
+              "description": "The family yosys synthesizes for, such as gw2a. Gowin only,\noptional: omitted means yosys's default, the GW1N family.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "architecture",
+            "part_number",
+            "size",
+            "nextpnr_device"
+          ],
+          "type": "object"
+        },
+        "UsbFilter": {
+          "additionalProperties": false,
+          "description": "Which USB devices are this board.",
+          "properties": {
+            "pid": {
+              "description": "USB product ID, four lowercase hex digits, such as 6010.",
+              "pattern": "^[0-9a-f]{4}$",
+              "type": "string"
+            },
+            "product_regex": {
+              "description": "A regular expression the device's product name must match, when\nseveral boards share the same USB IDs. Omitted means any product name.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "release": {
+              "description": "The device's release number (USB bcdDevice), four lowercase hex\ndigits, such as 0500, that the device must report, for boards that\nshare USB IDs but differ in it. On FTDI chips, and on board debuggers\nthat act like them, it tells the chip type: 0700 for an FT2232H, 0500\nfor an FT2232C/D or a debugger that acts like one. Omitted means any\nrelease.",
+              "pattern": "^[0-9a-f]{4}$",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "serial_regex": {
+              "description": "A regular expression the device's serial number must match, for\nboards that share USB IDs and product names but have serial numbers\nthat tell them apart. Omitted means any serial number.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "vid": {
+              "description": "USB vendor ID, four lowercase hex digits, such as 0403.",
+              "pattern": "^[0-9a-f]{4}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "vid",
+            "pid"
+          ],
+          "type": "object"
+        },
+        "Variant": {
+          "additionalProperties": false,
+          "description": "One way to program a board: its connection and memory, and how to\nprogram the board that way.",
+          "properties": {
+            "args": {
+              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL_NUM} with its serial number,\n${USB_PATH} with its USB port path (such as 1-2.3, as dfu-util's -p\ntakes it), and ${BITSTREAM} with the bitstream path.",
+              "type": "string"
+            },
+            "connection": {
+              "description": "How the computer reaches the board: usb, bootloader, ft2232h,\nft232h, cmsis-dap, usb-blaster or unspecified (see the dimensions).",
+              "type": "string"
+            },
+            "id": {
+              "description": "The variant's ID within its board, such as usb-flash or ft232h-ram:\nwhat board_variant names in requests. Catalog boards use\n<connection>-<memory>.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
+            "memory": {
+              "description": "Where the design goes: flash (kept at power-off) or ram (lost at\npower-off).",
+              "type": "string"
+            },
+            "programmer": {
+              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
+              "type": "string"
+            },
+            "tested": {
+              "description": "Whether programming this way is known to work: tested on the board,\nor used unchanged in a tool that relies on it. False for ways that\nhaven't been tried on hardware, such as a board moved to a different\nprogrammer.",
+              "type": "boolean"
+            },
+            "usb": {
+              "$ref": "#/$defs/UsbFilter",
+              "description": "The USB filter that finds the board's device."
+            },
+            "user_notes": {
+              "description": "Warnings and missing information for users, such as a USB filter that\nalso matches other boards or a step needed before programming.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "connection",
+            "memory",
+            "programmer",
+            "args",
+            "usb",
+            "tested"
+          ],
+          "type": "object"
+        }
+      },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
-      "description": "Optionally, board files to match the devices against, besides the\ncatalog's boards, and a build whose board the devices must fit.",
+      "description": "Optionally, the host's own boards to match the devices against, besides\nthe catalog's, and a build whose board the devices must fit.",
       "properties": {
-        "board_files": {
-          "default": [],
-          "description": "Board files, as make_board_file returned them, sent unchanged.\nDevices are matched against their boards too; matches name them by\nthe board file's board ID, with custom true. Omitted means none.",
-          "items": {
-            "additionalProperties": true,
-            "type": "object"
-          },
-          "type": "array"
-        },
         "build_folder": {
           "default": null,
-          "description": "The build folder of a successful build, as an absolute path. When\ngiven, only devices that fit the build's board in its variant are\nlisted (in devices and unreachable), each with build_match, best\nfirst: the devices program_board can program that build into. The\nbuild's board comes from its build record, board files included.",
+          "description": "The build folder of a successful build, as an absolute path. When\ngiven, only devices that fit the build's board in its variant are\nlisted (in devices and unreachable), each with build_match, best\nfirst: the devices program_board can program that build into. The\nbuild's board comes from its build record, custom boards included.",
           "type": [
             "string",
             "null"
           ]
+        },
+        "custom_boards": {
+          "default": [],
+          "description": "The host's own boards, in the catalog's format, each with its id.\nDevices are matched against them too; matches name them with custom\ntrue. One with a catalog board's ID replaces that board. Send the\nsame list to every tool. Omitted means none.",
+          "items": {
+            "$ref": "#/$defs/CustomBoard"
+          },
+          "type": "array"
         }
       },
       "title": "ListDevicesInput",
@@ -3438,11 +3937,11 @@
           "description": "A board a device may be.",
           "properties": {
             "board": {
-              "description": "The board's ID: a catalog ID, or a board file's board ID when custom\nis true.",
+              "description": "The board's ID: a catalog ID, or a custom board's ID when custom is\ntrue.",
               "type": "string"
             },
             "custom": {
-              "description": "True when the board is from one of the request's board_files rather\nthan the catalog.",
+              "description": "True when the board is one of the request's custom_boards rather\nthan the catalog's.",
               "type": "boolean"
             },
             "variants": {
@@ -3684,103 +4183,277 @@
     }
   },
   {
-    "name": "make_board_file",
-    "description": "Makes a board file: the user's own board, from a connected device and the catalog board the user says it is, for a device that list_devices doesn't match to that board, or only weakly (the Board Wizard). The board file is for the frontend to store, typically in the project, and to send back unchanged as the board of build, lint, test and simulate, and in board_files of list_devices and get_catalog: never read or change its contents, which only the engine understands and may change between versions. It matches only devices like this one, and with pin_serial_number only this exact device, to tell identical boards apart. Show the notes to the user. Nothing is written to disk.",
-    "inputSchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "additionalProperties": false,
-      "description": "The device, and the board it is.",
-      "properties": {
-        "board": {
-          "description": "The catalog board the user says the device is, such as\narty-a7-100t. get_catalog lists them.",
-          "pattern": "^[a-z0-9-]+$",
-          "type": "string"
-        },
-        "device": {
-          "description": "The device's ID, from list_devices.",
-          "type": "string"
-        },
-        "name": {
-          "default": null,
-          "description": "The board's name for people, such as \"My Arty\". Omitted means the\ncatalog board's name with \"(my board)\".",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "pin_serial_number": {
-          "default": false,
-          "description": "Match only this exact device, by its serial number, to tell it apart\nfrom identical boards connected at the same time. The board file then\nholds the serial number. Defaults to false.",
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "device",
-        "board"
-      ],
-      "title": "MakeBoardFileInput",
-      "type": "object"
-    },
-    "outputSchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "additionalProperties": false,
-      "description": "The board file.",
-      "properties": {
-        "board_file": {
-          "additionalProperties": true,
-          "description": "The board file, to store and send back unchanged. Its contents are\nthe engine's own.",
-          "type": "object"
-        },
-        "board_id": {
-          "description": "The board's ID, as results name it, such as arty-a7-100t-3f9a2c. The\nsame device and board give the same ID.",
-          "type": "string"
-        },
-        "name": {
-          "description": "The board's name for people.",
-          "type": "string"
-        },
-        "notes": {
-          "description": "Things the user should know, such as that the device has no product\nname, to show as they are.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        }
-      },
-      "required": [
-        "board_file",
-        "board_id",
-        "name"
-      ],
-      "title": "MakeBoardFileOutput",
-      "type": "object"
-    },
-    "annotations": {
-      "readOnlyHint": true,
-      "destructiveHint": false,
-      "openWorldHint": false
-    }
-  },
-  {
     "name": "program_board",
     "description": "Programs the bitstream of a successful build into the board it was built for. It doesn't build: call build first, and program_board only if the build succeeded. The board comes from the build, so it takes the build folder and the device to program: the id of a device from list_devices whose boards include the build's board (ask the user when several do). A device that isn't connected anymore is a setup error with connect_board; list the devices again. On ECP5, Gowin and Xilinx boards it first reads the connected FPGA's ID code and refuses a different FPGA, such as a board of another size than the build's, before writing anything. Most boards are programmed to flash, so the design stays after power-off.",
     "inputSchema": {
+      "$defs": {
+        "Architecture": {
+          "description": "FPGA families.",
+          "oneOf": [
+            {
+              "const": "ice40",
+              "description": "Lattice iCE40.",
+              "type": "string"
+            },
+            {
+              "const": "ecp5",
+              "description": "Lattice ECP5.",
+              "type": "string"
+            },
+            {
+              "const": "gowin",
+              "description": "Gowin (GW1N, GW2A and GW5A).",
+              "type": "string"
+            },
+            {
+              "const": "xilinx",
+              "description": "AMD/Xilinx 7 Series (Artix-7, Spartan-7 and Zynq-7000).",
+              "type": "string"
+            }
+          ]
+        },
+        "CustomBoard": {
+          "additionalProperties": false,
+          "description": "One of the host's own boards, in the catalog's format, with its ID.\nLike a catalog entry, except that the FPGA can be given either as\nfpga_id or as a full fpga definition.",
+          "properties": {
+            "description": {
+              "description": "The board's name for people.",
+              "type": "string"
+            },
+            "fpga": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/FpgaDefinition"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The board's FPGA as a full definition. Give either fpga_id or fpga."
+            },
+            "fpga_id": {
+              "description": "The board's FPGA as a catalog ID, such as ice40hx4k-tq144-8k. Give\neither fpga_id or fpga.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "id": {
+              "description": "The board's ID (lowercase letters, digits and hyphens), as board\nnames it in requests. A catalog board's ID replaces that catalog\nboard in this request.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
+            "variants": {
+              "description": "The ways the board can be programmed, as in the catalog. The first is\nthe default.",
+              "items": {
+                "$ref": "#/$defs/Variant"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "id",
+            "description",
+            "variants"
+          ],
+          "type": "object"
+        },
+        "FpgaDefinition": {
+          "additionalProperties": false,
+          "description": "An FPGA: its architecture, part and toolchain parameters.",
+          "properties": {
+            "architecture": {
+              "$ref": "#/$defs/Architecture",
+              "description": "The FPGA family: ice40, ecp5, gowin or xilinx."
+            },
+            "jtag_idcode": {
+              "description": "The FPGA's JTAG ID code, such as 0x0362d093, as openFPGALoader's\n--detect reports it. Before programming over JTAG, the engine reads\nthe connected FPGA's ID code and refuses to program a different\nFPGA, such as a board of another size than the build's. It\nidentifies the chip, not the size a board uses it as, so FPGAs made\nfrom the same chip share it. ECP5, Gowin and Xilinx only, optional:\nwithout it there is no check.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "nextpnr_device": {
+              "description": "The device nextpnr uses, such as hx8k for iCE40, 25k for ECP5,\nGW1NR-LV9QN88PC6/I5 for Gowin or xc7a35tcsg324-1 for Xilinx.",
+              "type": "string"
+            },
+            "nextpnr_family": {
+              "description": "The device family nextpnr uses, such as GW1N-9C, when nextpnr can't\ntell it from nextpnr_device. Gowin only, optional.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "nextpnr_package": {
+              "description": "The package nextpnr uses, such as tq144:4k for iCE40 or CABGA256 for\nECP5. Required for iCE40 and ECP5; Gowin and Xilinx have none,\nsince their nextpnr_device names the package.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "nextpnr_speed": {
+              "description": "The speed grade nextpnr uses, such as 6. ECP5 only, where it's\nrequired.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "packer_device": {
+              "description": "The device the bitstream packer (gowin_pack) uses, such as GW1N-9C.\nGowin only, where it's required.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "part_number": {
+              "description": "The vendor's part number, such as ICE40HX4K-TQ144.",
+              "type": "string"
+            },
+            "prjxray_family": {
+              "description": "The FPGA family's folder in the Project X-Ray database, which the\nbitstream tools read, such as artix7, spartan7 or zynq7. Xilinx\nonly, where it's required.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "size": {
+              "description": "The device size, such as 8k.",
+              "type": "string"
+            },
+            "yosys_arch": {
+              "description": "The architecture yosys synthesizes for (synth_xilinx -arch), such\nas xc7. Xilinx only, where it's required.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "yosys_family": {
+              "description": "The family yosys synthesizes for, such as gw2a. Gowin only,\noptional: omitted means yosys's default, the GW1N family.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "architecture",
+            "part_number",
+            "size",
+            "nextpnr_device"
+          ],
+          "type": "object"
+        },
+        "UsbFilter": {
+          "additionalProperties": false,
+          "description": "Which USB devices are this board.",
+          "properties": {
+            "pid": {
+              "description": "USB product ID, four lowercase hex digits, such as 6010.",
+              "pattern": "^[0-9a-f]{4}$",
+              "type": "string"
+            },
+            "product_regex": {
+              "description": "A regular expression the device's product name must match, when\nseveral boards share the same USB IDs. Omitted means any product name.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "release": {
+              "description": "The device's release number (USB bcdDevice), four lowercase hex\ndigits, such as 0500, that the device must report, for boards that\nshare USB IDs but differ in it. On FTDI chips, and on board debuggers\nthat act like them, it tells the chip type: 0700 for an FT2232H, 0500\nfor an FT2232C/D or a debugger that acts like one. Omitted means any\nrelease.",
+              "pattern": "^[0-9a-f]{4}$",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "serial_regex": {
+              "description": "A regular expression the device's serial number must match, for\nboards that share USB IDs and product names but have serial numbers\nthat tell them apart. Omitted means any serial number.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "vid": {
+              "description": "USB vendor ID, four lowercase hex digits, such as 0403.",
+              "pattern": "^[0-9a-f]{4}$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "vid",
+            "pid"
+          ],
+          "type": "object"
+        },
+        "Variant": {
+          "additionalProperties": false,
+          "description": "One way to program a board: its connection and memory, and how to\nprogram the board that way.",
+          "properties": {
+            "args": {
+              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL_NUM} with its serial number,\n${USB_PATH} with its USB port path (such as 1-2.3, as dfu-util's -p\ntakes it), and ${BITSTREAM} with the bitstream path.",
+              "type": "string"
+            },
+            "connection": {
+              "description": "How the computer reaches the board: usb, bootloader, ft2232h,\nft232h, cmsis-dap, usb-blaster or unspecified (see the dimensions).",
+              "type": "string"
+            },
+            "id": {
+              "description": "The variant's ID within its board, such as usb-flash or ft232h-ram:\nwhat board_variant names in requests. Catalog boards use\n<connection>-<memory>.",
+              "pattern": "^[a-z0-9-]+$",
+              "type": "string"
+            },
+            "memory": {
+              "description": "Where the design goes: flash (kept at power-off) or ram (lost at\npower-off).",
+              "type": "string"
+            },
+            "programmer": {
+              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
+              "type": "string"
+            },
+            "tested": {
+              "description": "Whether programming this way is known to work: tested on the board,\nor used unchanged in a tool that relies on it. False for ways that\nhaven't been tried on hardware, such as a board moved to a different\nprogrammer.",
+              "type": "boolean"
+            },
+            "usb": {
+              "$ref": "#/$defs/UsbFilter",
+              "description": "The USB filter that finds the board's device."
+            },
+            "user_notes": {
+              "description": "Warnings and missing information for users, such as a USB filter that\nalso matches other boards or a step needed before programming.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "connection",
+            "memory",
+            "programmer",
+            "args",
+            "usb",
+            "tested"
+          ],
+          "type": "object"
+        }
+      },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
       "description": "Which build to program, and into which device.",
       "properties": {
-        "board_file": {
-          "additionalProperties": true,
-          "default": null,
-          "description": "The board file the build was made with, when it was made with one,\nsent unchanged. After a successful upload it comes back in the\noutput's board_file, recording that this variant works: save that.",
-          "type": [
-            "object",
-            "null"
-          ]
-        },
         "build_folder": {
           "description": "The build folder of a successful build, as an absolute path.",
           "type": "string"
+        },
+        "custom_boards": {
+          "default": [],
+          "description": "The host's own boards, as sent to build: the build's board must\nstill be the same here, else the upload is refused (build again).\nSend the same list to every tool. Omitted means none.",
+          "items": {
+            "$ref": "#/$defs/CustomBoard"
+          },
+          "type": "array"
         },
         "device": {
           "description": "The device to program: the id of a device from list_devices, such as\none whose boards include the build's board. It must still be\nconnected and match the board's USB filter.",
@@ -3814,11 +4487,11 @@
           "description": "A board a device may be.",
           "properties": {
             "board": {
-              "description": "The board's ID: a catalog ID, or a board file's board ID when custom\nis true.",
+              "description": "The board's ID: a catalog ID, or a custom board's ID when custom is\ntrue.",
               "type": "string"
             },
             "custom": {
-              "description": "True when the board is from one of the request's board_files rather\nthan the catalog.",
+              "description": "True when the board is one of the request's custom_boards rather\nthan the catalog's.",
               "type": "boolean"
             },
             "variants": {
@@ -4009,14 +4682,6 @@
       "additionalProperties": false,
       "description": "What was programmed.",
       "properties": {
-        "board_file": {
-          "additionalProperties": true,
-          "description": "The request's board_file, recording this successful upload: save it\nin place of the old one. Omitted when the request had none.",
-          "type": [
-            "object",
-            "null"
-          ]
-        },
         "commands": {
           "description": "The programs this call ran, in order, each with the exact command and\na shell line that runs it again without the engine, such as for a bug\nreport to the tool's developers.",
           "items": {
@@ -4045,58 +4710,6 @@
       "readOnlyHint": false,
       "destructiveHint": false,
       "openWorldHint": true
-    }
-  },
-  {
-    "name": "share_board_file",
-    "description": "Returns a board file's report, for the user to share with the Logix Engine's maintainers so the catalog can learn the board: a title and a body to paste into a new GitHub issue at new_issue_url (a GitHub account is needed). Show the text, with a way to copy it and open the link, before anything is shared: it holds what the board's device reports (its serial number only as a shape), the catalog board it was made from, and the ways of programming it that worked. The engine sends nothing anywhere.",
-    "inputSchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "additionalProperties": false,
-      "description": "The board file to report.",
-      "properties": {
-        "board_file": {
-          "additionalProperties": true,
-          "description": "The board file, as make_board_file or program_board returned it,\nsent unchanged.",
-          "type": "object"
-        }
-      },
-      "required": [
-        "board_file"
-      ],
-      "title": "ShareBoardFileInput",
-      "type": "object"
-    },
-    "outputSchema": {
-      "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "additionalProperties": false,
-      "description": "The report.",
-      "properties": {
-        "body": {
-          "description": "The issue's body, in Markdown.",
-          "type": "string"
-        },
-        "new_issue_url": {
-          "description": "The page that opens a new issue, to paste the title and body into.",
-          "type": "string"
-        },
-        "title": {
-          "description": "The issue's title.",
-          "type": "string"
-        }
-      },
-      "required": [
-        "title",
-        "body",
-        "new_issue_url"
-      ],
-      "title": "ShareBoardFileOutput",
-      "type": "object"
-    },
-    "annotations": {
-      "readOnlyHint": true,
-      "destructiveHint": false,
-      "openWorldHint": false
     }
   }
 ]

@@ -109,7 +109,7 @@ async def build():
             result = await session.call_tool(
                 "build",
                 {
-                    "board": "icestick",                    # catalog ID, or a full definition
+                    "board": "icestick",                    # a board ID (catalog or custom_boards)
                     "top_module": "main",
                     "source_folder": "/home/user/proj",
                     "source_files": ["main.v"],
@@ -177,7 +177,7 @@ async function build(design, workDir) {
       {
         name: "build",
         arguments: {
-          board: design.board,                  // catalog ID, or a full definition
+          board: design.board,                  // a board ID (catalog or custom_boards)
           top_module: "main",
           source_folder: sourceFolder,
           source_files: ["main.v"],
@@ -245,7 +245,7 @@ async function build(projectDir) {
           {
             name: "build",
             arguments: {
-              board: "icestick",                    // catalog ID, or a full definition
+              board: "icestick",                    // a board ID (catalog or custom_boards)
               top_module: "main",
               source_folder: projectDir,
               source_files: ["main.v"],

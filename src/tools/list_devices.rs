@@ -4,7 +4,6 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::EngineTool;
-use crate::catalog;
 use crate::devices::{self, Candidate, Device, MatchLevel, UnreachableDevice};
 use crate::errors::ToolError;
 use crate::state::EngineState;
@@ -15,7 +14,7 @@ impl EngineTool for ListDevices {
     const NAME: &'static str = "list_devices";
     const DESCRIPTION: &'static str = "Lists the USB devices connected to this computer, with \
         their USB IDs, names and serial numbers, and for each the boards it may be: catalog \
-        boards, and the boards of the request's board_files, best first, each with the variants it fits and \
+        boards and the request's custom_boards, best first, each with the variants it fits and \
         how well it matches: strong (very likely this board), possible (a few other boards look \
         the same) or weak (many boards fit). Show the level as it is: how the engine decides it \
         is internal and changes without notice. \
@@ -29,22 +28,22 @@ impl EngineTool for ListDevices {
     type Output = ListDevicesOutput;
 }
 
-/// Optionally, board files to match the devices against, besides the
-/// catalog's boards, and a build whose board the devices must fit.
+/// Optionally, the host's own boards to match the devices against, besides
+/// the catalog's, and a build whose board the devices must fit.
 #[derive(Debug, Default, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ListDevicesInput {
-    /// Board files, as make_board_file returned them, sent unchanged.
-    /// Devices are matched against their boards too; matches name them by
-    /// the board file's board ID, with custom true. Omitted means none.
+    /// The host's own boards, in the catalog's format, each with its id.
+    /// Devices are matched against them too; matches name them with custom
+    /// true. One with a catalog board's ID replaces that board. Send the
+    /// same list to every tool. Omitted means none.
     #[serde(default)]
-    #[schemars(with = "Vec<serde_json::Map<String, serde_json::Value>>")]
-    pub board_files: Vec<serde_json::Value>,
+    pub custom_boards: Vec<crate::board::CustomBoard>,
     /// The build folder of a successful build, as an absolute path. When
     /// given, only devices that fit the build's board in its variant are
     /// listed (in devices and unreachable), each with build_match, best
     /// first: the devices program_board can program that build into. The
-    /// build's board comes from its build record, board files included.
+    /// build's board comes from its build record, custom boards included.
     #[serde(default)]
     pub build_folder: Option<String>,
 }
@@ -68,21 +67,16 @@ pub fn run_with(
     input: ListDevicesInput,
     scan: impl FnOnce() -> Result<Vec<Device>, ToolError>,
 ) -> Result<ListDevicesOutput, ToolError> {
-    let files = crate::board_file::read_all(&input.board_files)?;
-    let mut boards: Vec<Candidate> = catalog::builtin()
-        .boards
-        .iter()
-        .map(|(id, b)| Candidate {
-            id,
-            custom: false,
-            variants: &b.variants,
+    crate::board::check_custom_boards(&input.custom_boards)?;
+    let known = crate::board::known_boards(&input.custom_boards);
+    let boards: Vec<Candidate> = known
+        .values()
+        .map(|b| Candidate {
+            id: b.id,
+            custom: b.custom,
+            variants: b.variants,
         })
         .collect();
-    boards.extend(files.iter().map(|f| Candidate {
-        id: &f.id,
-        custom: true,
-        variants: &f.variants,
-    }));
 
     let build_usb = match &input.build_folder {
         Some(folder) => Some(
@@ -209,31 +203,43 @@ mod tests {
     }
 
     #[test]
-    fn board_files_are_matched_too() {
-        let d = device(
-            "0403",
-            "6010",
-            Some("Digilent USB Device"),
-            Some("210319AB51BBA"),
-            4,
-        );
-        let file = crate::board_file::make(&d, &[], "arty-a7-100t", None, false)
-            .unwrap()
-            .file;
-        let out = list(json!({"board_files": [file.to_value()]}), vec![d.clone()]).unwrap();
-        let mine = out.devices[0]
+    fn custom_boards_are_matched_too() {
+        let mine = |id: &str| {
+            json!({
+                "id": id, "description": "My Alhambra", "fpga_id": "ice40hx4k-tq144-8k",
+                "variants": [{
+                    "id": "usb-flash", "connection": "usb", "memory": "flash",
+                    "programmer": "iceprog", "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+                    "usb": {"vid": "0403", "pid": "6010", "product_regex": "^Alhambra"},
+                    "tested": true
+                }]
+            })
+        };
+        let alhambra = || vec![device("0403", "6010", Some("Alhambra II"), None, 3)];
+        let out = list(json!({"custom_boards": [mine("mine")]}), alhambra()).unwrap();
+        let strong: Vec<_> = out.devices[0]
             .boards
             .iter()
-            .find(|m| m.board == file.id)
-            .unwrap();
-        assert!(mine.custom);
-        assert_eq!(mine.best_level(), MatchLevel::Strong);
-        // Another device with other names isn't that board.
-        let other = device("0403", "6010", Some("Alhambra II v1.0A"), None, 5);
-        let out = list(json!({"board_files": [file.to_value()]}), vec![other]).unwrap();
-        assert!(!out.devices[0].boards.iter().any(|m| m.board == file.id));
-        let e = list(json!({"board_files": [{"logix_board_file": 1}]}), vec![]).unwrap_err();
-        assert!(e.message.starts_with("board_files[0]:"), "{}", e.message);
+            .filter(|m| m.best_level() == MatchLevel::Strong)
+            .map(|m| (m.board.as_str(), m.custom))
+            .collect();
+        assert_eq!(strong, [("alhambra-ii", false), ("mine", true)]);
+        // One with a catalog board's ID replaces it.
+        let out = list(json!({"custom_boards": [mine("alhambra-ii")]}), alhambra()).unwrap();
+        let named: Vec<_> = out.devices[0]
+            .boards
+            .iter()
+            .filter(|m| m.board == "alhambra-ii")
+            .map(|m| m.custom)
+            .collect();
+        assert_eq!(named, [true]);
+        // A bad list is a request error.
+        let e = list(
+            json!({"custom_boards": [{"id": "Bad ID", "description": "x", "fpga_id": "x", "variants": []}]}),
+            vec![],
+        )
+        .unwrap_err();
+        assert_eq!(e.category, crate::errors::Category::Request);
     }
 
     #[test]
@@ -249,7 +255,7 @@ mod tests {
         };
         // Variants with different filters, as a board file or the catalog
         // may have.
-        let variants: Vec<catalog::Variant> = serde_json::from_value(json!([
+        let variants: Vec<crate::catalog::Variant> = serde_json::from_value(json!([
             config(
                 "flash",
                 json!({"vid": "0403", "pid": "6010", "product_regex": "^Dual RS232-HS"})

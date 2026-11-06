@@ -9,7 +9,6 @@ use serde::{Deserialize, Serialize};
 use super::build::check_build_folder;
 use super::lint::check_sources;
 use super::{Call, EngineTool};
-use crate::board::BoardSpec;
 use crate::errors::{Category, Diagnostic, Severity, ToolError};
 use crate::paths;
 use crate::progress::Phases;
@@ -47,17 +46,23 @@ fn default_true() -> bool {
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct SimulateInput {
-    /// The target board: a catalog ID such as alhambra-ii (get_catalog lists
-    /// them), a board file from make_board_file (pass it unchanged), or a
-    /// full board definition. It selects the FPGA's primitive
-    /// models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for Gowin or PLLE2_BASE
-    /// for Xilinx.
-    pub board: BoardSpec,
+    /// The target board's ID: a catalog ID such as alhambra-ii (get_catalog
+    /// lists them), or the ID of one of custom_boards. It selects the FPGA's
+    /// primitive models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for
+    /// Gowin or PLLE2_BASE for Xilinx.
+    #[schemars(pattern(r"^[a-z0-9-]+$"))]
+    pub board: String,
     /// The board variant: the ID of one of the board's variants, which
     /// get_catalog lists, such as usb-ram or ft232h-flash. Omitted means
     /// the board's first variant, its default.
     #[serde(default)]
     pub board_variant: Option<String>,
+    /// The host's own boards, in the catalog's format, each with its id.
+    /// board can name one of them; one with a catalog board's ID replaces
+    /// that board in this request. Send the same list to every tool.
+    /// Omitted means none.
+    #[serde(default)]
+    pub custom_boards: Vec<crate::board::CustomBoard>,
     /// The folder with the design files, as an absolute path. The testbench
     /// runs in it, so it reads data files, such as with $readmemh, relative
     /// to it.
@@ -188,6 +193,7 @@ pub async fn run(
     let sources = check_sources(
         &input.board,
         &input.board_variant,
+        &input.custom_boards,
         &input.source_folder,
         input.source_files,
         vec![tb.clone()],

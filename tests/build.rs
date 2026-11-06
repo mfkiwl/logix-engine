@@ -559,10 +559,11 @@ async fn request_errors() {
 }
 
 #[tokio::test]
-async fn a_full_board_definition_works() {
+async fn a_custom_board_works() {
     let state = engine().await;
     let (_tmp, src) = project();
-    let board = json!({
+    let mine = json!({
+        "id": "my-alhambra",
         "description": "My Alhambra II copy",
         "fpga": {
             "architecture": "ice40", "part_number": "ICE40HX4K-TQ144", "size": "8k",
@@ -574,37 +575,19 @@ async fn a_full_board_definition_works() {
             "usb": {"vid": "0403", "pid": "6010"}, "tested": false
         }]
     });
-    let out = build_it(&state, &src, json!({"board": board}))
-        .await
-        .unwrap();
+    let out = build_it(
+        &state,
+        &src,
+        json!({"board": "my-alhambra", "custom_boards": [mine]}),
+    )
+    .await
+    .unwrap();
     assert!(src.join("_build").join(out.bitstream).exists());
-}
-
-/// A board file from make_board_file builds like its catalog board.
-#[tokio::test]
-async fn a_board_file_works() {
-    let state = engine().await;
-    let (_tmp, src) = project();
-    let mut device = logix_engine::devices::Device::usb(
-        "0403".into(),
-        "6010".into(),
-        Some("AlhambraBits".into()),
-        Some("Alhambra II v1.0A".into()),
-        Some("FTATANKC".into()),
-        1,
-        7,
-        "1-2".into(),
-        true,
-    );
-    device.release = Some("0700".into());
-    let file =
-        logix_engine::board_file::make(&device, &[], "alhambra-ii", Some("My Alhambra"), false)
-            .unwrap()
-            .file;
-    let out = build_it(&state, &src, json!({"board": file.to_value()}))
+    // Without the list, the ID means nothing.
+    let err = build_it(&state, &src, json!({"board": "my-alhambra"}))
         .await
-        .unwrap();
-    assert!(src.join("_build").join(out.bitstream).exists());
+        .unwrap_err();
+    assert_eq!(err.category, Category::Request);
 }
 
 #[tokio::test]
@@ -1064,18 +1047,15 @@ async fn program_board_refuses_a_board_with_another_fpga() {
     let runs = std::fs::read_to_string(&log).unwrap();
     assert_eq!(runs.lines().count(), 1, "only detect ran: {runs}");
 
-    // Board files: the upload is recorded in the file the build was made
-    // with, with the FPGA the check confirmed.
-    let file = logix_engine::board_file::make(&arty, &[], "arty-a7-35t", None, false)
-        .unwrap()
-        .file;
-    let upload = |folder: PathBuf| {
+    // Custom boards: the upload uses the board the build was made with,
+    // never another definition with its ID.
+    let mut my_arty =
+        serde_json::to_value(&logix_engine::catalog::builtin().boards["arty-a7-35t"]).unwrap();
+    my_arty["id"] = json!("my-arty");
+    let upload = |folder: PathBuf, custom: Value| {
         let _ = std::fs::remove_file(&log);
         let state = &state;
-        let input = program_input(
-            &folder,
-            json!({"device": arty.id, "board_file": file.to_value()}),
-        );
+        let input = program_input(&folder, json!({"device": arty.id, "custom_boards": custom}));
         let devices = vec![arty.clone()];
         let bin = bin.clone();
         async move {
@@ -1090,23 +1070,32 @@ async fn program_board_refuses_a_board_with_another_fpga() {
         }
     };
     std::fs::write(&detect, a35).unwrap();
-    // Not the board this build was made with: refused, nothing run.
-    let err = upload(folder.clone()).await.unwrap_err();
-    assert_eq!(err.category, Category::Request);
-    assert!(err.message.starts_with("board_file:"), "{}", err.message);
-    assert!(!log.exists());
-    // Built with the board file: recorded.
     let mine = src.join("_build_mine");
-    let with_file = json!({"board": file.to_value(), "board_variant": "usb-ram",
+    let custom_build = json!({"board": "my-arty", "board_variant": "usb-ram",
+        "custom_boards": [my_arty.clone()],
         "constraint_file": "main.xdc", "build_folder": mine});
-    build_it(&state, &src, with_file).await.unwrap();
-    let out = upload(mine).await.unwrap();
-    let saved = out.board_file.unwrap();
-    assert_eq!(
-        saved["verified"],
-        json!([{"variant": "usb-ram", "engine": logix_engine::state::ENGINE_VERSION, "fpga_idcode": "0x0362d093"}])
-    );
-    assert_eq!(saved["id"], json!(file.id));
+    build_it(&state, &src, custom_build).await.unwrap();
+    upload(mine.clone(), json!([my_arty.clone()]))
+        .await
+        .unwrap();
+    // The list left out, or the board changed since the build: refused,
+    // nothing run.
+    for custom in [json!([]), {
+        let mut changed = my_arty.clone();
+        changed["description"] = json!("Changed");
+        json!([changed])
+    }] {
+        let err = upload(mine.clone(), custom).await.unwrap_err();
+        assert_eq!(err.category, Category::Request);
+        assert!(err.message.contains("run build again"), "{}", err.message);
+        assert!(!log.exists());
+    }
+    // A catalog build, with a custom board now replacing its ID: refused.
+    let mut over = my_arty.clone();
+    over["id"] = json!("arty-a7-35t");
+    over["description"] = json!("Changed");
+    let err = upload(folder.clone(), json!([over])).await.unwrap_err();
+    assert_eq!(err.category, Category::Request);
 }
 
 /// The wrong-FPGA error suggests only the boards the device most likely is,
