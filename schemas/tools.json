@@ -370,16 +370,16 @@
           ],
           "type": "object"
         },
-        "BoardDefinition": {
+        "CatalogBoard": {
           "additionalProperties": false,
-          "description": "A board: its FPGA and its variants. A board is a name: two boards with\ndifferent names are unrelated, even when their hardware is identical, as\nare the sizes of a board sold with several FPGA sizes.",
+          "description": "A catalog board, as get_catalog returns it.",
           "properties": {
             "description": {
               "description": "The board's name for people, such as \"Alhambra II\".",
               "type": "string"
             },
             "dimensions": {
-              "description": "The standard dimensions, connection then memory, each with the values\nthe board's variants use, with labels and help from the engine, for\nshowing the choices. Derived from the variants: ignored in inputs and\nnot written in the catalog file.",
+              "description": "The standard dimensions, connection then memory, each with the values\nthe board's variants use, with labels and help from the engine, for\nshowing the choices.",
               "items": {
                 "$ref": "#/$defs/Dimension"
               },
@@ -387,22 +387,67 @@
             },
             "fpga_id": {
               "description": "The board's FPGA, as a catalog ID of the fpgas section, such as\nice40hx4k-tq144-8k. Every variant uses it.",
-              "pattern": "^[a-z0-9-]+$",
               "type": "string"
             },
             "variants": {
-              "description": "The ways the board can be programmed, such as through its USB port\nto flash, each with how to program it. The first is the board's\ndefault. Variants differ only in how the board is programmed: all\nhave the same FPGA and pin file, so the same project works with each.",
+              "description": "The ways the board can be programmed, the board's default first.",
               "items": {
-                "$ref": "#/$defs/Variant"
+                "$ref": "#/$defs/CatalogVariant"
               },
-              "minItems": 1,
               "type": "array"
             }
           },
           "required": [
             "description",
             "fpga_id",
+            "dimensions",
             "variants"
+          ],
+          "type": "object"
+        },
+        "CatalogVariant": {
+          "additionalProperties": false,
+          "description": "One way to program a catalog board. Which USB devices are the board is\nthe engine's own matter: list_devices gives each device the boards it\nmay be.",
+          "properties": {
+            "args": {
+              "description": "The programmer's arguments, as a template (see the variant fields of\nboard definitions).",
+              "type": "string"
+            },
+            "connection": {
+              "description": "How the computer reaches the board, a value of the connection\ndimension.",
+              "type": "string"
+            },
+            "id": {
+              "description": "The variant's ID within its board, <connection>-<memory>, such as\nusb-flash: what board_variant names in requests.",
+              "type": "string"
+            },
+            "memory": {
+              "description": "Where the design goes, a value of the memory dimension.",
+              "type": "string"
+            },
+            "programmer": {
+              "description": "The programmer the engine runs: openfpgaloader, iceprog, dfu-util or\nicesprog.",
+              "type": "string"
+            },
+            "tested": {
+              "description": "Whether programming this way is known to work. False for ways that\nhaven't been tried on hardware.",
+              "type": "boolean"
+            },
+            "user_notes": {
+              "description": "Warnings and missing information for users.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "id",
+            "connection",
+            "memory",
+            "programmer",
+            "args",
+            "tested"
           ],
           "type": "object"
         },
@@ -546,101 +591,6 @@
             "nextpnr_device"
           ],
           "type": "object"
-        },
-        "UsbFilter": {
-          "additionalProperties": false,
-          "description": "Which USB devices are this board.",
-          "properties": {
-            "pid": {
-              "description": "USB product ID, four lowercase hex digits, such as 6010.",
-              "pattern": "^[0-9a-f]{4}$",
-              "type": "string"
-            },
-            "product_regex": {
-              "description": "A regular expression the device's product name must match, when\nseveral boards share the same USB IDs. Omitted means any product name.",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "release": {
-              "description": "The device's release number (USB bcdDevice), four lowercase hex\ndigits, such as 0500, that the device must report, for boards that\nshare USB IDs but differ in it. On FTDI chips, and on board debuggers\nthat act like them, it tells the chip type: 0700 for an FT2232H, 0500\nfor an FT2232C/D or a debugger that acts like one. Omitted means any\nrelease.",
-              "pattern": "^[0-9a-f]{4}$",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "serial_regex": {
-              "description": "A regular expression the device's serial number must match, for\nboards that share USB IDs and product names but have serial numbers\nthat tell them apart. Omitted means any serial number.",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "vid": {
-              "description": "USB vendor ID, four lowercase hex digits, such as 0403.",
-              "pattern": "^[0-9a-f]{4}$",
-              "type": "string"
-            }
-          },
-          "required": [
-            "vid",
-            "pid"
-          ],
-          "type": "object"
-        },
-        "Variant": {
-          "additionalProperties": false,
-          "description": "One way to program a board: its connection and memory, and how to\nprogram the board that way.",
-          "properties": {
-            "args": {
-              "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL} with its serial number,\n${PORT} with its USB port path (such as 1-2.3, as dfu-util's -p\ntakes it), and ${BITSTREAM} with the bitstream path.",
-              "type": "string"
-            },
-            "connection": {
-              "description": "How the computer reaches the board: usb, bootloader, ft2232h,\nft232h, cmsis-dap, usb-blaster or unspecified (see the dimensions).",
-              "type": "string"
-            },
-            "id": {
-              "description": "The variant's ID within its board, such as usb-flash or ft232h-ram:\nwhat board_variant names in requests. Catalog boards use\n<connection>-<memory>.",
-              "pattern": "^[a-z0-9-]+$",
-              "type": "string"
-            },
-            "memory": {
-              "description": "Where the design goes: flash (kept at power-off) or ram (lost at\npower-off).",
-              "type": "string"
-            },
-            "programmer": {
-              "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
-              "type": "string"
-            },
-            "tested": {
-              "description": "Whether programming this way is known to work: tested on the board,\nor used unchanged in a tool that relies on it. False for ways that\nhaven't been tried on hardware, such as a board moved to a different\nprogrammer.",
-              "type": "boolean"
-            },
-            "usb": {
-              "$ref": "#/$defs/UsbFilter",
-              "description": "The USB filter that finds the board's device."
-            },
-            "user_notes": {
-              "description": "Warnings and missing information for users, such as a USB filter that\nalso matches other boards or a step needed before programming.",
-              "type": [
-                "string",
-                "null"
-              ]
-            }
-          },
-          "required": [
-            "id",
-            "connection",
-            "memory",
-            "programmer",
-            "args",
-            "usb",
-            "tested"
-          ],
-          "type": "object"
         }
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -657,9 +607,9 @@
         },
         "boards": {
           "additionalProperties": {
-            "$ref": "#/$defs/BoardDefinition"
+            "$ref": "#/$defs/CatalogBoard"
           },
-          "description": "Board definitions, by catalog ID.",
+          "description": "Boards, by catalog ID.",
           "type": "object"
         },
         "fpgas": {
@@ -3782,13 +3732,6 @@
                 "null"
               ]
             },
-            "release": {
-              "description": "The device's release number (USB bcdDevice), four lowercase hex\ndigits, such as 0700. Known even for devices the engine can't open.\nOn FTDI chips, and on board debuggers that act like them, it tells the\nchip type: 0700 for an FT2232H, 0500 for an FT2232C/D or a debugger\nthat acts like one.",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
             "serial_number": {
               "description": "The serial number the device reports, when available.",
               "type": [
@@ -4112,13 +4055,6 @@
             },
             "product": {
               "description": "The product name the device reports, when available.",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "release": {
-              "description": "The device's release number (USB bcdDevice), four lowercase hex\ndigits, such as 0700. Known even for devices the engine can't open.\nOn FTDI chips, and on board debuggers that act like them, it tells the\nchip type: 0700 for an FT2232H, 0500 for an FT2232C/D or a debugger\nthat acts like one.",
               "type": [
                 "string",
                 "null"

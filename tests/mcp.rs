@@ -270,10 +270,9 @@ async fn get_catalog_returns_the_requested_entries() {
     let alhambra = &boards["alhambra-ii"];
     assert_eq!(alhambra["description"], "Alhambra II");
     assert_eq!(alhambra["fpga_id"], "ice40hx4k-tq144-8k");
-    assert_eq!(
-        alhambra["variants"][0]["usb"]["product_regex"],
-        "^Alhambra II.*"
-    );
+    assert_eq!(alhambra["variants"][0]["id"], "usb-flash");
+    // USB filters are the engine's own matching data: not returned.
+    assert!(alhambra["variants"][0].get("usb").is_none());
     // The standard dimensions, derived and labeled by the engine.
     let dims = &alhambra["dimensions"];
     assert_eq!(dims[0]["id"], "connection");

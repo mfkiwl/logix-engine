@@ -6,7 +6,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::EngineTool;
-use crate::catalog::{self, BoardDefinition, FpgaDefinition};
+use crate::catalog::{self, BoardDefinition, Dimension, FpgaDefinition, Variant};
 use crate::errors::ToolError;
 use crate::state::EngineState;
 
@@ -74,12 +74,82 @@ pub struct CatalogQuery {
     pub ids: Option<Vec<String>>,
 }
 
+/// A catalog board, as get_catalog returns it.
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct CatalogBoard {
+    /// The board's name for people, such as "Alhambra II".
+    pub description: String,
+    /// The board's FPGA, as a catalog ID of the fpgas section, such as
+    /// ice40hx4k-tq144-8k. Every variant uses it.
+    pub fpga_id: String,
+    /// The standard dimensions, connection then memory, each with the values
+    /// the board's variants use, with labels and help from the engine, for
+    /// showing the choices.
+    pub dimensions: Vec<Dimension>,
+    /// The ways the board can be programmed, the board's default first.
+    pub variants: Vec<CatalogVariant>,
+}
+
+/// One way to program a catalog board. Which USB devices are the board is
+/// the engine's own matter: list_devices gives each device the boards it
+/// may be.
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct CatalogVariant {
+    /// The variant's ID within its board, <connection>-<memory>, such as
+    /// usb-flash: what board_variant names in requests.
+    pub id: String,
+    /// How the computer reaches the board, a value of the connection
+    /// dimension.
+    pub connection: String,
+    /// Where the design goes, a value of the memory dimension.
+    pub memory: String,
+    /// The programmer the engine runs: openfpgaloader, iceprog, dfu-util or
+    /// icesprog.
+    pub programmer: String,
+    /// The programmer's arguments, as a template (see the variant fields of
+    /// board definitions).
+    pub args: String,
+    /// Whether programming this way is known to work. False for ways that
+    /// haven't been tried on hardware.
+    pub tested: bool,
+    /// Warnings and missing information for users.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub user_notes: Option<String>,
+}
+
+impl From<&Variant> for CatalogVariant {
+    fn from(v: &Variant) -> Self {
+        CatalogVariant {
+            id: v.id.clone(),
+            connection: v.connection.clone(),
+            memory: v.memory.clone(),
+            programmer: v.programmer.clone(),
+            args: v.args.clone(),
+            tested: v.tested,
+            user_notes: v.user_notes.clone(),
+        }
+    }
+}
+
+impl From<&BoardDefinition> for CatalogBoard {
+    fn from(b: &BoardDefinition) -> Self {
+        CatalogBoard {
+            description: b.description.clone(),
+            fpga_id: b.fpga_id.clone(),
+            dimensions: b.dimensions.clone(),
+            variants: b.variants.iter().map(Into::into).collect(),
+        }
+    }
+}
+
 /// The requested catalog entries. Sections that weren't fetched are empty.
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct GetCatalogOutput {
-    /// Board definitions, by catalog ID.
-    pub boards: BTreeMap<String, BoardDefinition>,
+    /// Boards, by catalog ID.
+    pub boards: BTreeMap<String, CatalogBoard>,
     /// FPGA definitions, by catalog ID.
     pub fpgas: BTreeMap<String, FpgaDefinition>,
     /// FPGA architectures (families), by ID, such as ice40.
@@ -117,7 +187,10 @@ fn select<T: Clone>(
 pub fn run(_state: &EngineState, input: GetCatalogInput) -> Result<GetCatalogOutput, ToolError> {
     let c = catalog::builtin();
     Ok(GetCatalogOutput {
-        boards: select("boards", &c.boards, input.boards)?,
+        boards: select("boards", &c.boards, input.boards)?
+            .iter()
+            .map(|(id, b)| (id.clone(), b.into()))
+            .collect(),
         fpgas: select("fpgas", &c.fpgas, input.fpgas)?,
         architectures: select("architectures", &architectures(), input.architectures)?,
     })

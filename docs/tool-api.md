@@ -780,7 +780,6 @@ Hosts show the level, in their own words, and compare levels (weak < possible < 
 | `vid`, `pid` | USB ID | USB vendor and product IDs |
 | `manufacturer`, `product` | text | Names reported by the device, when available |
 | `serial_number` | text | Serial number, when available |
-| `release` | USB ID | The device's release number (USB `bcdDevice`), four lowercase hex digits. Known even for an unreachable device. On FTDI chips, and on board debuggers that act like them, it tells the chip type: `0700` for an FT2232H, `0500` for an FT2232C/D or a debugger that acts like one |
 | `bus`, `device` | integer | USB bus and device number, for USB devices. The device number changes when the device is plugged in again |
 | `build_match` | enum | Only with `build_folder`. How well the device matches the build's board in the build's board variant: `strong`, `possible` or `weak`, as for `boards` (`weak` for an unreachable device) |
 | `boards` | list of objects | Optional, omitted when empty. The boards the device may be, best first, each with `board` (its ID), `custom` (true for a board from `custom_boards`, omitted otherwise) and `variants` (the board's variants this device fits, in the board's order, each with `id`, the variant's ID, and its own `match` level) |
@@ -796,7 +795,7 @@ Hosts show the level, in their own words, and compare levels (weak < possible < 
       "id": "usb:1-1:0403:6010:FTATANKC",
       "kind": "usb", "vid": "0403", "pid": "6010",
       "manufacturer": "AlhambraBits", "product": "Alhambra II v1.0A",
-      "serial_number": "FTATANKC", "release": "0700", "bus": 1, "device": 7,
+      "serial_number": "FTATANKC", "bus": 1, "device": 7,
       "boards": [
         { "board": "alhambra-ii", "variants": [{ "id": "usb-flash", "match": "strong" }] },
         { "board": "alchitry-au", "variants": [{ "id": "usb-flash", "match": "weak" }, { "id": "usb-ram", "match": "weak" }] }
@@ -822,7 +821,7 @@ Returns the Logix Engine's built-in catalog, fixed for each engine version. Host
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `boards` | map of board definitions | Board definitions by catalog ID |
+| `boards` | map of board definitions | Board definitions by catalog ID, without their variants' `usb` filters: which devices are a board is the engine's own matter, and `list_devices` gives each device the boards it may be |
 | `fpgas` | map of FPGA definitions | FPGA definitions by catalog ID |
 | `architectures` | map of objects | FPGA architectures by ID (`ice40`, `ecp5`, `gowin`, `xilinx`, as FPGA definitions name them), each with `label` (its name for people, with its vendor, such as "Lattice iCE40"), `short_label` (such as "iCE40"), `constraint_extension` (its pin constraint files' extension, without the dot, such as `pcf`: the build takes only this format for its boards) and `order` (its place in the engine's order, 0 first), so frontends don't keep their own lists |
 
@@ -857,7 +856,6 @@ Output:
           "id": "usb-flash", "connection": "usb", "memory": "flash",
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -b ice40_generic --vid ${VID} --pid ${PID} --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
-          "usb": { "vid": "0403", "pid": "6010", "product_regex": "^Alhambra II.*" },
           "tested": true
         }
       ]
@@ -867,7 +865,7 @@ Output:
 }
 ```
 
-A board with a choice, such as the iCESugar-Pro, which can be programmed to flash or to RAM (dimensions' help, arguments and USB filters shortened):
+A board with a choice, such as the iCESugar-Pro, which can be programmed to flash or to RAM (dimensions' help and arguments shortened):
 
 ```json
 {
@@ -879,8 +877,8 @@ A board with a choice, such as the iCESugar-Pro, which can be programmed to flas
       "values": [ { "id": "flash", "label": "Flash", "help": "..." }, { "id": "ram", "label": "RAM", "help": "..." } ] }
   ],
   "variants": [
-    { "id": "usb-flash", "connection": "usb", "memory": "flash", "programmer": "openfpgaloader", "args": "...", "usb": { "vid": "1d50", "pid": "602b" }, "tested": true },
-    { "id": "usb-ram", "connection": "usb", "memory": "ram", "programmer": "openfpgaloader", "args": "...", "usb": { "vid": "1d50", "pid": "602b" }, "tested": true }
+    { "id": "usb-flash", "connection": "usb", "memory": "flash", "programmer": "openfpgaloader", "args": "...", "tested": true },
+    { "id": "usb-ram", "connection": "usb", "memory": "ram", "programmer": "openfpgaloader", "args": "...", "tested": true }
   ]
 }
 ```

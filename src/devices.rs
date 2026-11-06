@@ -39,11 +39,9 @@ pub struct Device {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub serial_number: Option<String>,
     /// The device's release number (USB bcdDevice), four lowercase hex
-    /// digits, such as 0700. Known even for devices the engine can't open.
-    /// On FTDI chips, and on board debuggers that act like them, it tells the
-    /// chip type: 0700 for an FT2232H, 0500 for an FT2232C/D or a debugger
-    /// that acts like one.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
+    /// digits, for matching only: not reported to hosts.
+    #[serde(skip)]
+    #[schemars(skip)]
     pub release: Option<String>,
     /// USB bus number.
     pub bus: u8,
@@ -564,6 +562,9 @@ pub mod tests {
         assert!(same_ids(&with_release(Some("0500"), false), &bl702));
         assert!(!same_ids(&with_release(Some("0700"), false), &bl702));
         assert!(matches(&with_release(Some("0700"), true), &filter(None)));
+        // Matching data only: hosts don't see it.
+        let json = serde_json::to_value(with_release(Some("0500"), true)).unwrap();
+        assert!(json.get("release").is_none(), "{json}");
 
         // iCESugar boards share IDs and product name; the serial tells them apart.
         let nano_filter = UsbFilter {
