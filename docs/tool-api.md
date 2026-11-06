@@ -744,7 +744,7 @@ Programs a bitstream into the board it was built for, on the device the host cho
 
 Lists the connected USB devices, each with an `id` for `program_board` and the boards it may be. The Logix Engine reads USB devices with libusb, built into the engine, the same library the programmers use, so the bus and device numbers mean the same to both. Devices are sorted by vendor ID, product ID, bus and device number.
 
-**Matching.** A device matches a variant's USB filter when its USB IDs are equal, its release is equal when the filter has `release`, and, when the filter has `product_regex` or `serial_regex`, its product name or serial number contains a match for it. An unreachable device's names are unknown, so only its USB IDs and release are compared. The engine matches every device against every catalog board and the request's `custom_boards` on each call, so a host's own boards count as soon as it sends them. Each device lists the boards it matches, strongest first: by their best board variant's match level, then catalog boards before custom ones, then by board ID. A custom board may have a catalog board's ID; both are listed, the custom one with `custom: true`, and the host decides which it means.
+**Matching.** A device matches a variant's USB filter when its USB IDs are equal, its release is equal when the filter has `release`, and, when the filter has `product_regex` or `serial_regex`, its product name or serial number contains a match for it. An unreachable device's names are unknown, so only its USB IDs and release are compared. The engine matches every device against every catalog board and the boards of the request's `board_files` on each call, so a user's own boards count as soon as the host sends them. Each device lists the boards it matches, strongest first: by their best board variant's match level, then catalog boards before board files' boards (`custom: true`), then by board ID.
 
 **Match levels.** Each board variant a device fits has a `match` level, since board variants can have different USB filters. Hosts use the level of the board variant they mean, such as the build's or the one the user selected. The levels say what the match means for the user, not why it matched:
 
@@ -764,7 +764,6 @@ Hosts show the level, in their own words, and compare levels (weak < possible < 
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `custom_boards` | map of board definitions | No | The host's own boards, by board ID, in the catalog format (the FPGA as `fpga_id` or `fpga`), matched as well as the catalog's. Omitted means none |
 | `board_files` | list of board files | No | Board files, sent unchanged. Devices are matched against their boards as well as the catalog's; matches name them by the file's board ID, with `custom: true`. Omitted means none |
 | `build_folder` | build folder path | No | A successful build's folder. When given, only the devices that fit the build's board in its board variant are listed, in `devices` and `unreachable`, each with `build_match`, strongest first: the devices `program_board` can program that build into. The board comes from the build record, so it works for custom boards too |
 
@@ -786,9 +785,9 @@ Hosts show the level, in their own words, and compare levels (weak < possible < 
 | `serial_number` | text | Serial number, when available |
 | `bus`, `device` | integer | USB bus and device number, for USB devices. The device number changes when the device is plugged in again |
 | `build_match` | enum | Only with `build_folder`. How well the device matches the build's board in the build's board variant: `strong`, `possible` or `weak`, as for `boards` (`weak` for an unreachable device) |
-| `boards` | list of objects | Optional, omitted when empty. The boards the device may be, best first, each with `board` (its ID), `custom` (true for a board from `custom_boards`, omitted otherwise) and `variants` (the board's variants this device fits, in the board's order, each with `id`, the variant's ID, and its own `match` level) |
+| `boards` | list of objects | Optional, omitted when empty. The boards the device may be, best first, each with `board` (its ID), `custom` (true for a board from `board_files`, omitted otherwise) and `variants` (the board's variants this device fits, in the board's order, each with `id`, the variant's ID, and its own `match` level) |
 
-**Errors:** setup errors with `install_drivers` or `fix_device_permissions` when devices cannot be scanned. Request errors for an invalid custom board, or a build folder without a build record from a successful build. Engine errors.
+**Errors:** setup errors with `install_drivers` or `fix_device_permissions` when devices cannot be scanned. Request errors for a damaged board file, or a build folder without a build record from a successful build. Engine errors.
 
 **Example**
 
@@ -1145,7 +1144,7 @@ Logic that every frontend would need and that doesn't depend on a frontend's own
 
 - Fill a board picker from `get_catalog` with `boards.fetch`, `fpgas.fetch` and `architectures.fetch` true: group boards by their FPGA's `architecture`, with the architecture's `label` and `order`, and use its `constraint_extension` for the board's pin file.
 - Show each board's `dimensions` labels and help as the board variant choices, and its `tested` and `user_notes` where the user picks.
-- A user's own boards are board files (see the Board Wizard below); full board definitions in `board` and `custom_boards` in `list_devices` still work until board files replace them.
+- A user's own boards are board files (see the Board Wizard below); a full board definition in `board` still works for a board with no catalog board to start from, until board files can describe such boards.
 
 ### Board Wizard: the user's own board
 
