@@ -76,6 +76,10 @@ pub enum ActionCode {
     /// Other connected devices have the board's USB IDs, and the board's
     /// programmer can't tell them apart. Disconnect them and retry.
     DisconnectDevices,
+    /// The constraint (pin) file's extension isn't the board's FPGA
+    /// family's format. If the file is written for this board, rename it
+    /// to the name in the error's data (`constraint_file`).
+    RenameConstraintFile,
 }
 
 /// A suggested action, with a code for the host and a description for people.

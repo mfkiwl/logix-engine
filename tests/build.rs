@@ -577,7 +577,12 @@ async fn request_errors() {
         .await
         .unwrap_err();
     assert_eq!(err.category, Category::Request, "{err:?}");
-    assert!(err.message.contains("isn't a .pcf file"), "{}", err.message);
+    assert!(err.message.contains("is the wrong kind"), "{}", err.message);
+    assert_eq!(
+        err.data.as_ref().unwrap()["constraint_file"],
+        "pinout.pcf",
+        "{err:?}"
+    );
     std::fs::remove_file(src.join("pinout.lpf")).unwrap();
     // An include from outside the source folder.
     std::fs::write(tmp.path().join("outside.vh"), "").unwrap();
