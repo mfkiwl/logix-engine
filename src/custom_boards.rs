@@ -286,12 +286,19 @@ fn problems(name: &str, found: Vec<Found>) -> ToolError {
 }
 
 /// serde's message without its own " at line L column C".
+/// An unknown field is just named, without serde's list of the expected
+/// ones (the user's request: too much to read).
 fn serde_message(e: &serde_json::Error) -> String {
     let text = e.to_string();
     let text = match text.rfind(" at line ") {
         Some(i) => text[..i].to_string(),
         None => text,
     };
+    if let Some(rest) = text.strip_prefix("unknown field `")
+        && let Some(end) = rest.find('`')
+    {
+        return format!("Unknown field {:?}.", &rest[..end]);
+    }
     let mut c = text.chars();
     match c.next() {
         Some(first) => format!("{}{}.", first.to_uppercase(), c.as_str()),
@@ -524,7 +531,7 @@ mod tests {
         assert!(d[0].2.contains("expected a map"), "{d:?}");
         // A misspelled field.
         let d = diags(&GOOD.replace("\"tested\"", "\"testd\""));
-        assert!(d[0].2.starts_with("Unknown field `testd`"), "{d:?}");
+        assert_eq!(d[0].2, "Unknown field \"testd\".", "{d:?}");
         assert_eq!(d[0].0, Some(9), "{d:?}");
     }
 
@@ -579,7 +586,7 @@ mod tests {
         );
         // The old shape, with an ID: an unknown field.
         let d = diags(&GOOD.replace("\"selector\": {", "\"id\": \"usb-flash\", \"selector\": {"));
-        assert!(d[0].2.starts_with("Unknown field `id`"), "{d:?}");
+        assert_eq!(d[0].2, "Unknown field \"id\".", "{d:?}");
         // A selector needs both dimensions.
         let d = diags(&GOOD.replace("\"connection\": \"usb\", ", ""));
         assert!(d[0].2.starts_with("Missing field `connection`"), "{d:?}");
@@ -637,7 +644,7 @@ mod tests {
             vec![
                 // z-board: its FPGA, then each variant on its own.
                 (4, 16, "\"nope\" isn't an FPGA in the catalog".to_string()),
-                (8, 19, "Unknown field `programer`".to_string()),
+                (8, 19, "Unknown field \"programer\"".to_string()),
                 (
                     14,
                     24,
