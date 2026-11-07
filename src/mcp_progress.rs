@@ -21,7 +21,7 @@ use serde_json::json;
 use tokio::sync::mpsc;
 use tokio::task::JoinHandle;
 
-use crate::progress::{OutputLevel, OutputSink, ProgressSink};
+use crate::progress::{OutputLevel, OutputSink, ProgressSink, ToolLine};
 
 /// The notification method for live tool output.
 pub const OUTPUT_METHOD: &str = "logix/output";
@@ -104,20 +104,20 @@ impl ProgressSink for McpNotifier {
 }
 
 impl OutputSink for McpNotifier {
-    fn line(&self, tool: &str, level: OutputLevel, text: &str) {
-        self.tool_line(tool, level, text, false);
-    }
-
-    fn tool_line(&self, tool: &str, level: OutputLevel, text: &str, redraw: bool) {
+    fn line(&self, line: &ToolLine) {
         let Some(id) = &self.output_for else { return };
-        self.send(Note::Output(json!({
+        let mut note = json!({
             "request_id": id,
-            "tool": tool,
+            "tool": line.tool,
             "kind": "output",
-            "level": level,
-            "text": text,
-            "redraw": redraw,
-        })));
+            "level": line.level,
+            "text": line.text,
+            "redraw": line.redraw,
+        });
+        if let Some(original) = line.original {
+            note["original_text"] = json!(original);
+        }
+        self.send(Note::Output(note));
     }
 
     fn command(&self, tool: &str, text: &str) {

@@ -46,9 +46,8 @@ pub async fn run_tool(
 /// Like run_tool, calling `on_line` with each output line as it arrives,
 /// such as to read progress or show it, and whether the tool will print
 /// over it (`redraw`: a bare carriage return ended it, as progress bars
-/// do; `\r\n` counts as a newline). Lines with only spaces, such as a
-/// progress bar's eraser, aren't passed to `on_line`; they stay in the
-/// output.
+/// do; `\r\n` counts as a newline). How lines are shown is up to the
+/// output rules (src/output_rules.rs).
 pub async fn run_tool_with(
     program: &Path,
     args: &[OsString],
@@ -132,9 +131,7 @@ pub async fn run_tool_with(
         tokio::select! {
             line = rx.recv() => match line {
                 Some((l, redraw)) => {
-                    if !l.trim().is_empty() {
-                        on_line(&l, redraw);
-                    }
+                    on_line(&l, redraw);
                     output.push(l);
                 }
                 None => break child.wait().await.map_err(RunError::Spawn)?,
@@ -362,28 +359,6 @@ mod tests {
             vec![("a".into(), false), ("b".into(), true), ("c".into(), false)]
         );
         assert_eq!(split(b"x"), vec![("x".into(), false)]);
-    }
-
-    #[tokio::test]
-    async fn blank_lines_are_not_shown_but_kept() {
-        let tmp = tempfile::tempdir().unwrap();
-        let args: Vec<OsString> = vec!["-c".into(), r"printf '   \rp 1%%\r   \rdone\n'".into()];
-        let seen = std::sync::Mutex::new(Vec::new());
-        let run = run_tool_with(
-            Path::new("/bin/sh"),
-            &args,
-            tmp.path(),
-            tmp.path(),
-            &CancellationToken::new(),
-            &|l, redraw| seen.lock().unwrap().push((l.to_string(), redraw)),
-        )
-        .await
-        .unwrap();
-        assert_eq!(
-            *seen.lock().unwrap(),
-            vec![("p 1%".to_string(), true), ("done".to_string(), false)]
-        );
-        assert_eq!(run.output, "   \np 1%\n   \ndone");
     }
 
     #[tokio::test]

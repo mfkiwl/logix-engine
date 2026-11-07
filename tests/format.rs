@@ -11,7 +11,7 @@ use logix_engine::errors::Severity;
 use logix_engine::format::FileStatus;
 use logix_engine::packages::PackageManager;
 use logix_engine::packages::manifest;
-use logix_engine::progress::{NoProgress, OutputLevel, OutputSink};
+use logix_engine::progress::{NoProgress, OutputSink, ToolLine};
 use logix_engine::state::{self, EngineState};
 use logix_engine::tools::{Call, format};
 use serde_json::json;
@@ -42,7 +42,8 @@ fn engine() -> EngineState {
 struct Output(Mutex<Vec<(String, String, String)>>);
 
 impl OutputSink for Output {
-    fn line(&self, tool: &str, _level: OutputLevel, text: &str) {
+    fn line(&self, line: &ToolLine) {
+        let (tool, text) = (line.tool, line.text);
         let line = ("output".into(), tool.into(), text.into());
         self.0.lock().unwrap().push(line);
     }

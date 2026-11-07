@@ -10,7 +10,7 @@ use std::sync::{Arc, Mutex};
 use logix_engine::errors::{Category, Severity};
 use logix_engine::packages::PackageManager;
 use logix_engine::packages::manifest;
-use logix_engine::progress::{NoProgress, OutputLevel, OutputSink, Phases};
+use logix_engine::progress::{NoProgress, OutputSink, Phases, ToolLine};
 use logix_engine::sim::testbench::Ending;
 use logix_engine::state::{self, EngineState};
 use logix_engine::tools::{Call, lint, simulate, test};
@@ -63,7 +63,8 @@ fn call() -> Call {
 struct Output(Mutex<Vec<(String, String, String)>>);
 
 impl OutputSink for Output {
-    fn line(&self, tool: &str, _level: OutputLevel, text: &str) {
+    fn line(&self, line: &ToolLine) {
+        let (tool, text) = (line.tool, line.text);
         let line = ("output".into(), tool.into(), text.into());
         self.0.lock().unwrap().push(line);
     }

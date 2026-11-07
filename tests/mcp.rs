@@ -405,5 +405,32 @@ async fn build_streams_tool_output_when_asked() {
         "the command comes before the tool's lines"
     );
     assert!(warning["request_id"].is_number() || warning["request_id"].is_string());
+    assert!(
+        warning.get("original_text").is_none(),
+        "yosys's line as printed"
+    );
+
+    // Verbose: nextpnr's lines come without their "Info: " prefix, with the
+    // line as printed in original_text (an output rule).
+    handler.0.lock().unwrap().clear();
+    let mut verbose = request("_build/c", true);
+    verbose
+        .arguments
+        .as_mut()
+        .unwrap()
+        .insert("verbose".into(), json!(true));
+    let r = client.call_tool(verbose).await.unwrap();
+    assert_ne!(r.is_error, Some(true), "{r:?}");
+    let lines = handler.0.lock().unwrap().clone();
+    let rewritten = lines
+        .iter()
+        .find(|l| l["tool"] == "nextpnr-ice40" && l.get("original_text").is_some())
+        .unwrap_or_else(|| panic!("no rewritten nextpnr line in {lines:?}"));
+    let original = rewritten["original_text"].as_str().unwrap();
+    assert_eq!(
+        original.strip_prefix("Info: "),
+        rewritten["text"].as_str(),
+        "{rewritten:?}"
+    );
     client.cancel().await.unwrap();
 }

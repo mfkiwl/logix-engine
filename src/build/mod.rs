@@ -31,7 +31,6 @@ use crate::board::ResolvedBoard;
 use crate::catalog::{Architecture, FpgaDefinition};
 use crate::errors::{Category, Diagnostic, ToolError};
 use crate::packages::manifest::PackageSpec;
-use crate::progress::OutputLevel;
 use crate::progress::Phases;
 use crate::runner::{RunError, command_line, run_tool_with};
 use crate::state::EngineState;
@@ -429,9 +428,9 @@ pub async fn run_watched(
     call.output.command(tool, &command_line(&program, args));
     call.commands
         .push(crate::commands::record(&program, args, cwd, bin_dir));
+    let shown = crate::output_rules::ToolOutput::new(tool, call.output.as_ref());
     let on_line = |line: &str, redraw: bool| {
-        call.output
-            .tool_line(tool, OutputLevel::of(line), line, redraw);
+        shown.line(line, redraw);
         watch(line);
     };
     match run_tool_with(&program, args, cwd, bin_dir, stop, &on_line).await {

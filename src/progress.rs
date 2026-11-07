@@ -54,17 +54,24 @@ impl OutputLevel {
     }
 }
 
+/// A line a tool printed, as the output rules show it (src/output_rules.rs).
+#[derive(Debug, Clone, Copy)]
+pub struct ToolLine<'a> {
+    /// The program, such as `yosys`.
+    pub tool: &'a str,
+    pub level: OutputLevel,
+    pub text: &'a str,
+    /// The tool prints over this line (a carriage return ended it, as
+    /// progress bars do).
+    pub redraw: bool,
+    /// The line as printed, when a rule removed noise from it.
+    pub original: Option<&'a str>,
+}
+
 /// Where live tool output goes, line by line.
 pub trait OutputSink: Send + Sync {
-    /// A line the tool printed.
-    fn line(&self, tool: &str, level: OutputLevel, text: &str);
-    /// A line the tool printed, and whether it will print over it
-    /// (`redraw`: a carriage return ended it, as progress bars do). Sinks
-    /// that don't show redraws differently keep the default.
-    fn tool_line(&self, tool: &str, level: OutputLevel, text: &str, redraw: bool) {
-        let _ = redraw;
-        self.line(tool, level, text);
-    }
+    /// A line a tool printed.
+    fn line(&self, line: &ToolLine);
     /// The command line of a tool about to run, before its output.
     fn command(&self, _tool: &str, _text: &str) {}
     /// A line from the engine itself, such as how the board will be
@@ -76,7 +83,7 @@ pub trait OutputSink: Send + Sync {
 pub struct NoOutput;
 
 impl OutputSink for NoOutput {
-    fn line(&self, _tool: &str, _level: OutputLevel, _text: &str) {}
+    fn line(&self, _line: &ToolLine) {}
 }
 
 /// Reports an operation's progress phase by phase. Shared between tasks.

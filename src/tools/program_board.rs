@@ -1,7 +1,5 @@
 //! The program_board tool (docs/tool-api.md, Tables 9 and 10).
 
-use std::sync::atomic::{AtomicBool, Ordering};
-
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -9,9 +7,10 @@ use super::{Call, EngineTool};
 use crate::build::{self, TOOLCHAIN};
 use crate::devices::{self, Device};
 use crate::errors::{ActionCode, Category, ToolError};
+use crate::output_rules::ToolOutput;
 use crate::paths;
-use crate::program::{self, ProgressLine};
-use crate::progress::{OutputLevel, Phases};
+use crate::program;
+use crate::progress::Phases;
 use crate::runner::{RunError, command_line, run_tool_with};
 use crate::state::EngineState;
 
@@ -188,30 +187,29 @@ pub async fn run_with_programmers(
         Some(_) => "custom".to_string(),
     };
 
-    // Progress: write, then verify. A custom command's output isn't read.
-    let verifying = AtomicBool::new(false);
+    // Progress: write, then verify, from the output rules. A custom
+    // command's progress isn't read.
+    let phase = std::sync::Mutex::new(None::<&str>);
     let tool_name = program
         .file_name()
         .unwrap_or_default()
         .to_string_lossy()
         .to_string();
+    let shown = ToolOutput::new(&tool_name, call.output.as_ref());
     let on_line = |line: &str, redraw: bool| {
-        call.output
-            .tool_line(&tool_name, OutputLevel::of(line), line, redraw);
+        let progress = shown.line(line, redraw);
         if custom.is_some() {
             return;
         }
-        match program::progress_line(line) {
-            ProgressLine::Percent(p) => phases.percent(p),
-            ProgressLine::Verifying(p) => {
-                if !verifying.swap(true, Ordering::SeqCst) {
-                    phases.start("Verifying");
-                }
-                if let Some(p) = p {
-                    phases.percent(p);
-                }
+        if let Some(name) = progress.phase {
+            let mut current = phase.lock().unwrap();
+            if *current != Some(name) {
+                *current = Some(name);
+                phases.start(name);
             }
-            ProgressLine::Other => {}
+        }
+        if let Some(p) = progress.percent {
+            phases.percent(p);
         }
     };
     phases.start(if custom.is_some() {
@@ -294,9 +292,9 @@ async fn check_fpga(
         .command("openFPGALoader", &command_line(&exe, &args));
     call.commands
         .push(crate::commands::record(&exe, &args, folder, bin));
+    let shown = ToolOutput::new("openFPGALoader", call.output.as_ref());
     let on_line = |line: &str, redraw: bool| {
-        call.output
-            .tool_line("openFPGALoader", OutputLevel::of(line), line, redraw)
+        shown.line(line, redraw);
     };
     let run = run_tool_with(&exe, &args, folder, bin, &call.cancel, &on_line).await;
     let r = match run {

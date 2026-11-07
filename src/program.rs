@@ -4,9 +4,6 @@
 
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
-use std::sync::OnceLock;
-
-use regex::Regex;
 
 use crate::catalog::{self, Architecture, FpgaDefinition, Variant};
 use crate::devices::{self, Device};
@@ -398,38 +395,6 @@ pub fn check_fpga(
     ))
 }
 
-fn percent_re() -> &'static Regex {
-    static RE: OnceLock<Regex> = OnceLock::new();
-    RE.get_or_init(|| Regex::new(r"(\d{1,3}(?:\.\d+)?)\s*%").unwrap())
-}
-
-/// What a programmer's output line says about progress.
-#[derive(Debug, PartialEq)]
-pub enum ProgressLine {
-    /// The programmer is verifying what it wrote, with a percentage when the
-    /// line has one.
-    Verifying(Option<f64>),
-    /// A percentage of the current step.
-    Percent(f64),
-    Other,
-}
-
-/// Reads progress from programmer output lines, such as openFPGALoader's,
-/// iceprog's and dfu-util's.
-pub fn progress_line(line: &str) -> ProgressLine {
-    let lower = line.to_lowercase();
-    let percent = percent_re()
-        .captures(line)
-        .and_then(|c| c[1].parse::<f64>().ok());
-    if lower.contains("verif") || lower.starts_with("reading") {
-        return ProgressLine::Verifying(percent);
-    }
-    match percent {
-        Some(p) => ProgressLine::Percent(p),
-        None => ProgressLine::Other,
-    }
-}
-
 /// Turns a failed programmer run into an error, by what its output says.
 pub fn failure(programmer: &str, board_name: &str, output: &str, status: &str) -> ToolError {
     let lower = output.to_lowercase();
@@ -812,25 +777,6 @@ mod tests {
                 .category,
             Category::Setup
         );
-    }
-
-    #[test]
-    fn progress_lines() {
-        assert_eq!(
-            progress_line("Writing: [====>     ] 45.33%"),
-            ProgressLine::Percent(45.33)
-        );
-        assert_eq!(progress_line("Erasing: 100%"), ProgressLine::Percent(100.0));
-        assert_eq!(
-            progress_line("Verifying write (May take time)"),
-            ProgressLine::Verifying(None)
-        );
-        assert_eq!(progress_line("reading.."), ProgressLine::Verifying(None));
-        assert_eq!(
-            progress_line("Verifying: 50.00%"),
-            ProgressLine::Verifying(Some(50.0))
-        );
-        assert_eq!(progress_line("cdone: high"), ProgressLine::Other);
     }
 
     #[test]

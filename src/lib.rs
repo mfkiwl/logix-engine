@@ -17,6 +17,7 @@ pub mod graph;
 pub mod json_pos;
 pub mod logging;
 pub mod mcp_progress;
+pub mod output_rules;
 pub mod packages;
 pub mod paths;
 pub mod program;

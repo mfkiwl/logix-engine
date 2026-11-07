@@ -182,7 +182,7 @@ On success, a tool returns its output object as structured content. On failure, 
 
 ### Presentation
 
-The engine reports facts as plain data and leaves presentation to the host. It sends no colors or terminal codes, and strips them from tool output. It doesn't rewrite tool output: tool lines reach the host as the tool printed them, except that empty lines and lines of only spaces (such as a progress bar's eraser) are left out of the live output. Instead it labels what things are, such as diagnostics with a severity and progress phases with a message, so each host can style, filter and summarize them in its own way.
+The engine reports facts as plain data and leaves presentation to the host. It sends no colors or terminal codes, and strips them from tool output. Tool lines reach the host as the tool printed them, with a few exceptions in the live output only: the engine leaves out empty and blank lines (such as a progress bar's eraser) and lines it knows to be harmless noise (such as warnings about optional speedups a tool doesn't have), removes noise around a message (such as nextpnr's `Info: ` prefix) without changing what it says, and may add a line of its own after a tool's line to explain it. Which lines are affected can change in any version; results and diagnostics are never affected. Otherwise it labels what things are, such as diagnostics with a severity and progress phases with a message, so each host can style, filter and summarize them in its own way.
 
 ### Live tool output
 
@@ -196,7 +196,8 @@ A host that wants to show the tools' output as it happens, such as in a console,
 | `tool` | text | The tool that printed it, such as `yosys`, `nextpnr-ice40` or `openFPGALoader`, or `logix-engine` for the engine's own messages |
 | `kind` | enum | `command` for the command line of a tool about to run, sent before its output, `output` for a line the tool printed, or `message` for a line from the engine itself, such as how `program_board` will program the board. Hosts should show unknown kinds like `output` |
 | `level` | enum | `error`, `warning` or `info`, from how the tool marks the line, so hosts can color it |
-| `text` | text | The line as the tool printed it, without terminal codes. A progress bar redrawn with carriage returns gives one line per redraw |
+| `text` | text | The line as the tool printed it, without terminal codes and without any noise the engine removed (see Presentation). A progress bar redrawn with carriage returns gives one line per redraw |
+| `original_text` | text | In `output` lines whose noise the engine removed: the line as the tool printed it. Omitted when `text` is the line as printed |
 | `redraw` | boolean | In `output` lines: true when the tool prints over this line (a carriage return ended it, as progress bars do), so a console may replace it with the tool's next line, as a terminal does. False otherwise |
 
 Lines that the engine reads into diagnostics still come in the tool result too. The live lines are for showing, not for parsing.

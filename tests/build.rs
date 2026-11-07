@@ -310,7 +310,29 @@ async fn builds_a_gowin_design() {
         std::fs::copy(from.join(f), src.join(f)).unwrap();
     }
     let input = json!({"board": "sipeed-tang-nano-9k", "constraint_file": "main.cst"});
-    let out = build_it(&state, &src, input.clone()).await.unwrap();
+    // gowin_pack's warnings about missing Python speedups are hidden (an
+    // output rule), and nothing else of it.
+    #[derive(Default)]
+    struct Lines(std::sync::Mutex<Vec<String>>);
+    impl logix_engine::progress::OutputSink for Lines {
+        fn line(&self, line: &logix_engine::progress::ToolLine) {
+            self.0
+                .lock()
+                .unwrap()
+                .push(format!("{}: {}", line.tool, line.text));
+        }
+    }
+    let lines = Arc::new(Lines::default());
+    let mut c = call();
+    c.output = lines.clone();
+    let out = build::run(&state, request(&src, input.clone()), &c)
+        .await
+        .unwrap();
+    let shown = lines.0.lock().unwrap().clone();
+    assert!(
+        !shown.iter().any(|l| l.contains("is not available")),
+        "{shown:?}"
+    );
     let tools: Vec<_> = out.commands.iter().map(|c| c.tool.as_str()).collect();
     assert_eq!(tools, ["yosys", "nextpnr-himbaechel", "gowin_pack"]);
     assert!(
@@ -957,12 +979,12 @@ async fn program_board_runs_the_command_with_the_device_and_bitstream() {
 
 #[tokio::test]
 async fn verbose_prints_more_but_gives_the_same_result() {
-    use logix_engine::progress::{OutputLevel, OutputSink};
+    use logix_engine::progress::{OutputSink, ToolLine};
     #[derive(Default)]
     struct Lines(std::sync::Mutex<Vec<String>>);
     impl OutputSink for Lines {
-        fn line(&self, _tool: &str, _level: OutputLevel, text: &str) {
-            self.0.lock().unwrap().push(text.to_string());
+        fn line(&self, line: &ToolLine) {
+            self.0.lock().unwrap().push(line.text.to_string());
         }
     }
     let state = engine().await;
@@ -1000,15 +1022,15 @@ async fn verbose_prints_more_but_gives_the_same_result() {
 /// it: the live output marks each redraw, and leaves out the blank erasers.
 #[tokio::test]
 async fn live_output_marks_progress_redraws() {
-    use logix_engine::progress::{OutputLevel, OutputSink};
+    use logix_engine::progress::{OutputSink, ToolLine};
     #[derive(Default)]
     struct Lines(std::sync::Mutex<Vec<(String, bool)>>);
     impl OutputSink for Lines {
-        fn line(&self, _tool: &str, _level: OutputLevel, _text: &str) {
-            unreachable!("tool lines come with their redraw flag");
-        }
-        fn tool_line(&self, _tool: &str, _level: OutputLevel, text: &str, redraw: bool) {
-            self.0.lock().unwrap().push((text.to_string(), redraw));
+        fn line(&self, line: &ToolLine) {
+            self.0
+                .lock()
+                .unwrap()
+                .push((line.text.to_string(), line.redraw));
         }
     }
     let state = engine().await;
