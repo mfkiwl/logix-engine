@@ -7,9 +7,9 @@
 #
 # The same as scripts/run-in-claude.sh, with Grok as the host. Arguments are
 # passed to grok. Grok runs in a playground folder, ~/.logix-dev/playground
-# (or LOGIX_PLAYGROUND), where it can create designs, not in this repo. The
+# (or LOGIX_ENGINE_DEV_PLAYGROUND), where it can create designs, not in this repo. The
 # engine uses the engine folder ~/.logix-dev/engine (or
-# LOGIX_ENGINE_FOLDER), and logs at LOGIX_LOG_LEVEL (info by default; debug
+# LOGIX_ENGINE_DEV_FOLDER), and logs at LOGIX_ENGINE_DEV_LOG_LEVEL (info by default; debug
 # also logs every program's output). The engine's tools are allowed without
 # asking. Each run starts the freshly built engine, copied to
 # ~/.logix-dev/bin so the session doesn't see this repo's path.
@@ -52,11 +52,11 @@ source scripts/_rust-env.sh
 source scripts/_test-session.sh
 
 repo="$(pwd)"
-engine_folder="${LOGIX_ENGINE_FOLDER:-$HOME/.logix-dev/engine}"
+engine_folder="${LOGIX_ENGINE_DEV_FOLDER:-$HOME/.logix-dev/engine}"
 # The engine log level: error, warn, info (default) or debug, which also logs
 # every program's output, such as a programmer's.
-log_level="${LOGIX_LOG_LEVEL:-info}"
-playground="${LOGIX_PLAYGROUND:-$HOME/.logix-dev/playground}"
+log_level="${LOGIX_ENGINE_DEV_LOG_LEVEL:-info}"
+playground="${LOGIX_ENGINE_DEV_PLAYGROUND:-$HOME/.logix-dev/playground}"
 
 # Find grok.
 grok_bin="$(command -v grok || true)"

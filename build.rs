@@ -1,22 +1,22 @@
-// Sets LOGIX_ENGINE_VERSION, the engine version reported by get_engine_info
-// and --version. Release builds pass it in the LOGIX_ENGINE_VERSION env var
+// Sets LOGIX_ENGINE_BUILD_VERSION, the engine version reported by get_engine_info
+// and --version. Release builds pass it in the LOGIX_ENGINE_BUILD_VERSION env var
 // (the release tag, yyyy-mm-dd or yyyy-mm-dd-N). Other builds use today's
 // UTC date.
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
 fn main() {
-    println!("cargo:rerun-if-env-changed=LOGIX_ENGINE_VERSION");
-    let version = match std::env::var("LOGIX_ENGINE_VERSION") {
+    println!("cargo:rerun-if-env-changed=LOGIX_ENGINE_BUILD_VERSION");
+    let version = match std::env::var("LOGIX_ENGINE_BUILD_VERSION") {
         Ok(v) if !v.is_empty() => {
             if !is_release_tag(&v) {
-                panic!("LOGIX_ENGINE_VERSION must be yyyy-mm-dd or yyyy-mm-dd-N, got {v:?}");
+                panic!("LOGIX_ENGINE_BUILD_VERSION must be yyyy-mm-dd or yyyy-mm-dd-N, got {v:?}");
             }
             v
         }
         _ => today_utc(),
     };
-    println!("cargo:rustc-env=LOGIX_ENGINE_VERSION={version}");
+    println!("cargo:rustc-env=LOGIX_ENGINE_BUILD_VERSION={version}");
 }
 
 fn is_release_tag(v: &str) -> bool {

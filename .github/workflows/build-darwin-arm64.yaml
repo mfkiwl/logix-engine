@@ -95,7 +95,7 @@ jobs:
       - name: Build the engine
         working-directory: _repo
         env:
-          LOGIX_ENGINE_VERSION: ${{ env.RELEASE_TAG }}
+          LOGIX_ENGINE_BUILD_VERSION: ${{ env.RELEASE_TAG }}
         run: scripts/build.sh
 
       # The package has one top-level folder, logix-engine/, with the

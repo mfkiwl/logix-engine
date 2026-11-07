@@ -6,9 +6,9 @@
 #   scripts/run-in-claude.sh "What version is the Logix engine?"
 #
 # Arguments are passed to claude. Claude runs in a playground folder,
-# ~/.logix-dev/playground (or LOGIX_PLAYGROUND), where it can create
+# ~/.logix-dev/playground (or LOGIX_ENGINE_DEV_PLAYGROUND), where it can create
 # designs, not in this repo. The engine uses the engine folder
-# ~/.logix-dev/engine (or LOGIX_ENGINE_FOLDER), and logs at LOGIX_LOG_LEVEL
+# ~/.logix-dev/engine (or LOGIX_ENGINE_DEV_FOLDER), and logs at LOGIX_ENGINE_DEV_LOG_LEVEL
 # (info by default; debug also logs every program's output). Only the
 # engine's MCP server is loaded, and its tools are allowed without asking.
 # Each run starts the freshly built engine, copied to ~/.logix-dev/bin so
@@ -62,11 +62,11 @@ source scripts/_rust-env.sh
 source scripts/_test-session.sh
 
 repo="$(pwd)"
-engine_folder="${LOGIX_ENGINE_FOLDER:-$HOME/.logix-dev/engine}"
+engine_folder="${LOGIX_ENGINE_DEV_FOLDER:-$HOME/.logix-dev/engine}"
 # The engine log level: error, warn, info (default) or debug, which also logs
 # every program's output, such as a programmer's.
-log_level="${LOGIX_LOG_LEVEL:-info}"
-playground="${LOGIX_PLAYGROUND:-$HOME/.logix-dev/playground}"
+log_level="${LOGIX_ENGINE_DEV_LOG_LEVEL:-info}"
+playground="${LOGIX_ENGINE_DEV_PLAYGROUND:-$HOME/.logix-dev/playground}"
 
 # Find claude.
 claude_bin="$(command -v claude || true)"

@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use rmcp::model::ProtocolVersion;
 
 /// The engine release, a date tag. Set by build.rs.
-pub const ENGINE_VERSION: &str = env!("LOGIX_ENGINE_VERSION");
+pub const ENGINE_VERSION: &str = env!("LOGIX_ENGINE_BUILD_VERSION");
 
 /// The MCP protocol versions the engine accepts, newest first. The engine is
 /// pinned to 2026-07-28 and also accepts 2025-11-25 clients.
