@@ -97,6 +97,13 @@ pub fn parse(text: &str, name: &str) -> Result<CustomBoards, ToolError> {
     let mut boards = CustomBoards::new();
     for (id, value) in root.as_object().into_iter().flatten() {
         let base = format!("/{}", segment(id));
+        // The file's schema, for editors: optional, but only this one.
+        if id == catalog::SCHEMA_KEY {
+            if let Some(problem) = catalog::schema_problem(value) {
+                found.push(Found::at(doc.index.value(&base), problem));
+            }
+            continue;
+        }
         let variants_value = value.get("variants").and_then(|v| v.as_array());
         let board = doc.read_board(&base);
         if let Err(e) = &board {
@@ -454,6 +461,42 @@ mod tests {
   }
 }
 "#;
+
+    #[test]
+    fn the_schema_key_is_optional_but_must_be_this_one() {
+        let named = GOOD.replacen(
+            "{\n",
+            &format!("{{\n  \"$schema\": \"{}\",\n", catalog::BOARDS_SCHEMA),
+            1,
+        );
+        let boards = parse(&named, "custom-boards.json").unwrap();
+        assert_eq!(boards.keys().collect::<Vec<_>>(), ["my-board"]);
+        // Another schema, or a future version, is a problem at its value.
+        let other = GOOD.replacen(
+            "{\n",
+            "{\n  \"$schema\": \"https://www.openlogix.org/schemas/logix-boards-v2.json\",\n",
+            1,
+        );
+        assert_eq!(
+            diags(&other),
+            [(
+                Some(2),
+                Some(14),
+                format!(
+                    "Unknown $schema \"https://www.openlogix.org/schemas/logix-boards-v2.json\": this Logix Engine reads {}.",
+                    catalog::BOARDS_SCHEMA
+                )
+            )]
+        );
+        let not_text = GOOD.replacen("{\n", "{\n  \"$schema\": 1,\n", 1);
+        assert_eq!(
+            diags(&not_text)[0].2,
+            format!(
+                "Unknown $schema 1: this Logix Engine reads {}.",
+                catalog::BOARDS_SCHEMA
+            )
+        );
+    }
 
     #[test]
     fn the_log_names_the_file_its_version_and_boards() {

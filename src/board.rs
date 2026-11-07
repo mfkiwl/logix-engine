@@ -19,9 +19,10 @@ use crate::errors::ToolError;
 /// catalog board's ID replaces that catalog board in the request.
 pub type CustomBoards = BTreeMap<String, CustomBoard>;
 
-/// One of the host's own boards, in the catalog's format: its FPGA is one
-/// of the catalog's, which has every FPGA the toolchain supports, so a
-/// custom board adds a board and its programming, never an FPGA.
+/// A board definition, the same in the catalog and in custom boards files:
+/// the board's name, its FPGA and the ways to program it. The FPGA is one of
+/// the catalog's, which has every FPGA the toolchain supports, so a custom
+/// board adds a board and its programming, never an FPGA.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct CustomBoard {
@@ -29,6 +30,7 @@ pub struct CustomBoard {
     pub description: String,
     /// The board's FPGA, as a catalog ID such as ice40hx4k-tq144-8k
     /// (get_catalog lists them).
+    #[schemars(pattern(r"^[a-z0-9-]+$"))]
     pub fpga_id: String,
     /// Ignored: the engine derives the dimensions from the variants. Here
     /// so a board copied from get_catalog can be sent back as is.
@@ -37,6 +39,7 @@ pub struct CustomBoard {
     pub dimensions: Vec<Dimension>,
     /// The ways the board can be programmed, as in the catalog. The first is
     /// the default.
+    #[schemars(length(min = 1))]
     pub variants: Vec<Variant>,
 }
 

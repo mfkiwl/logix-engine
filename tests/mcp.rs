@@ -75,6 +75,10 @@ async fn get_engine_info_reports_the_launch_settings() {
     assert_eq!(out["engine_folder"], folder);
     assert_eq!(out["auto_install"], false);
     assert_eq!(
+        out["boards_schema"],
+        "https://www.openlogix.org/schemas/logix-boards-v1.json"
+    );
+    assert_eq!(
         out["command_line"],
         json!([
             "--engine-folder",

@@ -1,0 +1,162 @@
+{
+  "$defs": {
+    "Board": {
+      "additionalProperties": false,
+      "description": "A board definition, the same in the catalog and in custom boards files:\nthe board's name, its FPGA and the ways to program it. The FPGA is one of\nthe catalog's, which has every FPGA the toolchain supports, so a custom\nboard adds a board and its programming, never an FPGA.",
+      "properties": {
+        "description": {
+          "description": "The board's name for people.",
+          "type": "string"
+        },
+        "fpga_id": {
+          "description": "The board's FPGA, as a catalog ID such as ice40hx4k-tq144-8k\n(get_catalog lists them).",
+          "pattern": "^[a-z0-9-]+$",
+          "type": "string"
+        },
+        "variants": {
+          "description": "The ways the board can be programmed, as in the catalog. The first is\nthe default.",
+          "items": {
+            "$ref": "#/$defs/Variant"
+          },
+          "minItems": 1,
+          "type": "array"
+        }
+      },
+      "required": [
+        "description",
+        "fpga_id",
+        "variants"
+      ],
+      "title": "Board",
+      "type": "object"
+    },
+    "Selector": {
+      "additionalProperties": false,
+      "description": "Which of a board's variants: a value of each standard dimension. In a\nboard definition it says where the variant sits; in requests\n(board_variant) it picks the variant with these values.",
+      "properties": {
+        "connection": {
+          "description": "How the computer reaches the board: usb, bootloader, ft2232h,\nft232h, cmsis-dap, usb-blaster or unspecified (see the dimensions).",
+          "type": "string"
+        },
+        "memory": {
+          "description": "Where the design goes: flash (kept at power-off) or ram (lost at\npower-off).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "connection",
+        "memory"
+      ],
+      "type": "object"
+    },
+    "UsbFilter": {
+      "additionalProperties": false,
+      "description": "Which USB devices are this board.",
+      "properties": {
+        "pid": {
+          "description": "USB product ID, four lowercase hex digits, such as 6010.",
+          "pattern": "^[0-9a-f]{4}$",
+          "type": "string"
+        },
+        "product_regex": {
+          "description": "A regular expression the device's product name must match, when\nseveral boards share the same USB IDs. Omitted means any product name.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "release": {
+          "description": "The device's release number (USB bcdDevice), four lowercase hex\ndigits, such as 0500, that the device must report, for boards that\nshare USB IDs but differ in it. On FTDI chips, and on board debuggers\nthat act like them, it tells the chip type: 0700 for an FT2232H, 0500\nfor an FT2232C/D or a debugger that acts like one. Omitted means any\nrelease.",
+          "pattern": "^[0-9a-f]{4}$",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "serial_regex": {
+          "description": "A regular expression the device's serial number must match, for\nboards that share USB IDs and product names but have serial numbers\nthat tell them apart. Omitted means any serial number.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "vid": {
+          "description": "USB vendor ID, four lowercase hex digits, such as 0403.",
+          "pattern": "^[0-9a-f]{4}$",
+          "type": "string"
+        }
+      },
+      "required": [
+        "vid",
+        "pid"
+      ],
+      "type": "object"
+    },
+    "Variant": {
+      "additionalProperties": false,
+      "description": "One way to program a board: its selector (its connection and memory),\nand how to program the board that way.",
+      "properties": {
+        "args": {
+          "description": "The programmer's arguments, as a template. The engine replaces\n${VID}, ${PID}, ${BUS} and ${DEV} with the device's USB vendor ID,\nproduct ID, bus and device number, ${SERIAL_NUM} with its serial number,\n${USB_PATH} with its USB port path (such as 1-2.3, as dfu-util's -p\ntakes it), and ${BITSTREAM} with the bitstream path.",
+          "type": "string"
+        },
+        "maintainer_notes": {
+          "description": "For the board definition's maintainers: where the settings come from\nand why they changed. Optional. get_catalog never returns it.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "writeOnly": true
+        },
+        "programmer": {
+          "description": "The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.",
+          "type": "string"
+        },
+        "selector": {
+          "$ref": "#/$defs/Selector",
+          "description": "The variant's value of each standard dimension, such as\n{\"connection\": \"usb\", \"memory\": \"flash\"}: what board_variant gives\nin requests to pick it. No two variants of a board have the same."
+        },
+        "tested": {
+          "description": "Whether programming this way is known to work: tested on the board,\nor used unchanged in a tool that relies on it. False for ways that\nhaven't been tried on hardware, such as a board moved to a different\nprogrammer.",
+          "type": "boolean"
+        },
+        "usb": {
+          "$ref": "#/$defs/UsbFilter",
+          "description": "The USB filter that finds the board's device."
+        },
+        "user_notes": {
+          "description": "Warnings and missing information for users, such as a USB filter that\nalso matches other boards or a step needed before programming.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "selector",
+        "programmer",
+        "args",
+        "usb",
+        "tested"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://www.openlogix.org/schemas/logix-boards-v1.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": {
+    "$ref": "#/$defs/Board"
+  },
+  "description": "FPGA board definitions for the Logix Engine: a map of board IDs (lowercase letters, digits and hyphens) to board definitions. The format of the Logix Engine's board catalog and of custom boards files.",
+  "properties": {
+    "$schema": {
+      "const": "https://www.openlogix.org/schemas/logix-boards-v1.json",
+      "description": "This schema's address, so editors can check the file. Optional; when given, the Logix Engine requires this value."
+    }
+  },
+  "propertyNames": {
+    "pattern": "^(\\$schema|[a-z0-9-]+)$"
+  },
+  "title": "Logix boards",
+  "type": "object"
+}

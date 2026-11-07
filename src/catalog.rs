@@ -195,11 +195,9 @@ pub struct Variant {
     /// also matches other boards or a step needed before programming.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub user_notes: Option<String>,
-    /// For the catalog's maintainers: where the settings come from and why
-    /// they changed. Kept in catalog/boards.json only; get_catalog never
-    /// returns it.
+    /// For the board definition's maintainers: where the settings come from
+    /// and why they changed. Optional. get_catalog never returns it.
     #[serde(default, skip_serializing)]
-    #[schemars(skip)]
     pub maintainer_notes: Option<String>,
 }
 
@@ -462,20 +460,61 @@ impl Architecture {
     }
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct BoardsFile {
-    #[allow(dead_code)]
-    source: String,
-    boards: BTreeMap<String, BoardDefinition>,
+/// The address of the boards schema, the JSON Schema of the board files:
+/// catalog/boards.json and custom boards files (docs/tool-api.md, Board
+/// specification). A file may name it in a `"$schema"` key, so editors can
+/// check and complete it; the engine refuses a file that names another one.
+/// The engine reads this one version. Until the first release the schema
+/// changes without a new version (the user's decision, 2026-11-07).
+pub const BOARDS_SCHEMA: &str = "https://www.openlogix.org/schemas/logix-boards-v1.json";
+
+/// The key a board file may use to name its schema.
+pub const SCHEMA_KEY: &str = "$schema";
+
+/// The JSON Schema of a board file, published at `BOARDS_SCHEMA` (a copy is
+/// in schemas/logix-boards-v1.json): a map of board IDs to board
+/// definitions, plus an optional `$schema`. Board definitions come from
+/// the Rust type custom boards are read into.
+pub fn boards_schema() -> serde_json::Value {
+    use serde_json::{Value, json};
+    let mut board = match serde_json::to_value(schemars::schema_for!(crate::board::CustomBoard)) {
+        Ok(Value::Object(m)) => m,
+        _ => Default::default(),
+    };
+    board.remove("$schema");
+    let mut defs = match board.remove("$defs") {
+        Some(Value::Object(m)) => m,
+        _ => Default::default(),
+    };
+    board.insert("title".into(), "Board".into());
+    defs.insert("Board".into(), Value::Object(board));
+    json!({
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "$id": BOARDS_SCHEMA,
+        "title": "Logix boards",
+        "description": "FPGA board definitions for the Logix Engine: a map of board IDs (lowercase letters, digits and hyphens) to board definitions. The format of the Logix Engine's board catalog and of custom boards files.",
+        "type": "object",
+        "properties": {
+            SCHEMA_KEY: {
+                "description": "This schema's address, so editors can check the file. Optional; when given, the Logix Engine requires this value.",
+                "const": BOARDS_SCHEMA
+            }
+        },
+        "propertyNames": {"pattern": r"^(\$schema|[a-z0-9-]+)$"},
+        "additionalProperties": {"$ref": "#/$defs/Board"},
+        "$defs": defs
+    })
 }
 
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct FpgasFile {
-    #[allow(dead_code)]
-    source: String,
-    fpgas: BTreeMap<String, FpgaDefinition>,
+/// A board file's `$schema` value when it isn't `BOARDS_SCHEMA`: the
+/// problem's message.
+pub fn schema_problem(value: &serde_json::Value) -> Option<String> {
+    if value.as_str() == Some(BOARDS_SCHEMA) {
+        return None;
+    }
+    Some(format!(
+        "Unknown $schema {value}: this Logix Engine reads {BOARDS_SCHEMA}."
+    ))
 }
 
 #[derive(Debug, Clone)]
@@ -731,17 +770,23 @@ impl BoardDefinition {
 
 impl Catalog {
     pub fn parse(boards_json: &str, fpgas_json: &str) -> Result<Catalog, String> {
-        let mut boards: BoardsFile =
+        let mut map: serde_json::Map<String, serde_json::Value> =
             serde_json::from_str(boards_json).map_err(|e| format!("boards: {e}"))?;
-        for b in boards.boards.values_mut() {
+        let schema = map
+            .remove(SCHEMA_KEY)
+            .ok_or_else(|| format!("boards: no {SCHEMA_KEY}"))?;
+        if let Some(problem) = schema_problem(&schema) {
+            return Err(format!("boards: {problem}"));
+        }
+        let mut boards: BTreeMap<String, BoardDefinition> =
+            serde_json::from_value(serde_json::Value::Object(map))
+                .map_err(|e| format!("boards: {e}"))?;
+        for b in boards.values_mut() {
             b.dimensions = derive_dimensions(&b.variants);
         }
-        let fpgas: FpgasFile =
+        let fpgas: BTreeMap<String, FpgaDefinition> =
             serde_json::from_str(fpgas_json).map_err(|e| format!("fpgas: {e}"))?;
-        let catalog = Catalog {
-            boards: boards.boards,
-            fpgas: fpgas.fpgas,
-        };
+        let catalog = Catalog { boards, fpgas };
         catalog.validate()?;
         Ok(catalog)
     }

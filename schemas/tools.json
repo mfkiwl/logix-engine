@@ -71,6 +71,10 @@
           "description": "Whether the engine installs and repairs packages automatically when a\ntool needs them. On by default. The host turns it off with the\n--no-auto-install command-line argument.",
           "type": "boolean"
         },
+        "boards_schema": {
+          "description": "The address of the boards schema this engine reads: the JSON Schema\nof custom boards files, which may name it in a \"$schema\" key so\neditors can check them. A file that names another schema is refused.",
+          "type": "string"
+        },
         "command_line": {
           "description": "The command-line arguments the engine was launched with, as given.",
           "items": {
@@ -118,7 +122,8 @@
         "auto_install",
         "command_line",
         "log_file",
-        "packages"
+        "packages",
+        "boards_schema"
       ],
       "title": "GetEngineInfoOutput",
       "type": "object"

@@ -54,6 +54,10 @@ pub struct GetEngineInfoOutput {
     pub log_file: String,
     /// Every package in the engine's manifest, with its status.
     pub packages: Vec<PackageInfo>,
+    /// The address of the boards schema this engine reads: the JSON Schema
+    /// of custom boards files, which may name it in a "$schema" key so
+    /// editors can check them. A file that names another schema is refused.
+    pub boards_schema: String,
 }
 
 /// A toolchain package and whether it's installed.
@@ -103,6 +107,7 @@ pub fn run(
         command_line: state.command_line.clone(),
         log_file: state.log_file.display().to_string(),
         packages: package_list(state),
+        boards_schema: crate::catalog::BOARDS_SCHEMA.to_string(),
     })
 }
 
