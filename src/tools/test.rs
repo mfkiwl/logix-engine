@@ -46,11 +46,13 @@ pub struct TestInput {
     /// Gowin or PLLE2_BASE for Xilinx.
     #[schemars(pattern(r"^[a-z0-9-]+$"))]
     pub board: String,
-    /// The board variant: the selector of one of the board's variants,
-    /// which get_catalog lists, such as {"connection": "usb", "memory":
-    /// "ram"}. Omitted means the board's first variant, its default.
+    /// The board variant: some or all of the selector of one of the board's
+    /// variants, which get_catalog lists, such as {"connection": "usb",
+    /// "memory": "ram"} or just {"memory": "ram"}. The board's first
+    /// variant with these values is used. Omitted or {} means its first
+    /// variant, its default.
     #[serde(default)]
-    pub board_variant: Option<crate::catalog::Selector>,
+    pub board_variant: Option<crate::catalog::VariantChoice>,
     /// The host's own boards: the absolute path of a JSON file that maps
     /// board IDs to definitions in the catalog's format. board can name one
     /// of them; one with a catalog board's ID replaces that board in this

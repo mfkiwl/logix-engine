@@ -44,10 +44,10 @@ pub struct CustomBoard {
     pub variants: Vec<Variant>,
 }
 
-/// A board variant in a request: its selector, such as
-/// {"connection": "ft232h", "memory": "ram"}. None means the board's first
-/// variant, its default.
-pub type VariantInput = Option<catalog::Selector>;
+/// A board variant in a request: some or all of a selector's values, such
+/// as {"memory": "ram"}; the board's first variant with them is used. None
+/// means the board's first variant, its default.
+pub type VariantInput = Option<catalog::VariantChoice>;
 
 /// A board as matching and listing need it: the catalog's, or a custom one.
 #[derive(Debug, Clone)]
@@ -239,7 +239,7 @@ mod tests {
     use serde_json::json;
 
     fn pick(connection: &str, memory: &str) -> VariantInput {
-        Some(catalog::Selector::new(connection, memory))
+        Some(catalog::Selector::new(connection, memory).into())
     }
 
     fn catalog_board(id: &str, variant: &VariantInput) -> Result<ResolvedBoard, ToolError> {
@@ -251,6 +251,49 @@ mod tests {
         list.into_iter()
             .map(|(id, b)| (id.to_string(), b))
             .collect()
+    }
+
+    #[test]
+    fn a_partial_variant_choice_picks_the_first_that_fits() {
+        let choose = |c: serde_json::Value| {
+            let c: catalog::VariantChoice = serde_json::from_value(c).unwrap();
+            catalog_board("colorlight-5a-75e-v71", &Some(c)).map(|b| b.variant.selector)
+        };
+        let sel = catalog::Selector::new;
+        // Its variants: ft2232h, ft232h, usb-blaster with flash, then with ram.
+        assert_eq!(choose(json!({})).unwrap(), sel("ft2232h", "flash"));
+        assert_eq!(
+            choose(json!({"memory": "ram"})).unwrap(),
+            sel("ft2232h", "ram")
+        );
+        assert_eq!(
+            choose(json!({"connection": "ft232h"})).unwrap(),
+            sel("ft232h", "flash")
+        );
+        assert_eq!(
+            choose(json!({"connection": "usb-blaster", "memory": "ram"})).unwrap(),
+            sel("usb-blaster", "ram")
+        );
+        let e = choose(json!({"connection": "cmsis-dap"})).unwrap_err();
+        assert!(
+            e.message.starts_with(
+                "board_variant: the board has no variant with connection cmsis-dap. Its variants: "
+            ),
+            "{}",
+            e.message
+        );
+        // Only the two standard dimensions.
+        assert!(
+            serde_json::from_value::<catalog::VariantChoice>(json!({"speed": "fast"})).is_err()
+        );
+    }
+
+    #[test]
+    fn variant_labels_for_people() {
+        let b = catalog_board("colorlight-5a-75e-v71", &pick("ft232h", "ram")).unwrap();
+        assert_eq!(b.variant.label(), "FT232H adapter · RAM");
+        let b = catalog_board("alhambra-ii", &None).unwrap();
+        assert_eq!(b.variant.label(), "USB · Flash");
     }
 
     #[test]

@@ -112,6 +112,54 @@ impl Selector {
     }
 }
 
+/// A board variant in a request: some or all of a selector's values, such
+/// as {"memory": "ram"}. The board's first variant with these values is
+/// used, so {} means its first variant, its default.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct VariantChoice {
+    /// The connection, such as usb or ft232h. Omitted means any.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub connection: Option<String>,
+    /// The memory, flash or ram. Omitted means any.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub memory: Option<String>,
+}
+
+impl VariantChoice {
+    /// Whether a variant with `selector` has every value of the choice.
+    pub fn fits(&self, selector: &Selector) -> bool {
+        self.connection
+            .as_ref()
+            .is_none_or(|c| *c == selector.connection)
+            && self.memory.as_ref().is_none_or(|m| *m == selector.memory)
+    }
+}
+
+impl From<Selector> for VariantChoice {
+    fn from(s: Selector) -> Self {
+        VariantChoice {
+            connection: Some(s.connection),
+            memory: Some(s.memory),
+        }
+    }
+}
+
+impl std::fmt::Display for VariantChoice {
+    /// As in messages: connection usb, memory flash; only the values given.
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let parts: Vec<String> = [("connection", &self.connection), ("memory", &self.memory)]
+            .into_iter()
+            .filter_map(|(k, v)| v.as_ref().map(|v| format!("{k} {v}")))
+            .collect();
+        if parts.is_empty() {
+            write!(f, "no values")
+        } else {
+            write!(f, "{}", parts.join(", "))
+        }
+    }
+}
+
 impl std::fmt::Display for Selector {
     /// As in messages: connection usb, memory flash.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -506,6 +554,22 @@ impl Variant {
         self.selector.value(dimension)
     }
 
+    /// The variant for people: its value of each standard dimension, in
+    /// their order, such as "FT232H adapter · RAM" or "USB · Flash".
+    pub fn label(&self) -> String {
+        STANDARD_DIMENSIONS
+            .iter()
+            .filter_map(|(dim, _, values)| {
+                let v = self.value(dim)?;
+                values
+                    .iter()
+                    .find(|(id, _, _)| *id == v)
+                    .map(|(_, l, _)| *l)
+            })
+            .collect::<Vec<_>>()
+            .join(" · ")
+    }
+
     /// The variant's values as people read them, such as "FT232H adapter,
     /// RAM", in the dimensions' order.
     pub fn labels(&self, dimensions: &[Dimension]) -> Vec<String> {
@@ -633,22 +697,25 @@ pub fn validate_variants(variants: &[Variant]) -> Result<(), String> {
 /// error for people that lists the board's selectors.
 pub fn select_variant<'a>(
     variants: &'a [Variant],
-    selector: Option<&Selector>,
+    choice: Option<&VariantChoice>,
 ) -> Result<&'a Variant, String> {
-    match selector {
+    match choice {
         None => variants
             .first()
             .ok_or_else(|| "the board has no variants".to_string()),
-        Some(s) => variants.iter().find(|v| &v.selector == s).ok_or_else(|| {
-            format!(
-                "the board has no variant with {s}. Its variants: {}",
-                variants
-                    .iter()
-                    .map(|v| format!("({})", v.selector))
-                    .collect::<Vec<_>>()
-                    .join(", ")
-            )
-        }),
+        Some(c) => variants
+            .iter()
+            .find(|v| c.fits(&v.selector))
+            .ok_or_else(|| {
+                format!(
+                    "the board has no variant with {c}. Its variants: {}",
+                    variants
+                        .iter()
+                        .map(|v| format!("({})", v.selector))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )
+            }),
     }
 }
 

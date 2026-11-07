@@ -491,6 +491,10 @@
               "description": "The programmer's arguments, as a template (see the variant fields of\nboard definitions).",
               "type": "string"
             },
+            "label": {
+              "description": "The variant for people: its connection and memory labels, such as\n\"USB · Flash\" or \"FT232H adapter · RAM\".",
+              "type": "string"
+            },
             "programmer": {
               "description": "The programmer the engine runs: openfpgaloader, iceprog, dfu-util or\nicesprog.",
               "type": "string"
@@ -513,6 +517,7 @@
           },
           "required": [
             "selector",
+            "label",
             "programmer",
             "args",
             "tested"
@@ -878,23 +883,25 @@
           },
           "type": "object"
         },
-        "Selector": {
+        "VariantChoice": {
           "additionalProperties": false,
-          "description": "Which of a board's variants: a value of each standard dimension. In a\nboard definition it says where the variant sits; in requests\n(board_variant) it picks the variant with these values.",
+          "description": "A board variant in a request: some or all of a selector's values, such\nas {\"memory\": \"ram\"}. The board's first variant with these values is\nused, so {} means its first variant, its default.",
           "properties": {
             "connection": {
-              "description": "How the computer reaches the board: usb, bootloader, ft2232h,\nft232h, cmsis-dap, usb-blaster or unspecified (see the dimensions).",
-              "type": "string"
+              "description": "The connection, such as usb or ft232h. Omitted means any.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "memory": {
-              "description": "Where the design goes: flash (kept at power-off) or ram (lost at\npower-off).",
-              "type": "string"
+              "description": "The memory, flash or ram. Omitted means any.",
+              "type": [
+                "string",
+                "null"
+              ]
             }
           },
-          "required": [
-            "connection",
-            "memory"
-          ],
           "type": "object"
         }
       },
@@ -910,14 +917,14 @@
         "board_variant": {
           "anyOf": [
             {
-              "$ref": "#/$defs/Selector"
+              "$ref": "#/$defs/VariantChoice"
             },
             {
               "type": "null"
             }
           ],
           "default": null,
-          "description": "The board variant: the selector of one of the board's variants,\nwhich get_catalog lists, such as {\"connection\": \"usb\", \"memory\":\n\"ram\"}. Omitted means the board's first variant, its default."
+          "description": "The board variant: some or all of the selector of one of the board's\nvariants, which get_catalog lists, such as {\"connection\": \"usb\",\n\"memory\": \"ram\"} or just {\"memory\": \"ram\"}. The board's first\nvariant with these values is used. Omitted or {} means its first\nvariant, its default."
         },
         "custom_boards_file": {
           "default": null,
@@ -1182,23 +1189,25 @@
           },
           "type": "object"
         },
-        "Selector": {
+        "VariantChoice": {
           "additionalProperties": false,
-          "description": "Which of a board's variants: a value of each standard dimension. In a\nboard definition it says where the variant sits; in requests\n(board_variant) it picks the variant with these values.",
+          "description": "A board variant in a request: some or all of a selector's values, such\nas {\"memory\": \"ram\"}. The board's first variant with these values is\nused, so {} means its first variant, its default.",
           "properties": {
             "connection": {
-              "description": "How the computer reaches the board: usb, bootloader, ft2232h,\nft232h, cmsis-dap, usb-blaster or unspecified (see the dimensions).",
-              "type": "string"
+              "description": "The connection, such as usb or ft232h. Omitted means any.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "memory": {
-              "description": "Where the design goes: flash (kept at power-off) or ram (lost at\npower-off).",
-              "type": "string"
+              "description": "The memory, flash or ram. Omitted means any.",
+              "type": [
+                "string",
+                "null"
+              ]
             }
           },
-          "required": [
-            "connection",
-            "memory"
-          ],
           "type": "object"
         }
       },
@@ -1214,14 +1223,14 @@
         "board_variant": {
           "anyOf": [
             {
-              "$ref": "#/$defs/Selector"
+              "$ref": "#/$defs/VariantChoice"
             },
             {
               "type": "null"
             }
           ],
           "default": null,
-          "description": "The board variant: the selector of one of the board's variants,\nwhich get_catalog lists, such as {\"connection\": \"usb\", \"memory\":\n\"ram\"}. Omitted means the board's first variant, its default."
+          "description": "The board variant: some or all of the selector of one of the board's\nvariants, which get_catalog lists, such as {\"connection\": \"usb\",\n\"memory\": \"ram\"} or just {\"memory\": \"ram\"}. The board's first\nvariant with these values is used. Omitted or {} means its first\nvariant, its default."
         },
         "build_folder": {
           "description": "Where the compiled testbenches and their waveforms go, as an absolute\npath. One of its last two folder names must contain \"build\", such as\n/home/user/proj/_build. It is created if needed.",
@@ -1579,23 +1588,25 @@
           },
           "type": "object"
         },
-        "Selector": {
+        "VariantChoice": {
           "additionalProperties": false,
-          "description": "Which of a board's variants: a value of each standard dimension. In a\nboard definition it says where the variant sits; in requests\n(board_variant) it picks the variant with these values.",
+          "description": "A board variant in a request: some or all of a selector's values, such\nas {\"memory\": \"ram\"}. The board's first variant with these values is\nused, so {} means its first variant, its default.",
           "properties": {
             "connection": {
-              "description": "How the computer reaches the board: usb, bootloader, ft2232h,\nft232h, cmsis-dap, usb-blaster or unspecified (see the dimensions).",
-              "type": "string"
+              "description": "The connection, such as usb or ft232h. Omitted means any.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "memory": {
-              "description": "Where the design goes: flash (kept at power-off) or ram (lost at\npower-off).",
-              "type": "string"
+              "description": "The memory, flash or ram. Omitted means any.",
+              "type": [
+                "string",
+                "null"
+              ]
             }
           },
-          "required": [
-            "connection",
-            "memory"
-          ],
           "type": "object"
         }
       },
@@ -1611,14 +1622,14 @@
         "board_variant": {
           "anyOf": [
             {
-              "$ref": "#/$defs/Selector"
+              "$ref": "#/$defs/VariantChoice"
             },
             {
               "type": "null"
             }
           ],
           "default": null,
-          "description": "The board variant: the selector of one of the board's variants,\nwhich get_catalog lists, such as {\"connection\": \"usb\", \"memory\":\n\"ram\"}. Omitted means the board's first variant, its default."
+          "description": "The board variant: some or all of the selector of one of the board's\nvariants, which get_catalog lists, such as {\"connection\": \"usb\",\n\"memory\": \"ram\"} or just {\"memory\": \"ram\"}. The board's first\nvariant with these values is used. Omitted or {} means its first\nvariant, its default."
         },
         "build_folder": {
           "description": "Where the compiled testbench and its waveform go, as an absolute path.\nOne of its last two folder names must contain \"build\", such as\n/home/user/proj/_build. It is created if needed.",
@@ -2526,23 +2537,25 @@
           },
           "type": "object"
         },
-        "Selector": {
+        "VariantChoice": {
           "additionalProperties": false,
-          "description": "Which of a board's variants: a value of each standard dimension. In a\nboard definition it says where the variant sits; in requests\n(board_variant) it picks the variant with these values.",
+          "description": "A board variant in a request: some or all of a selector's values, such\nas {\"memory\": \"ram\"}. The board's first variant with these values is\nused, so {} means its first variant, its default.",
           "properties": {
             "connection": {
-              "description": "How the computer reaches the board: usb, bootloader, ft2232h,\nft232h, cmsis-dap, usb-blaster or unspecified (see the dimensions).",
-              "type": "string"
+              "description": "The connection, such as usb or ft232h. Omitted means any.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
             "memory": {
-              "description": "Where the design goes: flash (kept at power-off) or ram (lost at\npower-off).",
-              "type": "string"
+              "description": "The memory, flash or ram. Omitted means any.",
+              "type": [
+                "string",
+                "null"
+              ]
             }
           },
-          "required": [
-            "connection",
-            "memory"
-          ],
           "type": "object"
         }
       },
@@ -2558,14 +2571,14 @@
         "board_variant": {
           "anyOf": [
             {
-              "$ref": "#/$defs/Selector"
+              "$ref": "#/$defs/VariantChoice"
             },
             {
               "type": "null"
             }
           ],
           "default": null,
-          "description": "The board variant: the selector of one of the board's variants,\nwhich get_catalog lists, such as {\"connection\": \"usb\", \"memory\":\n\"ram\"}. Omitted means the board's first variant, its default."
+          "description": "The board variant: some or all of the selector of one of the board's\nvariants, which get_catalog lists, such as {\"connection\": \"usb\",\n\"memory\": \"ram\"} or just {\"memory\": \"ram\"}. The board's first\nvariant with these values is used. Omitted or {} means its first\nvariant, its default."
         },
         "build_folder": {
           "description": "Where the build writes its files, as an absolute path. One of its last\ntwo folder names must contain \"build\", such as\n/home/user/proj/_build. It may be inside the source folder but\ncan't be the source folder itself. It is created if needed.",
@@ -2804,6 +2817,25 @@
           ],
           "type": "object"
         },
+        "Selector": {
+          "additionalProperties": false,
+          "description": "Which of a board's variants: a value of each standard dimension. In a\nboard definition it says where the variant sits; in requests\n(board_variant) it picks the variant with these values.",
+          "properties": {
+            "connection": {
+              "description": "How the computer reaches the board: usb, bootloader, ft2232h,\nft232h, cmsis-dap, usb-blaster or unspecified (see the dimensions).",
+              "type": "string"
+            },
+            "memory": {
+              "description": "Where the design goes: flash (kept at power-off) or ram (lost at\npower-off).",
+              "type": "string"
+            }
+          },
+          "required": [
+            "connection",
+            "memory"
+          ],
+          "type": "object"
+        },
         "Severity": {
           "description": "How serious a diagnostic is.",
           "enum": [
@@ -2821,6 +2853,10 @@
         "bitstream": {
           "description": "Path of the bitstream, relative to the build folder.",
           "type": "string"
+        },
+        "board_variant": {
+          "$ref": "#/$defs/Selector",
+          "description": "The board variant the build is for, by its full selector: the one\nboard_variant picked (the board's first with its values), which\nprogram_board programs by default."
         },
         "clocks_summary": {
           "description": "The clocks in timing with plain names, for showing to people without\nknowing how each FPGA family's tools name clock nets: usually the\ndesign's clock signal, such as \"CLK\" for the net\nCLK$SB_IO_IN_$glb_clk.",
@@ -2871,6 +2907,7 @@
       },
       "required": [
         "bitstream",
+        "board_variant",
         "up_to_date",
         "resources_usage",
         "resources_summary",

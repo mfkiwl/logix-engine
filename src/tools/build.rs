@@ -42,11 +42,13 @@ pub struct BuildInput {
     /// lists them), or the ID of a board in custom_boards_file.
     #[schemars(pattern(r"^[a-z0-9-]+$"))]
     pub board: String,
-    /// The board variant: the selector of one of the board's variants,
-    /// which get_catalog lists, such as {"connection": "usb", "memory":
-    /// "ram"}. Omitted means the board's first variant, its default.
+    /// The board variant: some or all of the selector of one of the board's
+    /// variants, which get_catalog lists, such as {"connection": "usb",
+    /// "memory": "ram"} or just {"memory": "ram"}. The board's first
+    /// variant with these values is used. Omitted or {} means its first
+    /// variant, its default.
     #[serde(default)]
-    pub board_variant: Option<crate::catalog::Selector>,
+    pub board_variant: Option<crate::catalog::VariantChoice>,
     /// The host's own boards: the absolute path of a JSON file that maps
     /// board IDs to definitions in the catalog's format. board can name one
     /// of them; one with a catalog board's ID replaces that board in this
@@ -99,6 +101,10 @@ pub struct BuildInput {
 pub struct BuildOutput {
     /// Path of the bitstream, relative to the build folder.
     pub bitstream: String,
+    /// The board variant the build is for, by its full selector: the one
+    /// board_variant picked (the board's first with its values), which
+    /// program_board programs by default.
+    pub board_variant: crate::catalog::Selector,
     /// True if nothing had changed since the last build, so nothing was
     /// rebuilt.
     pub up_to_date: bool,
@@ -270,10 +276,12 @@ pub async fn run(
 ) -> Result<BuildOutput, ToolError> {
     let request = check(input)?;
     let arch = request.board.fpga.architecture;
+    let board_variant = request.board.variant.selector.clone();
     let r = build::build(state, request, call).await?;
     Ok(BuildOutput {
         commands: call.commands.take(),
         bitstream: r.bitstream,
+        board_variant,
         up_to_date: r.up_to_date,
         resources_summary: crate::build::summary::summarize(arch, &r.resources_usage),
         resources_usage: r.resources_usage,

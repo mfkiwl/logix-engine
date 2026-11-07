@@ -130,6 +130,9 @@ pub struct CatalogVariant {
     /// {"connection": "usb", "memory": "flash"}: what board_variant gives in
     /// requests to pick it. No two variants of a board have the same.
     pub selector: Selector,
+    /// The variant for people: its connection and memory labels, such as
+    /// "USB · Flash" or "FT232H adapter · RAM".
+    pub label: String,
     /// The programmer the engine runs: openfpgaloader, iceprog, dfu-util or
     /// icesprog.
     pub programmer: String,
@@ -148,6 +151,7 @@ impl From<&Variant> for CatalogVariant {
     fn from(v: &Variant) -> Self {
         CatalogVariant {
             selector: v.selector.clone(),
+            label: v.label(),
             programmer: v.programmer.clone(),
             args: v.args.clone(),
             tested: v.tested,

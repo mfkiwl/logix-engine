@@ -277,7 +277,7 @@ pub fn upload_board(
     let Some(id) = &built.board_id else {
         return Ok(built.clone());
     };
-    match crate::board::resolve(id, &Some(built.variant.selector.clone()), custom) {
+    match crate::board::resolve(id, &Some(built.variant.selector.clone().into()), custom) {
         Ok(now) if now.build_key() == built.build_key() => Ok(now),
         _ => Err(ToolError::request(format!(
             "The board {id} in this request (from custom_boards_file, else the catalog) isn't the one {build_folder} was built for. Send the custom boards file the build had, or run build again."

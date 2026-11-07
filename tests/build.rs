@@ -131,6 +131,11 @@ async fn builds_then_is_up_to_date_until_an_input_changes() {
 
     let out = build_it(&state, &src, json!({})).await.unwrap();
     assert!(!out.up_to_date);
+    // The variant the build is for, in full, though the request named none.
+    assert_eq!(
+        out.board_variant,
+        logix_engine::catalog::Selector::new("usb", "flash")
+    );
     let tools: Vec<_> = out.commands.iter().map(|c| c.tool.as_str()).collect();
     assert_eq!(tools, ["yosys", "nextpnr-ice40", "icepack"]);
     assert!(
