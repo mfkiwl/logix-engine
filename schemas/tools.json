@@ -3085,11 +3085,6 @@
               "const": "disconnect_devices",
               "description": "Other connected devices have the board's USB IDs, and the board's\nprogrammer can't tell them apart. Disconnect them and retry.",
               "type": "string"
-            },
-            {
-              "const": "rename_constraint_file",
-              "description": "The constraint (pin) file's extension isn't the board's FPGA\nfamily's format. If the file is written for this board, rename it\nto the name in the error's data (`constraint_file`).",
-              "type": "string"
             }
           ]
         },

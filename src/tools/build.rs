@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use super::{Call, EngineTool};
 use crate::board;
 use crate::build::{self, BuildRequest, parse::ResourceUsage};
-use crate::errors::{ActionCode, Diagnostic, ToolError};
+use crate::errors::{Diagnostic, ToolError};
 use crate::paths;
 use crate::state::EngineState;
 
@@ -214,25 +214,13 @@ pub fn check_constraint_extension(
     if ext.is_some_and(|e| e.eq_ignore_ascii_case(wanted)) {
         return Ok(());
     }
-    // The same name with the family's extension, in the same folder.
-    let renamed = Path::new(rel)
-        .with_extension(wanted)
-        .to_string_lossy()
-        .replace('\\', "/");
-    let mut err = ToolError::request(format!(
+    // No suggested fix: each family's pin file format is different, so
+    // renaming the file is rarely all it takes.
+    Err(ToolError::request(format!(
         "The pin file {rel} is the wrong kind for the {}: {} FPGAs use .{wanted} pin files.",
         board.description,
         arch.label(),
-    ))
-    .with_action(
-        ActionCode::RenameConstraintFile,
-        format!("If {rel} is written for this board, rename it to {renamed}."),
-    );
-    err.data = Some(serde_json::Map::from_iter([(
-        "constraint_file".to_string(),
-        serde_json::Value::from(renamed),
-    )]));
-    Err(err)
+    )))
 }
 
 /// Checks a build folder against the path rules and returns its real path.
@@ -313,20 +301,9 @@ mod tests {
             err.message,
             "The pin file pins/pinout.lpf is the wrong kind for the Alhambra II: iCE40 FPGAs use .pcf pin files."
         );
-        // The fix: rename it, with the name a host can offer.
-        let action = err.action.as_ref().unwrap();
-        assert_eq!(action.code, ActionCode::RenameConstraintFile);
-        assert_eq!(
-            action.description,
-            "If pins/pinout.lpf is written for this board, rename it to pins/pinout.pcf."
-        );
-        assert_eq!(
-            err.data.as_ref().unwrap()["constraint_file"],
-            "pins/pinout.pcf"
-        );
-        // Without an extension, one is added.
-        let err = check_constraint_extension(&ice40, "pinout").unwrap_err();
-        assert_eq!(err.data.unwrap()["constraint_file"], "pinout.pcf");
+        // No suggested fix: the formats differ, so a rename isn't enough.
+        assert!(err.action.is_none());
+        assert!(err.data.is_none());
         assert!(check_constraint_extension(&board("icesugar-pro"), "main.lpf").is_ok());
         assert!(check_constraint_extension(&board("sipeed-tang-nano-9k"), "main.cst").is_ok());
         assert!(check_constraint_extension(&board("arty-a7-35t"), "main.xdc").is_ok());

@@ -205,7 +205,6 @@ On success, a tool returns its output object as structured content. On failure, 
 | `fix_device_permissions` | A device was found but cannot be opened |
 | `install_drivers` | A driver required by the board is missing |
 | `disconnect_devices` | Other connected devices have the board's USB IDs and its programmer can't tell them apart; disconnect them and retry |
-| `rename_constraint_file` | The constraint (pin) file's extension isn't the board's FPGA family's format, such as `pinout.lpf` for an iCE40 board. If the file is written for this board, rename it to the name in the error's `data.constraint_file`, such as `pinout.pcf` (same folder and name, the family's extension) |
 
 ### Presentation
 
@@ -728,7 +727,7 @@ Xilinx builds use two packages, `oss-cad-suite` and `openxc7`. Two Xilinx builds
 | `warnings` | list of diagnostics | Warnings from the tools. See diagnostic fields in Table 4 |
 | `commands` | list of commands | The programs this call ran, in order, so they can be run again without the Logix Engine. See Commands |
 
-**Errors:** design errors, such as syntax errors or unknown pin names. Setup errors with `install_packages`. Request errors, such as an unknown board, a constraint file whose extension isn't the board's FPGA family's format (with `rename_constraint_file`), or a build folder that breaks the keyword rules. Tool failures, engine errors and cancellation. A clock that misses its intended frequency is not an error: the host compares the frequencies in `timing` with its own targets.
+**Errors:** design errors, such as syntax errors or unknown pin names. Setup errors with `install_packages`. Request errors, such as an unknown board, a constraint file whose extension isn't the board's FPGA family's format, or a build folder that breaks the keyword rules. Tool failures, engine errors and cancellation. A clock that misses its intended frequency is not an error: the host compares the frequencies in `timing` with its own targets.
 
 **Table 8.** build tool source file rules
 
@@ -1221,7 +1220,7 @@ Logic that every frontend would need and that doesn't depend on a frontend's own
 - Every tool reports problems as diagnostics with `file` relative to the source folder, `line`, `column` and `severity`, so one routine can underline them for lint, test, build and format alike.
 - `lint` is fast and writes nothing, so it suits running on save. Build warnings come in `warnings`.
 - Summarize a build from `resources_summary`, such as "27 of 7680 logic cells (0.4%)" for its first, main entry, and its clocks from `clocks_summary`, such as "Maximum clock speed: 87.4 MHz (CLK)"; `resources_usage` and `timing` have the toolchain's own names for anyone who needs them.
-- Turn an error's `action` code into a button: `install_packages` calls the install_packages tool, `rename_constraint_file` offers to rename the pin file to `data.constraint_file`, and `connect_board`, `fix_device_permissions`, `install_drivers` and `disconnect_devices` show short instructions.
+- Turn an error's `action` code into a button: `install_packages` calls the install_packages tool, and `connect_board`, `fix_device_permissions`, `install_drivers` and `disconnect_devices` show short instructions.
 
 ### Run and debug testbenches
 
