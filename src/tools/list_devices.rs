@@ -189,7 +189,7 @@ mod tests {
         assert_eq!(
             bootloader.variants,
             [crate::devices::VariantMatch {
-                id: "bootloader-flash".into(),
+                selector: crate::catalog::Selector::new("bootloader", "flash"),
                 level: MatchLevel::Strong,
             }]
         );
@@ -200,7 +200,10 @@ mod tests {
             .find(|m| m.board == "butterstick-r10-2g-85k")
             .unwrap();
         assert_eq!(butterstick.best_level(), MatchLevel::Weak);
-        assert_eq!(butterstick.variants[0].id, "ft232h-ram");
+        assert_eq!(
+            butterstick.variants[0].selector,
+            crate::catalog::Selector::new("ft232h", "ram")
+        );
         assert_eq!(butterstick.variants[0].level, MatchLevel::Weak);
         assert!(out.devices[2].boards.is_empty());
         assert!(out.unreachable.is_empty());
@@ -212,7 +215,7 @@ mod tests {
             json!({id: {
                 "description": "My Alhambra", "fpga_id": "ice40hx4k-tq144-8k",
                 "variants": [{
-                    "id": "usb-flash", "connection": "usb", "memory": "flash",
+                    "selector": {"connection": "usb", "memory": "flash"},
                     "programmer": "iceprog", "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
                     "usb": {"vid": "0403", "pid": "6010", "product_regex": "^Alhambra"},
                     "tested": true
@@ -251,7 +254,7 @@ mod tests {
     fn each_variant_has_its_own_level() {
         let config = |memory: &str, usb: serde_json::Value| {
             json!({
-                "id": format!("usb-{memory}"), "connection": "usb", "memory": memory,
+                "selector": {"connection": "usb", "memory": memory},
                 "programmer": "iceprog",
                 "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
                 "usb": usb,
@@ -279,14 +282,11 @@ mod tests {
         let rated: Vec<_> = mine
             .variants
             .iter()
-            .map(|v| (v.id.as_str(), v.level))
+            .map(|v| (v.selector.memory.as_str(), v.level))
             .collect();
         assert_eq!(
             rated,
-            [
-                ("usb-flash", MatchLevel::Possible),
-                ("usb-ram", MatchLevel::Weak)
-            ]
+            [("flash", MatchLevel::Possible), ("ram", MatchLevel::Weak)]
         );
     }
 

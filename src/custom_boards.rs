@@ -174,27 +174,15 @@ fn board_problems(id: &str, b: &CustomBoard) -> Vec<Problem> {
             "A board needs at least one variant.".into(),
         );
     }
-    let mut ids = BTreeSet::new();
-    let mut pairs = BTreeSet::new();
+    let mut selectors = BTreeSet::new();
     for (i, v) in b.variants.iter().enumerate() {
         let vf = |f: &str| At::Value(format!("{base}/variants/{i}/{f}"));
-        if !catalog::is_catalog_id(&v.id) {
-            add(
-                vf("id"),
-                format!(
-                    "Variant ID {:?}: use lowercase letters, digits and hyphens.",
-                    v.id
-                ),
-            );
-        } else if !ids.insert(v.id.clone()) {
-            add(vf("id"), format!("Another variant has the ID {:?}.", v.id));
-        }
         for (dim, _, values) in STANDARD_DIMENSIONS {
             let value = v.value(dim).unwrap_or_default();
             if !values.iter().any(|(x, _, _)| *x == value) {
                 let known: Vec<_> = values.iter().map(|(x, _, _)| *x).collect();
                 add(
-                    vf(dim),
+                    vf(&format!("selector/{dim}")),
                     format!(
                         "{value:?} isn't a {dim} value. Known: {}.",
                         known.join(", ")
@@ -202,13 +190,10 @@ fn board_problems(id: &str, b: &CustomBoard) -> Vec<Problem> {
                 );
             }
         }
-        if !pairs.insert((v.connection.clone(), v.memory.clone())) {
+        if !selectors.insert(v.selector.clone()) {
             add(
-                vf("connection"),
-                format!(
-                    "Another variant has the same connection {} and memory {}.",
-                    v.connection, v.memory
-                ),
+                vf("selector"),
+                format!("Another variant has the same selector ({}).", v.selector),
             );
         }
         if !PROGRAMMERS.contains(&v.programmer.as_str()) {
@@ -286,7 +271,7 @@ mod tests {
     "fpga_id": "ice40up5k-sg48",
     "variants": [
       {
-        "id": "usb-flash", "connection": "usb", "memory": "flash",
+        "selector": {"connection": "usb", "memory": "flash"},
         "programmer": "iceprog", "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
         "usb": {"vid": "0403", "pid": "6014"}, "tested": false
       }
@@ -362,6 +347,35 @@ mod tests {
         // usb vid, line 9.
         assert_eq!((d[2].0, d[2].1), (Some(9), Some(24)), "{d:?}");
         assert!(d[2].2.starts_with("usb vid must be"), "{d:?}");
+    }
+
+    #[test]
+    fn selector_problems_point_at_the_selector() {
+        // An unknown memory value: at the memory value, line 7.
+        let d = diags(&GOOD.replace("\"memory\": \"flash\"", "\"memory\": \"eeprom\""));
+        assert_eq!(d.len(), 1, "{d:?}");
+        assert_eq!(d[0].0, Some(7), "{d:?}");
+        assert!(
+            d[0].2
+                .starts_with("\"eeprom\" isn't a memory value. Known: flash, ram."),
+            "{d:?}"
+        );
+        // The same selector twice: at the second one, line 12.
+        let variant = "      {\n        \"selector\": {\"connection\": \"usb\", \"memory\": \"flash\"},\n        \"programmer\": \"iceprog\", \"args\": \"${BITSTREAM}\",\n        \"usb\": {\"vid\": \"0403\", \"pid\": \"6014\"}, \"tested\": false\n      }";
+        let twice = GOOD.replace("      }\n    ]", &format!("      }},\n{variant}\n    ]"));
+        let d = diags(&twice);
+        assert_eq!(d.len(), 1, "{d:?}");
+        assert_eq!((d[0].0, d[0].1), (Some(12), Some(21)), "{d:?}");
+        assert_eq!(
+            d[0].2,
+            "Another variant has the same selector (connection usb, memory flash)."
+        );
+        // The old shape, with an ID: an unknown field.
+        let d = diags(&GOOD.replace("\"selector\": {", "\"id\": \"usb-flash\", \"selector\": {"));
+        assert!(d[0].2.starts_with("Unknown field `id`"), "{d:?}");
+        // A selector needs both dimensions.
+        let d = diags(&GOOD.replace("\"connection\": \"usb\", ", ""));
+        assert!(d[0].2.starts_with("Missing field `connection`"), "{d:?}");
     }
 
     #[test]

@@ -107,8 +107,9 @@ impl BoardMatch {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct VariantMatch {
-    /// The variant's ID within the board, such as usb-flash.
-    pub id: String,
+    /// The variant's selector, such as {"connection": "usb", "memory":
+    /// "flash"}, as board_variant gives it in requests.
+    pub selector: crate::catalog::Selector,
     /// How well the device matches the board in this variant: strong,
     /// possible or weak. See MatchLevel.
     #[serde(rename = "match")]
@@ -399,7 +400,7 @@ pub fn board_matches_and_promotion(
             };
             if hit {
                 variants.push(VariantMatch {
-                    id: c.id.clone(),
+                    selector: c.selector.clone(),
                     level: match_level(device, &c.usb),
                 });
             }

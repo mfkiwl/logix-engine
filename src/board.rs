@@ -44,9 +44,10 @@ pub struct CustomBoard {
     pub variants: Vec<Variant>,
 }
 
-/// A board variant in a request: the variant's ID, such as "ft232h-ram".
-/// None means the board's first variant, its default.
-pub type VariantInput = Option<String>;
+/// A board variant in a request: its selector, such as
+/// {"connection": "ft232h", "memory": "ram"}. None means the board's first
+/// variant, its default.
+pub type VariantInput = Option<catalog::Selector>;
 
 /// A board as matching and listing need it: the catalog's, or a custom one.
 #[derive(Debug, Clone)]
@@ -165,7 +166,7 @@ fn configure(
     variants: &[Variant],
     variant: &VariantInput,
 ) -> Result<(Variant, String), ToolError> {
-    let v = catalog::select_variant(variants, variant.as_deref())
+    let v = catalog::select_variant(variants, variant.as_ref())
         .map_err(|e| ToolError::request(format!("board_variant: {e}.")))?;
     // Only the dimensions the board has a choice in, e.g. "Icesugar Pro
     // (RAM)", not "Alhambra II (USB, Flash)".
@@ -223,8 +224,8 @@ mod tests {
     use super::*;
     use serde_json::json;
 
-    fn pick(v: &str) -> VariantInput {
-        Some(v.to_string())
+    fn pick(connection: &str, memory: &str) -> VariantInput {
+        Some(catalog::Selector::new(connection, memory))
     }
 
     fn catalog_board(id: &str, variant: &VariantInput) -> Result<ResolvedBoard, ToolError> {
@@ -245,7 +246,7 @@ mod tests {
         assert_eq!(b.fpga.nextpnr_device, "hx8k");
         // One value per dimension here, so the name doesn't mention them.
         assert_eq!(b.name, "Alhambra II");
-        assert_eq!(b.variant.id, "usb-flash");
+        assert_eq!(b.variant.selector, catalog::Selector::new("usb", "flash"));
         let err = catalog_board("nope", &None).unwrap_err();
         assert!(
             err.message.contains("custom boards file"),
@@ -255,30 +256,34 @@ mod tests {
     }
 
     #[test]
-    fn board_variants_are_picked_by_id() {
+    fn board_variants_are_picked_by_selector() {
         // The default is the first variant.
         let dfu = catalog_board("butterstick-r10-2g-85k", &None).unwrap();
-        assert_eq!(dfu.variant.id, "bootloader-flash");
+        assert_eq!(
+            dfu.variant.selector,
+            catalog::Selector::new("bootloader", "flash")
+        );
         assert_eq!(dfu.name, "butterstick r1.0 (USB bootloader, Flash)");
-        let cable = catalog_board("butterstick-r10-2g-85k", &pick("ft232h-ram")).unwrap();
+        let cable = catalog_board("butterstick-r10-2g-85k", &pick("ft232h", "ram")).unwrap();
         assert_eq!(cable.variant.programmer, "openfpgaloader");
         assert_eq!(cable.variant.usb.pid, "6014");
         // Every variant has the board's FPGA.
         assert_eq!(dfu.fpga, cable.fpga);
         // Memory changes only the programming, not the build.
         let flash = catalog_board("icesugar-pro", &None).unwrap();
-        let ram = catalog_board("icesugar-pro", &pick("usb-ram")).unwrap();
+        let ram = catalog_board("icesugar-pro", &pick("usb", "ram")).unwrap();
         assert_eq!(flash.fpga, ram.fpga);
         assert_ne!(flash.variant.args, ram.variant.args);
         assert_eq!(flash.build_key(), ram.build_key());
         assert_ne!(flash.checksum(), ram.checksum(), "the record keeps it");
         assert_eq!(ram.name, "Icesugar Pro (RAM)");
         // An unknown variant is a request error that lists the variants.
-        let e = catalog_board("butterstick-r10-2g-85k", &pick("bootloader-ram")).unwrap_err();
+        let e = catalog_board("butterstick-r10-2g-85k", &pick("bootloader", "ram")).unwrap_err();
         assert_eq!(e.category, crate::errors::Category::Request);
         assert!(
-            e.message
-                .contains("bootloader-flash, ft2232h-ram, ft232h-ram"),
+            e.message.contains(
+                "(connection bootloader, memory flash), (connection ft2232h, memory ram), (connection ft232h, memory ram)"
+            ),
             "{}",
             e.message
         );
@@ -288,7 +293,7 @@ mod tests {
         let mut v = json!({
             "description": "My board",
             "variants": [{
-                "id": "usb-flash", "connection": "usb", "memory": "flash",
+                "selector": {"connection": "usb", "memory": "flash"},
                 "programmer": "openfpgaloader",
                 "args": "-b ice40_generic --vid ${VID} --pid ${PID} ${BITSTREAM}",
                 "usb": {"vid": "0403", "pid": "6010"},
@@ -336,8 +341,8 @@ mod tests {
         let copied = serde_json::to_value(&catalog::builtin().boards["icesugar-pro"]).unwrap();
         assert!(copied.get("dimensions").is_some());
         let b: CustomBoard = serde_json::from_value(copied).unwrap();
-        let r = resolve("my-sugar", &pick("usb-ram"), &boards([("my-sugar", b)])).unwrap();
-        assert_eq!(r.variant.memory, "ram");
+        let r = resolve("my-sugar", &pick("usb", "ram"), &boards([("my-sugar", b)])).unwrap();
+        assert_eq!(r.variant.selector.memory, "ram");
     }
 
     #[test]
@@ -353,7 +358,7 @@ mod tests {
             dimensions: Vec::new(),
             variants: b.variants.clone(),
         };
-        let ram = pick("usb-ram");
+        let ram = pick("usb", "ram");
         let from_list = resolve("icesugar-pro", &ram, &boards([("icesugar-pro", same)])).unwrap();
         let from_catalog = catalog_board("icesugar-pro", &ram).unwrap();
         assert_eq!(from_list.checksum(), from_catalog.checksum());

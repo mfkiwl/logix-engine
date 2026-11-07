@@ -245,7 +245,7 @@ async fn builds_an_ecp5_design() {
     // bitstream: up to date, and the build record keeps the new variant for
     // program_board.
     let ram = json!({"board": "icesugar-pro", "constraint_file": "main.lpf",
-                     "board_variant": "usb-ram"});
+                     "board_variant": {"connection": "usb", "memory": "ram"}});
     assert!(
         build_it(&state, &src, ram.clone())
             .await
@@ -255,20 +255,25 @@ async fn builds_an_ecp5_design() {
     let record: Value =
         serde_json::from_slice(&std::fs::read(src.join("_build/build-record.json")).unwrap())
             .unwrap();
-    assert_eq!(record["board"]["variant"]["id"], json!("usb-ram"));
+    assert_eq!(
+        record["board"]["variant"]["selector"],
+        json!({"connection": "usb", "memory": "ram"})
+    );
     assert_eq!(record["board"]["name"], "Icesugar Pro (RAM)");
     assert!(build_it(&state, &src, ram).await.unwrap().up_to_date);
     let err = build_it(
         &state,
         &src,
         json!({"board": "icesugar-pro", "constraint_file": "main.lpf",
-               "board_variant": "usb-eeprom"}),
+               "board_variant": {"connection": "usb", "memory": "eeprom"}}),
     )
     .await
     .unwrap_err();
     assert_eq!(err.category, logix_engine::errors::Category::Request);
     assert!(
-        err.message.contains("usb-flash, usb-ram"),
+        err.message.contains(
+            "no variant with connection usb, memory eeprom. Its variants: (connection usb, memory flash), (connection usb, memory ram)"
+        ),
         "{}",
         err.message
     );
@@ -578,7 +583,7 @@ async fn a_custom_board_works() {
             "nextpnr_device": "hx8k", "nextpnr_package": "tq144:4k"
         },
         "variants": [{
-            "id": "usb-flash", "connection": "usb", "memory": "flash",
+            "selector": {"connection": "usb", "memory": "flash"},
             "programmer": "iceprog", "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
             "usb": {"vid": "0403", "pid": "6010"}, "tested": false
         }]
@@ -1004,8 +1009,7 @@ async fn program_board_refuses_a_board_with_another_fpga() {
     for f in ["main.v", "main.xdc"] {
         std::fs::copy(from.join(f), src.join(f)).unwrap();
     }
-    let ram =
-        json!({"board": "arty-a7-35t", "board_variant": "usb-ram", "constraint_file": "main.xdc"});
+    let ram = json!({"board": "arty-a7-35t", "board_variant": {"connection": "usb", "memory": "ram"}, "constraint_file": "main.xdc"});
     build_it(&state, &src, ram).await.unwrap();
     let folder = src.join("_build");
 
@@ -1118,7 +1122,7 @@ async fn program_board_refuses_a_board_with_another_fpga() {
     };
     std::fs::write(&detect, a35).unwrap();
     let mine = src.join("_build_mine");
-    let custom_build = json!({"board": "my-arty", "board_variant": "usb-ram",
+    let custom_build = json!({"board": "my-arty", "board_variant": {"connection": "usb", "memory": "ram"},
         "custom_boards_file": boards_file(&boards_dir, "build-mine.json", &json!({"my-arty": my_arty.clone()})),
         "constraint_file": "main.xdc", "build_folder": mine});
     build_it(&state, &src, custom_build).await.unwrap();
@@ -1135,7 +1139,10 @@ async fn program_board_refuses_a_board_with_another_fpga() {
         "{} --skip-reset",
         my_arty["variants"][1]["args"].as_str().unwrap()
     ));
-    assert_eq!(renamed["variants"][1]["id"], json!("usb-ram"));
+    assert_eq!(
+        renamed["variants"][1]["selector"],
+        json!({"connection": "usb", "memory": "ram"})
+    );
     upload(mine.clone(), Some(json!({"my-arty": renamed})))
         .await
         .unwrap();
@@ -1160,7 +1167,7 @@ async fn program_board_refuses_a_board_with_another_fpga() {
     // uploaded without the list: the same board, so it goes ahead.
     let same = my_arty.clone();
     let same_folder = src.join("_build_same");
-    let same_build = json!({"board": "arty-a7-35t", "board_variant": "usb-ram",
+    let same_build = json!({"board": "arty-a7-35t", "board_variant": {"connection": "usb", "memory": "ram"},
         "custom_boards_file": boards_file(&boards_dir, "build-same.json", &json!({"arty-a7-35t": same})),
         "constraint_file": "main.xdc", "build_folder": same_folder});
     build_it(&state, &src, same_build).await.unwrap();

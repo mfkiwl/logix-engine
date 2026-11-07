@@ -6,9 +6,10 @@
       "fpga_id": "xc7a35tftg256-1",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board alchitry_au --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -20,9 +21,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a35tftg256, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): the exact product name, from Alchitry's own loader, alchitry/Alchitry-Interface src/main/kotlin/com/alchitry/hardware/Board.kt (1c71e16), which finds boards by comparing it for equality: \"Alchitry Au\", \"Alchitry Au+\", \"Alchitry Cu\", and \"Alchitry Au V2\", \"Alchitry Cu V2\", \"Alchitry Pt V2\" for other boards, so the pattern matches the whole name."
         },
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board alchitry_au --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -40,9 +42,10 @@
       "fpga_id": "xc7a100tftg256-1",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board alchitry_au_plus --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -54,9 +57,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a100tftg256, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): the exact product name, from Alchitry's own loader, alchitry/Alchitry-Interface src/main/kotlin/com/alchitry/hardware/Board.kt (1c71e16), which finds boards by comparing it for equality: \"Alchitry Au\", \"Alchitry Au+\", \"Alchitry Cu\", and \"Alchitry Au V2\", \"Alchitry Cu V2\", \"Alchitry Pt V2\" for other boards, so the pattern matches the whole name."
         },
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board alchitry_au_plus --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -74,9 +78,10 @@
       "fpga_id": "ice40hx8k-cb132",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -94,9 +99,10 @@
       "fpga_id": "ice40hx4k-tq144-8k",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -b ice40_generic --vid ${VID} --pid ${PID} --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -113,9 +119,10 @@
       "fpga_id": "xc7a35tfgg484-2",
       "variants": [
         {
-          "id": "ft232h-flash",
-          "connection": "ft232h",
-          "memory": "flash",
+          "selector": {
+            "connection": "ft232h",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -f -c ft232 --fpga-part xc7a35t --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -133,9 +140,10 @@
       "fpga_id": "ice40up5k-sg48",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -152,9 +160,10 @@
       "fpga_id": "xc7a100tcsg324-1",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board arty_a7_100t --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -165,9 +174,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a100tcsg324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board arty_a7_100t --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -184,9 +194,10 @@
       "fpga_id": "xc7a35tcsg324-1",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board arty_a7_35t --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -198,9 +209,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a35tcsg324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. USB filter: product_regex from a real Arty A7-35T (FTDI 0403:6010, product \"Digilent USB Device\", manufacturer \"Digilent\"), as the Basys3's; it lets hosts suggest the Arty for that device. Other Digilent boards likely report the same name but weren't checked, so they keep the chip ids only. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board arty_a7_35t --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -218,9 +230,10 @@
       "fpga_id": "xc7s25csga324-1",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board arty_s7_25 --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -231,9 +244,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7s25csga324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board arty_s7_25 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -250,9 +264,10 @@
       "fpga_id": "xc7s50csga324-1",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board arty_s7_50 --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -263,9 +278,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7s50csga324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board arty_s7_50 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -282,9 +298,10 @@
       "fpga_id": "ice40hx4k-tq144-8k",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -301,9 +318,10 @@
       "fpga_id": "xc7a35tcpg236-1",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board basys3 --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -315,9 +333,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a35tcpg236, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board basys3 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -335,9 +354,10 @@
       "fpga_id": "gw1nr-lv9qn88pc6-i5",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -b brs-100-gw1nr9 -f --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -354,9 +374,10 @@
       "fpga_id": "lfe5um5g-85f-8bg381c",
       "variants": [
         {
-          "id": "bootloader-flash",
-          "connection": "bootloader",
-          "memory": "flash",
+          "selector": {
+            "connection": "bootloader",
+            "memory": "flash"
+          },
           "programmer": "dfu-util",
           "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM} --reset",
           "usb": {
@@ -368,9 +389,10 @@
           "user_notes": "Programming through the USB bootloader needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
         },
         {
-          "id": "ft2232h-ram",
-          "connection": "ft2232h",
-          "memory": "ram",
+          "selector": {
+            "connection": "ft2232h",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -381,9 +403,10 @@
           "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "ft232h-ram",
-          "connection": "ft232h",
-          "memory": "ram",
+          "selector": {
+            "connection": "ft232h",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -400,9 +423,10 @@
       "fpga_id": "xc7a35tcpg236-1",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board cmoda7_35t --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -413,9 +437,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a35tcpg236, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board cmoda7_35t --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -432,9 +457,10 @@
       "fpga_id": "lfe5u-25f-6bg381c",
       "variants": [
         {
-          "id": "ft2232h-flash",
-          "connection": "ft2232h",
-          "memory": "flash",
+          "selector": {
+            "connection": "ft2232h",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --unprotect-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -446,9 +472,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "ft2232h-ram",
-          "connection": "ft2232h",
-          "memory": "ram",
+          "selector": {
+            "connection": "ft2232h",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -465,9 +492,10 @@
       "fpga_id": "lfe5u-25f-6bg256c",
       "variants": [
         {
-          "id": "ft2232h-flash",
-          "connection": "ft2232h",
-          "memory": "flash",
+          "selector": {
+            "connection": "ft2232h",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --unprotect-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -479,9 +507,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "ft2232h-ram",
-          "connection": "ft2232h",
-          "memory": "ram",
+          "selector": {
+            "connection": "ft2232h",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -498,9 +527,10 @@
       "fpga_id": "lfe5u-25f-6bg256c",
       "variants": [
         {
-          "id": "ft2232h-flash",
-          "connection": "ft2232h",
-          "memory": "flash",
+          "selector": {
+            "connection": "ft2232h",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --unprotect-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -512,9 +542,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "ft2232h-ram",
-          "connection": "ft2232h",
-          "memory": "ram",
+          "selector": {
+            "connection": "ft2232h",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -531,9 +562,10 @@
       "fpga_id": "lfe5u-25f-6bg256c",
       "variants": [
         {
-          "id": "ft2232h-flash",
-          "connection": "ft2232h",
-          "memory": "flash",
+          "selector": {
+            "connection": "ft2232h",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --unprotect-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -545,9 +577,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "ft2232h-ram",
-          "connection": "ft2232h",
-          "memory": "ram",
+          "selector": {
+            "connection": "ft2232h",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -564,9 +597,10 @@
       "fpga_id": "lfe5u-25f-6bg256c",
       "variants": [
         {
-          "id": "ft2232h-flash",
-          "connection": "ft2232h",
-          "memory": "flash",
+          "selector": {
+            "connection": "ft2232h",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --unprotect-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -578,9 +612,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "ft232h-flash",
-          "connection": "ft232h",
-          "memory": "flash",
+          "selector": {
+            "connection": "ft232h",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft232 -v --write-flash --unprotect-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -592,9 +627,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "usb-blaster-flash",
-          "connection": "usb-blaster",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb-blaster",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c usb-blaster -v --write-flash --unprotect-flash --file-type bin ${BITSTREAM}",
           "usb": {
@@ -606,9 +642,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
         },
         {
-          "id": "ft2232h-ram",
-          "connection": "ft2232h",
-          "memory": "ram",
+          "selector": {
+            "connection": "ft2232h",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -619,9 +656,10 @@
           "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "ft232h-ram",
-          "connection": "ft232h",
-          "memory": "ram",
+          "selector": {
+            "connection": "ft232h",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -632,9 +670,10 @@
           "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "usb-blaster-ram",
-          "connection": "usb-blaster",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb-blaster",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c usb-blaster -v --file-type bin ${BITSTREAM}",
           "usb": {
@@ -650,9 +689,10 @@
       "fpga_id": "lfe5u-25f-6bg381c",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c cmsisdap --vid 0x${VID} --pid 0x${PID} --write-flash --unprotect-flash --file-type bin ${BITSTREAM}",
           "usb": {
@@ -663,9 +703,10 @@
           "tested": true
         },
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c cmsisdap --vid 0x${VID} --pid 0x${PID} --file-type bin ${BITSTREAM}",
           "usb": {
@@ -682,9 +723,10 @@
       "fpga_id": "lfe5u-45f-6bg381c",
       "variants": [
         {
-          "id": "cmsis-dap-flash",
-          "connection": "cmsis-dap",
-          "memory": "flash",
+          "selector": {
+            "connection": "cmsis-dap",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c cmsisdap -v --write-flash --unprotect-flash --file-type bin ${BITSTREAM}",
           "usb": {
@@ -696,9 +738,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
         },
         {
-          "id": "ft2232h-flash",
-          "connection": "ft2232h",
-          "memory": "flash",
+          "selector": {
+            "connection": "ft2232h",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --unprotect-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -710,9 +753,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "ft232h-flash",
-          "connection": "ft232h",
-          "memory": "flash",
+          "selector": {
+            "connection": "ft232h",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft232 -v --write-flash --unprotect-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -724,9 +768,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "usb-blaster-flash",
-          "connection": "usb-blaster",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb-blaster",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c usb-blaster -v --write-flash --unprotect-flash --file-type bin ${BITSTREAM}",
           "usb": {
@@ -738,9 +783,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash --unprotect-flash (the factory firmware write-protects the flash, as on the ColorLight i5). openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
         },
         {
-          "id": "cmsis-dap-ram",
-          "connection": "cmsis-dap",
-          "memory": "ram",
+          "selector": {
+            "connection": "cmsis-dap",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c cmsisdap -v --file-type bin ${BITSTREAM}",
           "usb": {
@@ -750,9 +796,10 @@
           "tested": true
         },
         {
-          "id": "ft2232h-ram",
-          "connection": "ft2232h",
-          "memory": "ram",
+          "selector": {
+            "connection": "ft2232h",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -763,9 +810,10 @@
           "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "ft232h-ram",
-          "connection": "ft232h",
-          "memory": "ram",
+          "selector": {
+            "connection": "ft232h",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -776,9 +824,10 @@
           "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "usb-blaster-ram",
-          "connection": "usb-blaster",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb-blaster",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c usb-blaster -v --file-type bin ${BITSTREAM}",
           "usb": {
@@ -794,9 +843,10 @@
       "fpga_id": "xc7a50tfgg484-1",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board colorlight-i9+ -c cmsisdap --write-flash ${BITSTREAM}",
           "usb": {
@@ -807,9 +857,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a50tfgg484, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
         },
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board colorlight-i9+ -c cmsisdap ${BITSTREAM}",
           "usb": {
@@ -825,9 +876,10 @@
       "fpga_id": "lfe5um5g-85f-8bg381c",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -839,9 +891,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): \"Lattice ECP5 Evaluation Board\" is the product name fujprog looks for on 0403:6010 (kost/fujprog fujprog.c, cable_hw_map). Also accepts the FT2232H's factory name, as the Versa's filter accepts its chip's, in case a board ships without the Lattice name (not checked)."
         },
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -859,9 +912,10 @@
       "fpga_id": "lfe5u-12f-6bg256c",
       "variants": [
         {
-          "id": "ft2232h-flash",
-          "connection": "ft2232h",
-          "memory": "flash",
+          "selector": {
+            "connection": "ft2232h",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -872,9 +926,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "ft2232h-ram",
-          "connection": "ft2232h",
-          "memory": "ram",
+          "selector": {
+            "connection": "ft2232h",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -891,9 +946,10 @@
       "fpga_id": "lfe5u-25f-6bg256c",
       "variants": [
         {
-          "id": "ft2232h-flash",
-          "connection": "ft2232h",
-          "memory": "flash",
+          "selector": {
+            "connection": "ft2232h",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -904,9 +960,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "ft2232h-ram",
-          "connection": "ft2232h",
-          "memory": "ram",
+          "selector": {
+            "connection": "ft2232h",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -923,9 +980,10 @@
       "fpga_id": "ice40hx4k-tq144-8k",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -942,9 +1000,10 @@
       "fpga_id": "gw1nr-lv9qn88pc6-i5",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -b epm11 -f --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -961,9 +1020,10 @@
       "fpga_id": "lfe5u-25f-6bg381c",
       "variants": [
         {
-          "id": "ft2232h-flash",
-          "connection": "ft2232h",
-          "memory": "flash",
+          "selector": {
+            "connection": "ft2232h",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -974,9 +1034,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "ft232h-flash",
-          "connection": "ft232h",
-          "memory": "flash",
+          "selector": {
+            "connection": "ft232h",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft232 -v --write-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -987,9 +1048,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "usb-blaster-flash",
-          "connection": "usb-blaster",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb-blaster",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c usb-blaster -v --write-flash --file-type bin ${BITSTREAM}",
           "usb": {
@@ -1000,9 +1062,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware."
         },
         {
-          "id": "ft2232h-ram",
-          "connection": "ft2232h",
-          "memory": "ram",
+          "selector": {
+            "connection": "ft2232h",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1013,9 +1076,10 @@
           "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "ft232h-ram",
-          "connection": "ft232h",
-          "memory": "ram",
+          "selector": {
+            "connection": "ft232h",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1026,9 +1090,10 @@
           "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "usb-blaster-ram",
-          "connection": "usb-blaster",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb-blaster",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c usb-blaster -v --file-type bin ${BITSTREAM}",
           "usb": {
@@ -1044,9 +1109,10 @@
       "fpga_id": "ice40up5k-uwg30",
       "variants": [
         {
-          "id": "bootloader-flash",
-          "connection": "bootloader",
-          "memory": "flash",
+          "selector": {
+            "connection": "bootloader",
+            "memory": "flash"
+          },
           "programmer": "dfu-util",
           "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM}",
           "usb": {
@@ -1065,9 +1131,10 @@
       "fpga_id": "ice40up5k-sg48",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -1084,9 +1151,10 @@
       "fpga_id": "ice40hx1k-vq100",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -1103,9 +1171,10 @@
       "fpga_id": "ice40hx8k-ct256",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -1123,9 +1192,10 @@
       "fpga_id": "ice40up5k-sg48",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -1143,9 +1213,10 @@
       "fpga_id": "ice40up5k-sg48",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -1163,9 +1234,10 @@
       "fpga_id": "ice40up5k-sg48",
       "variants": [
         {
-          "id": "bootloader-flash",
-          "connection": "bootloader",
-          "memory": "flash",
+          "selector": {
+            "connection": "bootloader",
+            "memory": "flash"
+          },
           "programmer": "dfu-util",
           "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM}",
           "usb": {
@@ -1183,9 +1255,10 @@
       "fpga_id": "ice40up5k-sg48",
       "variants": [
         {
-          "id": "bootloader-flash",
-          "connection": "bootloader",
-          "memory": "flash",
+          "selector": {
+            "connection": "bootloader",
+            "memory": "flash"
+          },
           "programmer": "dfu-util",
           "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM}",
           "usb": {
@@ -1203,9 +1276,10 @@
       "fpga_id": "ice40up5k-sg48",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -1221,9 +1295,10 @@
       "fpga_id": "lfe5u-25f-6bg256c",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft231X --pins=7:3:5:6 -v --write-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1236,9 +1311,10 @@
           "user_notes": "Its USB chip reports the chip's factory name, FT231X USB UART, as other boards with that chip may."
         },
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft231X --pins=7:3:5:6 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1257,9 +1333,10 @@
       "fpga_id": "ice40hx1k-tq144",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -1277,9 +1354,10 @@
       "fpga_id": "ice40up5k-sg48",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "icesprog",
           "args": "${BITSTREAM}",
           "usb": {
@@ -1298,9 +1376,10 @@
       "fpga_id": "ice40lp1k-cm36",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "icesprog",
           "args": "${BITSTREAM}",
           "usb": {
@@ -1319,9 +1398,10 @@
       "fpga_id": "lfe5u-25f-6bg256c",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c cmsisdap --vid 0x${VID} --pid 0x${PID} --write-flash --file-type bin ${BITSTREAM}",
           "usb": {
@@ -1334,9 +1414,10 @@
           "maintainer_notes": "iCESugar boards share USB IDs and product name. The serial number's first 4 characters are the board ID, as icesprog's source reads it: 0700 iCESugar, 0710 iCESugar-Pro, 0720 iCESugar-nano. 0710 checked on a real iCESugar-Pro."
         },
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c cmsisdap --vid 0x${VID} --pid 0x${PID} --file-type bin ${BITSTREAM}",
           "usb": {
@@ -1355,9 +1436,10 @@
       "fpga_id": "ice40hx1k-tq144",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -1374,9 +1456,10 @@
       "fpga_id": "ice40hx4k-tq144-8k",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} -I B ${BITSTREAM}",
           "usb": {
@@ -1393,9 +1476,10 @@
       "fpga_id": "xc7a200tfbg484-3",
       "variants": [
         {
-          "id": "unspecified-flash",
-          "connection": "unspecified",
-          "memory": "flash",
+          "selector": {
+            "connection": "unspecified",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft232 --fpga-part xc7a200tfbg484 --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1406,9 +1490,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a200tfbg484, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Programmed through an FT232 (openFPGALoader -c ft232); not found in the board's documentation whether the chip is on the board or an external adapter. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "unspecified-ram",
-          "connection": "unspecified",
-          "memory": "ram",
+          "selector": {
+            "connection": "unspecified",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft232 --fpga-part xc7a200tfbg484 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1425,9 +1510,10 @@
       "fpga_id": "xc7a50tfgg484-1",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board mimas_a7 --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1439,9 +1525,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a50tfgg484, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): the product name from Numato's own OpenOCD file (numato/samplecode FPGA/MimasA7/openocd/numato_mimasa7.cfg) and OpenOCD's tcl/board/numato_mimas_a7.cfg; 2a19 is Numato's vendor ID."
         },
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board mimas_a7 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1459,9 +1546,10 @@
       "fpga_id": "lfe5u-45f-6bg256c",
       "variants": [
         {
-          "id": "unspecified-flash",
-          "connection": "unspecified",
-          "memory": "flash",
+          "selector": {
+            "connection": "unspecified",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1472,9 +1560,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Programmed through an FT2232 (openFPGALoader -c ft2232); not found in the board's documentation whether the chip is on the board or an external adapter. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "unspecified-ram",
-          "connection": "unspecified",
-          "memory": "ram",
+          "selector": {
+            "connection": "unspecified",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1491,9 +1580,10 @@
       "fpga_id": "xc7a100tcsg324-1",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board nexys_a7_100 --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1504,9 +1594,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a100tcsg324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board nexys_a7_100 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1523,9 +1614,10 @@
       "fpga_id": "xc7a50tcsg324-1",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board nexys_a7_50 --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1536,9 +1628,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a50tcsg324, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board nexys_a7_50 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1555,9 +1648,10 @@
       "fpga_id": "ice5lp4k-sg48",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -1575,9 +1669,10 @@
       "fpga_id": "ice40up5k-sg48",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -1594,9 +1689,10 @@
       "fpga_id": "lfe5u-25f-6mg285c",
       "variants": [
         {
-          "id": "bootloader-flash",
-          "connection": "bootloader",
-          "memory": "flash",
+          "selector": {
+            "connection": "bootloader",
+            "memory": "flash"
+          },
           "programmer": "dfu-util",
           "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM}",
           "usb": {
@@ -1614,9 +1710,10 @@
       "fpga_id": "lfe5u-85f-6mg285c",
       "variants": [
         {
-          "id": "bootloader-flash",
-          "connection": "bootloader",
-          "memory": "flash",
+          "selector": {
+            "connection": "bootloader",
+            "memory": "flash"
+          },
           "programmer": "dfu-util",
           "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM}",
           "usb": {
@@ -1634,9 +1731,10 @@
       "fpga_id": "ice40up5k-sg48",
       "variants": [
         {
-          "id": "bootloader-flash",
-          "connection": "bootloader",
-          "memory": "flash",
+          "selector": {
+            "connection": "bootloader",
+            "memory": "flash"
+          },
           "programmer": "dfu-util",
           "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM} --reset",
           "usb": {
@@ -1654,9 +1752,10 @@
       "fpga_id": "xc7z020clg400-1",
       "variants": [
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board pynq_z1 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1673,9 +1772,10 @@
       "fpga_id": "xc7z020clg400-1",
       "variants": [
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board pynq_z2 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1692,9 +1792,10 @@
       "fpga_id": "xc7a100tfgg676-1",
       "variants": [
         {
-          "id": "ft2232h-ram",
-          "connection": "ft2232h",
-          "memory": "ram",
+          "selector": {
+            "connection": "ft2232h",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c ft2232 --fpga-part xc7a100tfgg676 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1711,9 +1812,10 @@
       "fpga_id": "gw1n-lv1qn48c6-i5",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -b tangnano --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1724,9 +1826,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash, which writes the GW1N's internal flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
         },
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -b tangnano --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1743,9 +1846,10 @@
       "fpga_id": "gw1nz-lv1qn48c6-i5",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -b tangnano1k -f --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1765,9 +1869,10 @@
       "fpga_id": "gw2ar-lv18qn88c8-i7",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -b tangnano20k -f --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1784,9 +1889,10 @@
       "fpga_id": "gw1nsr-lv4cqn48pc7-i6",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -b tangnano4k -f --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1806,9 +1912,10 @@
       "fpga_id": "gw1nr-lv9qn88pc6-i5",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -b tangnano9k -f --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1828,9 +1935,10 @@
       "fpga_id": "gw2a-lv18pg256c8-i7",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -b tangprimer20k -f --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1850,9 +1958,10 @@
       "fpga_id": "ice40up5k-sg48",
       "variants": [
         {
-          "id": "bootloader-flash",
-          "connection": "bootloader",
-          "memory": "flash",
+          "selector": {
+            "connection": "bootloader",
+            "memory": "flash"
+          },
           "programmer": "dfu-util",
           "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM}",
           "usb": {
@@ -1870,9 +1979,10 @@
       "fpga_id": "ice40up5k-sg48",
       "variants": [
         {
-          "id": "bootloader-flash",
-          "connection": "bootloader",
-          "memory": "flash",
+          "selector": {
+            "connection": "bootloader",
+            "memory": "flash"
+          },
           "programmer": "dfu-util",
           "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM}",
           "usb": {
@@ -1890,9 +2000,10 @@
       "fpga_id": "ice40hx4k-tq144-8k",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -1909,9 +2020,10 @@
       "fpga_id": "lfe5u-12f-6bg381c",
       "variants": [
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1930,9 +2042,10 @@
       "fpga_id": "lfe5u-25f-6bg381c",
       "variants": [
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1951,9 +2064,10 @@
       "fpga_id": "lfe5u-45f-6bg381c",
       "variants": [
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1972,9 +2086,10 @@
       "fpga_id": "lfe5u-85f-6bg381c",
       "variants": [
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -1993,9 +2108,10 @@
       "fpga_id": "ice40up5k-sg48",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -2012,9 +2128,10 @@
       "fpga_id": "ice40up5k-sg48",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -2031,9 +2148,10 @@
       "fpga_id": "ice40up5k-sg48",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -2051,9 +2169,10 @@
       "fpga_id": "ice40up5k-sg48",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -2070,9 +2189,10 @@
       "fpga_id": "ice40up5k-sg48",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -2089,9 +2209,10 @@
       "fpga_id": "lfe5um-45f-6bg381c",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -2109,9 +2230,10 @@
       "fpga_id": "ice40up5k-sg48",
       "variants": [
         {
-          "id": "usb-flash",
-          "connection": "usb",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb",
+            "memory": "flash"
+          },
           "programmer": "iceprog",
           "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
           "usb": {
@@ -2128,9 +2250,10 @@
       "fpga_id": "xc7z020clg484-1",
       "variants": [
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board zedboard --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -2147,9 +2270,10 @@
       "fpga_id": "xc7a35tfgg484-2",
       "variants": [
         {
-          "id": "usb-blaster-flash",
-          "connection": "usb-blaster",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb-blaster",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c usb-blaster --fpga-part xc7a35tfgg484 --write-flash ${BITSTREAM}",
           "usb": {
@@ -2160,9 +2284,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a35tfgg484, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
         },
         {
-          "id": "usb-blaster-ram",
-          "connection": "usb-blaster",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb-blaster",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c usb-blaster ${BITSTREAM}",
           "usb": {
@@ -2178,9 +2303,10 @@
       "fpga_id": "xc7a100tfgg484-2",
       "variants": [
         {
-          "id": "usb-blaster-flash",
-          "connection": "usb-blaster",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb-blaster",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c usb-blaster --fpga-part xc7a100tfgg484 --write-flash ${BITSTREAM}",
           "usb": {
@@ -2191,9 +2317,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a100tfgg484, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
         },
         {
-          "id": "usb-blaster-ram",
-          "connection": "usb-blaster",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb-blaster",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c usb-blaster ${BITSTREAM}",
           "usb": {
@@ -2209,9 +2336,10 @@
       "fpga_id": "xc7a200tfbg484-2",
       "variants": [
         {
-          "id": "usb-blaster-flash",
-          "connection": "usb-blaster",
-          "memory": "flash",
+          "selector": {
+            "connection": "usb-blaster",
+            "memory": "flash"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c usb-blaster --fpga-part xc7a200tfbg484 --write-flash ${BITSTREAM}",
           "usb": {
@@ -2222,9 +2350,10 @@
           "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a200tfbg484, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
         },
         {
-          "id": "usb-blaster-ram",
-          "connection": "usb-blaster",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb-blaster",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify -c usb-blaster ${BITSTREAM}",
           "usb": {
@@ -2240,9 +2369,10 @@
       "fpga_id": "xc7z010clg400-1",
       "variants": [
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board zybo_z7_10 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {
@@ -2259,9 +2389,10 @@
       "fpga_id": "xc7z020clg400-1",
       "variants": [
         {
-          "id": "usb-ram",
-          "connection": "usb",
-          "memory": "ram",
+          "selector": {
+            "connection": "usb",
+            "memory": "ram"
+          },
           "programmer": "openfpgaloader",
           "args": "--force-terminal-mode --verify --board zybo_z7_20 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
           "usb": {

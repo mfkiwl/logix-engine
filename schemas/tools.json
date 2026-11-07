@@ -438,21 +438,13 @@
               "description": "The programmer's arguments, as a template (see the variant fields of\nboard definitions).",
               "type": "string"
             },
-            "connection": {
-              "description": "How the computer reaches the board, a value of the connection\ndimension.",
-              "type": "string"
-            },
-            "id": {
-              "description": "The variant's ID within its board, <connection>-<memory>, such as\nusb-flash: what board_variant names in requests.",
-              "type": "string"
-            },
-            "memory": {
-              "description": "Where the design goes, a value of the memory dimension.",
-              "type": "string"
-            },
             "programmer": {
               "description": "The programmer the engine runs: openfpgaloader, iceprog, dfu-util or\nicesprog.",
               "type": "string"
+            },
+            "selector": {
+              "$ref": "#/$defs/Selector",
+              "description": "The variant's value of each standard dimension, such as\n{\"connection\": \"usb\", \"memory\": \"flash\"}: what board_variant gives in\nrequests to pick it. No two variants of a board have the same."
             },
             "tested": {
               "description": "Whether programming this way is known to work. False for ways that\nhaven't been tried on hardware.",
@@ -467,9 +459,7 @@
             }
           },
           "required": [
-            "id",
-            "connection",
-            "memory",
+            "selector",
             "programmer",
             "args",
             "tested"
@@ -616,6 +606,25 @@
             "nextpnr_device"
           ],
           "type": "object"
+        },
+        "Selector": {
+          "additionalProperties": false,
+          "description": "Which of a board's variants: a value of each standard dimension. In a\nboard definition it says where the variant sits; in requests\n(board_variant) it picks the variant with these values.",
+          "properties": {
+            "connection": {
+              "description": "How the computer reaches the board: usb, bootloader, ft2232h,\nft232h, cmsis-dap, usb-blaster or unspecified (see the dimensions).",
+              "type": "string"
+            },
+            "memory": {
+              "description": "Where the design goes: flash (kept at power-off) or ram (lost at\npower-off).",
+              "type": "string"
+            }
+          },
+          "required": [
+            "connection",
+            "memory"
+          ],
+          "type": "object"
         }
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -662,6 +671,27 @@
     "name": "lint",
     "description": "Checks Verilog and SystemVerilog sources for errors and likely mistakes with Verilator, without building. It is much faster than build and finds problems synthesis accepts, such as width mismatches. List the design files and, optionally, the testbenches; the engine doesn't search for them. The board selects the FPGA's primitive models, so designs that use them lint cleanly. Problems found are the result, not an error: passed is false and diagnostics lists each problem at file and line, with Verilator's warning code at the end of the text, which a /* verilator lint_off CODE */ comment can silence. The first call may install the toolchain package first, which takes a few minutes. Writes nothing.",
     "inputSchema": {
+      "$defs": {
+        "Selector": {
+          "additionalProperties": false,
+          "description": "Which of a board's variants: a value of each standard dimension. In a\nboard definition it says where the variant sits; in requests\n(board_variant) it picks the variant with these values.",
+          "properties": {
+            "connection": {
+              "description": "How the computer reaches the board: usb, bootloader, ft2232h,\nft232h, cmsis-dap, usb-blaster or unspecified (see the dimensions).",
+              "type": "string"
+            },
+            "memory": {
+              "description": "Where the design goes: flash (kept at power-off) or ram (lost at\npower-off).",
+              "type": "string"
+            }
+          },
+          "required": [
+            "connection",
+            "memory"
+          ],
+          "type": "object"
+        }
+      },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
       "description": "What to lint.",
@@ -672,12 +702,16 @@
           "type": "string"
         },
         "board_variant": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Selector"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": null,
-          "description": "The board variant: the ID of one of the board's variants, which\nget_catalog lists, such as usb-ram or ft232h-flash. Omitted means\nthe board's first variant, its default.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "The board variant: the selector of one of the board's variants,\nwhich get_catalog lists, such as {\"connection\": \"usb\", \"memory\":\n\"ram\"}. Omitted means the board's first variant, its default."
         },
         "custom_boards_file": {
           "default": null,
@@ -888,6 +922,27 @@
     "name": "test",
     "description": "Runs testbenches with Icarus Verilog: compiles the design files with each testbench, runs it, and reports whether it passed. A testbench fails by calling $fatal or $error, or by printing a failure line from common testbench assertion macros (*** ASSERTION FAILED or ERROR at file:line); it must end with $finish, and must not call $dumpfile, since the engine sets where its waveform goes (call $dumpvars to write one). Every listed testbench runs, even after one fails; each stops at its first failure unless stop_at_first_failure is false. A failing testbench is the result, not an error: passed is false, and each testbench's diagnostics and output say why. Compile errors are a design error with diagnostics at file and line. The first call may install the toolchain package first, which takes a few minutes. To look at a testbench's signals in a waveform viewer, use simulate.",
     "inputSchema": {
+      "$defs": {
+        "Selector": {
+          "additionalProperties": false,
+          "description": "Which of a board's variants: a value of each standard dimension. In a\nboard definition it says where the variant sits; in requests\n(board_variant) it picks the variant with these values.",
+          "properties": {
+            "connection": {
+              "description": "How the computer reaches the board: usb, bootloader, ft2232h,\nft232h, cmsis-dap, usb-blaster or unspecified (see the dimensions).",
+              "type": "string"
+            },
+            "memory": {
+              "description": "Where the design goes: flash (kept at power-off) or ram (lost at\npower-off).",
+              "type": "string"
+            }
+          },
+          "required": [
+            "connection",
+            "memory"
+          ],
+          "type": "object"
+        }
+      },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
       "description": "Which testbenches to run.",
@@ -898,12 +953,16 @@
           "type": "string"
         },
         "board_variant": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Selector"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": null,
-          "description": "The board variant: the ID of one of the board's variants, which\nget_catalog lists, such as usb-ram or ft232h-flash. Omitted means\nthe board's first variant, its default.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "The board variant: the selector of one of the board's variants,\nwhich get_catalog lists, such as {\"connection\": \"usb\", \"memory\":\n\"ram\"}. Omitted means the board's first variant, its default."
         },
         "build_folder": {
           "description": "Where the compiled testbenches and their waveforms go, as an absolute\npath. One of its last two folder names must contain \"build\", such as\n/home/user/proj/_build. It is created if needed.",
@@ -1207,6 +1266,27 @@
     "name": "simulate",
     "description": "Simulates one testbench with Icarus Verilog and opens its waveform in GTKWave: compiles the design files with the testbench, runs it to write the waveform (.vcd) into the build folder, then starts GTKWave detached and returns without waiting for it. The testbench must call $dumpvars and $finish, and must not call $dumpfile. GTKWave opens the layout file (.gtkw), which holds the signals shown; when it is missing, or is still a default one, the engine writes a default with the testbench's top-level signals, deleted again when GTKWave exits unless the user saved it; a layout the user saved is kept. Set open_viewer to false to only write the waveform, such as when no one is at the screen. A failing testbench runs to the end and is shown, with passed false and GTKWave's marker at the first failure in a default layout. Compile errors are a design error with diagnostics at file and line. To just check whether testbenches pass, use test.",
     "inputSchema": {
+      "$defs": {
+        "Selector": {
+          "additionalProperties": false,
+          "description": "Which of a board's variants: a value of each standard dimension. In a\nboard definition it says where the variant sits; in requests\n(board_variant) it picks the variant with these values.",
+          "properties": {
+            "connection": {
+              "description": "How the computer reaches the board: usb, bootloader, ft2232h,\nft232h, cmsis-dap, usb-blaster or unspecified (see the dimensions).",
+              "type": "string"
+            },
+            "memory": {
+              "description": "Where the design goes: flash (kept at power-off) or ram (lost at\npower-off).",
+              "type": "string"
+            }
+          },
+          "required": [
+            "connection",
+            "memory"
+          ],
+          "type": "object"
+        }
+      },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
       "description": "Which testbench to simulate, and how to show it.",
@@ -1217,12 +1297,16 @@
           "type": "string"
         },
         "board_variant": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Selector"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": null,
-          "description": "The board variant: the ID of one of the board's variants, which\nget_catalog lists, such as usb-ram or ft232h-flash. Omitted means\nthe board's first variant, its default.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "The board variant: the selector of one of the board's variants,\nwhich get_catalog lists, such as {\"connection\": \"usb\", \"memory\":\n\"ram\"}. Omitted means the board's first variant, its default."
         },
         "build_folder": {
           "description": "Where the compiled testbench and its waveform go, as an absolute path.\nOne of its last two folder names must contain \"build\", such as\n/home/user/proj/_build. It is created if needed.",
@@ -1968,6 +2052,27 @@
     "name": "build",
     "description": "Builds an FPGA design into a bitstream: synthesizes the Verilog or SystemVerilog sources, places and routes them on the board's FPGA using the constraint file, which maps top-level ports to pins (.pcf for iCE40, .lpf for ECP5, .cst for Gowin, .xdc for Xilinx), and packs the bitstream into the build folder. Give the source files explicitly; the engine doesn't search for them, though `include files are found next to the including file or in the source folder. A build with no changes since the last one returns at once with up_to_date set. The first build may install the toolchain package first, which takes a few minutes. Design problems come back as a design error with diagnostics at file and line. After a successful build, program_board programs the bitstream into the board.",
     "inputSchema": {
+      "$defs": {
+        "Selector": {
+          "additionalProperties": false,
+          "description": "Which of a board's variants: a value of each standard dimension. In a\nboard definition it says where the variant sits; in requests\n(board_variant) it picks the variant with these values.",
+          "properties": {
+            "connection": {
+              "description": "How the computer reaches the board: usb, bootloader, ft2232h,\nft232h, cmsis-dap, usb-blaster or unspecified (see the dimensions).",
+              "type": "string"
+            },
+            "memory": {
+              "description": "Where the design goes: flash (kept at power-off) or ram (lost at\npower-off).",
+              "type": "string"
+            }
+          },
+          "required": [
+            "connection",
+            "memory"
+          ],
+          "type": "object"
+        }
+      },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
       "description": "What to build, and where.",
@@ -1978,12 +2083,16 @@
           "type": "string"
         },
         "board_variant": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Selector"
+            },
+            {
+              "type": "null"
+            }
+          ],
           "default": null,
-          "description": "The board variant: the ID of one of the board's variants, which\nget_catalog lists, such as usb-ram or ft232h-flash. Omitted means\nthe board's first variant, its default.",
-          "type": [
-            "string",
-            "null"
-          ]
+          "description": "The board variant: the selector of one of the board's variants,\nwhich get_catalog lists, such as {\"connection\": \"usb\", \"memory\":\n\"ram\"}. Omitted means the board's first variant, its default."
         },
         "build_folder": {
           "description": "Where the build writes its files, as an absolute path. One of its last\ntwo folder names must contain \"build\", such as\n/home/user/proj/_build. It may be inside the source folder but\ncan't be the source folder itself. It is created if needed.",
@@ -2553,6 +2662,25 @@
             }
           ]
         },
+        "Selector": {
+          "additionalProperties": false,
+          "description": "Which of a board's variants: a value of each standard dimension. In a\nboard definition it says where the variant sits; in requests\n(board_variant) it picks the variant with these values.",
+          "properties": {
+            "connection": {
+              "description": "How the computer reaches the board: usb, bootloader, ft2232h,\nft232h, cmsis-dap, usb-blaster or unspecified (see the dimensions).",
+              "type": "string"
+            },
+            "memory": {
+              "description": "Where the design goes: flash (kept at power-off) or ram (lost at\npower-off).",
+              "type": "string"
+            }
+          },
+          "required": [
+            "connection",
+            "memory"
+          ],
+          "type": "object"
+        },
         "UnreachableDevice": {
           "additionalProperties": false,
           "description": "A device the engine sees but can't open, so it can't read its names or\nprogram it: it needs a driver or permissions first. Listed only when its\nUSB IDs fit a board.",
@@ -2619,17 +2747,17 @@
           "additionalProperties": false,
           "description": "A variant of a board that a device fits.",
           "properties": {
-            "id": {
-              "description": "The variant's ID within the board, such as usb-flash.",
-              "type": "string"
-            },
             "match": {
               "$ref": "#/$defs/MatchLevel",
               "description": "How well the device matches the board in this variant: strong,\npossible or weak. See MatchLevel."
+            },
+            "selector": {
+              "$ref": "#/$defs/Selector",
+              "description": "The variant's selector, such as {\"connection\": \"usb\", \"memory\":\n\"flash\"}, as board_variant gives it in requests."
             }
           },
           "required": [
-            "id",
+            "selector",
             "match"
           ],
           "type": "object"
@@ -2889,21 +3017,40 @@
             }
           ]
         },
+        "Selector": {
+          "additionalProperties": false,
+          "description": "Which of a board's variants: a value of each standard dimension. In a\nboard definition it says where the variant sits; in requests\n(board_variant) it picks the variant with these values.",
+          "properties": {
+            "connection": {
+              "description": "How the computer reaches the board: usb, bootloader, ft2232h,\nft232h, cmsis-dap, usb-blaster or unspecified (see the dimensions).",
+              "type": "string"
+            },
+            "memory": {
+              "description": "Where the design goes: flash (kept at power-off) or ram (lost at\npower-off).",
+              "type": "string"
+            }
+          },
+          "required": [
+            "connection",
+            "memory"
+          ],
+          "type": "object"
+        },
         "VariantMatch": {
           "additionalProperties": false,
           "description": "A variant of a board that a device fits.",
           "properties": {
-            "id": {
-              "description": "The variant's ID within the board, such as usb-flash.",
-              "type": "string"
-            },
             "match": {
               "$ref": "#/$defs/MatchLevel",
               "description": "How well the device matches the board in this variant: strong,\npossible or weak. See MatchLevel."
+            },
+            "selector": {
+              "$ref": "#/$defs/Selector",
+              "description": "The variant's selector, such as {\"connection\": \"usb\", \"memory\":\n\"flash\"}, as board_variant gives it in requests."
             }
           },
           "required": [
-            "id",
+            "selector",
             "match"
           ],
           "type": "object"

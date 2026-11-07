@@ -42,11 +42,11 @@ pub struct BuildInput {
     /// lists them), or the ID of a board in custom_boards_file.
     #[schemars(pattern(r"^[a-z0-9-]+$"))]
     pub board: String,
-    /// The board variant: the ID of one of the board's variants, which
-    /// get_catalog lists, such as usb-ram or ft232h-flash. Omitted means
-    /// the board's first variant, its default.
+    /// The board variant: the selector of one of the board's variants,
+    /// which get_catalog lists, such as {"connection": "usb", "memory":
+    /// "ram"}. Omitted means the board's first variant, its default.
     #[serde(default)]
-    pub board_variant: Option<String>,
+    pub board_variant: Option<crate::catalog::Selector>,
     /// The host's own boards: the absolute path of a JSON file that maps
     /// board IDs to definitions in the catalog's format. board can name one
     /// of them; one with a catalog board's ID replaces that board in this

@@ -146,7 +146,7 @@ pub fn verbose_flag(programmer: &str) -> Option<&'static str> {
 /// " (untested)" before the period.
 pub fn plan(board: &str, c: &Variant) -> Option<String> {
     let memory = memory_word(c)?;
-    let connection = Some(c.connection.as_str());
+    let connection = Some(c.selector.connection.as_str());
     let through = match connection {
         Some("usb") => " through its USB port".to_string(),
         Some("bootloader") => " through its USB bootloader".to_string(),
@@ -185,7 +185,7 @@ pub fn writing_phase(c: &Variant) -> &'static str {
 }
 
 fn memory_word(c: &Variant) -> Option<&'static str> {
-    match Some(c.memory.as_str()) {
+    match Some(c.selector.memory.as_str()) {
         Some("flash") => Some("flash"),
         Some("ram") => Some("RAM"),
         _ => None,

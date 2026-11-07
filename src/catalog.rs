@@ -78,22 +78,56 @@ pub struct DimensionValue {
     pub help: Option<String>,
 }
 
-/// One way to program a board: its connection and memory, and how to
-/// program the board that way.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+/// Which of a board's variants: a value of each standard dimension. In a
+/// board definition it says where the variant sits; in requests
+/// (board_variant) it picks the variant with these values.
+#[derive(
+    Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, JsonSchema,
+)]
 #[serde(deny_unknown_fields)]
-pub struct Variant {
-    /// The variant's ID within its board, such as usb-flash or ft232h-ram:
-    /// what board_variant names in requests. Catalog boards use
-    /// <connection>-<memory>.
-    #[schemars(pattern(r"^[a-z0-9-]+$"))]
-    pub id: String,
+pub struct Selector {
     /// How the computer reaches the board: usb, bootloader, ft2232h,
     /// ft232h, cmsis-dap, usb-blaster or unspecified (see the dimensions).
     pub connection: String,
     /// Where the design goes: flash (kept at power-off) or ram (lost at
     /// power-off).
     pub memory: String,
+}
+
+impl Selector {
+    pub fn new(connection: &str, memory: &str) -> Selector {
+        Selector {
+            connection: connection.into(),
+            memory: memory.into(),
+        }
+    }
+
+    /// The selector's value of a standard dimension, by dimension ID.
+    pub fn value(&self, dimension: &str) -> Option<&str> {
+        match dimension {
+            "connection" => Some(&self.connection),
+            "memory" => Some(&self.memory),
+            _ => None,
+        }
+    }
+}
+
+impl std::fmt::Display for Selector {
+    /// As in messages: connection usb, memory flash.
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "connection {}, memory {}", self.connection, self.memory)
+    }
+}
+
+/// One way to program a board: its selector (its connection and memory),
+/// and how to program the board that way.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct Variant {
+    /// The variant's value of each standard dimension, such as
+    /// {"connection": "usb", "memory": "flash"}: what board_variant gives
+    /// in requests to pick it. No two variants of a board have the same.
+    pub selector: Selector,
     /// The programmer to run: openfpgaloader, iceprog, dfu-util or icesprog.
     pub programmer: String,
     /// The programmer's arguments, as a template. The engine replaces
@@ -469,11 +503,7 @@ impl Variant {
 
     /// The variant's value of a standard dimension, by dimension ID.
     pub fn value(&self, dimension: &str) -> Option<&str> {
-        match dimension {
-            "connection" => Some(&self.connection),
-            "memory" => Some(&self.memory),
-            _ => None,
-        }
+        self.selector.value(dimension)
     }
 
     /// The variant's values as people read them, such as "FT232H adapter,
@@ -568,25 +598,15 @@ pub fn derive_dimensions(variants: &[Variant]) -> Vec<Dimension> {
         .collect()
 }
 
-/// Checks a board's variants: at least one, each with an ID (unique), a
-/// standard connection and memory (no two with the same pair) and valid
-/// programming fields.
+/// Checks a board's variants: at least one, each with a selector of
+/// standard values (no two the same) and valid programming fields.
 pub fn validate_variants(variants: &[Variant]) -> Result<(), String> {
     if variants.is_empty() {
         return Err("no variants".into());
     }
-    let mut ids = std::collections::BTreeSet::new();
-    let mut pairs = std::collections::BTreeSet::new();
+    let mut selectors = std::collections::BTreeSet::new();
     for v in variants {
-        let ctx = |e: String| format!("variant {:?}: {e}", v.id);
-        if !is_catalog_id(&v.id) {
-            return Err(ctx(
-                "its ID must be lowercase letters, digits and hyphens".into()
-            ));
-        }
-        if !ids.insert(&v.id) {
-            return Err(ctx("is listed twice".into()));
-        }
+        let ctx = |e: String| format!("variant ({}): {e}", v.selector);
         for (dim, _, values) in STANDARD_DIMENSIONS {
             let value = v.value(dim).unwrap_or_default();
             if !values.iter().any(|(x, _, _)| *x == value) {
@@ -600,33 +620,31 @@ pub fn validate_variants(variants: &[Variant]) -> Result<(), String> {
                 )));
             }
         }
-        if !pairs.insert((&v.connection, &v.memory)) {
-            return Err(ctx(format!(
-                "another variant has the same connection {} and memory {}",
-                v.connection, v.memory
-            )));
+        if !selectors.insert(&v.selector) {
+            return Err(ctx("another variant has the same selector".into()));
         }
         v.validate_programming().map_err(ctx)?;
     }
     Ok(())
 }
 
-/// The variant `id` names, or the first (the default) when there is none.
-/// An unknown ID is an error for people that lists the IDs.
+/// The variant with the selector's values, or the first (the default)
+/// when there is none. A selector the board has no variant for is an
+/// error for people that lists the board's selectors.
 pub fn select_variant<'a>(
     variants: &'a [Variant],
-    id: Option<&str>,
+    selector: Option<&Selector>,
 ) -> Result<&'a Variant, String> {
-    match id {
+    match selector {
         None => variants
             .first()
             .ok_or_else(|| "the board has no variants".to_string()),
-        Some(id) => variants.iter().find(|v| v.id == id).ok_or_else(|| {
+        Some(s) => variants.iter().find(|v| &v.selector == s).ok_or_else(|| {
             format!(
-                "the board has no variant {id:?}. Its variants: {}",
+                "the board has no variant with {s}. Its variants: {}",
                 variants
                     .iter()
-                    .map(|v| v.id.as_str())
+                    .map(|v| format!("({})", v.selector))
                     .collect::<Vec<_>>()
                     .join(", ")
             )
@@ -857,8 +875,8 @@ mod tests {
                 {
                     assert!(
                         c.args.contains("--busdev-num ${BUS}:${DEV}"),
-                        "{name} {:?}: {}",
-                        c.id,
+                        "{name} ({}): {}",
+                        c.selector,
                         c.args
                     );
                     checked += 1;
@@ -879,8 +897,8 @@ mod tests {
                 if c.programmer == "dfu-util" {
                     assert!(
                         c.args.contains("-p ${USB_PATH}"),
-                        "{name} {:?}: {}",
-                        c.id,
+                        "{name} ({}): {}",
+                        c.selector,
                         c.args
                     );
                     checked += 1;
@@ -903,8 +921,8 @@ mod tests {
                 if v.programmer == "openfpgaloader" && fpga.architecture != Architecture::Ice40 {
                     assert!(
                         crate::program::checks_fpga(v, fpga),
-                        "{name} {:?}: {} has no jtag_idcode",
-                        v.id,
+                        "{name} ({}): {} has no jtag_idcode",
+                        v.selector,
                         b.fpga_id
                     );
                     checked += 1;
@@ -976,19 +994,13 @@ mod tests {
                 .collect::<Vec<_>>(),
             [("connection", 1), ("memory", 1)]
         );
-        assert_eq!(v.connection, "usb");
-        assert_eq!(v.memory, "flash");
+        assert_eq!(v.selector.connection, "usb");
+        assert_eq!(v.selector.memory, "flash");
         assert_eq!(c.fpgas["ice40hx4k-tq144-8k"].package(), "tq144:4k");
         let variants = || c.boards.values().flat_map(|b| &b.variants);
         assert_eq!(c.boards.len(), 84);
         assert_eq!(variants().count(), 131);
         // Users pick boards by description, so no two boards share one.
-        // Catalog variant IDs follow <connection>-<memory>.
-        for (id, b) in &c.boards {
-            for v in &b.variants {
-                assert_eq!(v.id, format!("{}-{}", v.connection, v.memory), "{id}");
-            }
-        }
         let mut descriptions: Vec<&str> =
             c.boards.values().map(|b| b.description.as_str()).collect();
         descriptions.sort();
@@ -999,7 +1011,7 @@ mod tests {
         }
         // Boards with a choice: connections and memories. Sizes are separate
         // boards, since the pins may differ.
-        let memory_of = |id: &str, i: usize| c.boards[id].variants[i].memory.clone();
+        let memory_of = |id: &str, i: usize| c.boards[id].variants[i].selector.memory.clone();
         let dims = |id: &str| -> Vec<usize> {
             c.boards[id]
                 .dimensions
@@ -1030,8 +1042,8 @@ mod tests {
         assert_eq!(memory_of("arty-a7-35t", 1), "ram");
         for (id, b) in &c.boards {
             let cs = &b.variants;
-            if cs.iter().any(|v| v.memory == "flash") {
-                assert_eq!(cs[0].memory, "flash", "{id}");
+            if cs.iter().any(|v| v.selector.memory == "flash") {
+                assert_eq!(cs[0].selector.memory, "flash", "{id}");
             }
         }
         // Where openFPGALoader can't tell the part (no --board), the flash
@@ -1041,7 +1053,7 @@ mod tests {
                 continue;
             }
             for v in &b.variants {
-                if v.memory == "flash" {
+                if v.selector.memory == "flash" {
                     assert!(
                         v.args.contains("--board ") || v.args.contains("--fpga-part "),
                         "{}",
@@ -1057,7 +1069,7 @@ mod tests {
         assert_eq!(with_choices.count(), 32);
         // Where the design goes follows from the command: openFPGALoader
         // writes RAM unless told to write flash (iCE40 always flash).
-        let memory = |id: &str| c.boards[id].variants[0].memory.clone();
+        let memory = |id: &str| c.boards[id].variants[0].selector.memory.clone();
         assert_eq!(memory("arty-a7-35t"), "flash");
         assert_eq!(memory("sipeed-tang-nano-9k"), "flash");
         assert_eq!(memory("sipeed-tang-nano"), "flash");
@@ -1069,14 +1081,14 @@ mod tests {
                 if v.programmer == "openfpgaloader"
                     && c.fpgas[&b.fpga_id].architecture != Architecture::Ice40
                 {
-                    assert_eq!(v.memory == "flash", flag, "{}", b.description);
+                    assert_eq!(v.selector.memory == "flash", flag, "{}", b.description);
                 }
             }
         }
         // An unspecified connection says why, for maintainers.
         for (id, b) in &c.boards {
             for v in &b.variants {
-                if v.connection == "unspecified" {
+                if v.selector.connection == "unspecified" {
                     assert!(v.maintainer_notes.is_some(), "{id}");
                 }
             }
@@ -1175,7 +1187,7 @@ mod tests {
                     .flatten()
                 {
                     for alt in top_level_alternatives(re) {
-                        assert!(alt.starts_with('^'), "{id} {}: {re:?}", v.id);
+                        assert!(alt.starts_with('^'), "{id} ({}): {re:?}", v.selector);
                     }
                 }
             }
@@ -1209,19 +1221,17 @@ mod tests {
         let mut b = ok.clone();
         first(&mut b).usb.release = Some("0700".into());
         assert!(b.validate().is_ok());
-        // A bad ID, the same ID twice, the same connection and memory twice.
-        let mut b = ok.clone();
-        first(&mut b).id = "USB Flash".into();
-        assert!(b.validate().is_err());
+        // The same selector twice, an unknown connection or memory value.
         let mut b = ok.clone();
         let mut twin = b.variants[0].clone();
-        b.variants.push(twin.clone());
-        assert!(b.validate().unwrap_err().contains("twice"));
-        twin.id = "other".into();
-        b.variants[1] = twin;
-        assert!(b.validate().unwrap_err().contains("same connection"));
-        let mut b = ok;
-        first(&mut b).connection = "serial".into();
+        twin.args = "--other".into();
+        b.variants.push(twin);
+        assert!(b.validate().unwrap_err().contains("same selector"));
+        let mut b = ok.clone();
+        first(&mut b).selector.connection = "serial".into();
         assert!(b.validate().unwrap_err().contains("unspecified"));
+        let mut b = ok;
+        first(&mut b).selector.memory = "eeprom".into();
+        assert!(b.validate().unwrap_err().contains("flash, ram"));
     }
 }

@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 
 use super::EngineTool;
 use crate::board::KnownBoard;
-use crate::catalog::{self, Dimension, FpgaDefinition, Variant};
+use crate::catalog::{self, Dimension, FpgaDefinition, Selector, Variant};
 use crate::errors::ToolError;
 use crate::state::EngineState;
 
@@ -117,14 +117,10 @@ pub struct CatalogBoard {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct CatalogVariant {
-    /// The variant's ID within its board, <connection>-<memory>, such as
-    /// usb-flash: what board_variant names in requests.
-    pub id: String,
-    /// How the computer reaches the board, a value of the connection
-    /// dimension.
-    pub connection: String,
-    /// Where the design goes, a value of the memory dimension.
-    pub memory: String,
+    /// The variant's value of each standard dimension, such as
+    /// {"connection": "usb", "memory": "flash"}: what board_variant gives in
+    /// requests to pick it. No two variants of a board have the same.
+    pub selector: Selector,
     /// The programmer the engine runs: openfpgaloader, iceprog, dfu-util or
     /// icesprog.
     pub programmer: String,
@@ -142,9 +138,7 @@ pub struct CatalogVariant {
 impl From<&Variant> for CatalogVariant {
     fn from(v: &Variant) -> Self {
         CatalogVariant {
-            id: v.id.clone(),
-            connection: v.connection.clone(),
-            memory: v.memory.clone(),
+            selector: v.selector.clone(),
             programmer: v.programmer.clone(),
             args: v.args.clone(),
             tested: v.tested,
@@ -258,7 +252,7 @@ mod tests {
             "description": "My board",
             "fpga": {"architecture": "ice40", "part_number": "X", "size": "1k",
                      "nextpnr_device": "hx1k", "nextpnr_package": "tq144"},
-            "variants": [{"id": "usb-flash", "connection": "usb", "memory": "flash",
+            "variants": [{"selector": {"connection": "usb", "memory": "flash"},
                 "programmer": "iceprog", "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
                 "usb": {"vid": "0403", "pid": "6010"}, "tested": false}]
         });
