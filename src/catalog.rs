@@ -1152,14 +1152,6 @@ mod tests {
                 }
             }
         }
-        // An unspecified connection says why, for maintainers.
-        for (id, b) in &c.boards {
-            for v in &b.variants {
-                if v.selector.connection == "unspecified" {
-                    assert!(v.maintainer_notes.is_some(), "{id}");
-                }
-            }
-        }
         // Labels and help come from the engine.
         let ft = &c.boards["butterstick-r10-2g-85k"].dimensions[0].values[2];
         assert_eq!(
@@ -1167,20 +1159,15 @@ mod tests {
             ("ft232h", "FT232H adapter")
         );
         assert!(ft.help.as_deref().unwrap().contains("JTAG pins"));
-        // Boards moved to another programmer are marked untested, with a note.
+        // Boards moved to another programmer are marked untested, with a note for users.
         for id in ["ulx3s-12f", "ulx3s-85f", "odt-icyblue-feather"] {
             for v in &c.boards[id].variants {
                 assert!(!v.tested, "{id}");
                 assert!(v.user_notes.is_some(), "{id}");
-                assert!(v.maintainer_notes.is_some(), "{id}");
             }
         }
-        // Every untested configuration says why, for maintainers.
-        for (id, b) in &c.boards {
-            for v in &b.variants {
-                assert!(v.tested || v.maintainer_notes.is_some(), "{id}");
-            }
-        }
+        // maintainer_notes are never required (the user's decision,
+        // 2026-11-07).
         // Maintainer notes stay in the catalog file.
         let json = serde_json::to_value(&c.boards["ulx3s-12f"]).unwrap();
         let first = &json["variants"][0];
