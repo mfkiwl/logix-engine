@@ -105,6 +105,10 @@ impl ProgressSink for McpNotifier {
 
 impl OutputSink for McpNotifier {
     fn line(&self, tool: &str, level: OutputLevel, text: &str) {
+        self.tool_line(tool, level, text, false);
+    }
+
+    fn tool_line(&self, tool: &str, level: OutputLevel, text: &str, redraw: bool) {
         let Some(id) = &self.output_for else { return };
         self.send(Note::Output(json!({
             "request_id": id,
@@ -112,6 +116,7 @@ impl OutputSink for McpNotifier {
             "kind": "output",
             "level": level,
             "text": text,
+            "redraw": redraw,
         })));
     }
 

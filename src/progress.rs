@@ -58,6 +58,13 @@ impl OutputLevel {
 pub trait OutputSink: Send + Sync {
     /// A line the tool printed.
     fn line(&self, tool: &str, level: OutputLevel, text: &str);
+    /// A line the tool printed, and whether it will print over it
+    /// (`redraw`: a carriage return ended it, as progress bars do). Sinks
+    /// that don't show redraws differently keep the default.
+    fn tool_line(&self, tool: &str, level: OutputLevel, text: &str, redraw: bool) {
+        let _ = redraw;
+        self.line(tool, level, text);
+    }
     /// The command line of a tool about to run, before its output.
     fn command(&self, _tool: &str, _text: &str) {}
     /// A line from the engine itself, such as how the board will be

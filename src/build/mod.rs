@@ -429,8 +429,9 @@ pub async fn run_watched(
     call.output.command(tool, &command_line(&program, args));
     call.commands
         .push(crate::commands::record(&program, args, cwd, bin_dir));
-    let on_line = |line: &str| {
-        call.output.line(tool, OutputLevel::of(line), line);
+    let on_line = |line: &str, redraw: bool| {
+        call.output
+            .tool_line(tool, OutputLevel::of(line), line, redraw);
         watch(line);
     };
     match run_tool_with(&program, args, cwd, bin_dir, stop, &on_line).await {

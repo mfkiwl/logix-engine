@@ -384,6 +384,7 @@ async fn build_streams_tool_output_when_asked() {
     assert_eq!(warning["tool"], "yosys");
     assert_eq!(warning["kind"], "output");
     assert_eq!(warning["level"], "warning");
+    assert_eq!(warning["redraw"], false, "yosys doesn't redraw its lines");
     // Each tool's block starts with its command line.
     let commands: Vec<&Value> = lines.iter().filter(|l| l["kind"] == "command").collect();
     let tools: Vec<&str> = commands

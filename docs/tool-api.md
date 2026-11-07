@@ -182,7 +182,7 @@ On success, a tool returns its output object as structured content. On failure, 
 
 ### Presentation
 
-The engine reports facts as plain data and leaves presentation to the host. It sends no colors or terminal codes, and strips them from tool output. It doesn't filter or rewrite tool output: tool lines reach the host as the tool printed them. Instead it labels what things are, such as diagnostics with a severity and progress phases with a message, so each host can style, filter and summarize them in its own way.
+The engine reports facts as plain data and leaves presentation to the host. It sends no colors or terminal codes, and strips them from tool output. It doesn't rewrite tool output: tool lines reach the host as the tool printed them, except that empty lines and lines of only spaces (such as a progress bar's eraser) are left out of the live output. Instead it labels what things are, such as diagnostics with a severity and progress phases with a message, so each host can style, filter and summarize them in its own way.
 
 ### Live tool output
 
@@ -197,6 +197,7 @@ A host that wants to show the tools' output as it happens, such as in a console,
 | `kind` | enum | `command` for the command line of a tool about to run, sent before its output, `output` for a line the tool printed, or `message` for a line from the engine itself, such as how `program_board` will program the board. Hosts should show unknown kinds like `output` |
 | `level` | enum | `error`, `warning` or `info`, from how the tool marks the line, so hosts can color it |
 | `text` | text | The line as the tool printed it, without terminal codes. A progress bar redrawn with carriage returns gives one line per redraw |
+| `redraw` | boolean | In `output` lines: true when the tool prints over this line (a carriage return ended it, as progress bars do), so a console may replace it with the tool's next line, as a terminal does. False otherwise |
 
 Lines that the engine reads into diagnostics still come in the tool result too. The live lines are for showing, not for parsing.
 
@@ -1122,7 +1123,7 @@ Logic that every frontend would need and that doesn't depend on a frontend's own
 ### Show progress and a console
 
 - Add a progress token to every long call. Show an overall bar from `progress / total`, the phase message as its label, and the phase's own percentage as `progress mod 100`. A phase without percentages shows a spinner.
-- For a console, add `"logix/output": true` to the call's `_meta` and append each `logix/output` line, styled by `kind` and `level`. Don't parse these lines; the result has the diagnostics.
+- For a console, add `"logix/output": true` to the call's `_meta` and append each `logix/output` line, styled by `kind` and `level`. Hold a line with `redraw` true and drop it when the same tool's next line arrives, so a progress bar stays on one line; show it if anything else comes first or the call ends. Don't parse these lines; the result has the diagnostics.
 - A "copy command" action can use each `commands` entry's `shell` line, so users can rerun a step or report a tool bug without the engine.
 - Cancel with an MCP cancel notification for the call's request ID.
 

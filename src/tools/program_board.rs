@@ -195,8 +195,9 @@ pub async fn run_with_programmers(
         .unwrap_or_default()
         .to_string_lossy()
         .to_string();
-    let on_line = |line: &str| {
-        call.output.line(&tool_name, OutputLevel::of(line), line);
+    let on_line = |line: &str, redraw: bool| {
+        call.output
+            .tool_line(&tool_name, OutputLevel::of(line), line, redraw);
         if custom.is_some() {
             return;
         }
@@ -293,9 +294,9 @@ async fn check_fpga(
         .command("openFPGALoader", &command_line(&exe, &args));
     call.commands
         .push(crate::commands::record(&exe, &args, folder, bin));
-    let on_line = |line: &str| {
+    let on_line = |line: &str, redraw: bool| {
         call.output
-            .line("openFPGALoader", OutputLevel::of(line), line)
+            .tool_line("openFPGALoader", OutputLevel::of(line), line, redraw)
     };
     let run = run_tool_with(&exe, &args, folder, bin, &call.cancel, &on_line).await;
     let r = match run {

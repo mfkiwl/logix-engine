@@ -996,6 +996,61 @@ async fn verbose_prints_more_but_gives_the_same_result() {
     assert_eq!(results[0].resources_usage, results[1].resources_usage);
 }
 
+/// A programmer's progress redrawn with carriage returns, as iceprog prints
+/// it: the live output marks each redraw, and leaves out the blank erasers.
+#[tokio::test]
+async fn live_output_marks_progress_redraws() {
+    use logix_engine::progress::{OutputLevel, OutputSink};
+    #[derive(Default)]
+    struct Lines(std::sync::Mutex<Vec<(String, bool)>>);
+    impl OutputSink for Lines {
+        fn line(&self, _tool: &str, _level: OutputLevel, _text: &str) {
+            unreachable!("tool lines come with their redraw flag");
+        }
+        fn tool_line(&self, _tool: &str, _level: OutputLevel, text: &str, redraw: bool) {
+            self.0.lock().unwrap().push((text.to_string(), redraw));
+        }
+    }
+    let state = engine().await;
+    let (tmp, src) = project();
+    let folder = src.join("_build");
+    build_it(&state, &src, json!({})).await.unwrap();
+    let script = tmp.path().join("fake-iceprog.sh");
+    std::fs::write(
+        &script,
+        "#!/bin/sh\nprintf 'programming..\\n                      \\raddr 0x000000   0%%\\r                      \\raddr 0x000100  50%%\\r                      \\rdone.\\n' >&2\n",
+    )
+    .unwrap();
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755)).unwrap();
+    }
+    let lines = Arc::new(Lines::default());
+    let mut c = Call::new(Arc::new(NoProgress), CancellationToken::new());
+    c.output = lines.clone();
+    program_board::run_with(
+        &state,
+        program_input(
+            &folder,
+            json!({"programmer_command": format!("{} ${{BITSTREAM}}", script.display()), "device": usb("Alhambra II", None, 9).id}),
+        ),
+        &c,
+        || Ok(vec![usb("Alhambra II", None, 9)]),
+    )
+    .await
+    .unwrap();
+    assert_eq!(
+        *lines.0.lock().unwrap(),
+        vec![
+            ("programming..".to_string(), false),
+            ("addr 0x000000   0%".to_string(), true),
+            ("addr 0x000100  50%".to_string(), true),
+            ("done.".to_string(), false),
+        ]
+    );
+}
+
 /// Before programming over JTAG, program_board reads the connected FPGA's ID
 /// code with openFPGALoader --detect, and refuses another FPGA before
 /// anything is written. Uses a fake openFPGALoader.
