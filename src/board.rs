@@ -19,21 +19,17 @@ use crate::errors::ToolError;
 /// catalog board's ID replaces that catalog board in the request.
 pub type CustomBoards = BTreeMap<String, CustomBoard>;
 
-/// One of the host's own boards, in the catalog's format. Like a catalog
-/// entry, except that the FPGA can be given either as fpga_id or as a full
-/// fpga definition.
+/// One of the host's own boards, in the catalog's format: its FPGA is one
+/// of the catalog's, which has every FPGA the toolchain supports, so a
+/// custom board adds a board and its programming, never an FPGA.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct CustomBoard {
     /// The board's name for people.
     pub description: String,
-    /// The board's FPGA as a catalog ID, such as ice40hx4k-tq144-8k. Give
-    /// either fpga_id or fpga.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub fpga_id: Option<String>,
-    /// The board's FPGA as a full definition. Give either fpga_id or fpga.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub fpga: Option<FpgaDefinition>,
+    /// The board's FPGA, as a catalog ID such as ice40hx4k-tq144-8k
+    /// (get_catalog lists them).
+    pub fpga_id: String,
     /// Ignored: the engine derives the dimensions from the variants. Here
     /// so a board copied from get_catalog can be sent back as is.
     #[serde(default, skip_serializing)]
@@ -55,8 +51,8 @@ pub struct KnownBoard<'a> {
     pub id: &'a str,
     pub custom: bool,
     pub description: &'a str,
-    /// The FPGA's catalog ID, when it is one.
-    pub fpga_id: Option<&'a str>,
+    /// The FPGA's catalog ID.
+    pub fpga_id: &'a str,
     /// The FPGA definition (from the catalog for a catalog ID).
     pub fpga: FpgaDefinition,
     pub variants: &'a [Variant],
@@ -64,15 +60,7 @@ pub struct KnownBoard<'a> {
 
 /// A custom board's FPGA: its catalog ID and definition.
 fn custom_fpga(b: &CustomBoard) -> Result<(Option<String>, FpgaDefinition), ToolError> {
-    match (&b.fpga_id, &b.fpga) {
-        (Some(id), None) => Ok((Some(id.clone()), fpga_by_id(id)?)),
-        (None, Some(f)) => {
-            f.validate()
-                .map_err(|e| ToolError::request(format!("invalid FPGA definition: {e}.")))?;
-            Ok((None, f.clone()))
-        }
-        _ => Err(ToolError::request("give exactly one of fpga_id and fpga.")),
-    }
+    Ok((Some(b.fpga_id.clone()), fpga_by_id(&b.fpga_id)?))
 }
 
 /// Every board a request knows, by ID: the catalog's, with the request's
@@ -91,7 +79,7 @@ pub fn known_boards(custom: &CustomBoards) -> BTreeMap<&str, KnownBoard<'_>> {
                     id,
                     custom: false,
                     description: &b.description,
-                    fpga_id: Some(&b.fpga_id),
+                    fpga_id: &b.fpga_id,
                     fpga: c.fpgas.get(&b.fpga_id)?.clone(),
                     variants: &b.variants,
                 },
@@ -108,7 +96,7 @@ pub fn known_boards(custom: &CustomBoards) -> BTreeMap<&str, KnownBoard<'_>> {
                 id,
                 custom: true,
                 description: &b.description,
-                fpga_id: b.fpga_id.as_deref(),
+                fpga_id: &b.fpga_id,
                 fpga,
                 variants: &b.variants,
             },
@@ -369,14 +357,16 @@ mod tests {
         let b = resolve("mine", &None, &boards([("mine", by_id.clone())])).unwrap();
         assert_eq!(b.fpga.nextpnr_device, "up5k");
         assert_eq!(b.board_id.as_deref(), Some("mine"));
-        let inline = custom(json!({"fpga": {
-            "architecture": "ice40", "part_number": "X", "size": "1k",
-            "nextpnr_device": "hx1k", "nextpnr_package": "tq144"
-        }}));
-        let list = boards([("mine", by_id), ("inline", inline)]);
-        let b2 = resolve("inline", &None, &list).unwrap();
-        assert_eq!(b2.fpga.package(), "tq144");
-        assert_eq!(b2.fpga_id, None);
+        assert_eq!(b.fpga_id.as_deref(), Some("ice40up5k-sg48"));
+        let list = boards([("mine", by_id)]);
+        // Only catalog FPGAs: a full FPGA definition isn't a field.
+        assert!(
+            serde_json::from_value::<CustomBoard>(json!({
+                "description": "X", "fpga_id": "ice40up5k-sg48", "variants": [],
+                "fpga": {"architecture": "ice40"}
+            }))
+            .is_err()
+        );
         // The list doesn't change catalog boards it doesn't name.
         assert_eq!(
             resolve("alhambra-ii", &None, &list).unwrap(),
@@ -419,8 +409,7 @@ mod tests {
         let b = &c.boards["icesugar-pro"];
         let same = CustomBoard {
             description: b.description.clone(),
-            fpga_id: Some(b.fpga_id.clone()),
-            fpga: None,
+            fpga_id: b.fpga_id.clone(),
             dimensions: Vec::new(),
             variants: b.variants.clone(),
         };

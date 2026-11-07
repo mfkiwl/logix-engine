@@ -610,10 +610,7 @@ async fn a_custom_board_works() {
     let (_tmp, src) = project();
     let mine = json!({
         "description": "My Alhambra II copy",
-        "fpga": {
-            "architecture": "ice40", "part_number": "ICE40HX4K-TQ144", "size": "8k",
-            "nextpnr_device": "hx8k", "nextpnr_package": "tq144:4k"
-        },
+        "fpga_id": "ice40hx4k-tq144-8k",
         "variants": [{
             "selector": {"connection": "usb", "memory": "flash"},
             "programmer": "iceprog", "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",

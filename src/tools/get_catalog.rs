@@ -100,14 +100,9 @@ pub struct CatalogBoard {
     /// The board's name for people, such as "Alhambra II".
     pub description: String,
     /// The board's FPGA, as a catalog ID of the fpgas section, such as
-    /// ice40hx4k-tq144-8k. Every variant uses it. Omitted for a custom
-    /// board whose FPGA isn't in the catalog: see fpga.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub fpga_id: Option<String>,
-    /// The board's FPGA definition, only for a custom board whose FPGA isn't
-    /// in the catalog.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub fpga: Option<FpgaDefinition>,
+    /// ice40hx4k-tq144-8k. Every variant uses it. Boards with the same
+    /// fpga_id have the same FPGA.
+    pub fpga_id: String,
     /// The standard dimensions, connection then memory, each with the values
     /// the board's variants use, with labels and help from the engine, for
     /// showing the choices.
@@ -164,8 +159,7 @@ impl From<&KnownBoard<'_>> for CatalogBoard {
     fn from(b: &KnownBoard<'_>) -> Self {
         CatalogBoard {
             description: b.description.to_string(),
-            fpga_id: b.fpga_id.map(String::from),
-            fpga: b.fpga_id.is_none().then(|| b.fpga.clone()),
+            fpga_id: b.fpga_id.to_string(),
             dimensions: catalog::derive_dimensions(b.variants),
             variants: b.variants.iter().map(Into::into).collect(),
             custom: b.custom,
@@ -263,8 +257,7 @@ mod tests {
         };
         let mine = json!({
             "description": "My board",
-            "fpga": {"architecture": "ice40", "part_number": "X", "size": "1k",
-                     "nextpnr_device": "hx1k", "nextpnr_package": "tq144"},
+            "fpga_id": "ice40hx1k-tq144",
             "variants": [{"selector": {"connection": "usb", "memory": "flash"},
                 "programmer": "iceprog", "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
                 "usb": {"vid": "0403", "pid": "6010"}, "tested": false}]
@@ -280,8 +273,7 @@ mod tests {
         .unwrap();
         let b = &out.boards["mine"];
         assert!(b.custom);
-        assert_eq!(b.fpga_id, None);
-        assert_eq!(b.fpga.as_ref().unwrap().part_number, "X");
+        assert_eq!(b.fpga_id, "ice40hx1k-tq144");
         assert_eq!(b.dimensions.len(), 2);
         // Replaces the catalog board with its ID.
         assert!(out.boards["alhambra-ii"].custom);

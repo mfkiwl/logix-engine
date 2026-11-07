@@ -149,8 +149,12 @@ impl Found {
 }
 
 /// The parser's problem, its place counted from `start`, where the text it
-/// read starts in the file.
+/// read starts in the file. A missing field is at the object it belongs in
+/// (`start`): the parser notices it only at the object's end.
 fn from_serde(e: &serde_json::Error, start: Position) -> Found {
+    if e.to_string().starts_with("missing field") {
+        return Found::at(Some(start), serde_message(e));
+    }
     let (line, column) = (e.line() as u32, e.column() as u32);
     let pos = match (line, column) {
         (0, _) | (_, 0) => Some(start),
@@ -331,29 +335,12 @@ fn board_problems(
         );
     }
     if let Some(b) = board {
-        match (&b.fpga_id, &b.fpga) {
-            (Some(f), None) => {
-                if !catalog::builtin().fpgas.contains_key(f) {
-                    add(
-                        At::Value(field("fpga_id")),
-                        format!(
-                            "{f:?} isn't an FPGA in the catalog. Use get_catalog to list them, or give a full fpga definition."
-                        ),
-                    );
-                }
-            }
-            (None, Some(f)) => {
-                if let Err(e) = f.validate() {
-                    add(
-                        At::Value(field("fpga")),
-                        format!("Invalid FPGA definition: {e}."),
-                    );
-                }
-            }
-            _ => add(
-                At::Key(base.clone()),
-                format!("Board {id:?}: give exactly one of fpga_id and fpga."),
-            ),
+        let f = &b.fpga_id;
+        if !catalog::builtin().fpgas.contains_key(f) {
+            add(
+                At::Value(field("fpga_id")),
+                format!("{f:?} isn't an FPGA in the catalog. Use get_catalog to list them."),
+            );
         }
     }
     if variant_count == Some(0) {
@@ -716,9 +703,16 @@ mod tests {
 
     #[test]
     fn missing_fpga_points_at_the_board() {
+        // At the board's object, where the field belongs, not at its end.
         let d = diags(&GOOD.replace("\"fpga_id\": \"ice40up5k-sg48\",", ""));
-        assert_eq!((d[0].0, d[0].1), (Some(2), Some(3)), "{d:?}");
-        assert!(d[0].2.contains("exactly one of fpga_id and fpga"), "{d:?}");
+        assert_eq!((d[0].0, d[0].1), (Some(2), Some(15)), "{d:?}");
+        assert_eq!(d[0].2, "Missing field `fpga_id`.");
+        // A full FPGA definition isn't a field: catalog FPGAs only.
+        let d = diags(&GOOD.replace(
+            "\"fpga_id\": \"ice40up5k-sg48\",",
+            "\"fpga_id\": \"ice40up5k-sg48\", \"fpga\": {},",
+        ));
+        assert_eq!(d[0].2, "Unknown field \"fpga\".");
     }
 
     #[test]
