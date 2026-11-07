@@ -1,6 +1,6 @@
 # Tool API
 
-The Logix Engine is an MCP server that offers FPGA tools: lint, test, simulate, format, graph, build, program a board, list devices and more. This document describes those tools for the people who use them:
+The Logix Engine is an MCP server that offers FPGA tools: lint, test, simulate, format, graph, build, program a board, list devices, compare boards and more. This document describes those tools for the people who use them:
 
 - **AI agent users.** An AI agent connected to the Logix Engine reads the tool names, descriptions and schemas itself and decides which tools to call. You mostly need the concepts: boards and board variants, folders, testbenches, and what results and errors mean.
 - **Application developers.** A hardcoded client, such as the Logix IDE, launches the Logix Engine, calls its tools with JSON arguments over MCP and reads the JSON results. You need the full reference: every input and output field, the errors, and the progress and live output notifications.
@@ -970,6 +970,55 @@ A board with a choice, such as the iCESugar-Pro, which can be programmed to flas
 
 **Trust and notes.** Each catalog variant has `tested`: true when its programming is known to work, because it was tried on the board or is used unchanged by a tool that people rely on; false when it hasn't been tried on hardware, such as a board moved to a different programmer. A change rated low risk after checking the programmer's source keeps `tested` true: every openFPGALoader command through an FTDI chip names the chosen device with `--busdev-num ${BUS}:${DEV}` (openFPGALoader's FTDI drivers then open that device), a change made without hardware tests. Optional `user_notes` give warnings and missing information for its users, such as a USB filter that also matches other boards, or a step needed before programming. The catalog file also keeps `maintainer_notes`, where each variant's settings come from and why they changed, which `get_catalog` doesn't return. A USB filter can't always tell one board model from another: boards that use the same USB chip and report the same names look alike to the engine. Hosts can show both fields where users pick a board.
 
+## compare_boards tool
+
+Compares two boards, such as a project's board and one it may move to. It returns facts, not advice: what they mean for a project is the host's decision. A host that keeps a project's sources as they are may warn about each difference; one that adapts projects may convert the pin file or regenerate FPGA-specific parts.
+
+It compares boards, not variants: a board's variants differ only in how it's programmed, so they never change the result.
+
+Every aspect is always listed, in a fixed order, each the same (`yes`), different (`no`) or `unknown`, when the catalog doesn't describe it yet, such as a board's pins: a list of only the differences couldn't tell an aspect that matches from one nobody checked. A host collects what it needs with a filter, such as the aspects whose `same` is `no`. As the catalog learns more about boards, such as their pins, LEDs or clocks, later versions add aspects or settle unknown ones, with the same shape: a host skips aspects it doesn't know, or shows their `text`.
+
+**Table 35.** compare_boards tool inputs
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| `from_board` | board ID | Yes | The first board, such as the project's board now |
+| `to_board` | board ID | Yes | The second board, such as the board the project may move to |
+| `custom_boards_file` | custom boards file | No | The host's own boards (see Board specification). Omitted means none |
+
+**Table 36.** compare_boards tool outputs
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `same_build` | boolean | True when a build for one board is valid for the other: their FPGAs have the same build settings (see What counts as the same board), so the same bitstream fits both |
+| `aspects` | list of objects | Every aspect, in this order, each with `aspect` (its name), `same` (`yes`, `no` or `unknown`), `from` and `to` (the two values, when known; any JSON type, given by the aspect) and `text` (the comparison for people, such as "FPGA: ICE40HX4K-TQ144 → ICE40UP5K-SG48."). The aspects, all with text values today: `board` (the boards' names), `architecture` (such as "Lattice iCE40"), `fpga` (the part number), `size` (such as "8k"), `constraint_format` (the pin file's extension, such as ".pcf"), and `pins` (`yes` for the same board, otherwise `unknown` for now, without values) |
+
+**Errors:** request errors for an unknown board or variant, or a custom boards file with problems. Engine errors.
+
+**Example**
+
+Input:
+
+```json
+{ "from_board": "alhambra-ii", "to_board": "icebreaker" }
+```
+
+Output:
+
+```json
+{
+  "same_build": false,
+  "aspects": [
+    {"aspect": "board", "same": "no", "from": "Alhambra II", "to": "iCEBreaker", "text": "Board: Alhambra II → iCEBreaker."},
+    {"aspect": "architecture", "same": "yes", "from": "Lattice iCE40", "to": "Lattice iCE40", "text": "Same architecture: Lattice iCE40."},
+    {"aspect": "fpga", "same": "no", "from": "ICE40HX4K-TQ144", "to": "ICE40UP5K-SG48", "text": "FPGA: ICE40HX4K-TQ144 → ICE40UP5K-SG48."},
+    {"aspect": "size", "same": "no", "from": "8k", "to": "5k", "text": "Size: 8k → 5k."},
+    {"aspect": "constraint_format", "same": "yes", "from": ".pcf", "to": ".pcf", "text": "Same pin file format: .pcf."},
+    {"aspect": "pins", "same": "unknown", "text": "Pins: not known whether they match (the catalog doesn't describe boards' pins yet)."}
+  ]
+}
+```
+
 ## get_engine_info tool
 
 Returns the Logix Engine's version, platform and package status. A host calls it when it starts, to check that the engine is new enough and to show what is installed. It is fast and local: it never uses the network and doesn't verify checksums.
@@ -1181,6 +1230,7 @@ Logic that every frontend would need and that doesn't depend on a frontend's own
 - Fill a board picker from `get_catalog` with `boards.fetch`, `fpgas.fetch` and `architectures.fetch` true: group boards by their FPGA's `architecture`, with the architecture's `label` and `order`, and use its `constraint_extension` for the board's pin file.
 - Show each board's `dimensions` labels and help as the board variant choices, and its `tested` and `user_notes` where the user picks.
 - A user's own boards are custom boards: keep them in a file in the project, such as `custom-boards.json`, so they work on every platform and anyone who opens the project gets them. Send its path as `custom_boards_file` with every request, whatever board is selected, and list its boards with the catalog's by sending it to `get_catalog`. The frontend needn't edit, parse or copy it: users edit it with any editor, the Logix Engine reads it, and a frontend only notices changes on disk, shows the problems the engine reports at line and column, and marks its boards where the user picks so they aren't mistaken for catalog boards.
+- When the user changes a project's board, call `compare_boards` with the old and new boards and decide from its aspects what the change means for your project model: warn about each difference, or adapt the project, such as converting the pin file when `constraint_format` differs. `same_build` tells whether an existing build still fits.
 
 ### Format an unsaved editor buffer
 

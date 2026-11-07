@@ -721,6 +721,117 @@
     }
   },
   {
+    "name": "compare_boards",
+    "description": "Compares two boards, such as a project's board and one it may move to. Returns every aspect (board, architecture, fpga, size, constraint_format, pins), each the same, different or unknown (the catalog doesn't describe it yet), with both values and a sentence for people, and same_build: whether a build for one board is valid for the other. Facts only: what they mean for a project, such as files to change, is the host's decision. Boards can be catalog boards or the request's custom_boards_file.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "description": "The two boards.",
+      "properties": {
+        "custom_boards_file": {
+          "default": null,
+          "description": "The host's own boards: the absolute path of a JSON file that maps\nboard IDs to definitions in the catalog's format. Either board can be\none of them; one with a catalog board's ID replaces that board in\nthis request. Omitted means none.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "from_board": {
+          "description": "The first board's ID, such as the project's board now.",
+          "type": "string"
+        },
+        "to_board": {
+          "description": "The second board's ID, such as the board the project may move to.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "from_board",
+        "to_board"
+      ],
+      "title": "CompareBoardsInput",
+      "type": "object"
+    },
+    "outputSchema": {
+      "$defs": {
+        "Aspect": {
+          "additionalProperties": false,
+          "description": "One aspect of the two boards.",
+          "properties": {
+            "aspect": {
+              "description": "What is compared: board, architecture, fpga, size, constraint_format\nor pins. Later versions add aspects; hosts skip those they don't\nknow, or show their text.",
+              "type": "string"
+            },
+            "from": {
+              "description": "The first board's value, when known. Its type depends on the aspect:\ntext for every aspect today; later aspects may give numbers, lists\nor objects."
+            },
+            "same": {
+              "$ref": "#/$defs/Same",
+              "description": "yes, no or unknown."
+            },
+            "text": {
+              "description": "The comparison for people, such as \"FPGA: ICE40HX4K-TQ144 →\nICE40UP5K-SG48.\".",
+              "type": "string"
+            },
+            "to": {
+              "description": "The second board's value, when known, of the same type."
+            }
+          },
+          "required": [
+            "aspect",
+            "same",
+            "text"
+          ],
+          "type": "object"
+        },
+        "Same": {
+          "description": "Whether an aspect is the same for both boards.",
+          "oneOf": [
+            {
+              "enum": [
+                "yes",
+                "no"
+              ],
+              "type": "string"
+            },
+            {
+              "const": "unknown",
+              "description": "The catalog doesn't describe it yet.",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "description": "The two boards compared.",
+      "properties": {
+        "aspects": {
+          "description": "Every aspect, in a fixed order: board, architecture, fpga, size,\nconstraint_format, pins.",
+          "items": {
+            "$ref": "#/$defs/Aspect"
+          },
+          "type": "array"
+        },
+        "same_build": {
+          "description": "True when a build for one board is valid for the other: their FPGAs\nhave the same build settings, so the same bitstream fits both.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "same_build",
+        "aspects"
+      ],
+      "title": "CompareBoardsOutput",
+      "type": "object"
+    },
+    "annotations": {
+      "readOnlyHint": true,
+      "destructiveHint": false,
+      "openWorldHint": false
+    }
+  },
+  {
     "name": "lint",
     "description": "Checks Verilog and SystemVerilog sources for errors and likely mistakes with Verilator, without building. It is much faster than build and finds problems synthesis accepts, such as width mismatches. List the design files and, optionally, the testbenches; the engine doesn't search for them. The board selects the FPGA's primitive models, so designs that use them lint cleanly. Problems found are the result, not an error: passed is false and diagnostics lists each problem at file and line, with Verilator's warning code at the end of the text, which a /* verilator lint_off CODE */ comment can silence. The first call may install the toolchain package first, which takes a few minutes. Writes nothing.",
     "inputSchema": {

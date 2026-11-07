@@ -4,6 +4,7 @@
 
 pub mod build;
 pub mod clean_build;
+pub mod compare_boards;
 pub mod format;
 pub mod get_catalog;
 pub mod get_engine_info;
@@ -118,6 +119,7 @@ pub fn all_definitions() -> Vec<Tool> {
         definition::<get_engine_info::GetEngineInfo>(),
         definition::<install_packages::InstallPackages>(),
         definition::<get_catalog::GetCatalog>(),
+        definition::<compare_boards::CompareBoards>(),
         definition::<lint::Lint>(),
         definition::<test::Test>(),
         definition::<simulate::Simulate>(),
@@ -194,6 +196,7 @@ pub async fn call(
 ) -> Option<CallToolResult> {
     use build::Build;
     use clean_build::CleanBuild;
+    use compare_boards::CompareBoards;
     use format::Format;
     use get_catalog::GetCatalog;
     use get_engine_info::GetEngineInfo;
@@ -235,6 +238,13 @@ pub async fn call(
             display,
             with_commands(
                 parse_input::<GetCatalog>(arguments).and_then(|i| get_catalog::run(state, i)),
+                call,
+            ),
+        ),
+        CompareBoards::NAME => to_call_result(
+            display,
+            with_commands(
+                parse_input::<CompareBoards>(arguments).and_then(compare_boards::run),
                 call,
             ),
         ),
