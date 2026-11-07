@@ -232,6 +232,17 @@ The engine guards every change it makes on disk, including creating, writing, re
 - **Forbidden locations.** The engine refuses to use the file system root, the user's home folder or the source folder itself as an engine folder or build folder. A build folder inside the source folder stays allowed, such as a `_build` folder.
 - **Refusal, not a guess.** If any check fails, the engine changes nothing and returns a request error that says which check failed.
 
+## File names in messages
+
+Messages point people at the file to fix, named the way they know it. The engine doesn't know how a host keeps a user's files: a host may hand the engine copies, such as unsaved editor text written to a scratch folder or an example a new project starts from, whose paths mean nothing to the user. So the host decides how files are named, and the engine applies it:
+
+- **The request says how to name paths.** Every tool that reports files takes optional display paths: files, each named as a whole, and folders, whose files keep their path below the folder under the folder's new name, which may be empty (names relative to the folder) or any text. File entries come before folder entries, and within each, the first that matches wins. Matching is by real location, not by spelling: different spellings of the same file or folder, such as through a symbolic link, match.
+- **Everywhere a person reads a path.** Diagnostics, error messages, testbench output, the live tool output and the diagram's labels.
+- **Never where a program needs the real path.** The rerunnable command lines in results and paths given as fields, such as a bitstream or a waveform, stay real.
+- **Default: as the request gave it.** A path that matches no entry, or any path when the request has none, is shown as the request gave it: source files relative to the source folder, the custom boards file as its absolute path. A path the request never gave, such as a toolchain file a tool mentions, is shown as the tool printed it.
+
+The engine stays general: it knows nothing of projects, examples or scratch copies, only the names the request gives. A host that hands the engine the user's own files needs no display paths.
+
 ## Concurrency requirements
 
 Ideally, a single engine instance will support simultaneous operations and multiple frontends at the same time. However, this may rule out some desired implementations, such as one based on stdin/stdout. For this reason, some of the concurrency requirements below are nice to have rather than hard requirements.

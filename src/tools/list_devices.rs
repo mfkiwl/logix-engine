@@ -41,6 +41,15 @@ pub struct ListDevicesInput {
     /// tool. Omitted means none.
     #[serde(default)]
     pub custom_boards_file: Option<String>,
+    /// How to name paths in what people read (diagnostics, messages,
+    /// testbench output, live tool output, diagram labels): files named as
+    /// a whole, then folders whose files keep their path below the folder
+    /// under the folder's new name ("" gives names relative to it); the
+    /// first match in each list wins. Paths are compared by real location.
+    /// Never applied to command lines or fields that are paths. Omitted
+    /// means paths read as the request gave them.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub display_paths: Option<crate::display_paths::DisplayPaths>,
     /// The build folder of a successful build, as an absolute path. When
     /// given, only devices that fit the build's board in its variant are
     /// listed (in devices and unreachable), each with build_match, best
@@ -69,7 +78,7 @@ pub fn run_with(
     input: ListDevicesInput,
     scan: impl FnOnce() -> Result<Vec<Device>, ToolError>,
 ) -> Result<ListDevicesOutput, ToolError> {
-    let custom = crate::custom_boards::load(input.custom_boards_file.as_deref(), None)?;
+    let custom = crate::custom_boards::load(input.custom_boards_file.as_deref())?;
     let known = crate::board::known_boards(&custom);
     let boards: Vec<Candidate> = known
         .values()

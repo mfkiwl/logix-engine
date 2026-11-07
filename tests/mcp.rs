@@ -320,6 +320,63 @@ impl ClientHandler for OutputClient {
 }
 
 #[tokio::test]
+async fn display_paths_name_files_in_errors() {
+    let tmp = tempfile::tempdir().unwrap();
+    let client = start(&tmp.path().join("engine"), &[]).await;
+    // A host's copy of the user's file, in its scratch folder.
+    let scratch = tmp.path().join("scratch");
+    std::fs::create_dir(&scratch).unwrap();
+    let file = scratch.join("custom-boards.json");
+    std::fs::write(&file, "{\n  \"b\": 1\n}\n").unwrap();
+    let error = |r: CallToolResult| {
+        assert_eq!(r.is_error, Some(true));
+        r.structured_content.unwrap()
+    };
+    // As the request gave it.
+    let e = error(call(&client, "get_catalog", json!({"custom_boards_file": file})).await);
+    assert_eq!(e["diagnostics"][0]["file"], json!(file));
+    assert!(
+        e["message"]
+            .as_str()
+            .unwrap()
+            .contains(&*file.to_string_lossy())
+    );
+    // As the host names it.
+    let e = error(
+        call(
+            &client,
+            "get_catalog",
+            json!({
+                "custom_boards_file": file,
+                "display_paths": {"files": [{"path": file, "as": "/home/you/blinky/custom-boards.json"}]}
+            }),
+        )
+        .await,
+    );
+    assert_eq!(
+        e["diagnostics"][0]["file"],
+        "/home/you/blinky/custom-boards.json"
+    );
+    assert!(
+        e["message"]
+            .as_str()
+            .unwrap()
+            .contains("/home/you/blinky/custom-boards.json:2:"),
+        "{e}"
+    );
+    // An entry that isn't absolute is a request error.
+    let e = error(
+        call(
+            &client,
+            "get_catalog",
+            json!({"display_paths": {"folders": [{"path": "rel", "as": ""}]}}),
+        )
+        .await,
+    );
+    assert_eq!(e["category"], "request");
+}
+
+#[tokio::test]
 async fn build_streams_tool_output_when_asked() {
     // The toolchain from the build tests' shared engine folder.
     let engine = std::path::Path::new(env!("CARGO_TARGET_TMPDIR")).join("test-engine");

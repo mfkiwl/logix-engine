@@ -16,9 +16,9 @@ use crate::json_pos::{Position, PositionIndex, segment};
 /// The custom boards of a request: none without a file, else the file's
 /// boards when it has no problems. A file that can't be read, isn't valid
 /// JSON or has an invalid board is a request error whose diagnostics name
-/// each problem. Diagnostics name the file relative to `source_folder` when
-/// it's inside it, else as the request gave it.
-pub fn load(file: Option<&str>, source_folder: Option<&Path>) -> Result<CustomBoards, ToolError> {
+/// each problem. Diagnostics name the file as the request gave it (a
+/// request's display paths may rename it, docs/tool-api.md).
+pub fn load(file: Option<&str>) -> Result<CustomBoards, ToolError> {
     let Some(given) = file else {
         return Ok(CustomBoards::new());
     };
@@ -32,15 +32,7 @@ pub fn load(file: Option<&str>, source_folder: Option<&Path>) -> Result<CustomBo
         .map_err(|e| ToolError::request(format!("custom_boards_file: can't read {given}: {e}.")))?;
     let text = std::fs::read_to_string(&real)
         .map_err(|e| ToolError::request(format!("custom_boards_file: can't read {given}: {e}.")))?;
-    let name = source_folder
-        .and_then(|src| {
-            let src = crate::paths::resolve(src).ok()?;
-            real.strip_prefix(&src)
-                .ok()
-                .map(|r| r.to_string_lossy().replace('\\', "/"))
-        })
-        .unwrap_or_else(|| given.to_string());
-    let result = parse(&text, &name);
+    let result = parse(&text, given);
     log::info!("{}", log_line(given, &text, &result));
     result
 }
@@ -730,30 +722,28 @@ mod tests {
     }
 
     #[test]
-    fn files_are_read_by_absolute_path_and_named_from_the_source_folder() {
+    fn files_are_read_by_absolute_path_and_named_as_given() {
         let tmp = tempfile::tempdir().unwrap();
         let src = tmp.path().join("proj");
         std::fs::create_dir(&src).unwrap();
         let file = src.join("custom-boards.json");
         std::fs::write(&file, GOOD.replace("\"0403\"", "\"x\"")).unwrap();
         let given = file.to_string_lossy().into_owned();
-        let e = load(Some(&given), Some(&src)).unwrap_err();
-        assert_eq!(e.diagnostics[0].file.as_deref(), Some("custom-boards.json"));
-        let e = load(Some(&given), None).unwrap_err();
+        let e = load(Some(&given)).unwrap_err();
         assert_eq!(e.diagnostics[0].file.as_deref(), Some(given.as_str()));
         assert!(
-            load(Some("custom-boards.json"), None)
+            load(Some("custom-boards.json"))
                 .unwrap_err()
                 .message
                 .contains("absolute")
         );
         let missing = tmp.path().join("none.json").to_string_lossy().into_owned();
         assert!(
-            load(Some(&missing), None)
+            load(Some(&missing))
                 .unwrap_err()
                 .message
                 .contains("can't read")
         );
-        assert!(load(None, None).unwrap().is_empty());
+        assert!(load(None).unwrap().is_empty());
     }
 }

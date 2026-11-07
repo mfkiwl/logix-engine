@@ -51,6 +51,15 @@ pub struct GetCatalogInput {
     /// tool. Omitted means none.
     #[serde(default)]
     pub custom_boards_file: Option<String>,
+    /// How to name paths in what people read (diagnostics, messages,
+    /// testbench output, live tool output, diagram labels): files named as
+    /// a whole, then folders whose files keep their path below the folder
+    /// under the folder's new name ("" gives names relative to it); the
+    /// first match in each list wins. Paths are compared by real location.
+    /// Never applied to command lines or fields that are paths. Omitted
+    /// means paths read as the request gave them.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub display_paths: Option<crate::display_paths::DisplayPaths>,
 }
 
 /// An FPGA architecture (family), as FPGA definitions name it.
@@ -205,7 +214,7 @@ pub fn run(_state: &EngineState, input: GetCatalogInput) -> Result<GetCatalogOut
 }
 
 fn answer(input: GetCatalogInput) -> Result<GetCatalogOutput, ToolError> {
-    let custom = crate::custom_boards::load(input.custom_boards_file.as_deref(), None)?;
+    let custom = crate::custom_boards::load(input.custom_boards_file.as_deref())?;
     let known: BTreeMap<String, CatalogBoard> = crate::board::known_boards(&custom)
         .iter()
         .map(|(id, b)| (id.to_string(), b.into()))

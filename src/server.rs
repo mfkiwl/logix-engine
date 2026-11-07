@@ -98,12 +98,14 @@ impl ServerHandler for EngineServer {
         });
         let call = match &notifier {
             Some(n) => tools::Call {
+                display: Default::default(),
                 progress: n.clone(),
                 output: n.clone(),
                 cancel: context.ct.clone(),
                 commands: Default::default(),
             },
             None => tools::Call {
+                display: Default::default(),
                 progress: Arc::new(NoProgress),
                 output: Arc::new(NoOutput),
                 cancel: context.ct.clone(),

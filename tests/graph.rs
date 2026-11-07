@@ -123,6 +123,37 @@ async fn graph_draws_the_design_as_svg() {
     assert!(src.join("_build/graph.svg").is_file());
 }
 
+/// The diagram's text: the SVG through the engine's tool dispatcher, which
+/// applies the request's display paths.
+async fn labels(state: &EngineState, args: Value, src: &Path) -> String {
+    let result = logix_engine::tools::call(state, "graph", args.as_object().cloned(), &call())
+        .await
+        .unwrap();
+    assert_ne!(result.is_error, Some(true), "{result:?}");
+    std::fs::read_to_string(src.join("_build/graph.svg")).unwrap()
+}
+
+#[tokio::test]
+async fn graph_labels_name_files_as_the_request_says() {
+    let state = engine().await;
+    let (_tmp, src) = design("blinky", "my proj");
+    let mut args = json!({
+        "top_module": "main",
+        "source_folder": src,
+        "source_files": ["main.v"],
+        "build_folder": src.join("_build"),
+    });
+    let full = src.join("main.v").display().to_string();
+    // As the request gave it: relative to the source folder.
+    let svg = labels(&state, args.clone(), &src).await;
+    assert!(svg.contains("main.v:"), "{svg}");
+    assert!(!svg.contains(&full), "{svg}");
+    // As display_paths names it.
+    args["display_paths"] = json!({"folders": [{"path": src, "as": "PROJECT"}]});
+    let svg = labels(&state, args, &src).await;
+    assert!(svg.contains("PROJECT/main.v:"), "{svg}");
+}
+
 #[tokio::test]
 async fn graph_writes_png_and_pdf_and_draws_any_module() {
     let state = engine().await;

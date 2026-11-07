@@ -65,6 +65,15 @@ pub struct SimulateInput {
     /// tool. Omitted means none.
     #[serde(default)]
     pub custom_boards_file: Option<String>,
+    /// How to name paths in what people read (diagnostics, messages,
+    /// testbench output, live tool output, diagram labels): files named as
+    /// a whole, then folders whose files keep their path below the folder
+    /// under the folder's new name ("" gives names relative to it); the
+    /// first match in each list wins. Paths are compared by real location.
+    /// Never applied to command lines or fields that are paths. Omitted
+    /// means paths read as the request gave them.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub display_paths: Option<crate::display_paths::DisplayPaths>,
     /// The folder with the design files, as an absolute path. The testbench
     /// runs in it, so it reads data files, such as with $readmemh, relative
     /// to it.

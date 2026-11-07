@@ -37,6 +37,10 @@ pub struct Call {
     pub cancel: CancellationToken,
     /// The programs the call ran, for the result's commands list.
     pub commands: Arc<crate::commands::CommandLog>,
+    /// How the request names paths for people (`display_paths`). The live
+    /// output and the result are named by it already; a tool uses it only
+    /// for text it writes elsewhere, such as the diagram's labels.
+    pub display: Arc<crate::display_paths::Display>,
 }
 
 impl Call {
@@ -47,6 +51,7 @@ impl Call {
             output: Arc::new(crate::progress::NoOutput),
             cancel,
             commands: Default::default(),
+            display: Default::default(),
         }
     }
 }
@@ -134,9 +139,13 @@ pub fn parse_input<T: EngineTool>(arguments: Option<JsonObject>) -> Result<T::In
 }
 
 /// Turns a tool's result into an MCP tool result: the output or the error
-/// object as structured content, with the error flag set for errors.
-pub fn to_call_result<O: Serialize>(result: Result<O, ToolError>) -> CallToolResult {
-    let (value, is_error) = match result {
+/// object as structured content, with the error flag set for errors, and
+/// paths named as the request's display paths say.
+pub fn to_call_result<O: Serialize>(
+    display: &crate::display_paths::Display,
+    result: Result<O, ToolError>,
+) -> CallToolResult {
+    let (mut value, is_error) = match result {
         Ok(output) => match serde_json::to_value(output) {
             Ok(v) => (v, false),
             Err(e) => (
@@ -148,6 +157,7 @@ pub fn to_call_result<O: Serialize>(result: Result<O, ToolError>) -> CallToolRes
         },
         Err(err) => (to_value(&err), true),
     };
+    display.json(&mut value);
     if is_error {
         log::info!("Tool error: {value}");
         CallToolResult::structured_error(value)
@@ -194,79 +204,134 @@ pub async fn call(
     use program_board::ProgramBoard;
     use simulate::Simulate;
     use test::Test;
+    // Paths named as the request says: in the live output now, in the
+    // result below.
+    let display = match crate::display_paths::Display::from_arguments(arguments.as_ref()) {
+        Ok(d) => Arc::new(d),
+        Err(e) => return Some(to_call_result::<()>(&Default::default(), Err(e))),
+    };
+    let named = Call {
+        progress: call.progress.clone(),
+        output: Arc::new(crate::display_paths::DisplayOutput {
+            inner: call.output.clone(),
+            display: display.clone(),
+        }),
+        cancel: call.cancel.clone(),
+        commands: call.commands.clone(),
+        display: display.clone(),
+    };
+    let call = &named;
+    let display = &*display;
     let result = match name {
-        GetEngineInfo::NAME => to_call_result(with_commands(
-            parse_input::<GetEngineInfo>(arguments).and_then(|i| get_engine_info::run(state, i)),
-            call,
-        )),
-        GetCatalog::NAME => to_call_result(with_commands(
-            parse_input::<GetCatalog>(arguments).and_then(|i| get_catalog::run(state, i)),
-            call,
-        )),
-        Build::NAME => to_call_result(with_commands(
-            match parse_input::<Build>(arguments) {
-                Ok(input) => build::run(state, input, call).await,
-                Err(e) => Err(e),
-            },
-            call,
-        )),
-        Lint::NAME => to_call_result(with_commands(
-            match parse_input::<Lint>(arguments) {
-                Ok(input) => lint::run(state, input, call).await,
-                Err(e) => Err(e),
-            },
-            call,
-        )),
-        Test::NAME => to_call_result(with_commands(
-            match parse_input::<Test>(arguments) {
-                Ok(input) => test::run(state, input, call).await,
-                Err(e) => Err(e),
-            },
-            call,
-        )),
-        Simulate::NAME => to_call_result(with_commands(
-            match parse_input::<Simulate>(arguments) {
-                Ok(input) => simulate::run(state, input, call).await,
-                Err(e) => Err(e),
-            },
-            call,
-        )),
-        Format::NAME => to_call_result(with_commands(
-            match parse_input::<Format>(arguments) {
-                Ok(input) => format::run(state, input, call).await,
-                Err(e) => Err(e),
-            },
-            call,
-        )),
-        Graph::NAME => to_call_result(with_commands(
-            match parse_input::<Graph>(arguments) {
-                Ok(input) => graph::run(state, input, call).await,
-                Err(e) => Err(e),
-            },
-            call,
-        )),
-        CleanBuild::NAME => to_call_result(with_commands(
-            parse_input::<CleanBuild>(arguments).and_then(|i| clean_build::run(state, i)),
-            call,
-        )),
-        ListDevices::NAME => to_call_result(with_commands(
-            parse_input::<ListDevices>(arguments).and_then(|i| list_devices::run(state, i)),
-            call,
-        )),
-        ProgramBoard::NAME => to_call_result(with_commands(
-            match parse_input::<ProgramBoard>(arguments) {
-                Ok(input) => program_board::run(state, input, call).await,
-                Err(e) => Err(e),
-            },
-            call,
-        )),
-        InstallPackages::NAME => to_call_result(with_commands(
-            match parse_input::<InstallPackages>(arguments) {
-                Ok(input) => install_packages::run(state, input, call).await,
-                Err(e) => Err(e),
-            },
-            call,
-        )),
+        GetEngineInfo::NAME => to_call_result(
+            display,
+            with_commands(
+                parse_input::<GetEngineInfo>(arguments)
+                    .and_then(|i| get_engine_info::run(state, i)),
+                call,
+            ),
+        ),
+        GetCatalog::NAME => to_call_result(
+            display,
+            with_commands(
+                parse_input::<GetCatalog>(arguments).and_then(|i| get_catalog::run(state, i)),
+                call,
+            ),
+        ),
+        Build::NAME => to_call_result(
+            display,
+            with_commands(
+                match parse_input::<Build>(arguments) {
+                    Ok(input) => build::run(state, input, call).await,
+                    Err(e) => Err(e),
+                },
+                call,
+            ),
+        ),
+        Lint::NAME => to_call_result(
+            display,
+            with_commands(
+                match parse_input::<Lint>(arguments) {
+                    Ok(input) => lint::run(state, input, call).await,
+                    Err(e) => Err(e),
+                },
+                call,
+            ),
+        ),
+        Test::NAME => to_call_result(
+            display,
+            with_commands(
+                match parse_input::<Test>(arguments) {
+                    Ok(input) => test::run(state, input, call).await,
+                    Err(e) => Err(e),
+                },
+                call,
+            ),
+        ),
+        Simulate::NAME => to_call_result(
+            display,
+            with_commands(
+                match parse_input::<Simulate>(arguments) {
+                    Ok(input) => simulate::run(state, input, call).await,
+                    Err(e) => Err(e),
+                },
+                call,
+            ),
+        ),
+        Format::NAME => to_call_result(
+            display,
+            with_commands(
+                match parse_input::<Format>(arguments) {
+                    Ok(input) => format::run(state, input, call).await,
+                    Err(e) => Err(e),
+                },
+                call,
+            ),
+        ),
+        Graph::NAME => to_call_result(
+            display,
+            with_commands(
+                match parse_input::<Graph>(arguments) {
+                    Ok(input) => graph::run(state, input, call).await,
+                    Err(e) => Err(e),
+                },
+                call,
+            ),
+        ),
+        CleanBuild::NAME => to_call_result(
+            display,
+            with_commands(
+                parse_input::<CleanBuild>(arguments).and_then(|i| clean_build::run(state, i)),
+                call,
+            ),
+        ),
+        ListDevices::NAME => to_call_result(
+            display,
+            with_commands(
+                parse_input::<ListDevices>(arguments).and_then(|i| list_devices::run(state, i)),
+                call,
+            ),
+        ),
+        ProgramBoard::NAME => to_call_result(
+            display,
+            with_commands(
+                match parse_input::<ProgramBoard>(arguments) {
+                    Ok(input) => program_board::run(state, input, call).await,
+                    Err(e) => Err(e),
+                },
+                call,
+            ),
+        ),
+        InstallPackages::NAME => to_call_result(
+            display,
+            with_commands(
+                match parse_input::<InstallPackages>(arguments) {
+                    Ok(input) => install_packages::run(state, input, call).await,
+                    Err(e) => Err(e),
+                },
+                call,
+            ),
+        ),
         _ => return None,
     };
     Some(result)

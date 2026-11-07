@@ -55,6 +55,15 @@ pub struct BuildInput {
     /// tool. Omitted means none.
     #[serde(default)]
     pub custom_boards_file: Option<String>,
+    /// How to name paths in what people read (diagnostics, messages,
+    /// testbench output, live tool output, diagram labels): files named as
+    /// a whole, then folders whose files keep their path below the folder
+    /// under the folder's new name ("" gives names relative to it); the
+    /// first match in each list wins. Paths are compared by real location.
+    /// Never applied to command lines or fields that are paths. Omitted
+    /// means paths read as the request gave them.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub display_paths: Option<crate::display_paths::DisplayPaths>,
     /// Name of the top-level module, such as main.
     pub top_module: String,
     /// The folder with the design files, as an absolute path.
@@ -217,7 +226,7 @@ pub fn check(input: BuildInput) -> Result<BuildRequest, ToolError> {
     check_top_module(&input.top_module)?;
     check_defines(&input.defines)?;
     let src = check_source_folder(&input.source_folder)?;
-    let custom = crate::custom_boards::load(input.custom_boards_file.as_deref(), Some(&src))?;
+    let custom = crate::custom_boards::load(input.custom_boards_file.as_deref())?;
     let board = board::resolve(&input.board, &input.board_variant, &custom)?;
     if input.source_files.is_empty() {
         return Err(ToolError::request("source_files is empty."));

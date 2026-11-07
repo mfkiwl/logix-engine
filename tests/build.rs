@@ -643,10 +643,11 @@ async fn a_custom_board_works() {
     .await
     .unwrap_err();
     assert_eq!(err.category, Category::Request);
+    // As the request gave it, even inside the source folder.
     let d = &err.diagnostics[0];
     assert_eq!(
         (d.file.as_deref(), d.line, d.column),
-        (Some("custom-boards.json"), Some(4), Some(3)),
+        (Some(file.as_str()), Some(4), Some(3)),
         "{d:?}"
     );
 }

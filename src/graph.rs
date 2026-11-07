@@ -195,6 +195,16 @@ pub async fn graph_with(
     }
     let src = req.source_folder.to_string_lossy();
     let diagnostics = parse_yosys(&run.output, &src).warnings;
+    // The labels name each process's file and line: yosys was given
+    // absolute paths, so name them as the request says (source files
+    // relative to the source folder unless display_paths says otherwise).
+    let dot = out.join(format!("{STEM}.dot"));
+    if let Ok(text) = std::fs::read_to_string(&dot) {
+        let named = call.display.text(&text);
+        if named != text {
+            std::fs::write(&dot, named).map_err(|e| io("write the graph", e))?;
+        }
+    }
 
     phases.start("Drawing the graph");
     let run = run_logged("graph", "dot", bin, &dot_args(req.format), out, call).await?;

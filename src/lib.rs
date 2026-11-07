@@ -11,6 +11,7 @@ pub mod catalog;
 pub mod commands;
 pub mod custom_boards;
 pub mod devices;
+pub mod display_paths;
 pub mod errors;
 pub mod format;
 pub mod graph;
