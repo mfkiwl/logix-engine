@@ -130,12 +130,14 @@ pub fn run_with(
             }
         });
         if d.reachable {
+            d.likely_boards = devices::likely_boards(&matches);
             d.boards = matches;
             d.build_match = build_match;
             out.devices.push(d);
         } else if !matches.is_empty() || build_match.is_some() {
             out.unreachable.push(UnreachableDevice {
                 kind: d.kind,
+                label: devices::label(None, None, &d.vid, &d.pid),
                 vid: d.vid,
                 pid: d.pid,
                 bus: d.bus,
@@ -216,6 +218,36 @@ mod tests {
         assert_eq!(butterstick.variants[0].level, MatchLevel::Weak);
         assert!(out.devices[2].boards.is_empty());
         assert!(out.unreachable.is_empty());
+        // Labels for people, and the boards each device most likely is:
+        // the strongest, never only weak ones.
+        assert_eq!(
+            out.devices[0].label,
+            "OrangeCrab r0.2 DFU bootloader (1209:5af0)"
+        );
+        assert_eq!(
+            out.devices[0].likely_boards,
+            ["orangecrab-r02-25f", "orangecrab-r02-85f"]
+        );
+        // An FT232H with its default name: several boards use one, so they
+        // are possible matches, and likely; the boards matching only its
+        // USB IDs (weak) aren't.
+        assert_eq!(
+            out.devices[1].likely_boards,
+            [
+                "arice1",
+                "fpga101",
+                "upduino",
+                "upduino2",
+                "upduino21",
+                "vsdsquadron-fm"
+            ]
+        );
+        assert!(
+            !out.devices[1]
+                .likely_boards
+                .contains(&"butterstick-r10-2g-85k".to_string())
+        );
+        assert!(out.devices[2].likely_boards.is_empty());
     }
 
     #[test]

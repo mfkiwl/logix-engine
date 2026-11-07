@@ -3137,6 +3137,17 @@
               "$ref": "#/$defs/DeviceKind",
               "description": "The kind of device: usb."
             },
+            "label": {
+              "description": "The device for people: its product name (else its manufacturer's\nname, else \"USB device\"), then its manufacturer and USB IDs, such\nas \"Alhambra II v1.0A (AlhambraBits, 0403:6010)\".",
+              "type": "string"
+            },
+            "likely_boards": {
+              "description": "The boards this device most likely is, best first: those of boards\nat its strongest match level, unless that is weak (many boards fit,\nso none is likely). Empty when no board is likely.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
             "manufacturer": {
               "description": "The manufacturer name the device reports, when available.",
               "type": [
@@ -3170,6 +3181,7 @@
           "required": [
             "id",
             "kind",
+            "label",
             "vid",
             "pid",
             "bus",
@@ -3267,6 +3279,10 @@
               "$ref": "#/$defs/DeviceKind",
               "description": "The kind of device: usb."
             },
+            "label": {
+              "description": "The device for people, such as \"USB device (0403:6010)\": its names\ncan't be read.",
+              "type": "string"
+            },
             "pid": {
               "description": "USB product ID, four lowercase hex digits.",
               "type": "string"
@@ -3278,6 +3294,7 @@
           },
           "required": [
             "kind",
+            "label",
             "vid",
             "pid",
             "bus",
@@ -3547,6 +3564,17 @@
               "$ref": "#/$defs/DeviceKind",
               "description": "The kind of device: usb."
             },
+            "label": {
+              "description": "The device for people: its product name (else its manufacturer's\nname, else \"USB device\"), then its manufacturer and USB IDs, such\nas \"Alhambra II v1.0A (AlhambraBits, 0403:6010)\".",
+              "type": "string"
+            },
+            "likely_boards": {
+              "description": "The boards this device most likely is, best first: those of boards\nat its strongest match level, unless that is weak (many boards fit,\nso none is likely). Empty when no board is likely.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
             "manufacturer": {
               "description": "The manufacturer name the device reports, when available.",
               "type": [
@@ -3580,6 +3608,7 @@
           "required": [
             "id",
             "kind",
+            "label",
             "vid",
             "pid",
             "bus",

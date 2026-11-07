@@ -848,7 +848,7 @@ Hosts show the level, in their own words, and compare levels (weak < possible < 
 | Field | Type | Description |
 | --- | --- | --- |
 | `devices` | list of devices | The connected devices the engine can open. See device fields in Table 13 |
-| `unreachable` | list of objects | Optional. Devices that can't be opened and whose USB IDs fit a board: `kind`, `vid`, `pid`, `bus`, `device`, `boards` (as in Table 13), `action`, the fix (see Table 5), and `build_match` with `build_folder` |
+| `unreachable` | list of objects | Optional. Devices that can't be opened and whose USB IDs fit a board: `kind`, `label` (such as "USB device (0403:6010)", since its names can't be read), `vid`, `pid`, `bus`, `device`, `boards` (as in Table 13), `action`, the fix (see Table 5), and `build_match` with `build_folder` |
 
 **Table 13.** Device fields
 
@@ -856,12 +856,14 @@ Hosts show the level, in their own words, and compare levels (weak < possible < 
 | --- | --- | --- |
 | `id` | text | The device's ID, for `program_board`'s `device`. Opaque and short-lived |
 | `kind` | enum | Always `usb` for now. Other kinds may be added later |
+| `label` | text | The device for people: its product name (else its manufacturer's name, else "USB device"), then its manufacturer and USB IDs, such as "Alhambra II v1.0A (AlhambraBits, 0403:6010)" |
 | `vid`, `pid` | USB ID | USB vendor and product IDs |
 | `manufacturer`, `product` | text | Names reported by the device, when available |
 | `serial_number` | text | Serial number, when available |
 | `bus`, `device` | integer | USB bus and device number, for USB devices. The device number changes when the device is plugged in again |
 | `build_match` | enum | Only with `build_folder`. How well the device matches the build's board in the build's board variant: `strong`, `possible` or `weak`, as for `boards` (`weak` for an unreachable device) |
 | `boards` | list of objects | Optional, omitted when empty. The boards the device may be, best first, each with `board` (its ID), `custom` (true for a board from the custom boards file, omitted otherwise) and `variants` (the board's variants this device fits, in the board's order, each with its `selector` and its own `match` level) |
+| `likely_boards` | list of board IDs | Optional, omitted when empty. The boards the device most likely is, best first: those at its strongest match level, unless that is `weak` (many boards fit, so none is likely). Use it to name what a device probably is; `boards` has every candidate |
 
 **Errors:** setup errors with `install_drivers` or `fix_device_permissions` when devices cannot be scanned. Request errors for an invalid custom board, or a build folder without a build record from a successful build. Engine errors.
 

@@ -25,6 +25,10 @@ pub struct Device {
     pub id: String,
     /// The kind of device: usb.
     pub kind: DeviceKind,
+    /// The device for people: its product name (else its manufacturer's
+    /// name, else "USB device"), then its manufacturer and USB IDs, such
+    /// as "Alhambra II v1.0A (AlhambraBits, 0403:6010)".
+    pub label: String,
     /// USB vendor ID, four lowercase hex digits.
     pub vid: String,
     /// USB product ID, four lowercase hex digits.
@@ -52,6 +56,11 @@ pub struct Device {
     /// for a device that is no known board.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub boards: Vec<BoardMatch>,
+    /// The boards this device most likely is, best first: those of boards
+    /// at its strongest match level, unless that is weak (many boards fit,
+    /// so none is likely). Empty when no board is likely.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub likely_boards: Vec<String>,
     /// How well the device matches the given build's board in the build's
     /// variant: strong, possible or weak, as in boards. Present only when
     /// list_devices was given a build_folder.
@@ -192,6 +201,9 @@ pub fn match_level(device: &Device, filter: &UsbFilter) -> MatchLevel {
 pub struct UnreachableDevice {
     /// The kind of device: usb.
     pub kind: DeviceKind,
+    /// The device for people, such as "USB device (0403:6010)": its names
+    /// can't be read.
+    pub label: String,
     /// USB vendor ID, four lowercase hex digits.
     pub vid: String,
     /// USB product ID, four lowercase hex digits.
@@ -306,6 +318,7 @@ impl Device {
         Device {
             id,
             kind: DeviceKind::Usb,
+            label: label(manufacturer.as_deref(), product.as_deref(), &vid, &pid),
             vid,
             pid,
             manufacturer,
@@ -315,11 +328,46 @@ impl Device {
             bus,
             device,
             boards: Vec::new(),
+            likely_boards: Vec::new(),
             build_match: None,
             location,
             reachable,
         }
     }
+}
+
+/// A device for people: its product name, else its manufacturer's, else
+/// "USB device", then its manufacturer (when not already the name) and USB
+/// IDs, such as "Alhambra II v1.0A (AlhambraBits, 0403:6010)".
+pub fn label(manufacturer: Option<&str>, product: Option<&str>, vid: &str, pid: &str) -> String {
+    fn nonempty(s: Option<&str>) -> Option<&str> {
+        s.map(str::trim).filter(|s| !s.is_empty())
+    }
+    let (manufacturer, product) = (nonempty(manufacturer), nonempty(product));
+    let name = product.or(manufacturer).unwrap_or("USB device");
+    let mut details: Vec<String> = Vec::new();
+    if let Some(m) = manufacturer.filter(|m| Some(*m) != Some(name)) {
+        details.push(m.to_string());
+    }
+    details.push(format!("{vid}:{pid}"));
+    format!("{name} ({})", details.join(", "))
+}
+
+/// The boards a device most likely is, from its matches (best first):
+/// those at its strongest level, unless that is weak, since weak matches
+/// fit many boards.
+pub fn likely_boards(matches: &[BoardMatch]) -> Vec<String> {
+    let Some(best) = matches.iter().map(BoardMatch::best_level).max() else {
+        return Vec::new();
+    };
+    if best == MatchLevel::Weak {
+        return Vec::new();
+    }
+    matches
+        .iter()
+        .filter(|m| m.best_level() == best)
+        .map(|m| m.board.clone())
+        .collect()
 }
 
 /// Whether a device has the filter's USB IDs (case doesn't matter).
@@ -490,6 +538,48 @@ pub fn find(devices: &[Device], id: &str, board_name: &str) -> Result<Device, To
 #[cfg(test)]
 pub mod tests {
     use super::*;
+
+    #[test]
+    fn labels_for_people() {
+        assert_eq!(
+            label(
+                Some("AlhambraBits"),
+                Some("Alhambra II v1.0A"),
+                "0403",
+                "6010"
+            ),
+            "Alhambra II v1.0A (AlhambraBits, 0403:6010)"
+        );
+        assert_eq!(
+            label(Some("FTDI"), None, "0403", "6010"),
+            "FTDI (0403:6010)"
+        );
+        assert_eq!(
+            label(None, Some(" "), "0403", "6010"),
+            "USB device (0403:6010)"
+        );
+        assert_eq!(label(Some("X"), Some("X"), "1d50", "6130"), "X (1d50:6130)");
+    }
+
+    #[test]
+    fn likely_boards_are_the_strongest_unless_weak() {
+        let m = |board: &str, level: MatchLevel| BoardMatch {
+            board: board.into(),
+            custom: false,
+            variants: vec![VariantMatch {
+                selector: crate::catalog::Selector::new("usb", "flash"),
+                level,
+            }],
+        };
+        use MatchLevel::*;
+        assert_eq!(
+            likely_boards(&[m("a", Strong), m("b", Possible), m("c", Strong)]),
+            ["a", "c"]
+        );
+        assert_eq!(likely_boards(&[m("a", Possible), m("b", Weak)]), ["a"]);
+        assert!(likely_boards(&[m("a", Weak), m("b", Weak)]).is_empty());
+        assert!(likely_boards(&[]).is_empty());
+    }
 
     pub fn device(
         vid: &str,
