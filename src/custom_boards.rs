@@ -40,7 +40,32 @@ pub fn load(file: Option<&str>, source_folder: Option<&Path>) -> Result<CustomBo
                 .map(|r| r.to_string_lossy().replace('\\', "/"))
         })
         .unwrap_or_else(|| given.to_string());
-    parse(&text, &name)
+    let result = parse(&text, &name);
+    log::info!("{}", log_line(given, &text, &result));
+    result
+}
+
+/// The log's line about a request's custom boards file: its path, a short
+/// SHA-256 of its contents (to tell which version was used) and its board
+/// IDs, or how many problems it has.
+fn log_line(given: &str, text: &str, result: &Result<CustomBoards, ToolError>) -> String {
+    use sha2::{Digest, Sha256};
+    let digest = hex::encode(Sha256::digest(text.as_bytes()));
+    let head = format!("Custom boards file: {given} (sha256 {})", &digest[..12]);
+    match result {
+        Ok(boards) => {
+            let ids: Vec<&str> = boards.keys().map(String::as_str).collect();
+            format!(
+                "{head}, boards: {}",
+                if ids.is_empty() {
+                    "none".into()
+                } else {
+                    ids.join(", ")
+                }
+            )
+        }
+        Err(e) => format!("{head}, problems: {}", e.diagnostics.len().max(1)),
+    }
 }
 
 /// The boards in a custom boards file's `text`, or a request error with a
@@ -279,6 +304,24 @@ mod tests {
   }
 }
 "#;
+
+    #[test]
+    fn the_log_names_the_file_its_version_and_boards() {
+        let ok = parse(GOOD, "custom-boards.json");
+        let line = log_line("/p/custom-boards.json", GOOD, &ok);
+        assert!(
+            line.starts_with("Custom boards file: /p/custom-boards.json (sha256 "),
+            "{line}"
+        );
+        assert!(line.ends_with("), boards: my-board"), "{line}");
+        // The same text gives the same short digest; another text another.
+        assert_eq!(line, log_line("/p/custom-boards.json", GOOD, &ok));
+        assert_ne!(line, log_line("/p/custom-boards.json", "{}", &ok));
+        let bad = parse("{", "custom-boards.json");
+        assert!(log_line("/p/custom-boards.json", "{", &bad).ends_with(", problems: 1"));
+        let none = parse("{}", "custom-boards.json");
+        assert!(log_line("/p/c.json", "{}", &none).ends_with("boards: none"));
+    }
 
     fn diags(text: &str) -> Vec<(Option<u32>, Option<u32>, String)> {
         let e = parse(text, "custom-boards.json").unwrap_err();

@@ -183,6 +183,15 @@ fn configure(
     Ok((v.clone(), name))
 }
 
+/// The log's line about the board a request uses: its ID, where it comes
+/// from and its variant.
+fn log_line(id: &str, source: &str, selector: &catalog::Selector) -> String {
+    format!(
+        "Board: {id} from {source}, variant connection {}, memory {}",
+        selector.connection, selector.memory
+    )
+}
+
 /// Resolves the board named `id`, and its variant: one of the request's
 /// custom boards (from `custom_boards::load`), else a catalog board. Unknown IDs, bad
 /// custom boards and variants the board doesn't have are request errors.
@@ -194,6 +203,10 @@ pub fn resolve(
     if let Some(b) = custom.get(id) {
         let (fpga_id, fpga) = custom_fpga(b)?;
         let (variant, name) = configure(&b.description, &b.variants, variant)?;
+        log::info!(
+            "{}",
+            log_line(id, "the custom boards file", &variant.selector)
+        );
         return Ok(ResolvedBoard {
             board_id: Some(id.to_string()),
             description: b.description.clone(),
@@ -209,6 +222,7 @@ pub fn resolve(
         ))
     })?;
     let (variant, name) = configure(&b.description, &b.variants, variant)?;
+    log::info!("{}", log_line(id, "the catalog", &variant.selector));
     Ok(ResolvedBoard {
         board_id: Some(id.to_string()),
         description: b.description.clone(),
@@ -332,6 +346,15 @@ mod tests {
         assert_ne!(
             b3.checksum(),
             catalog_board("alhambra-ii", &None).unwrap().checksum()
+        );
+    }
+
+    #[test]
+    fn the_log_says_where_the_board_comes_from() {
+        let sel = catalog::Selector::new("usb", "flash");
+        assert_eq!(
+            log_line("mine", "the custom boards file", &sel),
+            "Board: mine from the custom boards file, variant connection usb, memory flash"
         );
     }
 
