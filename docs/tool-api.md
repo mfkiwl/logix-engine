@@ -1093,6 +1093,7 @@ The Logix Engine was designed together with the Logix IDE, and its tools map to 
 | Upload: build, pick a device, program | [engine/task.rs](https://github.com/openlogix/logix-ide/blob/main/src-tauri/src/engine/task.rs) (`pick_device`), [ui/src/lib/DevicePicker.svelte](https://github.com/openlogix/logix-ide/blob/main/ui/src/lib/DevicePicker.svelte) |
 | Show problems, build results and testbench results | [engine/task.rs](https://github.com/openlogix/logix-ide/blob/main/src-tauri/src/engine/task.rs), [ui/src/lib/buildReport.ts](https://github.com/openlogix/logix-ide/blob/main/ui/src/lib/buildReport.ts), [ui/src/lib/tasks.ts](https://github.com/openlogix/logix-ide/blob/main/ui/src/lib/tasks.ts) |
 | Pick a board and its board variant | [engine/catalog.rs](https://github.com/openlogix/logix-ide/blob/main/src-tauri/src/engine/catalog.rs), [ui/src/lib/BoardPicker.svelte](https://github.com/openlogix/logix-ide/blob/main/ui/src/lib/BoardPicker.svelte), [ui/src/lib/variants.ts](https://github.com/openlogix/logix-ide/blob/main/ui/src/lib/variants.ts) |
+| A project's own boards | [commands.rs](https://github.com/openlogix/logix-ide/blob/main/src-tauri/src/commands.rs) (`boards_file`, `custom_boards_stamp`), [engine/catalog.rs](https://github.com/openlogix/logix-ide/blob/main/src-tauri/src/engine/catalog.rs) (`project_boards`, `BoardsProblem`), [ui/src/lib/boards.ts](https://github.com/openlogix/logix-ide/blob/main/ui/src/lib/boards.ts) (`withProjectBoards`, `boardsProblemLines`) |
 | Format an unsaved editor buffer | [engine/format.rs](https://github.com/openlogix/logix-ide/blob/main/src-tauri/src/engine/format.rs) |
 
 Logic that every frontend would need and that doesn't depend on a frontend's own model belongs in the Logix Engine, not in each frontend: when a frontend finds itself repeating engine knowledge, such as FPGA family names or the toolchain's resource names, that is a gap to fill in the engine.
@@ -1142,7 +1143,7 @@ Logic that every frontend would need and that doesn't depend on a frontend's own
 
 - Fill a board picker from `get_catalog` with `boards.fetch`, `fpgas.fetch` and `architectures.fetch` true: group boards by their FPGA's `architecture`, with the architecture's `label` and `order`, and use its `constraint_extension` for the board's pin file.
 - Show each board's `dimensions` labels and help as the board variant choices, and its `tested` and `user_notes` where the user picks.
-- A user's own boards are custom boards: keep them with the project, list them with the catalog's by sending them to `get_catalog`, and send the same `custom_boards_file` with every request, whatever board is selected.
+- A user's own boards are custom boards: keep them in a file in the project, such as `custom-boards.json`, so they work on every platform and anyone who opens the project gets them. Send its path as `custom_boards_file` with every request, whatever board is selected, and list its boards with the catalog's by sending it to `get_catalog`. The frontend needn't edit, parse or copy it: users edit it with any editor, the Logix Engine reads it, and a frontend only notices changes on disk, shows the problems the engine reports at line and column, and marks its boards where the user picks so they aren't mistaken for catalog boards.
 
 ### Format an unsaved editor buffer
 
