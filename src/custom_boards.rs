@@ -9,9 +9,9 @@ use std::collections::BTreeSet;
 use std::path::Path;
 
 use crate::board::{CustomBoard, CustomBoards};
-use crate::catalog::{self, PROGRAMMERS, STANDARD_DIMENSIONS};
+use crate::catalog::{self, PROGRAMMERS, STANDARD_DIMENSIONS, Variant};
 use crate::errors::{Diagnostic, Severity, ToolError};
-use crate::json_pos::{PositionIndex, segment};
+use crate::json_pos::{Position, PositionIndex, segment};
 
 /// The custom boards of a request: none without a file, else the file's
 /// boards when it has no problems. A file that can't be read, isn't valid
@@ -68,57 +68,211 @@ fn log_line(given: &str, text: &str, result: &Result<CustomBoards, ToolError>) -
     }
 }
 
+/// At most this many problems are listed. Past it, a last note says how
+/// many more there are: editing these files by hand is rare, and a few
+/// problems at a time are easier to fix than a long list.
+pub const MAX_PROBLEMS: usize = 10;
+
 /// The boards in a custom boards file's `text`, or a request error with a
-/// diagnostic for each problem, in file `name`.
+/// diagnostic for each problem, in file `name`, in file order. Invalid JSON
+/// is one problem, the parser's. Otherwise each board and each variant is
+/// read on its own, so a wrong type or field in one doesn't hide problems
+/// in the others, and every part that reads cleanly is checked in full.
 pub fn parse(text: &str, name: &str) -> Result<CustomBoards, ToolError> {
-    let at = |line: Option<u32>, column: Option<u32>, text: String| Diagnostic {
-        file: Some(name.to_string()),
-        line,
-        column,
-        severity: Severity::Error,
-        text,
-        tool: None,
-        time_ns: None,
-    };
     if text.trim().is_empty() {
         return Ok(CustomBoards::new());
     }
-    let boards: CustomBoards = match serde_json::from_str(text) {
-        Ok(b) => b,
-        Err(e) => {
-            let line = u32::try_from(e.line()).ok().filter(|l| *l > 0);
-            let column = u32::try_from(e.column()).ok().filter(|c| *c > 0);
-            return Err(problems(name, vec![at(line, column, serde_message(&e))]));
-        }
+    let root: serde_json::Value = match serde_json::from_str(text) {
+        Ok(v) => v,
+        Err(e) => return Err(problems(name, vec![from_serde(&e, (1, 1))])),
     };
-    let index = PositionIndex::new(text).unwrap_or_default();
-    let found: Vec<Diagnostic> = boards
-        .iter()
-        .flat_map(|(id, b)| board_problems(id, b))
-        .map(|p| {
+    if !root.is_object() {
+        // Not a map of boards: the parser's message, such as "Invalid type:
+        // sequence, expected a map".
+        let e = serde_json::from_str::<CustomBoards>(text)
+            .err()
+            .map(|e| from_serde(&e, (1, 1)))
+            .unwrap_or_else(|| {
+                Found::at(
+                    Some((1, 1)),
+                    "Expected a map of board IDs to boards.".into(),
+                )
+            });
+        return Err(problems(name, vec![e]));
+    }
+    let doc = Doc::new(text, &root);
+    let mut found = Vec::new();
+    let mut boards = CustomBoards::new();
+    for (id, value) in root.as_object().into_iter().flatten() {
+        let base = format!("/{}", segment(id));
+        let variants_value = value.get("variants").and_then(|v| v.as_array());
+        let board = doc.read_board(&base);
+        if let Err(e) = &board {
+            found.push(e.clone());
+        }
+        let mut variants = Vec::new();
+        for i in 0..variants_value.map_or(0, Vec::len) {
+            match doc.read::<Variant>(&format!("{base}/variants/{i}")) {
+                Ok(v) => variants.push((i, v)),
+                Err(e) => found.push(e),
+            }
+        }
+        let checks = board_problems(
+            id,
+            board.as_ref().ok(),
+            variants_value.map(Vec::len),
+            &variants,
+        );
+        found.extend(checks.into_iter().map(|p| {
             let pos = match p.at {
-                At::Key(path) => index.key(&path),
-                At::Value(path) => index.nearest(&path),
+                At::Key(path) => doc.index.key(&path),
+                At::Value(path) => doc.index.nearest(&path),
             };
-            at(pos.map(|p| p.0), pos.map(|p| p.1), p.text)
-        })
-        .collect();
+            Found::at(pos, p.text)
+        }));
+        if let Ok(mut b) = board {
+            b.variants = variants.into_iter().map(|(_, v)| v).collect();
+            boards.insert(id.clone(), b);
+        }
+    }
     if found.is_empty() {
-        Ok(boards)
-    } else {
-        Err(problems(name, found))
+        return Ok(boards);
+    }
+    // File order; a problem without a place last.
+    found.sort_by_key(|f| f.pos.unwrap_or((u32::MAX, u32::MAX)));
+    Err(problems(name, found))
+}
+
+/// A problem found, at its place in the file when known.
+#[derive(Debug, Clone)]
+struct Found {
+    pos: Option<Position>,
+    text: String,
+}
+
+impl Found {
+    fn at(pos: Option<Position>, text: String) -> Found {
+        Found { pos, text }
     }
 }
 
-/// The request error for a file's problems.
-fn problems(name: &str, diagnostics: Vec<Diagnostic>) -> ToolError {
+/// The parser's problem, its place counted from `start`, where the text it
+/// read starts in the file.
+fn from_serde(e: &serde_json::Error, start: Position) -> Found {
+    let (line, column) = (e.line() as u32, e.column() as u32);
+    let pos = match (line, column) {
+        (0, _) | (_, 0) => Some(start),
+        (1, c) => Some((start.0, start.1 + c - 1)),
+        (l, c) => Some((start.0 + l - 1, c)),
+    };
+    Found::at(pos, serde_message(e))
+}
+
+/// The file's text and where its values are, to read its parts one by one.
+struct Doc<'a> {
+    chars: Vec<char>,
+    root: &'a serde_json::Value,
+    index: PositionIndex,
+}
+
+impl<'a> Doc<'a> {
+    fn new(text: &str, root: &'a serde_json::Value) -> Doc<'a> {
+        Doc {
+            chars: text.chars().collect(),
+            root,
+            index: PositionIndex::new(text).unwrap_or_default(),
+        }
+    }
+
+    /// The value at `path` as written in the file, or None when the index
+    /// doesn't have it.
+    fn text(&self, path: &str) -> Option<Vec<char>> {
+        let (a, b) = self.index.span(path)?;
+        Some(self.chars[a..b].to_vec())
+    }
+
+    /// The value at `path` read as a `T`, with the parser's problem at its
+    /// place in the file.
+    fn read<T: serde::de::DeserializeOwned>(&self, path: &str) -> Result<T, Found> {
+        let start = self.index.value(path).unwrap_or((1, 1));
+        match self.text(path) {
+            Some(chars) => serde_json::from_str(&chars.iter().collect::<String>())
+                .map_err(|e| from_serde(&e, start)),
+            None => serde_json::from_value(self.root.pointer(path).cloned().unwrap_or_default())
+                .map_err(|e| Found::at(Some(start), serde_message(&e))),
+        }
+    }
+
+    /// The board at `path` without its variants, which are read one by one:
+    /// a list of variants is blanked to `[]` (lines kept, so places stay
+    /// right).
+    fn read_board(&self, path: &str) -> Result<CustomBoard, Found> {
+        let variants = format!("{path}/variants");
+        let is_list = self.root.pointer(&variants).is_some_and(|v| v.is_array());
+        let (Some((a, _)), Some((va, vb)), Some(mut chars), true) = (
+            self.index.span(path),
+            self.index.span(&variants),
+            self.text(path),
+            is_list,
+        ) else {
+            return self.read(path);
+        };
+        for (n, c) in chars[va - a..vb - a].iter_mut().enumerate() {
+            *c = match (n, *c) {
+                (0, _) => '[',
+                (1, _) => ']',
+                (_, '\n') => '\n',
+                _ => ' ',
+            };
+        }
+        let start = self.index.value(path).unwrap_or((1, 1));
+        serde_json::from_str(&chars.iter().collect::<String>()).map_err(|e| from_serde(&e, start))
+    }
+}
+
+/// The request error for a file's problems: the first ones, at most
+/// `MAX_PROBLEMS`, then a note with how many more there are.
+fn problems(name: &str, found: Vec<Found>) -> ToolError {
+    let total = found.len();
+    let mut diagnostics: Vec<Diagnostic> = found
+        .into_iter()
+        .take(MAX_PROBLEMS)
+        .map(|f| Diagnostic {
+            file: Some(name.to_string()),
+            line: f.pos.map(|p| p.0),
+            column: f.pos.map(|p| p.1),
+            severity: Severity::Error,
+            text: f.text,
+            tool: None,
+            time_ns: None,
+        })
+        .collect();
+    if total > MAX_PROBLEMS {
+        let more = total - MAX_PROBLEMS;
+        diagnostics.push(Diagnostic {
+            file: Some(name.to_string()),
+            line: None,
+            column: None,
+            severity: Severity::Info,
+            text: format!(
+                "{} not listed. Fix these first, then check again.",
+                if more == 1 {
+                    "1 more problem".to_string()
+                } else {
+                    format!("{more} more problems")
+                }
+            ),
+            tool: None,
+            time_ns: None,
+        });
+    }
     let first = &diagnostics[0];
     let place = match (first.line, first.column) {
         (Some(l), Some(c)) => format!("{name}:{l}:{c}"),
         (Some(l), None) => format!("{name}:{l}"),
         _ => name.to_string(),
     };
-    let more = match diagnostics.len() {
+    let more = match total {
         1 => String::new(),
         2 => " (and 1 more problem)".to_string(),
         n => format!(" (and {} more problems)", n - 1),
@@ -157,8 +311,16 @@ struct Problem {
     text: String,
 }
 
-/// Every problem with one board: its ID, its FPGA and its variants.
-fn board_problems(id: &str, b: &CustomBoard) -> Vec<Problem> {
+/// Every problem with one board's contents: its ID; its FPGA, when `board`
+/// (without its variants) could be read; that it has variants, when
+/// `variant_count` says how many are listed; and each of `variants`, those
+/// that could be read, with their place in the list.
+fn board_problems(
+    id: &str,
+    board: Option<&CustomBoard>,
+    variant_count: Option<usize>,
+    variants: &[(usize, Variant)],
+) -> Vec<Problem> {
     let base = format!("/{}", segment(id));
     let field = |f: &str| format!("{base}/{f}");
     let mut out = Vec::new();
@@ -169,38 +331,40 @@ fn board_problems(id: &str, b: &CustomBoard) -> Vec<Problem> {
             format!("{id:?} isn't a board ID: use lowercase letters, digits and hyphens."),
         );
     }
-    match (&b.fpga_id, &b.fpga) {
-        (Some(f), None) => {
-            if !catalog::builtin().fpgas.contains_key(f) {
-                add(
-                    At::Value(field("fpga_id")),
-                    format!(
-                        "{f:?} isn't an FPGA in the catalog. Use get_catalog to list them, or give a full fpga definition."
-                    ),
-                );
+    if let Some(b) = board {
+        match (&b.fpga_id, &b.fpga) {
+            (Some(f), None) => {
+                if !catalog::builtin().fpgas.contains_key(f) {
+                    add(
+                        At::Value(field("fpga_id")),
+                        format!(
+                            "{f:?} isn't an FPGA in the catalog. Use get_catalog to list them, or give a full fpga definition."
+                        ),
+                    );
+                }
             }
-        }
-        (None, Some(f)) => {
-            if let Err(e) = f.validate() {
-                add(
-                    At::Value(field("fpga")),
-                    format!("Invalid FPGA definition: {e}."),
-                );
+            (None, Some(f)) => {
+                if let Err(e) = f.validate() {
+                    add(
+                        At::Value(field("fpga")),
+                        format!("Invalid FPGA definition: {e}."),
+                    );
+                }
             }
+            _ => add(
+                At::Key(base.clone()),
+                format!("Board {id:?}: give exactly one of fpga_id and fpga."),
+            ),
         }
-        _ => add(
-            At::Key(base.clone()),
-            format!("Board {id:?}: give exactly one of fpga_id and fpga."),
-        ),
     }
-    if b.variants.is_empty() {
+    if variant_count == Some(0) {
         add(
             At::Value(field("variants")),
             "A board needs at least one variant.".into(),
         );
     }
     let mut selectors = BTreeSet::new();
-    for (i, v) in b.variants.iter().enumerate() {
+    for (i, v) in variants {
         let vf = |f: &str| At::Value(format!("{base}/variants/{i}/{f}"));
         for (dim, _, values) in STANDARD_DIMENSIONS {
             let value = v.value(dim).unwrap_or_default();
@@ -419,6 +583,129 @@ mod tests {
         // A selector needs both dimensions.
         let d = diags(&GOOD.replace("\"connection\": \"usb\", ", ""));
         assert!(d[0].2.starts_with("Missing field `connection`"), "{d:?}");
+    }
+
+    /// Two boards, in the file in the opposite order to their IDs, with
+    /// problems of every kind: shape and content, in boards and variants.
+    const SEVERAL: &str = r#"{
+  "z-board": {
+    "description": "Z",
+    "fpga_id": "nope",
+    "variants": [
+      {
+        "selector": {"connection": "usb", "memory": "flash"},
+        "programer": "iceprog", "args": "${BITSTREAM}",
+        "usb": {"vid": "0403", "pid": "6014"}, "tested": false
+      },
+      {
+        "selector": {"connection": "usb", "memory": "ram"},
+        "programmer": "iceprog", "args": "${BITSTREAM}",
+        "usb": {"vid": "04G3", "pid": "6014"}, "tested": false
+      },
+      {"selector": {"connection": "usb", "memory": "flash"}, "programmer": 7}
+    ]
+  },
+  "a-board": {
+    "description": 3,
+    "fpga_id": "ice40up5k-sg48",
+    "variants": [
+      {
+        "selector": {"connection": "usb", "memory": "flash"},
+        "programmer": "icepro", "args": "${BITSTREAM}",
+        "usb": {"vid": "0403", "pid": "6014"}, "tested": false
+      }
+    ]
+  }
+}
+"#;
+
+    #[test]
+    fn every_problem_at_once_in_file_order() {
+        let d = diags(SEVERAL);
+        let got: Vec<_> = d
+            .iter()
+            .map(|(l, c, t)| {
+                (
+                    l.unwrap(),
+                    c.unwrap(),
+                    t.split(['.', ',']).next().unwrap().to_string(),
+                )
+            })
+            .collect();
+        assert_eq!(
+            got,
+            vec![
+                // z-board: its FPGA, then each variant on its own.
+                (4, 16, "\"nope\" isn't an FPGA in the catalog".to_string()),
+                (8, 19, "Unknown field `programer`".to_string()),
+                (
+                    14,
+                    24,
+                    "usb vid must be four lowercase hex digits".to_string()
+                ),
+                (16, 76, "Invalid type: integer `7`".to_string()),
+                // a-board: a wrong type in the board doesn't hide its variant.
+                (20, 20, "Invalid type: integer `3`".to_string()),
+                (25, 23, "Unknown programmer \"icepro\"".to_string()),
+            ],
+            "{d:?}"
+        );
+        let e = parse(SEVERAL, "custom-boards.json").unwrap_err();
+        assert!(
+            e.message
+                .starts_with("The custom boards file has problems. custom-boards.json:4:16: "),
+            "{}",
+            e.message
+        );
+        assert!(
+            e.message.ends_with(" (and 5 more problems)"),
+            "{}",
+            e.message
+        );
+    }
+
+    #[test]
+    fn at_most_ten_problems_then_how_many_more() {
+        let boards: Vec<String> = (0..13)
+            .map(|i| format!("  \"Board {i}\": {{\"description\": \"x\", \"fpga_id\": \"ice40up5k-sg48\", \"variants\": []}}"))
+            .collect();
+        let text = format!("{{\n{}\n}}\n", boards.join(",\n"));
+        // Each board: a bad ID and no variants.
+        let e = parse(&text, "custom-boards.json").unwrap_err();
+        assert_eq!(e.diagnostics.len(), MAX_PROBLEMS + 1, "{:?}", e.diagnostics);
+        assert!(
+            e.diagnostics[..MAX_PROBLEMS]
+                .iter()
+                .all(|d| d.severity == Severity::Error)
+        );
+        // In file order: board 0's two problems first.
+        assert_eq!(e.diagnostics[0].line, Some(2));
+        assert_eq!(e.diagnostics[1].line, Some(2));
+        assert_eq!(e.diagnostics[9].line, Some(6));
+        let last = &e.diagnostics[MAX_PROBLEMS];
+        assert_eq!(last.severity, Severity::Info);
+        assert_eq!((last.line, last.column), (None, None));
+        assert_eq!(
+            last.text,
+            "16 more problems not listed. Fix these first, then check again."
+        );
+        assert!(
+            e.message.ends_with(" (and 25 more problems)"),
+            "{}",
+            e.message
+        );
+    }
+
+    #[test]
+    fn a_board_that_isnt_an_object_and_variants_that_arent_a_list() {
+        let d = diags(
+            "{\n  \"a\": 5,\n  \"b\": {\"description\": \"b\", \"fpga_id\": \"ice40up5k-sg48\", \"variants\": {}}\n}\n",
+        );
+        assert_eq!(d.len(), 2, "{d:?}");
+        assert_eq!((d[0].0, d[0].1), (Some(2), Some(8)), "{d:?}");
+        assert!(d[0].2.starts_with("Invalid type: integer `5`"), "{d:?}");
+        assert_eq!((d[1].0, d[1].1), (Some(3), Some(69)), "{d:?}");
+        assert!(d[1].2.starts_with("Invalid type: map"), "{d:?}");
     }
 
     #[test]

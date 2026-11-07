@@ -15,6 +15,9 @@ pub type Position = (u32, u32);
 pub struct PositionIndex {
     values: HashMap<String, Position>,
     keys: HashMap<String, Position>,
+    /// Where each value starts and ends, as character offsets (end
+    /// excluded).
+    spans: HashMap<String, (usize, usize)>,
 }
 
 impl PositionIndex {
@@ -35,6 +38,12 @@ impl PositionIndex {
     /// Where the value at `path` starts.
     pub fn value(&self, path: &str) -> Option<Position> {
         self.values.get(path).copied()
+    }
+
+    /// The character offsets of the value at `path`: where it starts and
+    /// where it ends (excluded).
+    pub fn span(&self, path: &str) -> Option<(usize, usize)> {
+        self.spans.get(path).copied()
     }
 
     /// Where the key of the member at `path` starts.
@@ -103,12 +112,15 @@ impl Scanner {
         self.index
             .values
             .insert(path.to_string(), (self.line, self.column));
+        let start = self.at;
         match self.peek()? {
             '{' => self.object(path),
             '[' => self.array(path),
             '"' => self.string().map(|_| ()),
             _ => self.scalar(),
-        }
+        }?;
+        self.index.spans.insert(path.to_string(), (start, self.at));
+        Some(())
     }
 
     fn object(&mut self, path: &str) -> Option<()> {
@@ -214,6 +226,19 @@ mod tests {
         // A missing field: the object it belongs in.
         assert_eq!(ix.nearest("/my-board/fpga_id"), Some((2, 15)));
         assert_eq!(ix.nearest("/my-board/variants/0/usb/pid"), Some((4, 15)));
+        // Spans, as character offsets.
+        let chars: Vec<char> = text.chars().collect();
+        let text_at = |path: &str| {
+            let (a, b) = ix.span(path).unwrap();
+            chars[a..b].iter().collect::<String>()
+        };
+        assert_eq!(
+            text_at("/my-board/variants/0"),
+            "{\"usb\": {\"vid\": \"x\"}}"
+        );
+        assert_eq!(text_at("/my-board/variants/0/usb/vid"), "\"x\"");
+        assert_eq!(text_at(&format!("/{}", segment("a/b"))), "1");
+        assert_eq!(text_at(""), text.trim_end());
     }
 
     #[test]
