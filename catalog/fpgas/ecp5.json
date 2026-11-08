@@ -1,0 +1,314 @@
+{
+  "lfe5u-12f-6bg256c": {
+    "part_number": "LFE5U-12F-6BG256C",
+    "size": "12k",
+    "nextpnr_device": "12k",
+    "nextpnr_package": "CABGA256",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x21111043"
+  },
+  "lfe5u-12f-6bg381c": {
+    "part_number": "LFE5U-12F-6BG381C",
+    "size": "12k",
+    "nextpnr_device": "12k",
+    "nextpnr_package": "CABGA381",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x21111043"
+  },
+  "lfe5u-12f-6mg285c": {
+    "part_number": "LFE5U-12F-6MG285C",
+    "size": "12k",
+    "nextpnr_device": "12k",
+    "nextpnr_package": "CSFBGA285",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x21111043"
+  },
+  "lfe5u-12f-6tg144c": {
+    "part_number": "LFE5U-12F-6TG144C",
+    "size": "12k",
+    "nextpnr_device": "12k",
+    "nextpnr_package": "TQFP144",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x21111043"
+  },
+  "lfe5u-25f-6bg256c": {
+    "part_number": "LFE5U-25F-6BG256C",
+    "size": "25k",
+    "nextpnr_device": "25k",
+    "nextpnr_package": "CABGA256",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x41111043"
+  },
+  "lfe5u-25f-6bg381c": {
+    "part_number": "LFE5U-25F-6BG381C",
+    "size": "25k",
+    "nextpnr_device": "25k",
+    "nextpnr_package": "CABGA381",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x41111043"
+  },
+  "lfe5u-25f-6mg285c": {
+    "part_number": "LFE5U-25F-6MG285C",
+    "size": "25k",
+    "nextpnr_device": "25k",
+    "nextpnr_package": "CSFBGA285",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x41111043"
+  },
+  "lfe5u-25f-6tg144c": {
+    "part_number": "LFE5U-25F-6TG144C",
+    "size": "25k",
+    "nextpnr_device": "25k",
+    "nextpnr_package": "TQFP144",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x41111043"
+  },
+  "lfe5u-45f-6bg256c": {
+    "part_number": "LFE5U-45F-6BG256C",
+    "size": "45k",
+    "nextpnr_device": "45k",
+    "nextpnr_package": "CABGA256",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x41112043"
+  },
+  "lfe5u-45f-6bg381c": {
+    "part_number": "LFE5U-45F-6BG381C",
+    "size": "45k",
+    "nextpnr_device": "45k",
+    "nextpnr_package": "CABGA381",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x41112043"
+  },
+  "lfe5u-45f-6bg554c": {
+    "part_number": "LFE5U-45F-6BG554C",
+    "size": "45k",
+    "nextpnr_device": "45k",
+    "nextpnr_package": "CABGA554",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x41112043"
+  },
+  "lfe5u-45f-6mg285c": {
+    "part_number": "LFE5U-45F-6MG285C",
+    "size": "45k",
+    "nextpnr_device": "45k",
+    "nextpnr_package": "CSFBGA285",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x41112043"
+  },
+  "lfe5u-45f-6tg144c": {
+    "part_number": "LFE5U-45F-6TG144C",
+    "size": "45k",
+    "nextpnr_device": "45k",
+    "nextpnr_package": "TQFP144",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x41112043"
+  },
+  "lfe5u-85f-6bg381c": {
+    "part_number": "LFE5U-85F-6BG381C",
+    "size": "85k",
+    "nextpnr_device": "85k",
+    "nextpnr_package": "CABGA381",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x41113043"
+  },
+  "lfe5u-85f-6bg554c": {
+    "part_number": "LFE5U-85F-6BG554C",
+    "size": "85k",
+    "nextpnr_device": "85k",
+    "nextpnr_package": "CABGA554",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x41113043"
+  },
+  "lfe5u-85f-6bg756c": {
+    "part_number": "LFE5U-85F-6BG756C",
+    "size": "85k",
+    "nextpnr_device": "85k",
+    "nextpnr_package": "CABGA756",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x41113043"
+  },
+  "lfe5u-85f-6mg285c": {
+    "part_number": "LFE5U-85F-6MG285C",
+    "size": "85k",
+    "nextpnr_device": "85k",
+    "nextpnr_package": "CSFBGA285",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x41113043"
+  },
+  "lfe5um-25f-6bg256c": {
+    "part_number": "LFE5UM-25F-6BG256C",
+    "size": "25k",
+    "nextpnr_device": "um-25k",
+    "nextpnr_package": "CABGA256",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x01111043"
+  },
+  "lfe5um-25f-6bg381c": {
+    "part_number": "LFE5UM-25F-6BG381C",
+    "size": "25k",
+    "nextpnr_device": "um-25k",
+    "nextpnr_package": "CABGA381",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x01111043"
+  },
+  "lfe5um-25f-6mg285c": {
+    "part_number": "LFE5UM-25F-6MG285C",
+    "size": "25k",
+    "nextpnr_device": "um-25k",
+    "nextpnr_package": "CSFBGA285",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x01111043"
+  },
+  "lfe5um-45f-6bg256c": {
+    "part_number": "LFE5UM-45F-6BG256C",
+    "size": "45k",
+    "nextpnr_device": "um-45k",
+    "nextpnr_package": "CABGA256",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x01112043"
+  },
+  "lfe5um-45f-6bg381c": {
+    "part_number": "LFE5UM-45F-6BG381C",
+    "size": "45k",
+    "nextpnr_device": "um-45k",
+    "nextpnr_package": "CABGA381",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x01112043"
+  },
+  "lfe5um-45f-6bg554c": {
+    "part_number": "LFE5UM-45F-6BG554C",
+    "size": "45k",
+    "nextpnr_device": "um-45k",
+    "nextpnr_package": "CABGA554",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x01112043"
+  },
+  "lfe5um-45f-6mg285c": {
+    "part_number": "LFE5UM-45F-6MG285C",
+    "size": "45k",
+    "nextpnr_device": "um-45k",
+    "nextpnr_package": "CSFBGA285",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x01112043"
+  },
+  "lfe5um-85f-6bg381c": {
+    "part_number": "LFE5UM-85F-6BG381C",
+    "size": "85k",
+    "nextpnr_device": "um-85k",
+    "nextpnr_package": "CABGA381",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x01113043"
+  },
+  "lfe5um-85f-6bg554c": {
+    "part_number": "LFE5UM-85F-6BG554C",
+    "size": "85k",
+    "nextpnr_device": "um-85k",
+    "nextpnr_package": "CABGA554",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x01113043"
+  },
+  "lfe5um-85f-6bg756c": {
+    "part_number": "LFE5UM-85F-6BG756C",
+    "size": "85k",
+    "nextpnr_device": "um-85k",
+    "nextpnr_package": "CABGA756",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x01113043"
+  },
+  "lfe5um-85f-6mg285c": {
+    "part_number": "LFE5UM-85F-6MG285C",
+    "size": "85k",
+    "nextpnr_device": "um-85k",
+    "nextpnr_package": "CSFBGA285",
+    "nextpnr_speed": "6",
+    "jtag_idcode": "0x01113043"
+  },
+  "lfe5um5g-25f-8bg256c": {
+    "part_number": "LFE5UM5G-25F-8BG256C",
+    "size": "25k",
+    "nextpnr_device": "um5g-25k",
+    "nextpnr_package": "CABGA256",
+    "nextpnr_speed": "8",
+    "jtag_idcode": "0x81111043"
+  },
+  "lfe5um5g-25f-8bg381c": {
+    "part_number": "LFE5UM5G-25F-8BG381C",
+    "size": "25k",
+    "nextpnr_device": "um5g-25k",
+    "nextpnr_package": "CABGA381",
+    "nextpnr_speed": "8",
+    "jtag_idcode": "0x81111043"
+  },
+  "lfe5um5g-25f-8mg285c": {
+    "part_number": "LFE5UM5G-25F-8MG285C",
+    "size": "25k",
+    "nextpnr_device": "um5g-25k",
+    "nextpnr_package": "CSFBGA285",
+    "nextpnr_speed": "8",
+    "jtag_idcode": "0x81111043"
+  },
+  "lfe5um5g-45f-8bg256c": {
+    "part_number": "LFE5UM5G-45F-8BG256C",
+    "size": "45k",
+    "nextpnr_device": "um5g-45k",
+    "nextpnr_package": "CABGA256",
+    "nextpnr_speed": "8",
+    "jtag_idcode": "0x81112043"
+  },
+  "lfe5um5g-45f-8bg381c": {
+    "part_number": "LFE5UM5G-45F-8BG381C",
+    "size": "45k",
+    "nextpnr_device": "um5g-45k",
+    "nextpnr_package": "CABGA381",
+    "nextpnr_speed": "8",
+    "jtag_idcode": "0x81112043"
+  },
+  "lfe5um5g-45f-8bg554c": {
+    "part_number": "LFE5UM5G-45F-8BG554C",
+    "size": "45k",
+    "nextpnr_device": "um5g-45k",
+    "nextpnr_package": "CABGA554",
+    "nextpnr_speed": "8",
+    "jtag_idcode": "0x81112043"
+  },
+  "lfe5um5g-45f-8mg285c": {
+    "part_number": "LFE5UM5G-45F-8MG285C",
+    "size": "45k",
+    "nextpnr_device": "um5g-45k",
+    "nextpnr_package": "CSFBGA285",
+    "nextpnr_speed": "8",
+    "jtag_idcode": "0x81112043"
+  },
+  "lfe5um5g-85f-8bg381c": {
+    "part_number": "LFE5UM5G-85F-8BG381C",
+    "size": "85k",
+    "nextpnr_device": "um5g-85k",
+    "nextpnr_package": "CABGA381",
+    "nextpnr_speed": "8",
+    "jtag_idcode": "0x81113043"
+  },
+  "lfe5um5g-85f-8bg554c": {
+    "part_number": "LFE5UM5G-85F-8BG554C",
+    "size": "85k",
+    "nextpnr_device": "um5g-85k",
+    "nextpnr_package": "CABGA554",
+    "nextpnr_speed": "8",
+    "jtag_idcode": "0x81113043"
+  },
+  "lfe5um5g-85f-8bg756c": {
+    "part_number": "LFE5UM5G-85F-8BG756C",
+    "size": "85k",
+    "nextpnr_device": "um5g-85k",
+    "nextpnr_package": "CABGA756",
+    "nextpnr_speed": "8",
+    "jtag_idcode": "0x81113043"
+  },
+  "lfe5um5g-85f-8mg285c": {
+    "part_number": "LFE5UM5G-85F-8MG285C",
+    "size": "85k",
+    "nextpnr_device": "um5g-85k",
+    "nextpnr_package": "CSFBGA285",
+    "nextpnr_speed": "8",
+    "jtag_idcode": "0x81113043"
+  }
+}

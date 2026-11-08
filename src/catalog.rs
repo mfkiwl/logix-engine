@@ -769,8 +769,12 @@ impl BoardDefinition {
 
 impl Catalog {
     /// The catalog from its files: each board's file by ID (its file name
-    /// without .json), with its `$schema`, and fpgas.json.
-    pub fn parse(board_files: &[(&str, &str)], fpgas_json: &str) -> Result<Catalog, String> {
+    /// without .json), with its `$schema`, and each `fpgas/<architecture>.json`
+    /// by architecture: its FPGAs by ID, their architecture the file's name.
+    pub fn parse(
+        board_files: &[(&str, &str)],
+        fpga_files: &[(&str, &str)],
+    ) -> Result<Catalog, String> {
         let mut boards = BTreeMap::new();
         for (id, text) in board_files {
             let mut map: serde_json::Map<String, serde_json::Value> =
@@ -786,8 +790,28 @@ impl Catalog {
             b.dimensions = derive_dimensions(&b.variants);
             boards.insert(id.to_string(), b);
         }
-        let fpgas: BTreeMap<String, FpgaDefinition> =
-            serde_json::from_str(fpgas_json).map_err(|e| format!("fpgas: {e}"))?;
+        let mut fpgas = BTreeMap::new();
+        for (arch, text) in fpga_files {
+            let file = format!("fpgas/{arch}.json");
+            let entries: serde_json::Map<String, serde_json::Value> =
+                serde_json::from_str(text).map_err(|e| format!("{file}: {e}"))?;
+            for (id, entry) in entries {
+                let serde_json::Value::Object(mut fields) = entry else {
+                    return Err(format!("{file}: {id}: not an object"));
+                };
+                if fields.contains_key("architecture") {
+                    return Err(format!(
+                        "{file}: {id}: no architecture field: the file's name gives it"
+                    ));
+                }
+                fields.insert("architecture".into(), serde_json::Value::from(*arch));
+                let f: FpgaDefinition = serde_json::from_value(serde_json::Value::Object(fields))
+                    .map_err(|e| format!("{file}: {id}: {e}"))?;
+                if fpgas.insert(id.clone(), f).is_some() {
+                    return Err(format!("{file}: {id}: in another FPGA file too"));
+                }
+            }
+        }
         let catalog = Catalog { boards, fpgas };
         catalog.validate()?;
         Ok(catalog)
@@ -824,7 +848,8 @@ impl Catalog {
 pub fn builtin() -> &'static Catalog {
     static CATALOG: OnceLock<Catalog> = OnceLock::new();
     CATALOG.get_or_init(|| {
-        Catalog::parse(files::BOARD_FILES, files::FPGAS).expect("the built-in catalog is valid")
+        Catalog::parse(files::BOARD_FILES, files::FPGA_FILES)
+            .expect("the built-in catalog is valid")
     })
 }
 
@@ -1384,6 +1409,24 @@ mod tests {
     }
 
     #[test]
+    fn fpga_files_give_their_architecture() {
+        let names: Vec<&str> = files::FPGA_FILES.iter().map(|(a, _)| *a).collect();
+        assert_eq!(names, ["ecp5", "gowin", "ice40", "xilinx"]);
+        let f = r#""part_number": "P", "size": "1k", "nextpnr_device": "d", "nextpnr_package": "p", "nextpnr_speed": "6""#;
+        let one = format!(r#"{{"a": {{{f}}}}}"#);
+        let c = Catalog::parse(&[], &[("ecp5", &one)]).unwrap();
+        assert_eq!(c.fpgas["a"].architecture, Architecture::Ecp5);
+        let err = |files: &[(&str, &str)]| Catalog::parse(&[], files).unwrap_err();
+        assert_eq!(
+            err(&[("ecp5", &one), ("gowin", &one)]),
+            "fpgas/gowin.json: a: in another FPGA file too"
+        );
+        let with_arch = format!(r#"{{"a": {{"architecture": "ecp5", {f}}}}}"#);
+        assert!(err(&[("ecp5", &with_arch)]).contains("the file's name gives it"));
+        assert!(err(&[("other", &one)]).starts_with("fpgas/other.json: a: unknown variant"));
+    }
+
+    #[test]
     fn the_catalog_comes_from_logix_catalog() {
         let (commit, date, local) = source();
         assert_eq!(commit.len(), 7, "{commit}");
@@ -1392,7 +1435,7 @@ mod tests {
         let schema: serde_json::Value = serde_json::from_str(board_schema_text()).unwrap();
         assert_eq!(schema["$id"], BOARDS_SCHEMA);
         // A board file without its $schema, or with another, is refused.
-        let fpgas = files::FPGAS;
+        let fpgas = files::FPGA_FILES;
         let board = |schema: &str| {
             format!(
                 r#"{{{schema}"name": "X", "fpga_id": "ice40up5k-sg48", "variants": [{{"selector": {{"connection": "usb", "memory": "flash"}}, "programmer": "iceprog", "args": "${{BITSTREAM}}", "usb": {{"vid": "0403", "pid": "6014"}}, "tested": true}}]}}"#

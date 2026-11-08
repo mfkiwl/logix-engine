@@ -22,7 +22,7 @@ date="$(TZ=UTC git -C "$tmp/catalog" log -1 --date=format-local:%Y-%m-%d --forma
 rm -rf catalog
 mkdir -p catalog/schemas
 cp -R "$tmp/catalog/boards" catalog/boards
-cp "$tmp/catalog/fpgas.json" catalog/
+cp -R "$tmp/catalog/fpgas" catalog/fpgas
 cp "$tmp/catalog/schemas/logix-board-v1.json" catalog/schemas/
 cp "$tmp/catalog/LICENSE-MIT" "$tmp/catalog/LICENSE-APACHE" catalog/
 printf '{\n  "repo": "https://github.com/openlogix/logix-catalog",\n  "commit": "%s",\n  "date": "%s"\n}\n' "$commit" "$date" > catalog/SOURCE.json

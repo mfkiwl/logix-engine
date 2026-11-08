@@ -586,7 +586,7 @@
         "fpga_id": {
           "type": "string",
           "pattern": "^[a-z0-9-]+$",
-          "description": "The board's FPGA, an ID from the catalog's fpgas.json."
+          "description": "The board's FPGA, an ID from the catalog's fpgas/ files."
         },
         "variants": {
           "type": "array",
