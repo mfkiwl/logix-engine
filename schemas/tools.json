@@ -477,8 +477,15 @@
               "description": "True for a board from the request's custom_boards_folder, omitted for\ncatalog boards.",
               "type": "boolean"
             },
+            "requires": {
+              "description": "What every design for the board must do, such as driving a pin\nthat would otherwise reset the FPGA ({\"type\": \"drive\", \"name\":\n\"wifi_gpio0\", \"pins\": [\"L2\"], \"level\": \"high\"}), or a setup a person\nmust do. Omitted when nothing.",
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/Requirement"
+              }
+            },
             "resources": {
-              "description": "What the board wires to FPGA pins, by port name, each of a type with\nits own fields: clock (pin, mhz), leds, buttons and switches (pins,\nactive), rgb_led (red, green, blue, active), led_matrix (leds,\ncolors, active), uart (tx, rx), pmod (its 8 signal pins), header,\nand unclassified (every wired pin no other resource lists). A name\nwith one pin is a plain port, with several a vector, bit 0 first.\nThe order of resources means nothing. For creating designs and pin files for the board, such as a blinky.\nOmitted when none are known; a type a board doesn't list is unknown,\nunless the board has an unclassified resource.",
+              "description": "What the board wires to FPGA pins, by port name, each of a type with\nits own fields: clock (pin, mhz), leds, buttons and switches (pins,\nactive), rgb_led (red, green, blue, active), led_matrix (leds,\ncolors, active), uart (tx, rx), pmod (its 8 signal pins), header,\nand unclassified (every wired pin no other resource lists). A name\nwith one pin is a plain port, with several a vector, bit 0 first.\nThe order of resources means nothing. A resource's requires lists\nwhat must be done for it to work, such as a jumper a clock needs (a\nsetup). For creating designs and pin files for the board, such as a\nblinky. Omitted when none are known; a type a board doesn't list is unknown,\nunless the board has an unclassified resource.",
               "type": "object",
               "additionalProperties": {
                 "$ref": "#/$defs/Resource"
@@ -609,6 +616,158 @@
             "memory"
           ]
         },
+        "Requirement": {
+          "description": "What must be done for a board, or a resource, to work: in its\n`requires`.",
+          "oneOf": [
+            {
+              "description": "Pins a design must drive to a level, as a port of its own.",
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "drive"
+                },
+                "name": {
+                  "description": "The port name, a Verilog identifier, unique on the board among\nresources and other drives, such as wifi_gpio0.",
+                  "type": "string"
+                },
+                "pins": {
+                  "description": "The FPGA pins, bit 0 first.",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1
+                },
+                "level": {
+                  "description": "The level to drive the pins to: high or low.",
+                  "$ref": "#/$defs/ActiveLevel"
+                },
+                "io_standard": {
+                  "description": "The pins' I/O standard, when the FPGA family's pin files name one.",
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/IoStandard"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "why": {
+                  "description": "Why, for people, such as \"Keeps the ESP32 from resetting the board.\"",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "source": {
+                  "description": "Where the facts come from.",
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/Source"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "name",
+                "pins",
+                "level"
+              ]
+            },
+            {
+              "description": "Something a person must do to the hardware, such as closing a jumper.",
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string",
+                  "const": "setup"
+                },
+                "text": {
+                  "description": "What to do, for people, such as \"Short jumper JP2\".",
+                  "type": "string"
+                },
+                "source": {
+                  "description": "Where the facts come from.",
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/Source"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "additionalProperties": false,
+              "required": [
+                "type",
+                "text"
+              ]
+            }
+          ]
+        },
+        "ActiveLevel": {
+          "description": "The logic level that turns something on.",
+          "type": "string",
+          "enum": [
+            "high",
+            "low"
+          ]
+        },
+        "IoStandard": {
+          "description": "An I/O standard, one common name for every FPGA family; pin file writers\ntranslate it (IO_TYPE for ECP5 and Gowin, IOSTANDARD for Xilinx). iCE40\npin files have none.",
+          "type": "string",
+          "enum": [
+            "LVCMOS33",
+            "LVCMOS25",
+            "LVCMOS18",
+            "LVCMOS15",
+            "LVCMOS12",
+            "LVTTL",
+            "LVDS",
+            "SSTL15",
+            "SSTL135"
+          ]
+        },
+        "Source": {
+          "description": "Where facts come from: a resource's or a requirement's.",
+          "type": "object",
+          "properties": {
+            "kind": {
+              "description": "hardware (tried on the board), schematic, maker (the maker's docs,\npin files or examples), litex or amaranth (imported from their board\nfiles), or user (reported, not yet checked); strongest first.",
+              "$ref": "#/$defs/SourceKind"
+            },
+            "ref": {
+              "description": "The document, file and commit, or report.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "kind"
+          ]
+        },
+        "SourceKind": {
+          "type": "string",
+          "enum": [
+            "hardware",
+            "schematic",
+            "maker",
+            "litex",
+            "amaranth",
+            "user"
+          ]
+        },
         "Resource": {
           "description": "What a board wires to FPGA pins, by type.",
           "oneOf": [
@@ -650,8 +809,15 @@
                     }
                   ]
                 },
+                "requires": {
+                  "description": "What must be done for it to work, such as a jumper a clock\nneeds (a setup) or a pin to drive (a drive). Omitted when\nnothing.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Requirement"
+                  }
+                },
                 "user_notes": {
-                  "description": "Warnings and missing information for users, such as a jumper\na clock needs.",
+                  "description": "Warnings and missing information for users.",
                   "type": [
                     "string",
                     "null"
@@ -714,8 +880,15 @@
                     }
                   ]
                 },
+                "requires": {
+                  "description": "What must be done for it to work, such as a jumper a clock\nneeds (a setup) or a pin to drive (a drive). Omitted when\nnothing.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Requirement"
+                  }
+                },
                 "user_notes": {
-                  "description": "Warnings and missing information for users, such as a jumper\na clock needs.",
+                  "description": "Warnings and missing information for users.",
                   "type": [
                     "string",
                     "null"
@@ -778,8 +951,15 @@
                     }
                   ]
                 },
+                "requires": {
+                  "description": "What must be done for it to work, such as a jumper a clock\nneeds (a setup) or a pin to drive (a drive). Omitted when\nnothing.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Requirement"
+                  }
+                },
                 "user_notes": {
-                  "description": "Warnings and missing information for users, such as a jumper\na clock needs.",
+                  "description": "Warnings and missing information for users.",
                   "type": [
                     "string",
                     "null"
@@ -847,8 +1027,15 @@
                     }
                   ]
                 },
+                "requires": {
+                  "description": "What must be done for it to work, such as a jumper a clock\nneeds (a setup) or a pin to drive (a drive). Omitted when\nnothing.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Requirement"
+                  }
+                },
                 "user_notes": {
-                  "description": "Warnings and missing information for users, such as a jumper\na clock needs.",
+                  "description": "Warnings and missing information for users.",
                   "type": [
                     "string",
                     "null"
@@ -911,8 +1098,15 @@
                     }
                   ]
                 },
+                "requires": {
+                  "description": "What must be done for it to work, such as a jumper a clock\nneeds (a setup) or a pin to drive (a drive). Omitted when\nnothing.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Requirement"
+                  }
+                },
                 "user_notes": {
-                  "description": "Warnings and missing information for users, such as a jumper\na clock needs.",
+                  "description": "Warnings and missing information for users.",
                   "type": [
                     "string",
                     "null"
@@ -974,8 +1168,15 @@
                     }
                   ]
                 },
+                "requires": {
+                  "description": "What must be done for it to work, such as a jumper a clock\nneeds (a setup) or a pin to drive (a drive). Omitted when\nnothing.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Requirement"
+                  }
+                },
                 "user_notes": {
-                  "description": "Warnings and missing information for users, such as a jumper\na clock needs.",
+                  "description": "Warnings and missing information for users.",
                   "type": [
                     "string",
                     "null"
@@ -1036,8 +1237,15 @@
                     }
                   ]
                 },
+                "requires": {
+                  "description": "What must be done for it to work, such as a jumper a clock\nneeds (a setup) or a pin to drive (a drive). Omitted when\nnothing.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Requirement"
+                  }
+                },
                 "user_notes": {
-                  "description": "Warnings and missing information for users, such as a jumper\na clock needs.",
+                  "description": "Warnings and missing information for users.",
                   "type": [
                     "string",
                     "null"
@@ -1088,8 +1296,15 @@
                     }
                   ]
                 },
+                "requires": {
+                  "description": "What must be done for it to work, such as a jumper a clock\nneeds (a setup) or a pin to drive (a drive). Omitted when\nnothing.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Requirement"
+                  }
+                },
                 "user_notes": {
-                  "description": "Warnings and missing information for users, such as a jumper\na clock needs.",
+                  "description": "Warnings and missing information for users.",
                   "type": [
                     "string",
                     "null"
@@ -1142,8 +1357,15 @@
                     }
                   ]
                 },
+                "requires": {
+                  "description": "What must be done for it to work, such as a jumper a clock\nneeds (a setup) or a pin to drive (a drive). Omitted when\nnothing.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Requirement"
+                  }
+                },
                 "user_notes": {
-                  "description": "Warnings and missing information for users, such as a jumper\na clock needs.",
+                  "description": "Warnings and missing information for users.",
                   "type": [
                     "string",
                     "null"
@@ -1193,8 +1415,15 @@
                     }
                   ]
                 },
+                "requires": {
+                  "description": "What must be done for it to work, such as a jumper a clock\nneeds (a setup) or a pin to drive (a drive). Omitted when\nnothing.",
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/$defs/Requirement"
+                  }
+                },
                 "user_notes": {
-                  "description": "Warnings and missing information for users, such as a jumper\na clock needs.",
+                  "description": "Warnings and missing information for users.",
                   "type": [
                     "string",
                     "null"
@@ -1207,61 +1436,6 @@
                 "pins"
               ]
             }
-          ]
-        },
-        "IoStandard": {
-          "description": "An I/O standard, one common name for every FPGA family; pin file writers\ntranslate it (IO_TYPE for ECP5 and Gowin, IOSTANDARD for Xilinx). iCE40\npin files have none.",
-          "type": "string",
-          "enum": [
-            "LVCMOS33",
-            "LVCMOS25",
-            "LVCMOS18",
-            "LVCMOS15",
-            "LVCMOS12",
-            "LVTTL",
-            "LVDS",
-            "SSTL15",
-            "SSTL135"
-          ]
-        },
-        "Source": {
-          "description": "Where a resource's facts come from.",
-          "type": "object",
-          "properties": {
-            "kind": {
-              "description": "hardware (tried on the board), schematic, maker (the maker's docs,\npin files or examples), litex or amaranth (imported from their board\nfiles), or user (reported, not yet checked); strongest first.",
-              "$ref": "#/$defs/SourceKind"
-            },
-            "ref": {
-              "description": "The document, file and commit, or report.",
-              "type": [
-                "string",
-                "null"
-              ]
-            }
-          },
-          "additionalProperties": false,
-          "required": [
-            "kind"
-          ]
-        },
-        "SourceKind": {
-          "type": "string",
-          "enum": [
-            "hardware",
-            "schematic",
-            "maker",
-            "litex",
-            "amaranth",
-            "user"
-          ]
-        },
-        "ActiveLevel": {
-          "description": "The logic level that turns something on.",
-          "type": "string",
-          "enum": [
-            "high",
-            "low"
           ]
         },
         "Colors": {

@@ -35,7 +35,7 @@
     },
     "Source": {
       "type": "object",
-      "description": "Where the resource's facts come from.",
+      "description": "Where the facts come from.",
       "properties": {
         "kind": {
           "enum": [
@@ -78,6 +78,9 @@
         "source": {
           "$ref": "#/$defs/Source"
         },
+        "requires": {
+          "$ref": "#/$defs/Requires"
+        },
         "user_notes": {
           "type": "string",
           "description": "Warnings and missing information for users, such as a jumper a clock needs."
@@ -116,6 +119,9 @@
         },
         "source": {
           "$ref": "#/$defs/Source"
+        },
+        "requires": {
+          "$ref": "#/$defs/Requires"
         },
         "user_notes": {
           "type": "string",
@@ -156,6 +162,9 @@
         },
         "source": {
           "$ref": "#/$defs/Source"
+        },
+        "requires": {
+          "$ref": "#/$defs/Requires"
         },
         "user_notes": {
           "type": "string",
@@ -217,6 +226,9 @@
         "source": {
           "$ref": "#/$defs/Source"
         },
+        "requires": {
+          "$ref": "#/$defs/Requires"
+        },
         "user_notes": {
           "type": "string",
           "description": "Warnings and missing information for users, such as a jumper a clock needs."
@@ -256,6 +268,9 @@
         "source": {
           "$ref": "#/$defs/Source"
         },
+        "requires": {
+          "$ref": "#/$defs/Requires"
+        },
         "user_notes": {
           "type": "string",
           "description": "Warnings and missing information for users, such as a jumper a clock needs."
@@ -294,6 +309,9 @@
         "source": {
           "$ref": "#/$defs/Source"
         },
+        "requires": {
+          "$ref": "#/$defs/Requires"
+        },
         "user_notes": {
           "type": "string",
           "description": "Warnings and missing information for users, such as a jumper a clock needs."
@@ -330,6 +348,9 @@
         "source": {
           "$ref": "#/$defs/Source"
         },
+        "requires": {
+          "$ref": "#/$defs/Requires"
+        },
         "user_notes": {
           "type": "string",
           "description": "Warnings and missing information for users, such as a jumper a clock needs."
@@ -362,6 +383,9 @@
         },
         "source": {
           "$ref": "#/$defs/Source"
+        },
+        "requires": {
+          "$ref": "#/$defs/Requires"
         },
         "user_notes": {
           "type": "string",
@@ -401,6 +425,9 @@
         "source": {
           "$ref": "#/$defs/Source"
         },
+        "requires": {
+          "$ref": "#/$defs/Requires"
+        },
         "user_notes": {
           "type": "string",
           "description": "Warnings and missing information for users, such as a jumper a clock needs."
@@ -432,6 +459,9 @@
         "source": {
           "$ref": "#/$defs/Source"
         },
+        "requires": {
+          "$ref": "#/$defs/Requires"
+        },
         "user_notes": {
           "type": "string",
           "description": "Warnings and missing information for users, such as a jumper a clock needs."
@@ -442,6 +472,90 @@
         "pins"
       ],
       "additionalProperties": false
+    },
+    "Drive": {
+      "type": "object",
+      "description": "Pins a design must drive to a level, as a port of its own: a design that uses what the requirement belongs to (the board, or the resource) includes it.",
+      "properties": {
+        "type": {
+          "const": "drive"
+        },
+        "name": {
+          "type": "string",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "description": "The port name, a Verilog identifier, unique on the board among resources and other drives."
+        },
+        "pins": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Pin"
+          },
+          "minItems": 1,
+          "description": "The FPGA pins, bit 0 first."
+        },
+        "level": {
+          "enum": [
+            "high",
+            "low"
+          ],
+          "description": "The level to drive the pins to."
+        },
+        "io_standard": {
+          "$ref": "#/$defs/IoStandard"
+        },
+        "why": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Why, for people."
+        },
+        "source": {
+          "$ref": "#/$defs/Source"
+        }
+      },
+      "required": [
+        "type",
+        "name",
+        "pins",
+        "level"
+      ],
+      "additionalProperties": false
+    },
+    "Setup": {
+      "type": "object",
+      "description": "Something a person must do to the hardware, such as closing a jumper. Generators leave out what needs a setup, so designs work on the board as shipped.",
+      "properties": {
+        "type": {
+          "const": "setup"
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "What to do, for people."
+        },
+        "source": {
+          "$ref": "#/$defs/Source"
+        }
+      },
+      "required": [
+        "type",
+        "text"
+      ],
+      "additionalProperties": false
+    },
+    "Requires": {
+      "type": "array",
+      "description": "What must be done for the board, or the resource, to work: drive pins (the design) or a setup (a person).",
+      "items": {
+        "oneOf": [
+          {
+            "$ref": "#/$defs/Drive"
+          },
+          {
+            "$ref": "#/$defs/Setup"
+          }
+        ]
+      },
+      "minItems": 1
     },
     "Resource": {
       "oneOf": [
@@ -604,6 +718,10 @@
           "additionalProperties": {
             "$ref": "#/$defs/Resource"
           }
+        },
+        "requires": {
+          "$ref": "#/$defs/Requires",
+          "description": "What every design for the board must do, such as driving a pin that would otherwise reset the FPGA."
         }
       },
       "required": [

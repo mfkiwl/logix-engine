@@ -114,14 +114,22 @@ pub struct CatalogBoard {
     /// catalog boards.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub custom: bool,
+    /// What every design for the board must do, such as driving a pin
+    /// that would otherwise reset the FPGA ({"type": "drive", "name":
+    /// "wifi_gpio0", "pins": ["L2"], "level": "high"}), or a setup a person
+    /// must do. Omitted when nothing.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub requires: crate::resources::Requires,
     /// What the board wires to FPGA pins, by port name, each of a type with
     /// its own fields: clock (pin, mhz), leds, buttons and switches (pins,
     /// active), rgb_led (red, green, blue, active), led_matrix (leds,
     /// colors, active), uart (tx, rx), pmod (its 8 signal pins), header,
     /// and unclassified (every wired pin no other resource lists). A name
     /// with one pin is a plain port, with several a vector, bit 0 first.
-    /// The order of resources means nothing. For creating designs and pin files for the board, such as a blinky.
-    /// Omitted when none are known; a type a board doesn't list is unknown,
+    /// The order of resources means nothing. A resource's requires lists
+    /// what must be done for it to work, such as a jumper a clock needs (a
+    /// setup). For creating designs and pin files for the board, such as a
+    /// blinky. Omitted when none are known; a type a board doesn't list is unknown,
     /// unless the board has an unclassified resource.
     #[serde(default, skip_serializing_if = "indexmap::IndexMap::is_empty")]
     pub resources: catalog::Resources,
@@ -175,6 +183,7 @@ impl From<&KnownBoard<'_>> for CatalogBoard {
             dimensions: catalog::derive_dimensions(b.variants),
             variants: b.variants.iter().map(Into::into).collect(),
             custom: b.custom,
+            requires: b.requires.clone(),
             resources: b.resources.clone(),
         }
     }

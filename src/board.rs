@@ -46,6 +46,10 @@ pub struct CustomBoard {
     /// the default.
     #[schemars(length(min = 1))]
     pub variants: Vec<Variant>,
+    /// What every design for the board must do, as in the catalog, such as
+    /// a pin to drive. Optional.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub requires: crate::resources::Requires,
     /// What the board wires to FPGA pins, by port name, as in the catalog,
     /// such as its clock and LEDs. Optional.
     #[serde(default, skip_serializing_if = "indexmap::IndexMap::is_empty")]
@@ -68,6 +72,7 @@ pub struct KnownBoard<'a> {
     /// The FPGA definition (from the catalog for a catalog ID).
     pub fpga: FpgaDefinition,
     pub variants: &'a [Variant],
+    pub requires: &'a crate::resources::Requires,
     pub resources: &'a catalog::Resources,
 }
 
@@ -95,6 +100,7 @@ pub fn known_boards(custom: &CustomBoards) -> BTreeMap<&str, KnownBoard<'_>> {
                     fpga_id: &b.fpga_id,
                     fpga: c.fpgas.get(&b.fpga_id)?.clone(),
                     variants: &b.variants,
+                    requires: &b.requires,
                     resources: &b.resources,
                 },
             ))
@@ -113,6 +119,7 @@ pub fn known_boards(custom: &CustomBoards) -> BTreeMap<&str, KnownBoard<'_>> {
                 fpga_id: &b.fpga_id,
                 fpga,
                 variants: &b.variants,
+                requires: &b.requires,
                 resources: &b.resources,
             },
         );
@@ -136,6 +143,10 @@ pub struct ResolvedBoard {
     pub fpga: FpgaDefinition,
     /// The chosen variant, with how to program the board that way.
     pub variant: Variant,
+    /// What every design for the board must do (facts for people and
+    /// designs; builds don't use them).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub requires: crate::resources::Requires,
     /// What the board wires to FPGA pins (facts for people and designs;
     /// builds don't use them).
     #[serde(default, skip_serializing_if = "indexmap::IndexMap::is_empty")]
@@ -221,6 +232,7 @@ pub fn resolve(
             fpga_id,
             fpga,
             variant,
+            requires: b.requires.clone(),
             resources: b.resources.clone(),
         });
     }
@@ -238,6 +250,7 @@ pub fn resolve(
         fpga: fpga_by_id(&b.fpga_id)?,
         fpga_id: Some(b.fpga_id.clone()),
         variant,
+        requires: b.requires.clone(),
         resources: b.resources.clone(),
     })
 }
@@ -434,6 +447,7 @@ mod tests {
             fpga_id: b.fpga_id.clone(),
             dimensions: Vec::new(),
             variants: b.variants.clone(),
+            requires: b.requires.clone(),
             resources: b.resources.clone(),
         };
         let ram = pick("usb", "ram");

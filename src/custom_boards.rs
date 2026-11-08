@@ -395,6 +395,13 @@ fn board_problems(
                 format!("{f:?} isn't an FPGA in the catalog. Use get_catalog to list them."),
             );
         }
+        for (field, text) in crate::resources::board_requires_problems(
+            &b.requires,
+            &b.resources,
+            fpga.map(|f| f.architecture),
+        ) {
+            add(At::Value(format!("/requires/{field}")), text);
+        }
         for (name, field, text) in
             crate::resources::problems(&b.resources, fpga.map(|f| f.architecture))
         {
@@ -646,6 +653,35 @@ mod tests {
         );
         // An unknown resource type is a problem too.
         let d = diags(&ok.replace("\"type\": \"leds\"", "\"type\": \"lamp\""));
+        assert_eq!(d.len(), 1, "{d:?}");
+    }
+
+    #[test]
+    fn requirement_problems_point_at_their_values() {
+        // A board's drive named like a resource, and a resource's empty setup.
+        let with = GOOD.replacen(
+            "  \"variants\": [",
+            "  \"requires\": [\n    {\"type\": \"drive\", \"name\": \"led\", \"pins\": [\"2\"], \"level\": \"high\"}\n  ],\n  \"resources\": {\n    \"led\": {\"type\": \"leds\", \"pins\": [\"1\"], \"requires\": [{\"type\": \"setup\", \"text\": \"\"}]}\n  },\n  \"variants\": [",
+            1,
+        );
+        let d = diags(&with);
+        let got: Vec<_> = d.iter().map(|d| (d.0, d.2.as_str())).collect();
+        assert_eq!(
+            got,
+            [
+                (Some(5), "Another resource or drive is named led."),
+                (Some(8), "Say what to do."),
+            ],
+            "{d:?}"
+        );
+        let ok = with
+            .replace("\"name\": \"led\"", "\"name\": \"led_en\"")
+            .replace("\"text\": \"\"", "\"text\": \"Close J1.\"");
+        let boards = parse("/p", &[file("my-board", &ok)]).unwrap();
+        assert_eq!(boards["my-board"].requires.len(), 1);
+        assert_eq!(boards["my-board"].resources["led"].requires().len(), 1);
+        // An unknown requirement type is a problem too.
+        let d = diags(&ok.replace("\"type\": \"setup\"", "\"type\": \"jumper\""));
         assert_eq!(d.len(), 1, "{d:?}");
     }
 

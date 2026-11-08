@@ -17,6 +17,20 @@
       "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware. USB filter (2026-11-05): the ULX3S's FT231X is programmed with a product name that gives the FPGA size and board revision, such as \"ULX3S FPGA 85K v3.0.8\": kost/fujprog fujprog.c (cable_hw_map, compared for equality) lists 12K to 85K for v2.1.2, v3.0.3, v3.0.7 and v3.0.8, and the early names \"ULX3S FPGA board\" and \"ULX3S FPGA v1.7\" without a size; intergalaktik/ulx3s-bin README sets it with ftx_prog (manufacturer FER-RADIONA-EMARD). Also accepts the FT231X's factory name, for a board whose chip was never named."
     }
   ],
+  "requires": [
+    {
+      "type": "drive",
+      "name": "wifi_gpio0",
+      "pins": ["L2"],
+      "level": "high",
+      "io_standard": "LVCMOS33",
+      "why": "GPIO0 of the board's ESP32 WiFi module: held low, it makes the ESP32 reset the board.",
+      "source": {
+        "kind": "maker",
+        "ref": "github.com/ulx3s/ulx3s-examples blinky/blinky.v (c953d25): \"Tie GPIO0, keep board from rebooting\""
+      }
+    }
+  ],
   "resources": {
     "sys_clk": {"type": "clock", "pin": "G2", "mhz": 25, "io_standard": "LVCMOS33"},
     "leds": {

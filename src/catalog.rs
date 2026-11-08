@@ -73,6 +73,12 @@ pub struct BoardDefinition {
     /// have the same FPGA and pin file, so the same project works with each.
     #[schemars(length(min = 1))]
     pub variants: Vec<Variant>,
+    /// What every design for the board must do, such as driving a pin
+    /// that would otherwise reset the FPGA ({"type": "drive", "name":
+    /// "wifi_gpio0", "pins": ["L2"], "level": "high"}), or a setup a person
+    /// must do. Omitted when nothing.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub requires: crate::resources::Requires,
     /// What the board wires to FPGA pins, by port name, each of a type with
     /// its own fields, such as {"clk": {"type": "clock", "pin": "35",
     /// "mhz": 12}}: for creating designs and pin files for the board, such
@@ -839,6 +845,16 @@ impl Catalog {
             {
                 return Err(format!("board {id}: resources/{name}/{field}: {text}"));
             }
+            if let Some((field, text)) = crate::resources::board_requires_problems(
+                &b.requires,
+                &b.resources,
+                Some(fpga.architecture),
+            )
+            .into_iter()
+            .next()
+            {
+                return Err(format!("board {id}: requires/{field}: {text}"));
+            }
         }
         Ok(())
     }
@@ -1387,7 +1403,55 @@ mod tests {
             panic!("a clock");
         };
         assert_eq!((up.pin.as_str(), up.mhz), ("20", 12.0));
-        assert!(up.user_notes.as_deref().unwrap().contains("R16"));
+        let [crate::resources::Requirement::Setup(jumper)] = up.requires.as_slice() else {
+            panic!("a setup");
+        };
+        assert!(jumper.text.contains("R16"));
+        // Jumpers are setups, never only notes: no resource note says one.
+        for (id, b) in &c.boards {
+            for (name, r) in &b.resources {
+                let notes = serde_json::to_value(r).unwrap()["user_notes"].clone();
+                assert!(
+                    !notes.to_string().to_lowercase().contains("jumper"),
+                    "{id} {name}"
+                );
+            }
+        }
+        // Pins every design must drive: the ULX3S's ESP32 GPIO0, Fomu's USB.
+        let drives = |id: &str| -> Vec<(String, Vec<String>, ActiveLevel)> {
+            c.boards[id]
+                .requires
+                .iter()
+                .filter_map(|q| match q {
+                    crate::resources::Requirement::Drive(d) => {
+                        Some((d.name.clone(), d.pins.clone(), d.level))
+                    }
+                    crate::resources::Requirement::Setup(_) => None,
+                })
+                .collect()
+        };
+        for size in ["12f", "25f", "45f", "85f"] {
+            assert_eq!(
+                drives(&format!("ulx3s-{size}")),
+                [("wifi_gpio0".into(), vec!["L2".into()], ActiveLevel::High)]
+            );
+        }
+        let fomu: Vec<_> = drives("fomu")
+            .into_iter()
+            .map(|d| (d.0, d.1[0].clone(), d.2))
+            .collect();
+        assert_eq!(
+            fomu,
+            [
+                ("usb_dp".into(), "A1".into(), ActiveLevel::Low),
+                ("usb_dn".into(), "A2".into(), ActiveLevel::Low),
+                ("usb_dp_pu".into(), "A4".into(), ActiveLevel::Low),
+            ]
+        );
+        assert_eq!(
+            c.boards.values().filter(|b| !b.requires.is_empty()).count(),
+            5
+        );
         // The ButterStick's RGB LEDs are a matrix, from its schematic.
         let Resource::LedMatrix(m) = &c.boards["butterstick-r10-2g-85k"].resources["leds"] else {
             panic!("a matrix");

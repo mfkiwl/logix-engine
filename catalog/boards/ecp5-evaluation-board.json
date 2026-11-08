@@ -34,7 +34,12 @@
       "pin": "A10",
       "mhz": 12,
       "io_standard": "LVCMOS33",
-      "user_notes": "The 12 MHz clock comes from the board's FTDI chip and reaches the FPGA only with jumper JP2 shorted."
+      "requires": [
+        {
+          "type": "setup",
+          "text": "Short jumper JP2: the 12 MHz clock from the board's FTDI chip reaches the FPGA only then."
+        }
+      ]
     },
     "led": {"type": "leds", "pins": ["A13"], "active": "low", "io_standard": "LVCMOS25"}
   }

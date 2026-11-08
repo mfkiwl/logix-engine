@@ -17,6 +17,41 @@
       "maintainer_notes": "Memory flash: Fomu's bootloader (foboot) stores the design in flash, but the board starts its bootloader at power-up, so whether the design comes back by itself is to check on hardware."
     }
   ],
+  "requires": [
+    {
+      "type": "drive",
+      "name": "usb_dp",
+      "pins": ["A1"],
+      "level": "low",
+      "why": "Disconnects the board from the computer's USB, which would otherwise try to talk to a design without a USB stack.",
+      "source": {
+        "kind": "maker",
+        "ref": "github.com/im-tomu/fomu-workshop hdl/verilog/blink/blink.v and pcf/fomu-pvt.pcf (af55dff): \"Assign USB pins to 0 so as to disconnect Fomu from the host system\""
+      }
+    },
+    {
+      "type": "drive",
+      "name": "usb_dn",
+      "pins": ["A2"],
+      "level": "low",
+      "why": "Disconnects the board from the computer's USB, which would otherwise try to talk to a design without a USB stack.",
+      "source": {
+        "kind": "maker",
+        "ref": "github.com/im-tomu/fomu-workshop hdl/verilog/blink/blink.v and pcf/fomu-pvt.pcf (af55dff): \"Assign USB pins to 0 so as to disconnect Fomu from the host system\""
+      }
+    },
+    {
+      "type": "drive",
+      "name": "usb_dp_pu",
+      "pins": ["A4"],
+      "level": "low",
+      "why": "Disconnects the board from the computer's USB, which would otherwise try to talk to a design without a USB stack.",
+      "source": {
+        "kind": "maker",
+        "ref": "github.com/im-tomu/fomu-workshop hdl/verilog/blink/blink.v and pcf/fomu-pvt.pcf (af55dff): \"Assign USB pins to 0 so as to disconnect Fomu from the host system\""
+      }
+    }
+  ],
   "resources": {
     "sys_clk": {"type": "clock", "pin": "F4", "mhz": 48},
     "rgb_led": {"type": "rgb_led", "red": "B5", "green": "C5", "blue": "A5", "active": "low"}

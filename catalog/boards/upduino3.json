@@ -16,7 +16,12 @@
       "type": "clock",
       "pin": "20",
       "mhz": 12,
-      "user_notes": "The 12 MHz oscillator reaches this pin only with the board's OSC jumper (R16) shorted."
+      "requires": [
+        {
+          "type": "setup",
+          "text": "Short the OSC jumper (R16): the 12 MHz oscillator reaches this pin only then."
+        }
+      ]
     },
     "rgb_led": {"type": "rgb_led", "red": "41", "green": "39", "blue": "40", "active": "low"}
   }
