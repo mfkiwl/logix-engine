@@ -41,6 +41,10 @@ pub struct CustomBoard {
     /// the default.
     #[schemars(length(min = 1))]
     pub variants: Vec<Variant>,
+    /// What the board wires to FPGA pins, in groups, as in the catalog,
+    /// such as its clock and LEDs. Optional.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub pin_groups: Vec<catalog::PinGroup>,
 }
 
 /// A board variant in a request: some or all of a selector's values, such
@@ -59,6 +63,7 @@ pub struct KnownBoard<'a> {
     /// The FPGA definition (from the catalog for a catalog ID).
     pub fpga: FpgaDefinition,
     pub variants: &'a [Variant],
+    pub pin_groups: &'a [catalog::PinGroup],
 }
 
 /// A custom board's FPGA: its catalog ID and definition.
@@ -85,6 +90,7 @@ pub fn known_boards(custom: &CustomBoards) -> BTreeMap<&str, KnownBoard<'_>> {
                     fpga_id: &b.fpga_id,
                     fpga: c.fpgas.get(&b.fpga_id)?.clone(),
                     variants: &b.variants,
+                    pin_groups: &b.pin_groups,
                 },
             ))
         })
@@ -102,6 +108,7 @@ pub fn known_boards(custom: &CustomBoards) -> BTreeMap<&str, KnownBoard<'_>> {
                 fpga_id: &b.fpga_id,
                 fpga,
                 variants: &b.variants,
+                pin_groups: &b.pin_groups,
             },
         );
     }
@@ -124,6 +131,10 @@ pub struct ResolvedBoard {
     pub fpga: FpgaDefinition,
     /// The chosen variant, with how to program the board that way.
     pub variant: Variant,
+    /// What the board wires to FPGA pins (facts for people and designs;
+    /// builds don't use them).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub pin_groups: Vec<catalog::PinGroup>,
 }
 
 impl ResolvedBoard {
@@ -205,6 +216,7 @@ pub fn resolve(
             fpga_id,
             fpga,
             variant,
+            pin_groups: b.pin_groups.clone(),
         });
     }
     let b = catalog::builtin().boards.get(id).ok_or_else(|| {
@@ -221,6 +233,7 @@ pub fn resolve(
         fpga: fpga_by_id(&b.fpga_id)?,
         fpga_id: Some(b.fpga_id.clone()),
         variant,
+        pin_groups: b.pin_groups.clone(),
     })
 }
 
@@ -415,6 +428,7 @@ mod tests {
             fpga_id: b.fpga_id.clone(),
             dimensions: Vec::new(),
             variants: b.variants.clone(),
+            pin_groups: b.pin_groups.clone(),
         };
         let ram = pick("usb", "ram");
         let from_list = resolve("icesugar-pro", &ram, &boards([("icesugar-pro", same)])).unwrap();

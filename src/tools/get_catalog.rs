@@ -113,6 +113,14 @@ pub struct CatalogBoard {
     /// catalog boards.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub custom: bool,
+    /// What the board wires to FPGA pins, in groups, such as its clock
+    /// (type clock, with mhz) and LEDs (type led, with active): each group's
+    /// name is a port name, a vector name[N-1:0] for several pins (the first
+    /// is bit 0). For creating designs and pin files for the board, such as
+    /// a blinky. Omitted when none are known; a board may have more than it
+    /// lists.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub pin_groups: Vec<catalog::PinGroup>,
 }
 
 /// One way to program a catalog board. Which USB devices are the board is
@@ -163,6 +171,7 @@ impl From<&KnownBoard<'_>> for CatalogBoard {
             dimensions: catalog::derive_dimensions(b.variants),
             variants: b.variants.iter().map(Into::into).collect(),
             custom: b.custom,
+            pin_groups: b.pin_groups.to_vec(),
         }
     }
 }

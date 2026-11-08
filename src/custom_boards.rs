@@ -349,6 +349,9 @@ fn board_problems(
                 format!("{f:?} isn't an FPGA in the catalog. Use get_catalog to list them."),
             );
         }
+        for (at, text) in catalog::pin_group_problems(&b.pin_groups) {
+            add(At::Value(field(&format!("pin_groups/{at}"))), text);
+        }
     }
     if variant_count == Some(0) {
         add(
@@ -496,6 +499,26 @@ mod tests {
                 catalog::BOARDS_SCHEMA
             )
         );
+    }
+
+    #[test]
+    fn pin_group_problems_point_at_their_values() {
+        let with_groups = GOOD.replacen(
+            "    \"variants\": [",
+            "    \"pin_groups\": [\n      {\"name\": \"sys_clk\", \"type\": \"clock\", \"pins\": [\"35\"]}\n    ],\n    \"variants\": [",
+            1,
+        );
+        assert_eq!(
+            diags(&with_groups),
+            [(
+                Some(6),
+                Some(7),
+                "A clock needs its frequency, mhz.".to_string()
+            )]
+        );
+        let ok = with_groups.replace("\"type\": \"clock\",", "\"type\": \"clock\", \"mhz\": 12,");
+        let boards = parse(&ok, "custom-boards.json").unwrap();
+        assert_eq!(boards["my-board"].pin_groups[0].mhz, Some(12.0));
     }
 
     #[test]

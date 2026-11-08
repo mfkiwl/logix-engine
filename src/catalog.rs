@@ -46,6 +46,160 @@ pub struct BoardDefinition {
     /// have the same FPGA and pin file, so the same project works with each.
     #[schemars(length(min = 1))]
     pub variants: Vec<Variant>,
+    /// What the board wires to FPGA pins, in groups, such as its clock and
+    /// its LEDs: for creating designs and pin files for the board, such as
+    /// a blinky. Facts only: builds never use them. Boards list what is
+    /// known; a board without a group of a type may still have one.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub pin_groups: Vec<PinGroup>,
+}
+
+/// Pins the board wires to one thing, such as its clock or a row of LEDs.
+/// The group's name is the design's port name: a vector, name[N-1:0], for
+/// several pins (the first pin is bit 0), and a plain port for one.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct PinGroup {
+    /// The port name, a Verilog identifier unique on the board, such as
+    /// sys_clk, led or leds.
+    #[schemars(pattern(r"^[A-Za-z_][A-Za-z0-9_]*$"))]
+    pub name: String,
+    /// What the pins are wired to: clock (an oscillator, one pin, with mhz)
+    /// or led (LEDs, with active when known). Later versions add types,
+    /// such as button and switch.
+    #[serde(rename = "type")]
+    pub group_type: PinGroupType,
+    /// For LEDs whose pins mean more than bit numbers: rgb is one RGB LED,
+    /// three pins in the order red, green, blue. Omitted for plain LEDs.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind: Option<LedKind>,
+    /// The clock's frequency in MHz, such as 12. Clocks only.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mhz: Option<f64>,
+    /// The logic level that turns the LEDs on: high or low. Omitted when
+    /// not known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub active: Option<ActiveLevel>,
+    /// The pins' I/O standard, such as LVCMOS33, for pin file formats that
+    /// name one (ECP5, Gowin and Xilinx). Omitted when not known or not
+    /// needed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schemars(pattern(r"^[A-Z0-9_]+$"))]
+    pub io_standard: Option<String>,
+    /// The FPGA pins, as the board's pin files name them, such as 49 or
+    /// N14. For several pins, the first is bit 0.
+    #[schemars(length(min = 1))]
+    pub pins: Vec<String>,
+}
+
+/// What a pin group is wired to.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum PinGroupType {
+    /// An oscillator: one pin, with its frequency.
+    Clock,
+    /// One or more LEDs.
+    Led,
+}
+
+/// A group of LEDs whose pins mean more than bit numbers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum LedKind {
+    /// One RGB LED: three pins, red, green, blue.
+    Rgb,
+}
+
+/// The logic level that turns something on.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum ActiveLevel {
+    High,
+    Low,
+}
+
+/// A Verilog identifier: a letter or underscore, then letters, digits and
+/// underscores.
+fn is_identifier(s: &str) -> bool {
+    let mut chars = s.chars();
+    chars
+        .next()
+        .is_some_and(|c| c.is_ascii_alphabetic() || c == '_')
+        && chars.all(|c| c.is_ascii_alphanumeric() || c == '_')
+}
+
+/// A board's pin group problems, each as (path under pin_groups, such as
+/// "0/name", message), for the catalog's checks and custom boards'
+/// diagnostics.
+pub fn pin_group_problems(groups: &[PinGroup]) -> Vec<(String, String)> {
+    let mut out = Vec::new();
+    let mut names = std::collections::BTreeSet::new();
+    let mut pins = std::collections::BTreeMap::new();
+    for (i, g) in groups.iter().enumerate() {
+        let mut add = |field: &str, text: String| out.push((format!("{i}/{field}"), text));
+        if !is_identifier(&g.name) {
+            add(
+                "name",
+                format!(
+                    "{:?} isn't a port name: use letters, digits and underscores, starting with a letter.",
+                    g.name
+                ),
+            );
+        } else if !names.insert(g.name.as_str()) {
+            add("name", format!("Another pin group is named {:?}.", g.name));
+        }
+        if g.pins.is_empty() {
+            add("pins", "A pin group needs at least one pin.".into());
+        }
+        for (j, p) in g.pins.iter().enumerate() {
+            if p.is_empty() || p.chars().any(|c| c.is_whitespace() || c == '"' || c == ';') {
+                add(&format!("pins/{j}"), format!("{p:?} isn't a pin name."));
+            } else if let Some(other) = pins.insert(p.as_str(), g.name.as_str()) {
+                add(&format!("pins/{j}"), format!("Pin {p} is also in {other}."));
+            }
+        }
+        if let Some(io) = &g.io_standard
+            && (io.is_empty()
+                || !io
+                    .chars()
+                    .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_'))
+        {
+            add(
+                "io_standard",
+                format!("{io:?} isn't an I/O standard, such as LVCMOS33."),
+            );
+        }
+        match g.group_type {
+            PinGroupType::Clock => {
+                match g.mhz {
+                    Some(f) if f > 0.0 && f.is_finite() => {}
+                    Some(f) => add("mhz", format!("{f} isn't a frequency in MHz.")),
+                    None => add("mhz", "A clock needs its frequency, mhz.".into()),
+                }
+                if g.pins.len() > 1 {
+                    add("pins", "A clock has one pin.".into());
+                }
+                if g.active.is_some() {
+                    add("active", "Only LEDs have active.".into());
+                }
+                if g.kind.is_some() {
+                    add("kind", "Only LEDs have a kind.".into());
+                }
+            }
+            PinGroupType::Led => {
+                if g.mhz.is_some() {
+                    add("mhz", "Only clocks have mhz.".into());
+                }
+                if g.kind == Some(LedKind::Rgb) && g.pins.len() != 3 {
+                    add(
+                        "pins",
+                        "An RGB LED has three pins: red, green, blue.".into(),
+                    );
+                }
+            }
+        }
+    }
+    out
 }
 
 /// One kind of choice, such as the memory to program.
@@ -764,7 +918,11 @@ impl BoardDefinition {
         if !is_catalog_id(&self.fpga_id) {
             return Err(format!("bad fpga_id {:?}", self.fpga_id));
         }
-        validate_variants(&self.variants)
+        validate_variants(&self.variants)?;
+        match pin_group_problems(&self.pin_groups).into_iter().next() {
+            Some((at, text)) => Err(format!("pin_groups/{at}: {text}")),
+            None => Ok(()),
+        }
     }
 }
 
@@ -1332,5 +1490,99 @@ mod tests {
         let mut b = ok;
         first(&mut b).selector.memory = "eeprom".into();
         assert!(b.validate().unwrap_err().contains("flash, ram"));
+    }
+
+    #[test]
+    fn pin_groups_from_the_examples() {
+        let c = builtin();
+        // Every board but one has its clock or LEDs (taken from its example's
+        // pin file); soan-papdi-mini has no published pinout.
+        let without: Vec<_> = c
+            .boards
+            .iter()
+            .filter(|(_, b)| b.pin_groups.is_empty())
+            .map(|(id, _)| id.as_str())
+            .collect();
+        assert_eq!(without, ["soan-papdi-mini"]);
+        let g = &c.boards["alhambra-ii"].pin_groups;
+        assert_eq!(
+            serde_json::to_value(g).unwrap(),
+            serde_json::json!([
+                {"name": "sys_clk", "type": "clock", "mhz": 12.0, "pins": ["49"]},
+                {"name": "leds", "type": "led", "active": "high",
+                 "pins": ["45", "44", "43", "42", "41", "39", "38", "37"]}
+            ])
+        );
+        let fomu = &c.boards["fomu"].pin_groups[1];
+        assert_eq!(
+            (fomu.kind, fomu.active),
+            (Some(LedKind::Rgb), Some(ActiveLevel::Low))
+        );
+        // ECP5 and Xilinx pin files name an I/O standard: every group has it.
+        for (id, b) in &c.boards {
+            let arch = c.fpgas[&b.fpga_id].architecture;
+            if matches!(arch, Architecture::Ecp5 | Architecture::Xilinx) {
+                for g in &b.pin_groups {
+                    assert!(g.io_standard.is_some(), "{id} {}", g.name);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn pin_group_checks() {
+        let group = |v: serde_json::Value| serde_json::from_value::<PinGroup>(v).unwrap();
+        let clock = group(
+            serde_json::json!({"name": "sys_clk", "type": "clock", "mhz": 12, "pins": ["49"]}),
+        );
+        let leds = group(
+            serde_json::json!({"name": "leds", "type": "led", "active": "high", "pins": ["45", "44"]}),
+        );
+        assert!(pin_group_problems(&[clock.clone(), leds.clone()]).is_empty());
+        let problems = |groups: &[PinGroup]| pin_group_problems(groups);
+        let mut bad = clock.clone();
+        bad.name = "2clk".into();
+        bad.mhz = None;
+        bad.active = Some(ActiveLevel::High);
+        assert_eq!(
+            problems(&[bad]),
+            [
+                ("0/name".to_string(), "\"2clk\" isn't a port name: use letters, digits and underscores, starting with a letter.".to_string()),
+                ("0/mhz".to_string(), "A clock needs its frequency, mhz.".to_string()),
+                ("0/active".to_string(), "Only LEDs have active.".to_string()),
+            ]
+        );
+        let mut twice = leds.clone();
+        twice.pins = vec!["49".into()];
+        assert_eq!(
+            problems(&[clock.clone(), twice.clone(), twice]),
+            [
+                (
+                    "1/pins/0".to_string(),
+                    "Pin 49 is also in sys_clk.".to_string()
+                ),
+                (
+                    "2/name".to_string(),
+                    "Another pin group is named \"leds\".".to_string()
+                ),
+                (
+                    "2/pins/0".to_string(),
+                    "Pin 49 is also in leds.".to_string()
+                ),
+            ]
+        );
+        let mut rgb = leds.clone();
+        rgb.kind = Some(LedKind::Rgb);
+        assert_eq!(
+            problems(&[rgb])[0].1,
+            "An RGB LED has three pins: red, green, blue."
+        );
+        // Unknown types and fields are format errors.
+        assert!(
+            serde_json::from_value::<PinGroup>(
+                serde_json::json!({"name": "b", "type": "button", "pins": ["1"]})
+            )
+            .is_err()
+        );
     }
 }

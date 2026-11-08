@@ -21,7 +21,7 @@ impl EngineTool for CompareBoards {
     const NAME: &'static str = "compare_boards";
     const DESCRIPTION: &'static str = "Compares two boards, such as a project's board and one \
         it may move to. Returns every aspect (board, architecture, fpga, size, \
-        constraint_format, pins), each the same, different or unknown (the catalog doesn't \
+        constraint_format, pins, clock, leds), each the same, different or unknown (the catalog doesn't \
         describe it yet), with both values and a sentence for people, and same_build: whether \
         a build for one board is valid for the other. Facts only: what they mean for a project, \
         such as files to change, is the host's decision. Boards can be catalog boards or the \
@@ -61,15 +61,16 @@ pub enum Same {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Aspect {
-    /// What is compared: board, architecture, fpga, size, constraint_format
-    /// or pins. Later versions add aspects; hosts skip those they don't
-    /// know, or show their text.
+    /// What is compared: board, architecture, fpga, size, constraint_format,
+    /// pins, clock (the clocks' frequencies in MHz, a list of numbers) or
+    /// leds (how many LEDs, a number). Later versions add aspects; hosts
+    /// skip those they don't know, or show their text.
     pub aspect: String,
     /// yes, no or unknown.
     pub same: Same,
     /// The first board's value, when known. Its type depends on the aspect:
-    /// text for every aspect today; later aspects may give numbers, lists
-    /// or objects.
+    /// text, a number (leds) or a list of numbers (clock); later aspects may
+    /// give other types.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub from: Option<Value>,
     /// The second board's value, when known, of the same type.
@@ -88,7 +89,7 @@ pub struct CompareBoardsOutput {
     /// have the same build settings, so the same bitstream fits both.
     pub same_build: bool,
     /// Every aspect, in a fixed order: board, architecture, fpga, size,
-    /// constraint_format, pins.
+    /// constraint_format, pins, clock, leds.
     pub aspects: Vec<Aspect>,
 }
 
@@ -130,6 +131,70 @@ fn plain_aspect(name: &str, same: Same, text: &str) -> Aspect {
         to: None,
         text: text.into(),
     }
+}
+
+/// The board's clock frequencies in MHz, from its pin groups.
+fn clocks(b: &ResolvedBoard) -> Vec<f64> {
+    b.pin_groups
+        .iter()
+        .filter(|g| g.group_type == catalog::PinGroupType::Clock)
+        .filter_map(|g| g.mhz)
+        .collect()
+}
+
+/// How many LEDs the board lists, or None when it lists none.
+fn led_count(b: &ResolvedBoard) -> Option<usize> {
+    let n: usize = b
+        .pin_groups
+        .iter()
+        .filter(|g| g.group_type == catalog::PinGroupType::Led)
+        .map(|g| g.pins.len())
+        .sum();
+    (n > 0).then_some(n)
+}
+
+/// An aspect the catalog may not know for a board: compared when both
+/// boards have it, the same for the same board, else unknown.
+fn fact_aspect(
+    name: &str,
+    (label, same_label): (&str, &str),
+    values: Option<(Value, Value, String, String)>,
+    same_board: bool,
+) -> Aspect {
+    match values {
+        Some((x, y, tx, ty)) => {
+            let same = x == y;
+            Aspect {
+                aspect: name.into(),
+                same: if same { Same::Yes } else { Same::No },
+                from: Some(x),
+                to: Some(y),
+                text: if same {
+                    format!("{same_label}: {tx}.")
+                } else {
+                    format!("{label}: {tx} → {ty}.")
+                },
+            }
+        }
+        None if same_board => {
+            plain_aspect(name, Same::Yes, &format!("{same_label}: the same board."))
+        }
+        None => plain_aspect(
+            name,
+            Same::Unknown,
+            &format!(
+                "{label}: not known for both boards (the catalog doesn't list it for every board yet)."
+            ),
+        ),
+    }
+}
+
+/// Frequencies as people read them: "12 MHz", "12 MHz and 100 MHz".
+fn mhz_text(list: &[f64]) -> String {
+    list.iter()
+        .map(|f| format!("{f} MHz"))
+        .collect::<Vec<_>>()
+        .join(" and ")
 }
 
 /// Two boards compared.
@@ -186,9 +251,33 @@ pub fn compare(a: &ResolvedBoard, b: &ResolvedBoard) -> CompareBoardsOutput {
                 plain_aspect(
                     "pins",
                     Same::Unknown,
-                    "Pins: not known whether they match (the catalog doesn't describe boards' pins yet).",
+                    "Pins: not known whether they match (the catalog doesn't describe all of a board's pins).",
                 )
             },
+            {
+                let (x, y) = (clocks(a), clocks(b));
+                fact_aspect(
+                    "clock",
+                    ("Clock", "Same clock"),
+                    (!x.is_empty() && !y.is_empty()).then(|| {
+                        (
+                            serde_json::json!(x),
+                            serde_json::json!(y),
+                            mhz_text(&x),
+                            mhz_text(&y),
+                        )
+                    }),
+                    same_board,
+                )
+            },
+            fact_aspect(
+                "leds",
+                ("LEDs", "Same number of LEDs"),
+                led_count(a)
+                    .zip(led_count(b))
+                    .map(|(x, y)| (Value::from(x), Value::from(y), x.to_string(), y.to_string())),
+                same_board,
+            ),
         ],
     }
 }
@@ -240,6 +329,13 @@ mod tests {
                 row("size", No, Some("8k"), Some("5k")),
                 row("constraint_format", Yes, Some(".pcf"), Some(".pcf")),
                 row("pins", Unknown, None, None),
+                (
+                    "clock".into(),
+                    Yes,
+                    Some(json!([12.0])),
+                    Some(json!([12.0]))
+                ),
+                ("leds".into(), No, Some(json!(8)), Some(json!(6))),
             ]
         );
         let texts: Vec<_> = out.aspects.iter().map(|a| a.text.as_str()).collect();
@@ -247,6 +343,26 @@ mod tests {
         assert_eq!(texts[1], "Same architecture: Lattice iCE40.");
         assert_eq!(texts[2], "FPGA: ICE40HX4K-TQ144 → ICE40UP5K-SG48.");
         assert_eq!(texts[4], "Same pin file format: .pcf.");
+        assert_eq!(texts[6], "Same clock: 12 MHz.");
+        assert_eq!(texts[7], "LEDs: 8 → 6.");
+    }
+
+    #[test]
+    fn clocks_and_leds_not_listed_are_unknown() {
+        // The UPduino 3.0's example uses the internal oscillator: no clock.
+        let out = cmp(json!({"from_board": "icebreaker", "to_board": "upduino3"}));
+        let clock = &out.aspects[6];
+        assert_eq!(
+            (clock.aspect.as_str(), clock.same),
+            ("clock", Same::Unknown)
+        );
+        assert_eq!(clock.from, None);
+        let out = cmp(json!({"from_board": "alhambra-ii", "to_board": "icesugar-pro"}));
+        assert_eq!(out.aspects[6].text, "Clock: 12 MHz → 25 MHz.");
+        // A board with none, compared with itself: the same.
+        let out = cmp(json!({"from_board": "soan-papdi-mini", "to_board": "soan-papdi-mini"}));
+        assert_eq!(out.aspects[6].same, Same::Yes);
+        assert_eq!(out.aspects[7].text, "Same number of LEDs: the same board.");
     }
 
     #[test]

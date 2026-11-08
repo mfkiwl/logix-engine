@@ -386,6 +386,14 @@
     },
     "outputSchema": {
       "$defs": {
+        "ActiveLevel": {
+          "description": "The logic level that turns something on.",
+          "enum": [
+            "high",
+            "low"
+          ],
+          "type": "string"
+        },
         "Architecture": {
           "description": "FPGA families.",
           "oneOf": [
@@ -463,6 +471,13 @@
             "fpga_id": {
               "description": "The board's FPGA, as a catalog ID of the fpgas section, such as\nice40hx4k-tq144-8k. Every variant uses it. Boards with the same\nfpga_id have the same FPGA.",
               "type": "string"
+            },
+            "pin_groups": {
+              "description": "What the board wires to FPGA pins, in groups, such as its clock\n(type clock, with mhz) and LEDs (type led, with active): each group's\nname is a port name, a vector name[N-1:0] for several pins (the first\nis bit 0). For creating designs and pin files for the board, such as\na blinky. Omitted when none are known; a board may have more than it\nlists.",
+              "items": {
+                "$ref": "#/$defs/PinGroup"
+              },
+              "type": "array"
             },
             "variants": {
               "description": "The ways the board can be programmed, the board's default first.",
@@ -662,6 +677,97 @@
           ],
           "type": "object"
         },
+        "LedKind": {
+          "description": "A group of LEDs whose pins mean more than bit numbers.",
+          "oneOf": [
+            {
+              "const": "rgb",
+              "description": "One RGB LED: three pins, red, green, blue.",
+              "type": "string"
+            }
+          ]
+        },
+        "PinGroup": {
+          "additionalProperties": false,
+          "description": "Pins the board wires to one thing, such as its clock or a row of LEDs.\nThe group's name is the design's port name: a vector, name[N-1:0], for\nseveral pins (the first pin is bit 0), and a plain port for one.",
+          "properties": {
+            "active": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/ActiveLevel"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "The logic level that turns the LEDs on: high or low. Omitted when\nnot known."
+            },
+            "io_standard": {
+              "description": "The pins' I/O standard, such as LVCMOS33, for pin file formats that\nname one (ECP5, Gowin and Xilinx). Omitted when not known or not\nneeded.",
+              "pattern": "^[A-Z0-9_]+$",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "kind": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/LedKind"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "For LEDs whose pins mean more than bit numbers: rgb is one RGB LED,\nthree pins in the order red, green, blue. Omitted for plain LEDs."
+            },
+            "mhz": {
+              "description": "The clock's frequency in MHz, such as 12. Clocks only.",
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "name": {
+              "description": "The port name, a Verilog identifier unique on the board, such as\nsys_clk, led or leds.",
+              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+              "type": "string"
+            },
+            "pins": {
+              "description": "The FPGA pins, as the board's pin files name them, such as 49 or\nN14. For several pins, the first is bit 0.",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 1,
+              "type": "array"
+            },
+            "type": {
+              "$ref": "#/$defs/PinGroupType",
+              "description": "What the pins are wired to: clock (an oscillator, one pin, with mhz)\nor led (LEDs, with active when known). Later versions add types,\nsuch as button and switch."
+            }
+          },
+          "required": [
+            "name",
+            "type",
+            "pins"
+          ],
+          "type": "object"
+        },
+        "PinGroupType": {
+          "description": "What a pin group is wired to.",
+          "oneOf": [
+            {
+              "const": "clock",
+              "description": "An oscillator: one pin, with its frequency.",
+              "type": "string"
+            },
+            {
+              "const": "led",
+              "description": "One or more LEDs.",
+              "type": "string"
+            }
+          ]
+        },
         "Selector": {
           "additionalProperties": false,
           "description": "Which of a board's variants: a value of each standard dimension. In a\nboard definition it says where the variant sits; in requests\n(board_variant) it picks the variant with these values.",
@@ -724,7 +830,7 @@
   },
   {
     "name": "compare_boards",
-    "description": "Compares two boards, such as a project's board and one it may move to. Returns every aspect (board, architecture, fpga, size, constraint_format, pins), each the same, different or unknown (the catalog doesn't describe it yet), with both values and a sentence for people, and same_build: whether a build for one board is valid for the other. Facts only: what they mean for a project, such as files to change, is the host's decision. Boards can be catalog boards or the request's custom_boards_file.",
+    "description": "Compares two boards, such as a project's board and one it may move to. Returns every aspect (board, architecture, fpga, size, constraint_format, pins, clock, leds), each the same, different or unknown (the catalog doesn't describe it yet), with both values and a sentence for people, and same_build: whether a build for one board is valid for the other. Facts only: what they mean for a project, such as files to change, is the host's decision. Boards can be catalog boards or the request's custom_boards_file.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
@@ -761,11 +867,11 @@
           "description": "One aspect of the two boards.",
           "properties": {
             "aspect": {
-              "description": "What is compared: board, architecture, fpga, size, constraint_format\nor pins. Later versions add aspects; hosts skip those they don't\nknow, or show their text.",
+              "description": "What is compared: board, architecture, fpga, size, constraint_format,\npins, clock (the clocks' frequencies in MHz, a list of numbers) or\nleds (how many LEDs, a number). Later versions add aspects; hosts\nskip those they don't know, or show their text.",
               "type": "string"
             },
             "from": {
-              "description": "The first board's value, when known. Its type depends on the aspect:\ntext for every aspect today; later aspects may give numbers, lists\nor objects."
+              "description": "The first board's value, when known. Its type depends on the aspect:\ntext, a number (leds) or a list of numbers (clock); later aspects may\ngive other types."
             },
             "same": {
               "$ref": "#/$defs/Same",
@@ -809,7 +915,7 @@
       "description": "The two boards compared.",
       "properties": {
         "aspects": {
-          "description": "Every aspect, in a fixed order: board, architecture, fpga, size,\nconstraint_format, pins.",
+          "description": "Every aspect, in a fixed order: board, architecture, fpga, size,\nconstraint_format, pins, clock, leds.",
           "items": {
             "$ref": "#/$defs/Aspect"
           },

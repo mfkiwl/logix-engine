@@ -1,5 +1,13 @@
 {
   "$defs": {
+    "ActiveLevel": {
+      "description": "The logic level that turns something on.",
+      "enum": [
+        "high",
+        "low"
+      ],
+      "type": "string"
+    },
     "Board": {
       "additionalProperties": false,
       "description": "A board definition, the same in the catalog and in custom boards files:\nthe board's name, its FPGA and the ways to program it. The FPGA is one of\nthe catalog's, which has every FPGA the toolchain supports, so a custom\nboard adds a board and its programming, never an FPGA.",
@@ -12,6 +20,13 @@
           "description": "The board's FPGA, as a catalog ID such as ice40hx4k-tq144-8k\n(get_catalog lists them).",
           "pattern": "^[a-z0-9-]+$",
           "type": "string"
+        },
+        "pin_groups": {
+          "description": "What the board wires to FPGA pins, in groups, as in the catalog,\nsuch as its clock and LEDs. Optional.",
+          "items": {
+            "$ref": "#/$defs/PinGroup"
+          },
+          "type": "array"
         },
         "variants": {
           "description": "The ways the board can be programmed, as in the catalog. The first is\nthe default.",
@@ -29,6 +44,98 @@
       ],
       "title": "Board",
       "type": "object"
+    },
+    "LedKind": {
+      "description": "A group of LEDs whose pins mean more than bit numbers.",
+      "oneOf": [
+        {
+          "const": "rgb",
+          "description": "One RGB LED: three pins, red, green, blue.",
+          "type": "string"
+        }
+      ]
+    },
+    "PinGroup": {
+      "additionalProperties": false,
+      "description": "Pins the board wires to one thing, such as its clock or a row of LEDs.\nThe group's name is the design's port name: a vector, name[N-1:0], for\nseveral pins (the first pin is bit 0), and a plain port for one.",
+      "properties": {
+        "active": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ActiveLevel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "The logic level that turns the LEDs on: high or low. Omitted when\nnot known."
+        },
+        "io_standard": {
+          "description": "The pins' I/O standard, such as LVCMOS33, for pin file formats that\nname one (ECP5, Gowin and Xilinx). Omitted when not known or not\nneeded.",
+          "pattern": "^[A-Z0-9_]+$",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LedKind"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "For LEDs whose pins mean more than bit numbers: rgb is one RGB LED,\nthree pins in the order red, green, blue. Omitted for plain LEDs."
+        },
+        "mhz": {
+          "description": "The clock's frequency in MHz, such as 12. Clocks only.",
+          "format": "double",
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "name": {
+          "description": "The port name, a Verilog identifier unique on the board, such as\nsys_clk, led or leds.",
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
+          "type": "string"
+        },
+        "pins": {
+          "description": "The FPGA pins, as the board's pin files name them, such as 49 or\nN14. For several pins, the first is bit 0.",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "type": "array"
+        },
+        "type": {
+          "$ref": "#/$defs/PinGroupType",
+          "description": "What the pins are wired to: clock (an oscillator, one pin, with mhz)\nor led (LEDs, with active when known). Later versions add types,\nsuch as button and switch."
+        }
+      },
+      "required": [
+        "name",
+        "type",
+        "pins"
+      ],
+      "type": "object"
+    },
+    "PinGroupType": {
+      "description": "What a pin group is wired to.",
+      "oneOf": [
+        {
+          "const": "clock",
+          "description": "An oscillator: one pin, with its frequency.",
+          "type": "string"
+        },
+        {
+          "const": "led",
+          "description": "One or more LEDs.",
+          "type": "string"
+        }
+      ]
     },
     "Selector": {
       "additionalProperties": false,
