@@ -1795,9 +1795,18 @@
     ],
     "pin_groups": [
       {
+        "name": "sys_clk",
+        "type": "clock",
+        "mhz": 12,
+        "pins": [
+          "35"
+        ]
+      },
+      {
         "name": "rgb_led",
         "type": "led",
         "kind": "rgb",
+        "active": "low",
         "pins": [
           "41",
           "39",
@@ -2409,11 +2418,14 @@
     ],
     "pin_groups": [
       {
-        "name": "led",
+        "name": "leds",
         "type": "led",
         "active": "high",
         "pins": [
-          "137"
+          "137",
+          "135",
+          "129",
+          "121"
         ]
       }
     ]
@@ -2904,6 +2916,7 @@
         "name": "rgb_led",
         "type": "led",
         "kind": "rgb",
+        "active": "low",
         "pins": [
           "41",
           "39",
