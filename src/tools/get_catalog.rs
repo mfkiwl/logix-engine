@@ -120,7 +120,7 @@ pub struct CatalogBoard {
     /// colors, active), uart (tx, rx), pmod (its 8 signal pins), header,
     /// and unclassified (every wired pin no other resource lists). A name
     /// with one pin is a plain port, with several a vector, bit 0 first.
-    /// For creating designs and pin files for the board, such as a blinky.
+    /// The order of resources means nothing. For creating designs and pin files for the board, such as a blinky.
     /// Omitted when none are known; a type a board doesn't list is unknown,
     /// unless the board has an unclassified resource.
     #[serde(default, skip_serializing_if = "indexmap::IndexMap::is_empty")]

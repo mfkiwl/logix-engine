@@ -478,7 +478,7 @@
               "type": "boolean"
             },
             "resources": {
-              "description": "What the board wires to FPGA pins, by port name, each of a type with\nits own fields: clock (pin, mhz), leds, buttons and switches (pins,\nactive), rgb_led (red, green, blue, active), led_matrix (leds,\ncolors, active), uart (tx, rx), pmod (its 8 signal pins), header,\nand unclassified (every wired pin no other resource lists). A name\nwith one pin is a plain port, with several a vector, bit 0 first.\nFor creating designs and pin files for the board, such as a blinky.\nOmitted when none are known; a type a board doesn't list is unknown,\nunless the board has an unclassified resource.",
+              "description": "What the board wires to FPGA pins, by port name, each of a type with\nits own fields: clock (pin, mhz), leds, buttons and switches (pins,\nactive), rgb_led (red, green, blue, active), led_matrix (leds,\ncolors, active), uart (tx, rx), pmod (its 8 signal pins), header,\nand unclassified (every wired pin no other resource lists). A name\nwith one pin is a plain port, with several a vector, bit 0 first.\nThe order of resources means nothing. For creating designs and pin files for the board, such as a blinky.\nOmitted when none are known; a type a board doesn't list is unknown,\nunless the board has an unclassified resource.",
               "type": "object",
               "additionalProperties": {
                 "$ref": "#/$defs/Resource"
