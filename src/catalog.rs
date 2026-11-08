@@ -1382,15 +1382,15 @@ mod tests {
     #[test]
     fn resources_of_the_catalog() {
         let c = builtin();
-        // Every board but one has its clock or LEDs; soan-papdi-mini has no
-        // published pinout.
+        // Every board has its clock or LEDs; the Soan Papdi Mini's come from
+        // its maker, its LED's active level not yet.
         let without: Vec<_> = c
             .boards
             .iter()
             .filter(|(_, b)| b.resources.is_empty())
             .map(|(id, _)| id.as_str())
             .collect();
-        assert_eq!(without, ["soan-papdi-mini"]);
+        assert!(without.is_empty(), "{without:?}");
         assert_eq!(
             serde_json::to_value(&c.boards["alhambra-ii"].resources).unwrap(),
             serde_json::json!({

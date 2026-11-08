@@ -351,9 +351,12 @@ mod tests {
         assert_eq!(clock.from, None);
         let out = cmp(json!({"from_board": "alhambra-ii", "to_board": "icesugar-pro"}));
         assert_eq!(out.aspects[6].text, "Clock: 12 MHz → 25 MHz.");
-        // A board with none, compared with itself: the same.
-        let out = cmp(json!({"from_board": "soan-papdi-mini", "to_board": "soan-papdi-mini"}));
+        // A board with none, compared with itself: the same (the pico-ice
+        // has no clock, the Tang Primer 20K Lite no LEDs).
+        let out = cmp(json!({"from_board": "pico-ice", "to_board": "pico-ice"}));
         assert_eq!(out.aspects[6].same, Same::Yes);
+        let lite = "sipeed-tang-primer-20k-lite";
+        let out = cmp(json!({"from_board": lite, "to_board": lite}));
         assert_eq!(out.aspects[7].text, "Same number of LEDs: the same board.");
     }
 

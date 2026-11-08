@@ -11,5 +11,26 @@
       "tested": true,
       "user_notes": "Programming through the USB bootloader needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
     }
-  ]
+  ],
+  "resources": {
+    "sys_clk": {
+      "type": "clock",
+      "pin": "35",
+      "mhz": 12,
+      "source": {
+        "kind": "maker",
+        "ref": "The maker's reply to the Logix project, 2026-11-08: 12 MHz external clock on pin 35; RGB LED red on 39, green on 40, blue on 41. Polarity not stated yet."
+      }
+    },
+    "rgb_led": {
+      "type": "rgb_led",
+      "red": "39",
+      "green": "40",
+      "blue": "41",
+      "source": {
+        "kind": "maker",
+        "ref": "The maker's reply to the Logix project, 2026-11-08: 12 MHz external clock on pin 35; RGB LED red on 39, green on 40, blue on 41. Polarity not stated yet."
+      }
+    }
+  }
 }
