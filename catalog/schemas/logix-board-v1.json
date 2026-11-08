@@ -1,0 +1,622 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "title": "Logix board",
+  "description": "One board of Logix Catalog (www.openlogix.org/catalog/): its file, boards/<id>.json.",
+  "$ref": "#/$defs/BoardFields",
+  "properties": {
+    "$schema": {
+      "const": "https://www.openlogix.org/schemas/logix-board-v1.json"
+    }
+  },
+  "required": [
+    "$schema"
+  ],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "Pin": {
+      "type": "string",
+      "pattern": "^[^\\s\";]+$",
+      "description": "An FPGA pin as the board's pin files name it, such as 49 or N14."
+    },
+    "IoStandard": {
+      "enum": [
+        "LVCMOS33",
+        "LVCMOS25",
+        "LVCMOS18",
+        "LVCMOS15",
+        "LVCMOS12",
+        "LVTTL",
+        "LVDS",
+        "SSTL15",
+        "SSTL135"
+      ],
+      "description": "The pins' I/O standard, one common name for every FPGA family; each pin file writer translates it. Not used on iCE40."
+    },
+    "Source": {
+      "type": "object",
+      "description": "Where the resource's facts come from.",
+      "properties": {
+        "kind": {
+          "enum": [
+            "hardware",
+            "schematic",
+            "maker",
+            "litex",
+            "amaranth",
+            "user"
+          ]
+        },
+        "ref": {
+          "type": "string",
+          "description": "The document, file and commit, or report."
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "additionalProperties": false
+    },
+    "Clock": {
+      "type": "object",
+      "description": "An oscillator wired to one FPGA pin.",
+      "properties": {
+        "type": {
+          "const": "clock"
+        },
+        "pin": {
+          "$ref": "#/$defs/Pin"
+        },
+        "mhz": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "description": "Its frequency in MHz."
+        },
+        "io_standard": {
+          "$ref": "#/$defs/IoStandard"
+        },
+        "source": {
+          "$ref": "#/$defs/Source"
+        },
+        "user_notes": {
+          "type": "string",
+          "description": "Warnings and missing information for users, such as a jumper a clock needs."
+        }
+      },
+      "required": [
+        "type",
+        "pin",
+        "mhz"
+      ],
+      "additionalProperties": false
+    },
+    "Leds": {
+      "type": "object",
+      "description": "LEDs, one pin each. One pin gives a plain port, several a vector, bit 0 first.",
+      "properties": {
+        "type": {
+          "const": "leds"
+        },
+        "pins": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Pin"
+          },
+          "minItems": 1
+        },
+        "active": {
+          "enum": [
+            "high",
+            "low"
+          ],
+          "description": "The logic level that turns it on. Left out when not known."
+        },
+        "io_standard": {
+          "$ref": "#/$defs/IoStandard"
+        },
+        "source": {
+          "$ref": "#/$defs/Source"
+        },
+        "user_notes": {
+          "type": "string",
+          "description": "Warnings and missing information for users, such as a jumper a clock needs."
+        }
+      },
+      "required": [
+        "type",
+        "pins"
+      ],
+      "additionalProperties": false
+    },
+    "RgbLed": {
+      "type": "object",
+      "description": "One RGB LED: a pin per color.",
+      "properties": {
+        "type": {
+          "const": "rgb_led"
+        },
+        "red": {
+          "$ref": "#/$defs/Pin"
+        },
+        "green": {
+          "$ref": "#/$defs/Pin"
+        },
+        "blue": {
+          "$ref": "#/$defs/Pin"
+        },
+        "active": {
+          "enum": [
+            "high",
+            "low"
+          ],
+          "description": "The logic level that turns it on. Left out when not known."
+        },
+        "io_standard": {
+          "$ref": "#/$defs/IoStandard"
+        },
+        "source": {
+          "$ref": "#/$defs/Source"
+        },
+        "user_notes": {
+          "type": "string",
+          "description": "Warnings and missing information for users, such as a jumper a clock needs."
+        }
+      },
+      "required": [
+        "type",
+        "red",
+        "green",
+        "blue"
+      ],
+      "additionalProperties": false
+    },
+    "LedMatrix": {
+      "type": "object",
+      "description": "RGB LEDs in a matrix: a pin per LED, and a pin per color; an LED lights when its pin and a color's pin are both active.",
+      "properties": {
+        "type": {
+          "const": "led_matrix"
+        },
+        "leds": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Pin"
+          },
+          "minItems": 1
+        },
+        "colors": {
+          "type": "object",
+          "properties": {
+            "red": {
+              "$ref": "#/$defs/Pin"
+            },
+            "green": {
+              "$ref": "#/$defs/Pin"
+            },
+            "blue": {
+              "$ref": "#/$defs/Pin"
+            }
+          },
+          "required": [
+            "red",
+            "green",
+            "blue"
+          ],
+          "additionalProperties": false
+        },
+        "active": {
+          "enum": [
+            "high",
+            "low"
+          ],
+          "description": "The logic level that turns it on. Left out when not known."
+        },
+        "io_standard": {
+          "$ref": "#/$defs/IoStandard"
+        },
+        "source": {
+          "$ref": "#/$defs/Source"
+        },
+        "user_notes": {
+          "type": "string",
+          "description": "Warnings and missing information for users, such as a jumper a clock needs."
+        }
+      },
+      "required": [
+        "type",
+        "leds",
+        "colors"
+      ],
+      "additionalProperties": false
+    },
+    "Buttons": {
+      "type": "object",
+      "description": "Push buttons, one pin each.",
+      "properties": {
+        "type": {
+          "const": "buttons"
+        },
+        "pins": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Pin"
+          },
+          "minItems": 1
+        },
+        "active": {
+          "enum": [
+            "high",
+            "low"
+          ],
+          "description": "The logic level that turns it on. Left out when not known."
+        },
+        "io_standard": {
+          "$ref": "#/$defs/IoStandard"
+        },
+        "source": {
+          "$ref": "#/$defs/Source"
+        },
+        "user_notes": {
+          "type": "string",
+          "description": "Warnings and missing information for users, such as a jumper a clock needs."
+        }
+      },
+      "required": [
+        "type",
+        "pins"
+      ],
+      "additionalProperties": false
+    },
+    "Switches": {
+      "type": "object",
+      "description": "Switches, one pin each.",
+      "properties": {
+        "type": {
+          "const": "switches"
+        },
+        "pins": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Pin"
+          },
+          "minItems": 1
+        },
+        "active": {
+          "enum": [
+            "high",
+            "low"
+          ],
+          "description": "The logic level that turns it on. Left out when not known."
+        },
+        "io_standard": {
+          "$ref": "#/$defs/IoStandard"
+        },
+        "source": {
+          "$ref": "#/$defs/Source"
+        },
+        "user_notes": {
+          "type": "string",
+          "description": "Warnings and missing information for users, such as a jumper a clock needs."
+        }
+      },
+      "required": [
+        "type",
+        "pins"
+      ],
+      "additionalProperties": false
+    },
+    "Uart": {
+      "type": "object",
+      "description": "A serial port, as the FPGA sees it: tx is the FPGA's output.",
+      "properties": {
+        "type": {
+          "const": "uart"
+        },
+        "tx": {
+          "$ref": "#/$defs/Pin"
+        },
+        "rx": {
+          "$ref": "#/$defs/Pin"
+        },
+        "rts": {
+          "$ref": "#/$defs/Pin"
+        },
+        "cts": {
+          "$ref": "#/$defs/Pin"
+        },
+        "io_standard": {
+          "$ref": "#/$defs/IoStandard"
+        },
+        "source": {
+          "$ref": "#/$defs/Source"
+        },
+        "user_notes": {
+          "type": "string",
+          "description": "Warnings and missing information for users, such as a jumper a clock needs."
+        }
+      },
+      "required": [
+        "type",
+        "tx",
+        "rx"
+      ],
+      "additionalProperties": false
+    },
+    "Pmod": {
+      "type": "object",
+      "description": "A PMOD header: its 8 signal pins in header order, 1 to 4 then 7 to 10.",
+      "properties": {
+        "type": {
+          "const": "pmod"
+        },
+        "pins": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Pin"
+          },
+          "minItems": 8,
+          "maxItems": 8
+        },
+        "io_standard": {
+          "$ref": "#/$defs/IoStandard"
+        },
+        "source": {
+          "$ref": "#/$defs/Source"
+        },
+        "user_notes": {
+          "type": "string",
+          "description": "Warnings and missing information for users, such as a jumper a clock needs."
+        }
+      },
+      "required": [
+        "type",
+        "pins"
+      ],
+      "additionalProperties": false
+    },
+    "Header": {
+      "type": "object",
+      "description": "Any other header: every position in order, null for power and ground.",
+      "properties": {
+        "type": {
+          "const": "header"
+        },
+        "pins": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/Pin"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "minItems": 1
+        },
+        "io_standard": {
+          "$ref": "#/$defs/IoStandard"
+        },
+        "source": {
+          "$ref": "#/$defs/Source"
+        },
+        "user_notes": {
+          "type": "string",
+          "description": "Warnings and missing information for users, such as a jumper a clock needs."
+        }
+      },
+      "required": [
+        "type",
+        "pins"
+      ],
+      "additionalProperties": false
+    },
+    "Unclassified": {
+      "type": "object",
+      "description": "Every FPGA pin the board wires to something no other resource describes; FPGA pins wired to nothing are left out. A board with one lists all its wired pins.",
+      "properties": {
+        "type": {
+          "const": "unclassified"
+        },
+        "pins": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Pin"
+          },
+          "minItems": 1
+        },
+        "io_standard": {
+          "$ref": "#/$defs/IoStandard"
+        },
+        "source": {
+          "$ref": "#/$defs/Source"
+        },
+        "user_notes": {
+          "type": "string",
+          "description": "Warnings and missing information for users, such as a jumper a clock needs."
+        }
+      },
+      "required": [
+        "type",
+        "pins"
+      ],
+      "additionalProperties": false
+    },
+    "Resource": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/Clock"
+        },
+        {
+          "$ref": "#/$defs/Leds"
+        },
+        {
+          "$ref": "#/$defs/RgbLed"
+        },
+        {
+          "$ref": "#/$defs/LedMatrix"
+        },
+        {
+          "$ref": "#/$defs/Buttons"
+        },
+        {
+          "$ref": "#/$defs/Switches"
+        },
+        {
+          "$ref": "#/$defs/Uart"
+        },
+        {
+          "$ref": "#/$defs/Pmod"
+        },
+        {
+          "$ref": "#/$defs/Header"
+        },
+        {
+          "$ref": "#/$defs/Unclassified"
+        }
+      ]
+    },
+    "Selector": {
+      "type": "object",
+      "description": "Which variant: a value of each standard dimension.",
+      "properties": {
+        "connection": {
+          "enum": [
+            "usb",
+            "bootloader",
+            "ft2232h",
+            "ft232h",
+            "cmsis-dap",
+            "usb-blaster",
+            "unspecified"
+          ]
+        },
+        "memory": {
+          "enum": [
+            "flash",
+            "ram"
+          ]
+        }
+      },
+      "required": [
+        "connection",
+        "memory"
+      ],
+      "additionalProperties": false
+    },
+    "Usb": {
+      "type": "object",
+      "description": "The USB device the board is programmed through. How tools match devices to boards is their own.",
+      "properties": {
+        "vid": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{4}$"
+        },
+        "pid": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{4}$"
+        },
+        "product_regex": {
+          "type": "string"
+        },
+        "release": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{4}$"
+        },
+        "serial_regex": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "vid",
+        "pid"
+      ],
+      "additionalProperties": false
+    },
+    "Variant": {
+      "type": "object",
+      "description": "One way to program the board. The first is the default.",
+      "properties": {
+        "selector": {
+          "$ref": "#/$defs/Selector"
+        },
+        "programmer": {
+          "enum": [
+            "openfpgaloader",
+            "iceprog",
+            "dfu-util",
+            "icesprog"
+          ]
+        },
+        "args": {
+          "type": "string",
+          "description": "The programmer's arguments, a template with ${VID}, ${PID}, ${BUS}, ${DEV}, ${SERIAL_NUM}, ${USB_PATH} and ${BITSTREAM}."
+        },
+        "usb": {
+          "$ref": "#/$defs/Usb"
+        },
+        "tested": {
+          "type": "boolean"
+        },
+        "user_notes": {
+          "type": "string"
+        },
+        "maintainer_notes": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "selector",
+        "programmer",
+        "args",
+        "usb",
+        "tested"
+      ],
+      "additionalProperties": false
+    },
+    "BoardFields": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The board's name for people."
+        },
+        "fpga_id": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$",
+          "description": "The board's FPGA, an ID from the catalog's fpgas.json."
+        },
+        "variants": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Variant"
+          },
+          "minItems": 1
+        },
+        "resources": {
+          "type": "object",
+          "description": "What the board wires to FPGA pins, by port name.",
+          "propertyNames": {
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/Resource"
+          }
+        }
+      },
+      "required": [
+        "name",
+        "fpga_id",
+        "variants"
+      ]
+    },
+    "Board": {
+      "title": "Board",
+      "description": "A board, the same in its catalog file and in a custom boards file.",
+      "$ref": "#/$defs/BoardFields",
+      "unevaluatedProperties": false
+    }
+  }
+}

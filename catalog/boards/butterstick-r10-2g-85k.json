@@ -1,0 +1,45 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "butterstick r1.0",
+  "fpga_id": "lfe5um5g-85f-8bg381c",
+  "variants": [
+    {
+      "selector": {"connection": "bootloader", "memory": "flash"},
+      "programmer": "dfu-util",
+      "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM} --reset",
+      "usb": {"vid": "1209", "pid": "5af1", "product_regex": "^butterstick (dfu v1.1)"},
+      "tested": true,
+      "user_notes": "Programming through the USB bootloader needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+    },
+    {
+      "selector": {"connection": "ft2232h", "memory": "ram"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6010"},
+      "tested": true,
+      "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
+    },
+    {
+      "selector": {"connection": "ft232h", "memory": "ram"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify -c ft232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6014"},
+      "tested": true,
+      "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "B12", "mhz": 30, "io_standard": "LVCMOS33"},
+    "leds": {
+      "type": "led_matrix",
+      "leds": ["C13", "D12", "U2", "T3", "D13", "E13", "C16"],
+      "colors": {"red": "T1", "green": "U1", "blue": "R1"},
+      "active": "high",
+      "io_standard": "LVCMOS33",
+      "source": {
+        "kind": "schematic",
+        "ref": "ButterStick r1.0a schematic, sheets IO-LEDS and FPGA bank pins"
+      }
+    }
+  }
+}

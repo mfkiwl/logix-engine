@@ -76,7 +76,14 @@ async fn get_engine_info_reports_the_launch_settings() {
     assert_eq!(out["auto_install"], false);
     assert_eq!(
         out["boards_schema"],
-        "https://www.openlogix.org/schemas/logix-boards-v1.json"
+        "https://www.openlogix.org/schemas/logix-board-v1.json"
+    );
+    assert_eq!(out["catalog"]["commit"].as_str().unwrap().len(), 7);
+    assert!(
+        out["report"]
+            .as_str()
+            .unwrap()
+            .contains("Board catalog: Logix Catalog ")
     );
     let report = out["report"].as_str().unwrap();
     assert!(report.starts_with("Logix Engine "), "{report}");
@@ -278,7 +285,7 @@ async fn get_catalog_returns_the_requested_entries() {
     let boards = out["boards"].as_object().unwrap();
     assert_eq!(boards.len(), 1);
     let alhambra = &boards["alhambra-ii"];
-    assert_eq!(alhambra["description"], "Alhambra II");
+    assert_eq!(alhambra["name"], "Alhambra II");
     assert_eq!(alhambra["fpga_id"], "ice40hx4k-tq144-8k");
     assert_eq!(
         alhambra["variants"][0]["selector"],
@@ -333,17 +340,24 @@ impl ClientHandler for OutputClient {
 async fn display_paths_name_files_in_errors() {
     let tmp = tempfile::tempdir().unwrap();
     let client = start(&tmp.path().join("engine"), &[]).await;
-    // A host's copy of the user's file, in its scratch folder.
-    let scratch = tmp.path().join("scratch");
-    std::fs::create_dir(&scratch).unwrap();
-    let file = scratch.join("custom-boards.json");
-    std::fs::write(&file, "{\n  \"b\": 1\n}\n").unwrap();
+    // A host's copy of the user's boards folder, in its scratch folder.
+    let folder = tmp.path().join("scratch").join("boards");
+    std::fs::create_dir_all(&folder).unwrap();
+    std::fs::write(folder.join("b.json"), "{\n  \"name\": 1\n}\n").unwrap();
+    let file = folder.join("b.json");
     let error = |r: CallToolResult| {
         assert_eq!(r.is_error, Some(true));
         r.structured_content.unwrap()
     };
     // As the request gave it.
-    let e = error(call(&client, "get_catalog", json!({"custom_boards_file": file})).await);
+    let e = error(
+        call(
+            &client,
+            "get_catalog",
+            json!({"custom_boards_folder": folder}),
+        )
+        .await,
+    );
     assert_eq!(e["diagnostics"][0]["file"], json!(file));
     assert!(
         e["message"]
@@ -357,21 +371,21 @@ async fn display_paths_name_files_in_errors() {
             &client,
             "get_catalog",
             json!({
-                "custom_boards_file": file,
-                "display_paths": {"files": [{"path": file, "as": "/home/you/blinky/custom-boards.json"}]}
+                "custom_boards_folder": folder,
+                "display_paths": {"folders": [{"path": folder, "as": "/home/you/blinky/boards"}]}
             }),
         )
         .await,
     );
     assert_eq!(
         e["diagnostics"][0]["file"],
-        "/home/you/blinky/custom-boards.json"
+        "/home/you/blinky/boards/b.json"
     );
     assert!(
         e["message"]
             .as_str()
             .unwrap()
-            .contains("/home/you/blinky/custom-boards.json:2:"),
+            .contains("/home/you/blinky/boards/b.json:2:"),
         "{e}"
     );
     // An entry that isn't absolute is a request error.

@@ -11,6 +11,29 @@
     },
     "outputSchema": {
       "$defs": {
+        "CatalogInfo": {
+          "additionalProperties": false,
+          "description": "The board catalog built into the engine (Logix Catalog,\ngithub.com/openlogix/logix-catalog).",
+          "properties": {
+            "commit": {
+              "description": "The Logix Catalog commit, a short hash such as 3cdae93.",
+              "type": "string"
+            },
+            "local": {
+              "description": "True when this engine was built from a local catalog clone (a\ndeveloper build), which may differ from the commit; omitted\notherwise.",
+              "type": "boolean"
+            },
+            "version": {
+              "description": "The catalog's version: the date (yyyy-mm-dd) of its Logix Catalog\ncommit.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "version",
+            "commit"
+          ],
+          "type": "object"
+        },
         "PackageInfo": {
           "additionalProperties": false,
           "description": "A toolchain package and whether it's installed.",
@@ -72,8 +95,12 @@
           "type": "boolean"
         },
         "boards_schema": {
-          "description": "The address of the boards schema this engine reads: the JSON Schema\nof custom boards files, which may name it in a \"$schema\" key so\neditors can check them. A file that names another schema is refused.",
+          "description": "The address of the board schema this engine reads (Logix Catalog's):\nthe JSON Schema of each board file, in the catalog and in custom\nboards folders, which may name it in a \"$schema\" key so editors can\ncheck them. A file that names another schema is refused.",
           "type": "string"
+        },
+        "catalog": {
+          "$ref": "#/$defs/CatalogInfo",
+          "description": "The board catalog built into this engine: its Logix Catalog version."
         },
         "command_line": {
           "description": "The command-line arguments the engine was launched with, as given.",
@@ -114,7 +141,7 @@
           "type": "array"
         },
         "report": {
-          "description": "The facts above as plain text lines for people, the engine's part of\na frontend's system info (for bug reports), so every frontend shows\nthem the same way: the version, platform, engine folder, log file,\nautomatic install, command line, each package with its version and\nstatus, and the boards schema. Show it as is; its wording can change\nin any version, so read the fields above, not this text.",
+          "description": "The facts above as plain text lines for people, the engine's part of\na frontend's system info (for bug reports), so every frontend shows\nthem the same way: the version, platform, engine folder, log file,\nautomatic install, command line, each package with its version and\nstatus, the board catalog and the boards schema. Show it as is; its wording can change\nin any version, so read the fields above, not this text.",
           "type": "string"
         }
       },
@@ -128,6 +155,7 @@
         "log_file",
         "packages",
         "boards_schema",
+        "catalog",
         "report"
       ],
       "title": "GetEngineInfoOutput",
@@ -255,7 +283,7 @@
   },
   {
     "name": "get_catalog",
-    "description": "Returns board and FPGA definitions from the engine's read-only catalog. Use it to find a board's catalog ID, such as alhambra-ii, to pass as the board of other tools, or to see a board's FPGA and how it is programmed. Each section is returned only when asked for: {\"boards\": {\"fetch\": true}} returns all boards, and {\"boards\": {\"fetch\": true, \"ids\": [\"alhambra-ii\"]}} only the listed ones. Boards include those of the request's custom_boards_file, marked custom, a custom board replacing the catalog board with its ID. The architectures section gives each FPGA family's name for people and the extension of its pin constraint files. Board descriptions are the boards' names for people.",
+    "description": "Returns board and FPGA definitions from the engine's read-only catalog. Use it to find a board's catalog ID, such as alhambra-ii, to pass as the board of other tools, or to see a board's FPGA and how it is programmed. Each section is returned only when asked for: {\"boards\": {\"fetch\": true}} returns all boards, and {\"boards\": {\"fetch\": true, \"ids\": [\"alhambra-ii\"]}} only the listed ones. Boards include those of the request's custom_boards_folder, marked custom, a custom board replacing the catalog board with its ID. The architectures section gives each FPGA family's name for people and the extension of its pin constraint files. Board descriptions are the boards' names for people.",
     "inputSchema": {
       "$defs": {
         "CatalogQuery": {
@@ -350,9 +378,9 @@
           ],
           "description": "Which boards to return. Omitted means none."
         },
-        "custom_boards_file": {
+        "custom_boards_folder": {
           "default": null,
-          "description": "The host's own boards: the absolute path of a JSON file that maps\nboard IDs to definitions in the catalog's format. board can name one\nof them; one with a catalog board's ID replaces that board in this\nrequest. Problems in the file come back as a request error with a\ndiagnostic for each, at line and column. Send the same file to every\ntool. Omitted means none.",
+          "description": "The host's own boards: the absolute path of a folder of board files,\none board each in the catalog's format, named by board ID, such as\nboards/my-board.json (a project's boards folder). board can name one\nof them; one with a catalog board's ID replaces that board in this\nrequest. Problems in any file come back as a request error with a\ndiagnostic for each, at file, line and column. Send the same folder to\nevery tool. Omitted means none.",
           "type": [
             "string",
             "null"
@@ -454,12 +482,8 @@
           "description": "A catalog board, as get_catalog returns it.",
           "properties": {
             "custom": {
-              "description": "True for a board from the request's custom_boards_file, omitted for\ncatalog boards.",
+              "description": "True for a board from the request's custom_boards_folder, omitted for\ncatalog boards.",
               "type": "boolean"
-            },
-            "description": {
-              "description": "The board's name for people, such as \"Alhambra II\".",
-              "type": "string"
             },
             "dimensions": {
               "description": "The standard dimensions, connection then memory, each with the values\nthe board's variants use, with labels and help from the engine, for\nshowing the choices.",
@@ -472,12 +496,16 @@
               "description": "The board's FPGA, as a catalog ID of the fpgas section, such as\nice40hx4k-tq144-8k. Every variant uses it. Boards with the same\nfpga_id have the same FPGA.",
               "type": "string"
             },
-            "pin_groups": {
-              "description": "What the board wires to FPGA pins, in groups, such as its clock\n(type clock, with mhz) and LEDs (type led, with active): each group's\nname is a port name, a vector name[N-1:0] for several pins (the first\nis bit 0). For creating designs and pin files for the board, such as\na blinky. Omitted when none are known; a board may have more than it\nlists.",
-              "items": {
-                "$ref": "#/$defs/PinGroup"
+            "name": {
+              "description": "The board's name for people, such as \"Alhambra II\".",
+              "type": "string"
+            },
+            "resources": {
+              "additionalProperties": {
+                "$ref": "#/$defs/Resource"
               },
-              "type": "array"
+              "description": "What the board wires to FPGA pins, by port name, each of a type with\nits own fields: clock (pin, mhz), leds, buttons and switches (pins,\nactive), rgb_led (red, green, blue, active), led_matrix (leds,\ncolors, active), uart (tx, rx), pmod (its 8 signal pins), header,\nand unclassified (every wired pin no other resource lists). A name\nwith one pin is a plain port, with several a vector, bit 0 first.\nFor creating designs and pin files for the board, such as a blinky.\nOmitted when none are known; a type a board doesn't list is unknown,\nunless the board has an unclassified resource.",
+              "type": "object"
             },
             "variants": {
               "description": "The ways the board can be programmed, the board's default first.",
@@ -488,7 +516,7 @@
             }
           },
           "required": [
-            "description",
+            "name",
             "fpga_id",
             "dimensions",
             "variants"
@@ -533,6 +561,27 @@
             "programmer",
             "args",
             "tested"
+          ],
+          "type": "object"
+        },
+        "Colors": {
+          "additionalProperties": false,
+          "description": "A pin per color.",
+          "properties": {
+            "blue": {
+              "type": "string"
+            },
+            "green": {
+              "type": "string"
+            },
+            "red": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "red",
+            "green",
+            "blue"
           ],
           "type": "object"
         },
@@ -677,111 +726,618 @@
           ],
           "type": "object"
         },
-        "LedKind": {
-          "description": "A group of LEDs whose pins mean more than bit numbers.",
-          "oneOf": [
-            {
-              "const": "rgb",
-              "description": "One RGB LED: three pins, red, green, blue.",
-              "type": "string"
-            }
-          ]
-        },
-        "PinGroup": {
-          "additionalProperties": false,
-          "description": "Pins the board wires to one thing, such as its clock or a row of LEDs.\nThe group's name is the design's port name: a vector, name[N-1:0], for\nseveral pins (the first pin is bit 0), and a plain port for one.",
-          "properties": {
-            "active": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/ActiveLevel"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "The logic level that turns the LEDs on: high or low. Omitted when\nnot known."
-            },
-            "io_standard": {
-              "description": "The pins' I/O standard, such as LVCMOS33, for pin file formats that\nname one (ECP5, Gowin and Xilinx). Omitted when not known or not\nneeded.",
-              "pattern": "^[A-Z0-9_]+$",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "kind": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/LedKind"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "For LEDs whose pins mean more than bit numbers: rgb is one RGB LED,\nthree pins in the order red, green, blue (for led_select, the pins\nthat pick each color). Omitted for plain LEDs."
-            },
-            "mhz": {
-              "description": "The clock's frequency in MHz, such as 12. Clocks only.",
-              "type": [
-                "number",
-                "null"
-              ]
-            },
-            "name": {
-              "description": "The port name, a Verilog identifier unique on the board, such as\nsys_clk, led or leds.",
-              "pattern": "^[A-Za-z_][A-Za-z0-9_]*$",
-              "type": "string"
-            },
-            "pins": {
-              "description": "The FPGA pins, as the board's pin files name them, such as 49 or\nN14. For several pins, the first is bit 0.",
-              "items": {
-                "type": "string"
-              },
-              "minItems": 1,
-              "type": "array"
-            },
-            "type": {
-              "$ref": "#/$defs/PinGroupType",
-              "description": "What the pins are wired to: clock (an oscillator, one pin, with mhz),\nled (LEDs, with active when known), or for LEDs in a matrix,\nled_matrix (one pin per LED) with led_select (the pins that pick\nwhat lights, such as an RGB LED's color: an LED lights when its\nled_matrix pin and a led_select pin are both active). Later versions\nadd types, such as button and switch."
-            },
-            "user_notes": {
-              "description": "Warnings and missing information for users, such as a jumper the\nclock needs.",
-              "type": [
-                "string",
-                "null"
-              ]
-            }
-          },
-          "required": [
-            "name",
-            "type",
-            "pins"
+        "IoStandard": {
+          "description": "An I/O standard, one common name for every FPGA family; pin file writers\ntranslate it (IO_TYPE for ECP5 and Gowin, IOSTANDARD for Xilinx). iCE40\npin files have none.",
+          "enum": [
+            "LVCMOS33",
+            "LVCMOS25",
+            "LVCMOS18",
+            "LVCMOS15",
+            "LVCMOS12",
+            "LVTTL",
+            "LVDS",
+            "SSTL15",
+            "SSTL135"
           ],
-          "type": "object"
+          "type": "string"
         },
-        "PinGroupType": {
-          "description": "What a pin group is wired to.",
+        "Resource": {
+          "description": "What a board wires to FPGA pins, by type.",
           "oneOf": [
             {
-              "const": "clock",
-              "description": "An oscillator: one pin, with its frequency.",
-              "type": "string"
+              "additionalProperties": false,
+              "description": "An oscillator: pin, mhz.",
+              "properties": {
+                "io_standard": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/IoStandard"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The pins' I/O standard, such as LVCMOS33, when known and\nthe FPGA family's pin files name one (not iCE40)."
+                },
+                "mhz": {
+                  "description": "The frequency in MHz, such as 12.",
+                  "type": "number"
+                },
+                "pin": {
+                  "description": "The FPGA pin, as the board's pin files name it, such as 35.",
+                  "type": "string"
+                },
+                "source": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/Source"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Where the facts come from."
+                },
+                "type": {
+                  "const": "clock",
+                  "type": "string"
+                },
+                "user_notes": {
+                  "description": "Warnings and missing information for users, such as a jumper\na clock needs.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "pin",
+                "mhz"
+              ],
+              "type": "object"
             },
             {
-              "const": "led",
-              "description": "One or more LEDs.",
-              "type": "string"
+              "additionalProperties": false,
+              "description": "LEDs: pins, active.",
+              "properties": {
+                "active": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/ActiveLevel"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The level that turns them on: high or low. Left out when not\nknown."
+                },
+                "io_standard": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/IoStandard"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The pins' I/O standard, such as LVCMOS33, when known and\nthe FPGA family's pin files name one (not iCE40)."
+                },
+                "pins": {
+                  "description": "The FPGA pins, bit 0 first.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1,
+                  "type": "array"
+                },
+                "source": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/Source"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Where the facts come from."
+                },
+                "type": {
+                  "const": "leds",
+                  "type": "string"
+                },
+                "user_notes": {
+                  "description": "Warnings and missing information for users, such as a jumper\na clock needs.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "pins"
+              ],
+              "type": "object"
             },
             {
-              "const": "led_matrix",
-              "description": "LEDs in a matrix: one pin per LED, which lights when a led_select\npin is active too.",
-              "type": "string"
+              "additionalProperties": false,
+              "description": "One RGB LED: red, green, blue, active.",
+              "properties": {
+                "active": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/ActiveLevel"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The level that turns a color on. Left out when not known."
+                },
+                "blue": {
+                  "type": "string"
+                },
+                "green": {
+                  "type": "string"
+                },
+                "io_standard": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/IoStandard"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The pins' I/O standard, such as LVCMOS33, when known and\nthe FPGA family's pin files name one (not iCE40)."
+                },
+                "red": {
+                  "type": "string"
+                },
+                "source": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/Source"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Where the facts come from."
+                },
+                "type": {
+                  "const": "rgb_led",
+                  "type": "string"
+                },
+                "user_notes": {
+                  "description": "Warnings and missing information for users, such as a jumper\na clock needs.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "red",
+                "green",
+                "blue"
+              ],
+              "type": "object"
             },
             {
-              "const": "led_select",
-              "description": "The pins that pick what lights in the board's led_matrix, such as\nan RGB LED's color.",
-              "type": "string"
+              "additionalProperties": false,
+              "description": "RGB LEDs in a matrix: leds, colors, active.",
+              "properties": {
+                "active": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/ActiveLevel"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The level that turns them on. Left out when not known."
+                },
+                "colors": {
+                  "$ref": "#/$defs/Colors",
+                  "description": "A pin per color, shared by the LEDs."
+                },
+                "io_standard": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/IoStandard"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The pins' I/O standard, such as LVCMOS33, when known and\nthe FPGA family's pin files name one (not iCE40)."
+                },
+                "leds": {
+                  "description": "A pin per LED.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1,
+                  "type": "array"
+                },
+                "source": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/Source"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Where the facts come from."
+                },
+                "type": {
+                  "const": "led_matrix",
+                  "type": "string"
+                },
+                "user_notes": {
+                  "description": "Warnings and missing information for users, such as a jumper\na clock needs.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "leds",
+                "colors"
+              ],
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "description": "Push buttons: pins, active.",
+              "properties": {
+                "active": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/ActiveLevel"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The level that turns them on: high or low. Left out when not\nknown."
+                },
+                "io_standard": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/IoStandard"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The pins' I/O standard, such as LVCMOS33, when known and\nthe FPGA family's pin files name one (not iCE40)."
+                },
+                "pins": {
+                  "description": "The FPGA pins, bit 0 first.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1,
+                  "type": "array"
+                },
+                "source": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/Source"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Where the facts come from."
+                },
+                "type": {
+                  "const": "buttons",
+                  "type": "string"
+                },
+                "user_notes": {
+                  "description": "Warnings and missing information for users, such as a jumper\na clock needs.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "pins"
+              ],
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "description": "Switches: pins, active.",
+              "properties": {
+                "active": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/ActiveLevel"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The level that turns them on: high or low. Left out when not\nknown."
+                },
+                "io_standard": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/IoStandard"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The pins' I/O standard, such as LVCMOS33, when known and\nthe FPGA family's pin files name one (not iCE40)."
+                },
+                "pins": {
+                  "description": "The FPGA pins, bit 0 first.",
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1,
+                  "type": "array"
+                },
+                "source": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/Source"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Where the facts come from."
+                },
+                "type": {
+                  "const": "switches",
+                  "type": "string"
+                },
+                "user_notes": {
+                  "description": "Warnings and missing information for users, such as a jumper\na clock needs.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "pins"
+              ],
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "description": "A serial port: tx, rx, rts, cts.",
+              "properties": {
+                "cts": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "io_standard": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/IoStandard"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The pins' I/O standard, such as LVCMOS33, when known and\nthe FPGA family's pin files name one (not iCE40)."
+                },
+                "rts": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "rx": {
+                  "type": "string"
+                },
+                "source": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/Source"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Where the facts come from."
+                },
+                "tx": {
+                  "type": "string"
+                },
+                "type": {
+                  "const": "uart",
+                  "type": "string"
+                },
+                "user_notes": {
+                  "description": "Warnings and missing information for users, such as a jumper\na clock needs.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "tx",
+                "rx"
+              ],
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "description": "A PMOD header: its 8 signal pins.",
+              "properties": {
+                "io_standard": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/IoStandard"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The pins' I/O standard, such as LVCMOS33, when known and\nthe FPGA family's pin files name one (not iCE40)."
+                },
+                "pins": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1,
+                  "type": "array"
+                },
+                "source": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/Source"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Where the facts come from."
+                },
+                "type": {
+                  "const": "pmod",
+                  "type": "string"
+                },
+                "user_notes": {
+                  "description": "Warnings and missing information for users, such as a jumper\na clock needs.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "pins"
+              ],
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "description": "Another header: every position, null for power and ground.",
+              "properties": {
+                "io_standard": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/IoStandard"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The pins' I/O standard, such as LVCMOS33, when known and\nthe FPGA family's pin files name one (not iCE40)."
+                },
+                "pins": {
+                  "items": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "minItems": 1,
+                  "type": "array"
+                },
+                "source": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/Source"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Where the facts come from."
+                },
+                "type": {
+                  "const": "header",
+                  "type": "string"
+                },
+                "user_notes": {
+                  "description": "Warnings and missing information for users, such as a jumper\na clock needs.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "pins"
+              ],
+              "type": "object"
+            },
+            {
+              "additionalProperties": false,
+              "description": "Every wired pin no other resource describes; a board with one lists\nall its wired pins.",
+              "properties": {
+                "io_standard": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/IoStandard"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "The pins' I/O standard, such as LVCMOS33, when known and\nthe FPGA family's pin files name one (not iCE40)."
+                },
+                "pins": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "minItems": 1,
+                  "type": "array"
+                },
+                "source": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/Source"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Where the facts come from."
+                },
+                "type": {
+                  "const": "unclassified",
+                  "type": "string"
+                },
+                "user_notes": {
+                  "description": "Warnings and missing information for users, such as a jumper\na clock needs.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "type",
+                "pins"
+              ],
+              "type": "object"
             }
           ]
         },
@@ -803,6 +1359,38 @@
             "memory"
           ],
           "type": "object"
+        },
+        "Source": {
+          "additionalProperties": false,
+          "description": "Where a resource's facts come from.",
+          "properties": {
+            "kind": {
+              "$ref": "#/$defs/SourceKind",
+              "description": "hardware (tried on the board), schematic, maker (the maker's docs,\npin files or examples), litex or amaranth (imported from their board\nfiles), or user (reported, not yet checked); strongest first."
+            },
+            "ref": {
+              "description": "The document, file and commit, or report.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "type": "object"
+        },
+        "SourceKind": {
+          "enum": [
+            "hardware",
+            "schematic",
+            "maker",
+            "litex",
+            "amaranth",
+            "user"
+          ],
+          "type": "string"
         }
       },
       "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -847,15 +1435,15 @@
   },
   {
     "name": "compare_boards",
-    "description": "Compares two boards, such as a project's board and one it may move to. Returns every aspect (board, architecture, fpga, size, constraint_format, pins, clock, leds), each the same, different or unknown (the catalog doesn't describe it yet), with both values and a sentence for people, and same_build: whether a build for one board is valid for the other. Facts only: what they mean for a project, such as files to change, is the host's decision. Boards can be catalog boards or the request's custom_boards_file.",
+    "description": "Compares two boards, such as a project's board and one it may move to. Returns every aspect (board, architecture, fpga, size, constraint_format, pins, clock, leds), each the same, different or unknown (the catalog doesn't describe it yet), with both values and a sentence for people, and same_build: whether a build for one board is valid for the other. Facts only: what they mean for a project, such as files to change, is the host's decision. Boards can be catalog boards or the request's custom_boards_folder.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
       "description": "The two boards.",
       "properties": {
-        "custom_boards_file": {
+        "custom_boards_folder": {
           "default": null,
-          "description": "The host's own boards: the absolute path of a JSON file that maps\nboard IDs to definitions in the catalog's format. Either board can be\none of them; one with a catalog board's ID replaces that board in\nthis request. Omitted means none.",
+          "description": "The host's own boards: the absolute path of a folder of board files,\none board each in the catalog's format, named by board ID, such as\nboards/my-board.json. Either board can be one of them; one with a\ncatalog board's ID replaces that board in this request. Omitted means\nnone.",
           "type": [
             "string",
             "null"
@@ -1030,7 +1618,7 @@
       "description": "What to lint.",
       "properties": {
         "board": {
-          "description": "The target board's ID: a catalog ID such as alhambra-ii (get_catalog\nlists them), or the ID of a board in custom_boards_file. It selects the FPGA's\nprimitive models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for\nGowin or PLLE2_BASE for Xilinx.",
+          "description": "The target board's ID: a catalog ID such as alhambra-ii (get_catalog\nlists them), or the ID of a board in custom_boards_folder. It selects the FPGA's\nprimitive models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for\nGowin or PLLE2_BASE for Xilinx.",
           "pattern": "^[a-z0-9-]+$",
           "type": "string"
         },
@@ -1046,9 +1634,9 @@
           "default": null,
           "description": "The board variant: some or all of the selector of one of the board's\nvariants, which get_catalog lists, such as {\"connection\": \"usb\",\n\"memory\": \"ram\"} or just {\"memory\": \"ram\"}. The board's first\nvariant with these values is used. Omitted or {} means its first\nvariant, its default."
         },
-        "custom_boards_file": {
+        "custom_boards_folder": {
           "default": null,
-          "description": "The host's own boards: the absolute path of a JSON file that maps\nboard IDs to definitions in the catalog's format. board can name one\nof them; one with a catalog board's ID replaces that board in this\nrequest. Problems in the file come back as a request error with a\ndiagnostic for each, at line and column. Send the same file to every\ntool. Omitted means none.",
+          "description": "The host's own boards: the absolute path of a folder of board files,\none board each in the catalog's format, named by board ID, such as\nboards/my-board.json (a project's boards folder). board can name one\nof them; one with a catalog board's ID replaces that board in this\nrequest. Problems in any file come back as a request error with a\ndiagnostic for each, at file, line and column. Send the same folder to\nevery tool. Omitted means none.",
           "type": [
             "string",
             "null"
@@ -1336,7 +1924,7 @@
       "description": "Which testbenches to run.",
       "properties": {
         "board": {
-          "description": "The target board's ID: a catalog ID such as alhambra-ii (get_catalog\nlists them), or the ID of a board in custom_boards_file. It selects the FPGA's\nprimitive models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for\nGowin or PLLE2_BASE for Xilinx.",
+          "description": "The target board's ID: a catalog ID such as alhambra-ii (get_catalog\nlists them), or the ID of a board in custom_boards_folder. It selects the FPGA's\nprimitive models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for\nGowin or PLLE2_BASE for Xilinx.",
           "pattern": "^[a-z0-9-]+$",
           "type": "string"
         },
@@ -1356,9 +1944,9 @@
           "description": "Where the compiled testbenches and their waveforms go, as an absolute\npath. One of its last two folder names must contain \"build\", such as\n/home/user/proj/_build. It is created if needed.",
           "type": "string"
         },
-        "custom_boards_file": {
+        "custom_boards_folder": {
           "default": null,
-          "description": "The host's own boards: the absolute path of a JSON file that maps\nboard IDs to definitions in the catalog's format. board can name one\nof them; one with a catalog board's ID replaces that board in this\nrequest. Problems in the file come back as a request error with a\ndiagnostic for each, at line and column. Send the same file to every\ntool. Omitted means none.",
+          "description": "The host's own boards: the absolute path of a folder of board files,\none board each in the catalog's format, named by board ID, such as\nboards/my-board.json (a project's boards folder). board can name one\nof them; one with a catalog board's ID replaces that board in this\nrequest. Problems in any file come back as a request error with a\ndiagnostic for each, at file, line and column. Send the same folder to\nevery tool. Omitted means none.",
           "type": [
             "string",
             "null"
@@ -1735,7 +2323,7 @@
       "description": "Which testbench to simulate, and how to show it.",
       "properties": {
         "board": {
-          "description": "The target board's ID: a catalog ID such as alhambra-ii (get_catalog\nlists them), or the ID of a board in custom_boards_file. It selects the FPGA's\nprimitive models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for\nGowin or PLLE2_BASE for Xilinx.",
+          "description": "The target board's ID: a catalog ID such as alhambra-ii (get_catalog\nlists them), or the ID of a board in custom_boards_folder. It selects the FPGA's\nprimitive models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for\nGowin or PLLE2_BASE for Xilinx.",
           "pattern": "^[a-z0-9-]+$",
           "type": "string"
         },
@@ -1755,9 +2343,9 @@
           "description": "Where the compiled testbench and its waveform go, as an absolute path.\nOne of its last two folder names must contain \"build\", such as\n/home/user/proj/_build. It is created if needed.",
           "type": "string"
         },
-        "custom_boards_file": {
+        "custom_boards_folder": {
           "default": null,
-          "description": "The host's own boards: the absolute path of a JSON file that maps\nboard IDs to definitions in the catalog's format. board can name one\nof them; one with a catalog board's ID replaces that board in this\nrequest. Problems in the file come back as a request error with a\ndiagnostic for each, at line and column. Send the same file to every\ntool. Omitted means none.",
+          "description": "The host's own boards: the absolute path of a folder of board files,\none board each in the catalog's format, named by board ID, such as\nboards/my-board.json (a project's boards folder). board can name one\nof them; one with a catalog board's ID replaces that board in this\nrequest. Problems in any file come back as a request error with a\ndiagnostic for each, at file, line and column. Send the same folder to\nevery tool. Omitted means none.",
           "type": [
             "string",
             "null"
@@ -2684,7 +3272,7 @@
       "description": "What to build, and where.",
       "properties": {
         "board": {
-          "description": "The target board's ID: a catalog ID such as alhambra-ii (get_catalog\nlists them), or the ID of a board in custom_boards_file.",
+          "description": "The target board's ID: a catalog ID such as alhambra-ii (get_catalog\nlists them), or the ID of a board in custom_boards_folder.",
           "pattern": "^[a-z0-9-]+$",
           "type": "string"
         },
@@ -2708,9 +3296,9 @@
           "description": "The constraint file, relative to the source folder: .pcf for iCE40,\n.lpf for ECP5, .cst for Gowin, .xdc for Xilinx. Another extension is\nrefused, since each family's tools read only their own format.",
           "type": "string"
         },
-        "custom_boards_file": {
+        "custom_boards_folder": {
           "default": null,
-          "description": "The host's own boards: the absolute path of a JSON file that maps\nboard IDs to definitions in the catalog's format. board can name one\nof them; one with a catalog board's ID replaces that board in this\nrequest. Problems in the file come back as a request error with a\ndiagnostic for each, at line and column. Send the same file to every\ntool. Omitted means none.",
+          "description": "The host's own boards: the absolute path of a folder of board files,\none board each in the catalog's format, named by board ID, such as\nboards/my-board.json (a project's boards folder). board can name one\nof them; one with a catalog board's ID replaces that board in this\nrequest. Problems in any file come back as a request error with a\ndiagnostic for each, at file, line and column. Send the same folder to\nevery tool. Omitted means none.",
           "type": [
             "string",
             "null"
@@ -3091,7 +3679,7 @@
   },
   {
     "name": "list_devices",
-    "description": "Lists the USB devices connected to this computer, with their USB IDs, names and serial numbers, and for each the boards it may be: catalog boards and the request's custom_boards_file, best first, each with the variants it fits and how well it matches: strong (very likely this board), possible (a few other boards look the same) or weak (many boards fit). Show the level as it is: how the engine decides it is internal and changes without notice. program_board needs the id of one of these devices. Given a build_folder, it lists only the devices that fit that build's board and variant, best first, each with its build_match: program the only one, or ask the user when there are several. Devices that need a driver or permissions first are listed apart, under unreachable, with the fix.",
+    "description": "Lists the USB devices connected to this computer, with their USB IDs, names and serial numbers, and for each the boards it may be: catalog boards and the request's custom_boards_folder, best first, each with the variants it fits and how well it matches: strong (very likely this board), possible (a few other boards look the same) or weak (many boards fit). Show the level as it is: how the engine decides it is internal and changes without notice. program_board needs the id of one of these devices. Given a build_folder, it lists only the devices that fit that build's board and variant, best first, each with its build_match: program the only one, or ask the user when there are several. Devices that need a driver or permissions first are listed apart, under unreachable, with the fix.",
     "inputSchema": {
       "$defs": {
         "DisplayPath": {
@@ -3149,9 +3737,9 @@
             "null"
           ]
         },
-        "custom_boards_file": {
+        "custom_boards_folder": {
           "default": null,
-          "description": "The host's own boards: the absolute path of a JSON file that maps\nboard IDs to definitions in the catalog's format. board can name one\nof them; one with a catalog board's ID replaces that board in this\nrequest. Problems in the file come back as a request error with a\ndiagnostic for each, at line and column. Send the same file to every\ntool. Omitted means none.",
+          "description": "The host's own boards: the absolute path of a folder of board files,\none board each in the catalog's format, named by board ID, such as\nboards/my-board.json (a project's boards folder). board can name one\nof them; one with a catalog board's ID replaces that board in this\nrequest. Problems in any file come back as a request error with a\ndiagnostic for each, at file, line and column. Send the same folder to\nevery tool. Omitted means none.",
           "type": [
             "string",
             "null"
@@ -3230,7 +3818,7 @@
               "type": "string"
             },
             "custom": {
-              "description": "True when the board is from the request's custom boards file rather\nthan the catalog's.",
+              "description": "True when the board is from the request's custom boards folder rather\nthan the catalog's.",
               "type": "boolean"
             },
             "variants": {
@@ -3563,9 +4151,9 @@
           "description": "The build folder of a successful build, as an absolute path.",
           "type": "string"
         },
-        "custom_boards_file": {
+        "custom_boards_folder": {
           "default": null,
-          "description": "The host's own boards: the absolute path of a JSON file that maps\nboard IDs to definitions in the catalog's format. board can name one\nof them; one with a catalog board's ID replaces that board in this\nrequest. Problems in the file come back as a request error with a\ndiagnostic for each, at line and column. Send the same file to every\ntool. Omitted means none.",
+          "description": "The host's own boards: the absolute path of a folder of board files,\none board each in the catalog's format, named by board ID, such as\nboards/my-board.json (a project's boards folder). board can name one\nof them; one with a catalog board's ID replaces that board in this\nrequest. Problems in any file come back as a request error with a\ndiagnostic for each, at file, line and column. Send the same folder to\nevery tool. Omitted means none.",
           "type": [
             "string",
             "null"
@@ -3618,7 +4206,7 @@
               "type": "string"
             },
             "custom": {
-              "description": "True when the board is from the request's custom boards file rather\nthan the catalog's.",
+              "description": "True when the board is from the request's custom boards folder rather\nthan the catalog's.",
               "type": "boolean"
             },
             "variants": {

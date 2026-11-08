@@ -1,0 +1,19 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "QMTECH XC7A100T core board (Xilinx, Artix7)",
+  "fpga_id": "xc7a100tfgg676-1",
+  "variants": [
+    {
+      "selector": {"connection": "ft2232h", "memory": "ram"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify -c ft2232 --fpga-part xc7a100tfgg676 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6010"},
+      "tested": true,
+      "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "U22", "mhz": 50, "io_standard": "LVCMOS33"},
+    "leds_n": {"type": "leds", "pins": ["T23", "R23"], "active": "low", "io_standard": "LVCMOS33"}
+  }
+}

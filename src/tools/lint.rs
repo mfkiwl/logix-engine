@@ -37,7 +37,7 @@ impl EngineTool for Lint {
 #[serde(deny_unknown_fields)]
 pub struct LintInput {
     /// The target board's ID: a catalog ID such as alhambra-ii (get_catalog
-    /// lists them), or the ID of a board in custom_boards_file. It selects the FPGA's
+    /// lists them), or the ID of a board in custom_boards_folder. It selects the FPGA's
     /// primitive models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for
     /// Gowin or PLLE2_BASE for Xilinx.
     #[schemars(pattern(r"^[a-z0-9-]+$"))]
@@ -49,14 +49,15 @@ pub struct LintInput {
     /// variant, its default.
     #[serde(default)]
     pub board_variant: Option<crate::catalog::VariantChoice>,
-    /// The host's own boards: the absolute path of a JSON file that maps
-    /// board IDs to definitions in the catalog's format. board can name one
+    /// The host's own boards: the absolute path of a folder of board files,
+    /// one board each in the catalog's format, named by board ID, such as
+    /// boards/my-board.json (a project's boards folder). board can name one
     /// of them; one with a catalog board's ID replaces that board in this
-    /// request. Problems in the file come back as a request error with a
-    /// diagnostic for each, at line and column. Send the same file to every
-    /// tool. Omitted means none.
+    /// request. Problems in any file come back as a request error with a
+    /// diagnostic for each, at file, line and column. Send the same folder to
+    /// every tool. Omitted means none.
     #[serde(default)]
-    pub custom_boards_file: Option<String>,
+    pub custom_boards_folder: Option<String>,
     /// How to name paths in what people read (diagnostics, messages,
     /// testbench output, live tool output, diagram labels): files named as
     /// a whole, then folders whose files keep their path below the folder
@@ -124,7 +125,7 @@ pub struct LintOutput {
 pub fn check_sources(
     board: &str,
     variant: &crate::board::VariantInput,
-    custom_boards_file: Option<&str>,
+    custom_boards_folder: Option<&str>,
     source_folder: &str,
     source_files: Vec<String>,
     testbench_files: Vec<String>,
@@ -133,7 +134,7 @@ pub fn check_sources(
 ) -> Result<Sources, ToolError> {
     check_defines(&defines)?;
     let src = check_source_folder(source_folder)?;
-    let custom = crate::custom_boards::load(custom_boards_file)?;
+    let custom = crate::custom_boards::load(custom_boards_folder)?;
     let board = board::resolve(board, variant, &custom)?;
     if source_files.is_empty() {
         return Err(ToolError::request("source_files is empty."));
@@ -170,7 +171,7 @@ pub fn check(input: LintInput) -> Result<LintRequest, ToolError> {
         sources: check_sources(
             &input.board,
             &input.board_variant,
-            input.custom_boards_file.as_deref(),
+            input.custom_boards_folder.as_deref(),
             &input.source_folder,
             input.source_files,
             input.testbench_files,

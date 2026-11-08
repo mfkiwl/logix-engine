@@ -1,0 +1,20 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "iCESugar-nano",
+  "fpga_id": "ice40lp1k-cm36",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "flash"},
+      "programmer": "icesprog",
+      "args": "${BITSTREAM}",
+      "usb": {"vid": "1d50", "pid": "602b", "serial_regex": "^0720"},
+      "tested": true,
+      "user_notes": "Connect only this iCESugar when programming: its programmer can't tell iCESugar boards apart, so the engine refuses when another board with the same USB IDs, such as an iCESugar-Pro, is connected.",
+      "maintainer_notes": "iCESugar boards share USB IDs and product name. The serial number's first 4 characters are the board ID, as icesprog's source reads it: 0700 iCESugar, 0710 iCESugar-Pro, 0720 iCESugar-nano. 0720 comes from icesprog's source only; no log from a real nano found."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "D1", "mhz": 12},
+    "led": {"type": "leds", "pins": ["B6"], "active": "high"}
+  }
+}

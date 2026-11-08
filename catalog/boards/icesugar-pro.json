@@ -1,0 +1,37 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "Icesugar Pro",
+  "fpga_id": "lfe5u-25f-6bg256c",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "flash"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify -c cmsisdap --vid 0x${VID} --pid 0x${PID} --write-flash --file-type bin ${BITSTREAM}",
+      "usb": {
+        "vid": "1d50",
+        "pid": "602b",
+        "product_regex": "^DAPLink CMSIS-DAP|^CMSIS-DAP-v1-MuseLab",
+        "serial_regex": "^0710"
+      },
+      "tested": true,
+      "maintainer_notes": "iCESugar boards share USB IDs and product name. The serial number's first 4 characters are the board ID, as icesprog's source reads it: 0700 iCESugar, 0710 iCESugar-Pro, 0720 iCESugar-nano. 0710 checked on a real iCESugar-Pro."
+    },
+    {
+      "selector": {"connection": "usb", "memory": "ram"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify -c cmsisdap --vid 0x${VID} --pid 0x${PID} --file-type bin ${BITSTREAM}",
+      "usb": {
+        "vid": "1d50",
+        "pid": "602b",
+        "product_regex": "^DAPLink CMSIS-DAP|^CMSIS-DAP-v1-MuseLab",
+        "serial_regex": "^0710"
+      },
+      "tested": true,
+      "maintainer_notes": "iCESugar boards share USB IDs and product name. The serial number's first 4 characters are the board ID, as icesprog's source reads it: 0700 iCESugar, 0710 iCESugar-Pro, 0720 iCESugar-nano. 0710 checked on a real iCESugar-Pro."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "P6", "mhz": 25, "io_standard": "LVCMOS33"},
+    "led": {"type": "leds", "pins": ["A11"], "active": "low", "io_standard": "LVCMOS33"}
+  }
+}

@@ -69,13 +69,13 @@ The Type columns in this document use these logical types. Each maps to a JSON t
 | relative path | string | Relative to the folder named in the field's description. Always uses `/` as the separator on every platform, never starts with `/`, and contains no `.` or `..` segments. An empty string means the folder itself, but only in fields whose description says so. Elsewhere it is a request error |
 | build folder path | string | An absolute path that satisfies the path keyword rules |
 | catalog ID | string | Lowercase letters, digits and hyphens |
-| board ID | string | A board's ID: a catalog ID, or the ID of a board in the request's custom boards file |
+| board ID | string | A board's ID: a catalog ID, or the ID of a board in the request's custom boards folder (its file name without `.json`) |
 | display paths | object | How to name paths in what people read (see Display paths) |
-| custom boards file | absolute path | A JSON file with the host's own boards, by board ID (lowercase letters, digits and hyphens): board definitions with the FPGA as `fpga_id`, a catalog FPGA. See Board specification |
-| board definition | object | A board entry in the catalog format: its `description`, its FPGA as `fpga_id`, its `variants` (a list of variants, each with its selector, the first being the default), its optional `pin_groups` (see pin group) and, in `get_catalog` results, its `dimensions`. Every board has the two standard dimensions, `connection` then `memory`, with values the engine defines: connection `usb` (the board's own USB port, through the programmer chip on the board), `bootloader` (its USB port in bootloader mode), the external JTAG adapters `ft2232h`, `ft232h`, `cmsis-dap` and `usb-blaster`, or `unspecified` (not known; shown as "USB"); memory `flash` (kept at power-off) or `ram` (lost at power-off). `dimensions` lists each with the values the board's variants use, in the engine's order, for showing the choices: a dimension has an `id`, a `label` for people (such as "Memory") and its `values`, each with an `id` (such as `ram`), a `label` (such as "RAM") and `help` text. It is derived by the engine, so inputs may leave it out (it is ignored). A dimension with one value is a fact about the board rather than a choice. Versions of a board with any signal on a different pin are different boards, and a board sold in several FPGA sizes is one board per size |
+| custom boards folder | absolute path | A folder with the host's own boards, one file each, named by board ID (lowercase letters, digits and hyphens) plus `.json`, such as a project's `boards/` folder: board definitions in the catalog's format, with the FPGA as `fpga_id`, a catalog FPGA. See Board specification |
+| board definition | object | A board in Logix Catalog's format: its `name` for people, its FPGA as `fpga_id`, its `variants` (a list of variants, each with its selector, the first being the default), its optional `resources` (see resource) and, in `get_catalog` results, its `dimensions`. Every board has the two standard dimensions, `connection` then `memory`, with values the engine defines: connection `usb` (the board's own USB port, through the programmer chip on the board), `bootloader` (its USB port in bootloader mode), the external JTAG adapters `ft2232h`, `ft232h`, `cmsis-dap` and `usb-blaster`, or `unspecified` (not known; shown as "USB"); memory `flash` (kept at power-off) or `ram` (lost at power-off). `dimensions` lists each with the values the board's variants use, in the engine's order, for showing the choices: a dimension has an `id`, a `label` for people (such as "Memory") and its `values`, each with an `id` (such as `ram`), a `label` (such as "RAM") and `help` text. It is derived by the engine, so inputs may leave it out (it is ignored). A dimension with one value is a fact about the board rather than a choice. Versions of a board with any signal on a different pin are different boards, and a board sold in several FPGA sizes is one board per size |
 | selector | object | A value of each standard dimension, `connection` and `memory`, such as `{"connection": "usb", "memory": "flash"}`. Each variant has one, which says where it sits among the board's choices, and requests pick a variant with one (`board_variant`). Both fields are required, with the values the engine defines (see board definition) |
 | variant | object | One way to program a board, in a board definition's `variants`: its `selector`, and how to program the board that way. It names the programmer to run, such as `openfpgaloader`, and gives the full argument template for it, with variables such as `${VID}`, `${PID}`, `${BUS}`, `${DEV}`, `${SERIAL_NUM}`, `${USB_PATH}` (the device's USB port path, such as `1-2.3`, as dfu-util's `-p` takes it) and `${BITSTREAM}`, and the USB filter that finds the device: `vid`, `pid`, an optional `product_regex`, a regular expression the device's product name must match, for boards that share USB IDs, an optional `serial_regex`, a regular expression the device's serial number must match, for boards that share USB IDs and product names but whose serial numbers tell them apart, and an optional `release`, the device's release number (USB `bcdDevice`, four lowercase hex digits, such as `0500`), for boards that share USB IDs but whose USB chips differ, such as a board debugger that acts like an FTDI FT2232C/D (`0500`) rather than an FT2232H (`0700`). The engine maps the programmer name to its executable and the package that provides it, so there are no separate programmer definitions. The supported programmers are `openfpgaloader`, `iceprog`, `dfu-util` and `icesprog`, all from the toolchain package. Catalog variants also have `tested` and optional `user_notes` (see Catalog contents under the get_catalog tool); custom boards take the same fields, `maintainer_notes` included. No two variants of a board have the same selector. Variants differ only in how the board is programmed: they all have the board's FPGA and the same pin file (every LED, button and clock on the same pin), so the same project works with each |
-| pin group | object | Pins a board wires to one thing, such as its clock or a row of LEDs, in a board definition's optional `pin_groups`: for creating designs and pin files for the board, such as a blinky; builds never use them. `name` is the design's port name, a Verilog identifier unique on the board, such as `sys_clk`, `led` or `leds`: for several pins a vector, `leds[7:0]`, whose bit 0 is the first pin, and for one pin a plain port. `type` is `clock` (an oscillator: one pin, with `mhz`, its frequency, such as 12) or `led` (with `active`, `high` or `low`, when known, and an optional `kind`: `rgb` is one RGB LED, three pins in the order red, green, blue), or, for LEDs in a matrix, `led_matrix` (one pin per LED, with `active`) and `led_select` (the pins that pick what lights, with `active`, and `kind: rgb` for the three colors in the order red, green, blue): an LED lights when its `led_matrix` pin and a `led_select` pin are both active, and a board with one has the other, one of each; later versions add types, such as `button` and `switch`. `io_standard`, such as `LVCMOS33`, is the pins' I/O standard for pin file formats that name one (ECP5, Gowin and Xilinx), when known. `pins` are the FPGA pins as the board's pin files name them, such as `49` or `N14`. Optional `user_notes` warn users, such as of a jumper the clock needs. A board lists what is known: one without a group of a type may still have it. Example: `{"name": "leds", "type": "led", "active": "high", "pins": ["45", "44", "43", "42", "41", "39", "38", "37"]}` |
+| resource | object | What a board wires to FPGA pins, in a board definition's optional `resources`, a map from name to resource: for creating designs and pin files for the board, such as a blinky; builds never use them. The name is the design's port name, a Verilog identifier: one pin gives a plain port (`led`), several a vector (`leds[7:0]`), bit 0 first. `type` says which fields it has: `clock` (`pin`, `mhz`), `leds`, `buttons` and `switches` (`pins`, `active`), `rgb_led` (`red`, `green`, `blue`, `active`), `led_matrix` (`leds`, a pin per LED, and `colors`, a pin per color, `red`, `green`, `blue`: an LED lights when its pin and a color's pin are both active; `active`), `uart` (`tx`, the FPGA's output, `rx`, optional `rts`, `cts`), `pmod` (`pins`, its 8 signal pins in header order, 1 to 4 then 7 to 10), `header` (`pins`, every position, `null` for power and ground), and `unclassified` (`pins`: every FPGA pin the board wires to something no other resource describes). `active` is `high` or `low`; left out, it's unknown. Every resource may have `io_standard` (one common name for every family, such as `LVCMOS33`; not used on iCE40), `source` (where its facts come from: `kind`, one of `hardware`, `schematic`, `maker`, `litex`, `amaranth` or `user`, and `ref`) and `user_notes` (such as a jumper a clock needs). Resources may share pins (an LED on a PMOD pin); within one, pins are unique. A board lists what is known: a type it doesn't list is unknown, unless it has an `unclassified` resource, which lists all its wired pins. Example: `"clk": {"type": "clock", "pin": "35", "mhz": 12}`. The full format is Logix Catalog's [docs/model.md](https://github.com/openlogix/logix-catalog/blob/main/docs/model.md) |
 | board variant | object | In requests: some or all of a selector's values, such as `{"connection": "ft232h", "memory": "ram"}` or just `{"memory": "ram"}`. The board's first variant with these values is used, so a host can keep only the values the user chose, and `{}` means the first variant, the default. Omitted means the default too. Values no variant has are a request error that lists the board's selectors. Results that depend on the variant, such as `build`'s `board_variant`, give the full selector used |
 | FPGA definition | object | An FPGA entry in the catalog format: its `architecture` (`ice40`, `ecp5`, `gowin` or `xilinx`), `part_number`, `size`, and the toolchain parameters: `nextpnr_device` for every architecture; `nextpnr_package` for iCE40 and ECP5; `nextpnr_speed`, the speed grade, for ECP5 only; for Gowin only, `packer_device` (the device `gowin_pack` uses) and, when needed, `nextpnr_family` and `yosys_family`; and for Xilinx only, `yosys_arch` (such as `xc7`) and `prjxray_family` (the Project X-Ray database folder, such as `artix7`). ECP5, Gowin and Xilinx FPGAs may have a `jtag_idcode`, such as `0x0362d093`, the ID code openFPGALoader's `--detect` reports, which `program_board` checks before writing (see program_board). It identifies the chip, not the size a board uses it as. A field that doesn't belong to the architecture is a request error |
 | catalog query | object | Selects entries from one catalog section. It has `fetch`, a boolean that defaults to false, and `ids`, an optional list of catalog IDs. When `fetch` is true, the section is returned with only the listed IDs, or with all its entries when `ids` is omitted. An ID that isn't in the section is a request error |
@@ -126,35 +126,38 @@ Every tool that reports files (`lint`, `test`, `simulate`, `format`, `graph`, `b
 - **Real locations.** Paths are compared by where they really are, not by how they're spelled: through symbolic links (such as `/tmp` and `/private/tmp` on macOS), and as the same file on disk, so a case-insensitive volume's spellings match. A file that doesn't exist is compared by its path's parts.
 - **Where.** Diagnostics (`file`, and paths in `text`), error `message` and `details`, testbench `output`, the live tool output (`text` and `original_text`) and the labels of `graph`'s diagram. In text, the engine finds paths it knows, as the request or a tool spelled them, and names them by the same rules.
 - **Never.** Command lines (`commands`, and `command` lines in the live output), which must stay rerunnable, and fields that are paths, such as `bitstream`, `graph_file`, `waveform_file` and `layout_file`.
-- **No match.** A path that matches no entry, or any path when the request has no `display_paths`, is shown as the request gave it: source files relative to the source folder, the custom boards file as its absolute path. A path the request never gave, such as a toolchain file a tool mentions, is shown as the tool printed it.
+- **No match.** A path that matches no entry, or any path when the request has no `display_paths`, is shown as the request gave it: source files relative to the source folder, custom board file as its absolute path. A path the request never gave, such as a toolchain file a tool mentions, is shown as the tool printed it.
 - **A path in an entry that isn't absolute** is a request error.
 
 ### Board specification
 
-The `board` field is a board ID: a catalog ID, such as `"icestick"`, or the ID of one of the host's own boards. Every tool that deals with boards (`build`, `lint`, `test`, `simulate`, `program_board`, `list_devices` and `get_catalog`) takes the same optional `custom_boards_file`, the absolute path of a JSON file with the host's own boards, which is independent of the board a request selects:
+The `board` field is a board ID: a catalog ID, such as `"icestick"`, or the ID of one of the host's own boards. Every tool that deals with boards (`build`, `lint`, `test`, `simulate`, `program_board`, `list_devices`, `get_catalog` and `compare_boards`) takes the same optional `custom_boards_folder`, the absolute path of a folder with the host's own boards, which is independent of the board a request selects:
 
-- **Format.** The file holds a JSON object that maps board IDs to board definitions, the same shape as the catalog's boards; an empty file means no boards. Each definition has `description`, the FPGA as `fpga_id` (a catalog ID: the catalog has every FPGA the toolchain supports, so custom boards add boards, never FPGAs), and its `variants`, written out in full, with their USB filters. A definition may have every field of the catalog's, `user_notes` and `maintainer_notes` included, and an entry of the engine's catalog file can be copied as is, in either direction; one from `get_catalog` needs its variants' `usb` filters added, which `get_catalog` leaves out. `dimensions` are ignored.
-- **Schema.** The format has a JSON Schema, the boards schema, at `https://www.openlogix.org/schemas/logix-boards-v1.json` (`boards_schema` in `get_engine_info`; a copy is [schemas/logix-boards-v1.json](../schemas/logix-boards-v1.json) in the logix-engine repository). The engine's catalog file follows it too. A file may name it with a `"$schema"` key, so editors that read JSON Schemas, such as VS Code, JetBrains IDEs, Zed or Neovim, check the file and complete its fields as it's written. The key is optional; when it's there, its value must be the schema the engine reads, or the file has a problem at that line. The engine checks more than the schema can, such as that `fpga_id` is a catalog FPGA. Until the first release the schema changes without a new version; after it, it only gains optional fields, and a breaking change gets a new address (`-v2`).
+- **Format.** The folder holds one file per board, in [Logix Catalog](https://www.openlogix.org/catalog/)'s format, named by the board's ID: `my-tang-nano-9k.json` is the board `my-tang-nano-9k`. The engine reads every `*.json` file in the folder and ignores other files; an empty folder means no boards. Each file has `name`, the FPGA as `fpga_id` (a catalog ID: the catalog has every FPGA the toolchain supports, so custom boards add boards, never FPGAs), its `variants`, written out in full, with their USB filters, and optional `resources`. It's exactly a Logix Catalog board file, so a board copies between the catalog and a project as a file, name and all; one from `get_catalog` needs its variants' `usb` filters added, which `get_catalog` leaves out. `dimensions` are ignored.
+- **Schema.** The format has a JSON Schema, which Logix Catalog owns, at `https://www.openlogix.org/schemas/logix-board-v1.json` (`boards_schema` in `get_engine_info`). Every catalog board file names it. A file may name it with a `"$schema"` key, so editors that read JSON Schemas, such as VS Code, JetBrains IDEs, Zed or Neovim, check the file and complete its fields as it's written. The key is optional; when it's there, its value must be the schema the engine reads, or the file has a problem at that line. The engine checks more than the schema can, such as that `fpga_id` is a catalog FPGA. Until the first release the schema changes without a new version; after it, it only gains optional fields, and a breaking change gets a new address (`-v2`).
 
   ```json
   {
-    "$schema": "https://www.openlogix.org/schemas/logix-boards-v1.json",
-    "my-tang-nano-9k": {
-      "description": "My Tang Nano 9K",
-      "fpga_id": "gw1nr-lv9qn88pc6-i5",
-      "variants": [{
+    "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+    "name": "My Tang Nano 9K",
+    "fpga_id": "gw1nr-lv9qn88pc6-i5",
+    "variants": [
+      {
         "selector": {"connection": "usb", "memory": "flash"},
         "programmer": "openfpgaloader",
         "args": "--force-terminal-mode --verify -b tangnano9k -f --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
         "usb": {"vid": "0403", "pid": "6010", "product_regex": "^JTAG Debugger$", "release": "0500"},
         "tested": true
-      }]
+      }
+    ],
+    "resources": {
+      "clk": {"type": "clock", "pin": "52", "mhz": 27, "io_standard": "LVCMOS33"}
     }
   }
   ```
 - **Replacing catalog boards.** A custom board with a catalog board's ID replaces that catalog board for the request: for building, matching devices and listing.
-- **Problems at file, line and column.** The engine reads the file the request names, and nothing else. Every tool checks the whole file, so a problem in it is a request error in every tool, whichever board the request selects. Its `diagnostics` give each problem at file, line and column, as for source files: invalid JSON (with the parser's message), a field of the wrong type, a misspelled or missing field, an invalid board ID, an unknown FPGA ID, a `$schema` other than the boards schema, and in variants an invalid connection or memory value in the selector, a selector another variant has, a programmer, argument template, USB ID, release or regular expression. A definition problem points at the value, or for a missing field at the object it belongs in. Problems come all at once, in file order: each board and each variant is checked on its own, so a problem in one never hides problems in another. Invalid JSON is the exception: it is one problem, the parser's, since nothing after it can be read. At most 10 problems are listed; when there are more, a last `info` diagnostic without a line says how many more. Diagnostics name the file by the path the request gave, or as `display_paths` names it. Hosts can show them as markers in their editor.
-- **Send the same file to every tool.** The engine keeps nothing between requests. A build's board is kept in its build record. `program_board` looks up the build's board again in its request and refuses the upload only when the bitstream no longer fits it (see What counts as the same board below); changes to other boards never matter.
+- **Problems at file, line and column.** The engine reads the folder the request names, and nothing else. Every tool checks every file in it, so a problem in any is a request error in every tool, whichever board the request selects. Its `diagnostics` give each problem at file, line and column, as for source files: invalid JSON (with the parser's message), a field of the wrong type, a misspelled or missing field, a file name that isn't a board ID, an unknown FPGA ID, a `$schema` other than the board schema, a resource's problems (a name that isn't a port name, a pin twice in one resource, a PMOD without its 8 pins, a clock without a frequency, an I/O standard the FPGA family doesn't use), and in variants an invalid connection or memory value in the selector, a selector another variant has, a programmer, argument template, USB ID, release or regular expression. A definition problem points at the value, or for a missing field at the object it belongs in. Problems come all at once, by file name, then in file order: each board and each variant is checked on its own, so a problem in one never hides problems in another. Invalid JSON is the exception: it is one problem, the parser's, since nothing after it can be read. At most 10 problems are listed; when there are more, a last `info` diagnostic without a line says how many more. Diagnostics name each file by the folder as the request gave it, plus the file name, or as `display_paths` names it. Hosts can show them as markers in their editor.
+- **Send the same folder to every tool.** The engine keeps nothing between requests. A build's board is kept in its build record. `program_board` looks up the build's board again in its request and refuses the upload only when the bitstream no longer fits it (see What counts as the same board below); changes to other boards never matter.
 
 Tools that take a board also take an optional `board_variant`: some or all of the selector of one of the board's variants, such as `{"connection": "usb", "memory": "ram"}` or `{"memory": "ram"}`; the board's first variant with those values is used. The build record keeps the chosen board and variant for `program_board`.
 
@@ -163,14 +166,14 @@ Tools that take a board also take an optional `board_variant`: some or all of th
 | Board field | Compared | Why |
 | --- | --- | --- |
 | FPGA `architecture`, `nextpnr_device`, `nextpnr_package`, `nextpnr_speed`, `nextpnr_family`, `packer_device`, `yosys_family`, `yosys_arch`, `prjxray_family` | Yes | The build tools use them: a change makes another bitstream. `build` rebuilds, and `program_board` refuses an older build (build again) |
-| Board ID and where the board comes from (the catalog or the custom boards file) | No | A board identical to another, under any ID, builds the same bitstream. `program_board` uses the build's board ID only to look the board up again |
+| Board ID and where the board comes from (the catalog or the custom boards folder) | No | A board identical to another, under any ID, builds the same bitstream. `program_board` uses the build's board ID only to look the board up again |
 | Board `description` | No | A name for people |
 | FPGA `part_number` and `size` | No | Names for people and messages |
 | FPGA `jtag_idcode` | No | Used only when programming, to check the connected FPGA: `program_board` uses the current value |
 | Variant: which one (`board_variant`), and its `programmer`, `args` and `usb` filter | No | They only say how the board is programmed: a build for another variant is up to date, and `program_board` programs with the current definition of the build's variant |
-| Variant `tested` and `user_notes`, `dimensions` and `pin_groups` | No | Information for people and for creating designs |
+| Variant `tested` and `user_notes`, `dimensions` and `resources` | No | Information for people and for creating designs |
 
-The other build inputs, such as the sources, the options, the toolchain and the engine version, still count as before (see build). `program_board` looks up the build's board ID and variant selector in its own request (its custom boards file first, else the catalog) and programs with what it finds; a board or variant that is gone, or a different FPGA setting from the table, is a request error: build again.
+The other build inputs, such as the sources, the options, the toolchain and the engine version, still count as before (see build). `program_board` looks up the build's board ID and variant selector in its own request (its custom boards folder first, else the catalog) and programs with what it finds; a board or variant that is gone, or a different FPGA setting from the table, is a request error: build again.
 
 ### Results and errors
 
@@ -191,7 +194,7 @@ On success, a tool returns its output object as structured content. On failure, 
 
 | Diagnostic field | Type | Description |
 | --- | --- | --- |
-| `file` | text | The file, when known: as the request named it (a source file relative to the source folder, the custom boards file as its absolute path), or as `display_paths` names it. Many tool messages have no location |
+| `file` | text | The file, when known: as the request named it (a source file relative to the source folder, a custom board file as the folder's absolute path plus its name), or as `display_paths` names it. Many tool messages have no location |
 | `line` | integer | Line number, starting at 1, when known |
 | `column` | integer | Optional column number, starting at 1 |
 | `severity` | enum | `error`, `warning` or `info` |
@@ -306,7 +309,7 @@ The Logix Engine adds the FPGA's primitive models, so designs that use primitive
 | --- | --- | --- | --- |
 | `board` | board ID | Yes | The target board. It selects the FPGA's primitive models |
 | `board_variant` | board variant | No | The board's variant: the first with these values. Omitted means its first |
-| `custom_boards_file` | custom boards file | No | The host's own boards (see Board specification). Omitted means none |
+| `custom_boards_folder` | custom boards folder | No | The host's own boards (see Board specification). Omitted means none |
 | `display_paths` | display paths | No | How to name paths in what people read. Omitted means as the request gave them (see Display paths) |
 | `top_module` | text | No | Name of the top-level module. When omitted, Verilator checks every module that no other module uses |
 | `source_folder`, `source_files` | See folder fields in Table 2 | Yes | The design files |
@@ -372,7 +375,7 @@ Testbenches run in the source folder, so they read data files, such as with `$re
 | --- | --- | --- | --- |
 | `board` | board ID | Yes | The target board. It selects the FPGA's primitive models |
 | `board_variant` | board variant | No | The board's variant: the first with these values. Omitted means its first |
-| `custom_boards_file` | custom boards file | No | The host's own boards (see Board specification). Omitted means none |
+| `custom_boards_folder` | custom boards folder | No | The host's own boards (see Board specification). Omitted means none |
 | `display_paths` | display paths | No | How to name paths in what people read. Omitted means as the request gave them (see Display paths) |
 | `source_folder`, `source_files`, `build_folder` | See folder fields in Table 2 | Yes | The design files, without testbenches |
 | `testbench_files` | list of relative paths | Yes | The testbenches to run, in order, relative to the source folder. At least one. A file may be listed only once in `source_files` and `testbench_files` together |
@@ -464,7 +467,7 @@ This is the one case where the engine creates or deletes a file in the source fo
 | --- | --- | --- | --- |
 | `board` | board ID | Yes | The target board. It selects the FPGA's primitive models |
 | `board_variant` | board variant | No | The board's variant: the first with these values. Omitted means its first |
-| `custom_boards_file` | custom boards file | No | The host's own boards (see Board specification). Omitted means none |
+| `custom_boards_folder` | custom boards folder | No | The host's own boards (see Board specification). Omitted means none |
 | `display_paths` | display paths | No | How to name paths in what people read. Omitted means as the request gave them (see Display paths) |
 | `source_folder`, `source_files`, `build_folder` | See folder fields in Table 2 | Yes | The design files, without testbenches |
 | `testbench_file` | relative path | Yes | The testbench to simulate, relative to the source folder |
@@ -709,7 +712,7 @@ Xilinx builds use two packages, `oss-cad-suite` and `openxc7`. Two Xilinx builds
 | --- | --- | --- | --- |
 | `board` | board ID | Yes | The target board |
 | `board_variant` | board variant | No | The board's variant: the first with these values. Omitted means its first |
-| `custom_boards_file` | custom boards file | No | The host's own boards (see Board specification). Omitted means none |
+| `custom_boards_folder` | custom boards folder | No | The host's own boards (see Board specification). Omitted means none |
 | `display_paths` | display paths | No | How to name paths in what people read. Omitted means as the request gave them (see Display paths) |
 | `top_module` | text | Yes | Name of the top-level module |
 | `source_folder`, `source_files`, `constraint_file`, `build_folder` | See folder fields in Table 2 | Yes | The constraint file is required |
@@ -805,7 +808,7 @@ Programs a bitstream into the board it was built for, on the device the host cho
 | `device` | text | Yes | The device to program: the `id` of a device from `list_devices`. It is opaque and short-lived: it stays valid while the device stays on the same USB port |
 | `programmer_command` | text | No | A custom command template that replaces the variant's whole command. Its first word is a program from the toolchain package, such as `openFPGALoader`, or an absolute path. It uses the same variables as argument templates and must use `${BITSTREAM}` |
 | `verbose` | boolean | No | Let the programmer print more detail. Not applied to a `programmer_command`. Defaults to false |
-| `custom_boards_file` | custom boards file | No | The host's own boards, as sent to `build`. The build's board must still be the same under its ID (from this file, else the catalog); otherwise the upload is a request error and nothing runs: build again. Omitted means none |
+| `custom_boards_folder` | custom boards folder | No | The host's own boards, as sent to `build`. The build's board must still be the same under its ID (from this folder, else the catalog); otherwise the upload is a request error and nothing runs: build again. Omitted means none |
 | `display_paths` | display paths | No | How to name paths in what people read. Omitted means as the request gave them (see Display paths) |
 
 **Table 10.** program_board tool outputs
@@ -842,7 +845,7 @@ Hosts show the level, in their own words, and compare levels (weak < possible < 
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `custom_boards_file` | custom boards file | No | The host's own boards (see Board specification), matched as well as the catalog's. Omitted means none |
+| `custom_boards_folder` | custom boards folder | No | The host's own boards (see Board specification), matched as well as the catalog's. Omitted means none |
 | `display_paths` | display paths | No | How to name paths in what people read. Omitted means as the request gave them (see Display paths) |
 | `build_folder` | build folder path | No | A successful build's folder. When given, only the devices that fit the build's board in its board variant are listed, in `devices` and `unreachable`, each with `build_match`, strongest first: the devices `program_board` can program that build into. The board comes from the build record, so it works for custom boards too |
 
@@ -865,7 +868,7 @@ Hosts show the level, in their own words, and compare levels (weak < possible < 
 | `serial_number` | text | Serial number, when available |
 | `bus`, `device` | integer | USB bus and device number, for USB devices. The device number changes when the device is plugged in again |
 | `build_match` | enum | Only with `build_folder`. How well the device matches the build's board in the build's board variant: `strong`, `possible` or `weak`, as for `boards` (`weak` for an unreachable device) |
-| `boards` | list of objects | Optional, omitted when empty. The boards the device may be, best first, each with `board` (its ID), `custom` (true for a board from the custom boards file, omitted otherwise) and `variants` (the board's variants this device fits, in the board's order, each with its `selector` and its own `match` level) |
+| `boards` | list of objects | Optional, omitted when empty. The boards the device may be, best first, each with `board` (its ID), `custom` (true for a board from the custom boards folder, omitted otherwise) and `variants` (the board's variants this device fits, in the board's order, each with its `selector` and its own `match` level) |
 | `likely_boards` | list of board IDs | Optional, omitted when empty. The boards the device most likely is, best first: those at its strongest match level, unless that is `weak` (many boards fit, so none is likely). Use it to name what a device probably is; `boards` has every candidate |
 
 **Errors:** setup errors with `install_drivers` or `fix_device_permissions` when devices cannot be scanned. Request errors for an invalid custom board, or a build folder without a build record from a successful build. Engine errors.
@@ -894,7 +897,7 @@ Hosts show the level, in their own words, and compare levels (weak < possible < 
 
 ## get_catalog tool
 
-Returns the Logix Engine's built-in catalog, fixed for each engine version, with the boards of the request's `custom_boards_file` among them, so a board picker can list them together.
+Returns the Logix Engine's built-in catalog, fixed for each engine version, with the boards of the request's `custom_boards_folder` among them, so a board picker can list them together.
 
 **Table 14.** get_catalog tool inputs
 
@@ -903,14 +906,14 @@ Returns the Logix Engine's built-in catalog, fixed for each engine version, with
 | `boards` | catalog query | No | Which boards to return. Omitted means none |
 | `fpgas` | catalog query | No | Which FPGAs to return. Omitted means none |
 | `architectures` | catalog query | No | Which FPGA architectures (families) to return, by ID, such as `ice40`. Omitted means none |
-| `custom_boards_file` | custom boards file | No | The host's own boards (see Board specification). When `boards` are fetched, they are returned with the catalog's, with `custom: true`; one with a catalog board's ID replaces that board. `boards.ids` can name them. Omitted means none |
+| `custom_boards_folder` | custom boards folder | No | The host's own boards (see Board specification). When `boards` are fetched, they are returned with the catalog's, with `custom: true`; one with a catalog board's ID replaces that board. `boards.ids` can name them. Omitted means none |
 | `display_paths` | display paths | No | How to name paths in what people read. Omitted means as the request gave them (see Display paths) |
 
 **Table 15.** get_catalog tool outputs
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `boards` | map of board definitions | Board definitions by ID, the custom boards file's with `custom: true`, without their variants' `usb` filters: which devices are a board is the engine's own matter, and `list_devices` gives each device the boards it may be. Each variant has a `label` for people, its connection and memory labels, such as "USB · Flash" or "FT232H adapter · RAM". Boards have their `pin_groups` when known (see pin group) |
+| `boards` | map of board definitions | Board definitions by ID, the custom boards folder's with `custom: true`, without their variants' `usb` filters: which devices are a board is the engine's own matter, and `list_devices` gives each device the boards it may be. Each variant has a `label` for people, its connection and memory labels, such as "USB · Flash" or "FT232H adapter · RAM". Boards have their `pin_groups` when known (see pin group) |
 | `fpgas` | map of FPGA definitions | FPGA definitions by catalog ID |
 | `architectures` | map of objects | FPGA architectures by ID (`ice40`, `ecp5`, `gowin`, `xilinx`, as FPGA definitions name them), each with `label` (its name for people, with its vendor, such as "Lattice iCE40"), `short_label` (such as "iCE40"), `constraint_extension` (its pin constraint files' extension, without the dot, such as `pcf`: the build takes only this format for its boards) and `order` (its place in the engine's order, 0 first), so frontends don't keep their own lists |
 
@@ -932,7 +935,7 @@ Output:
 {
   "boards": {
     "alhambra-ii": {
-      "description": "Alhambra II",
+      "name": "Alhambra II",
       "fpga_id": "ice40hx4k-tq144-8k",
       "dimensions": [
         { "id": "connection", "label": "Connection",
@@ -958,7 +961,7 @@ A board with a choice, such as the iCESugar-Pro, which can be programmed to flas
 
 ```json
 {
-  "description": "Icesugar Pro",
+  "name": "Icesugar Pro",
   "fpga_id": "lfe5u-25f-6bg256c",
   "dimensions": [
     { "id": "connection", "label": "Connection", "values": [ { "id": "usb", "label": "USB", "help": "..." } ] },
@@ -972,7 +975,7 @@ A board with a choice, such as the iCESugar-Pro, which can be programmed to flas
 }
 ```
 
-**Catalog contents.** The catalog is data in the engine's repo, `catalog/boards.json` (a board file in the boards schema's format, see Board specification) and `catalog/fpgas.json`. It has every iCE40, ECP5, Gowin and Xilinx FPGA the toolchain packages support, and 81 boards: 27 iCE40, 22 ECP5, 9 Gowin and 23 Xilinx, with 128 variants in all, programmed with `openfpgaloader`, `iceprog`, `dfu-util` or `icesprog`. 32 boards have a choice: memory (iCESugar-Pro, ColorLight i5, and most Xilinx and ECP5 boards, which have a RAM and a flash variant; flash is the default wherever a board has it), connection and memory (ColorLight 5A-75E V7.1 and i9 v7.2, FleaFPGA Ohm), or both with fewer combinations (ButterStick r1.0: its USB bootloader writes flash, its adapters RAM). The others have one value of each, which still tells where an upload goes: 50 variants write RAM, and the Zynq boards, the QMTECH XC7A100T and the ULX3S upload only to RAM. Every variant has a USB filter, whatever its architecture. Boards programmed through a cable named with openFPGALoader's `-c` option, such as `-c ft2232`, use that cable's default USB IDs. 80 boards have `pin_groups`: 78 a clock with its frequency, 79 their LEDs (with `active` for 78 of them, and `kind: rgb` where the colors' order is known). They come from the boards' example pin files, most of them tried on hardware, and from the boards' schematics and makers. Clocks that need a jumper say so in `user_notes` (the UPduino v3.0 and v3.1, the ECP5 Evaluation Board). Boards without an oscillator of their own (the pico-ice, whose clock comes from its RP2040) or whose clock isn't documented yet list no clock; the Tang Primer 20K is two boards, one per carrier board (Dock, with six LEDs, and Lite, without); the ButterStick's seven RGB LEDs are a `led_matrix` with a `led_select`; the Soan Papdi Mini, without a published pinout, has none.
+**Catalog contents.** The catalog is [Logix Catalog](https://github.com/openlogix/logix-catalog), a board file per board (see Board specification) and `fpgas.json`, built into each engine release from a pinned commit; `catalog` in `get_engine_info` gives its version. It has every iCE40, ECP5, Gowin and Xilinx FPGA the toolchain packages support, and 81 boards: 27 iCE40, 22 ECP5, 9 Gowin and 23 Xilinx, with 128 variants in all, programmed with `openfpgaloader`, `iceprog`, `dfu-util` or `icesprog`. 32 boards have a choice: memory (iCESugar-Pro, ColorLight i5, and most Xilinx and ECP5 boards, which have a RAM and a flash variant; flash is the default wherever a board has it), connection and memory (ColorLight 5A-75E V7.1 and i9 v7.2, FleaFPGA Ohm), or both with fewer combinations (ButterStick r1.0: its USB bootloader writes flash, its adapters RAM). The others have one value of each, which still tells where an upload goes: 50 variants write RAM, and the Zynq boards, the QMTECH XC7A100T and the ULX3S upload only to RAM. Every variant has a USB filter, whatever its architecture. Boards programmed through a cable named with openFPGALoader's `-c` option, such as `-c ft2232`, use that cable's default USB IDs. 80 boards have `resources`: 78 a clock with its frequency, 79 their LEDs (with `active` for 78 of them; RGB LEDs as `rgb_led`). They come from the boards' example pin files, most of them tried on hardware, and from the boards' schematics and makers. Clocks that need a jumper say so in `user_notes` (the UPduino v3.0 and v3.1, the ECP5 Evaluation Board). Boards without an oscillator of their own (the pico-ice, whose clock comes from its RP2040) or whose clock isn't documented yet list no clock; the Tang Primer 20K is two boards, one per carrier board (Dock, with six LEDs, and Lite, without); the ButterStick's seven RGB LEDs are a `led_matrix`; the Soan Papdi Mini, without a published pinout, has none.
 
 **Trust and notes.** Each catalog variant has `tested`: true when its programming is known to work, because it was tried on the board or is used unchanged by a tool that people rely on; false when it hasn't been tried on hardware, such as a board moved to a different programmer. A change rated low risk after checking the programmer's source keeps `tested` true: every openFPGALoader command through an FTDI chip names the chosen device with `--busdev-num ${BUS}:${DEV}` (openFPGALoader's FTDI drivers then open that device), a change made without hardware tests. Optional `user_notes` give warnings and missing information for its users, such as a USB filter that also matches other boards, or a step needed before programming. The catalog file also keeps `maintainer_notes`, where each variant's settings come from and why they changed, which `get_catalog` doesn't return. A USB filter can't always tell one board model from another: boards that use the same USB chip and report the same names look alike to the engine. Hosts can show both fields where users pick a board.
 
@@ -990,7 +993,7 @@ Every aspect is always listed, in a fixed order, each the same (`yes`), differen
 | --- | --- | --- | --- |
 | `from_board` | board ID | Yes | The first board, such as the project's board now |
 | `to_board` | board ID | Yes | The second board, such as the board the project may move to |
-| `custom_boards_file` | custom boards file | No | The host's own boards (see Board specification). Omitted means none |
+| `custom_boards_folder` | custom boards folder | No | The host's own boards (see Board specification). Omitted means none |
 
 **Table 36.** compare_boards tool outputs
 
@@ -999,7 +1002,7 @@ Every aspect is always listed, in a fixed order, each the same (`yes`), differen
 | `same_build` | boolean | True when a build for one board is valid for the other: their FPGAs have the same build settings (see What counts as the same board), so the same bitstream fits both |
 | `aspects` | list of objects | Every aspect, in this order, each with `aspect` (its name), `same` (`yes`, `no` or `unknown`), `from` and `to` (the two values, when known; any JSON type, given by the aspect) and `text` (the comparison for people, such as "FPGA: ICE40HX4K-TQ144 → ICE40UP5K-SG48."). The aspects: `board` (the boards' names), `architecture` (such as "Lattice iCE40"), `fpga` (the part number), `size` (such as "8k"), `constraint_format` (the pin file's extension, such as ".pcf"), `pins` (`yes` for the same board, otherwise `unknown` for now, without values), `clock` (the frequencies in MHz of the clocks in the boards' `pin_groups`, a list of numbers, such as `[12]`) and `leds` (how many LEDs the boards' `pin_groups` list, a number). `clock` and `leds` are `unknown`, without values, when a board lists none, except for the same board |
 
-**Errors:** request errors for an unknown board or variant, or a custom boards file with problems. Engine errors.
+**Errors:** request errors for an unknown board or variant, or a custom boards folder with problems. Engine errors.
 
 **Example**
 
@@ -1049,8 +1052,9 @@ Returns the Logix Engine's version, platform and package status. A host calls it
 | `command_line` | list of text | The command-line arguments the engine was launched with, as given, for diagnostics |
 | `log_file` | absolute path | The log file this engine process writes, in the `logs` subfolder of the engine folder |
 | `packages` | list of packages | Every package in the engine's manifest. Each has a text `name`, a date tag `version`, a `status`: `installed`, `missing` or `broken`, and, when installed, `bin_folder`: the absolute path of the folder with its programs, for hosts that run one directly, such as Verible's language server `verible-verilog-ls` from the `verible` package |
-| `boards_schema` | text | The address of the boards schema this engine reads, the JSON Schema of custom boards files, such as `https://www.openlogix.org/schemas/logix-boards-v1.json` (see Board specification) |
-| `report` | multiline text | The facts above as lines for people, the engine's part of a frontend's system info (see Show system info under Recipes): the version, platform, engine folder, log file, automatic install, command line, each package with its version and status, and the boards schema. Show it as is; its wording can change in any version, so programs read the fields above |
+| `boards_schema` | text | The address of the board schema this engine reads, Logix Catalog's JSON Schema of a board file, in the catalog and in custom boards folders, such as `https://www.openlogix.org/schemas/logix-board-v1.json` (see Board specification) |
+| `catalog` | object | The board catalog built into this engine: `version`, the date (yyyy-mm-dd) of its Logix Catalog commit, `commit`, that commit's short hash, and `local`, true only for a developer build from a local catalog clone |
+| `report` | multiline text | The facts above as lines for people, the engine's part of a frontend's system info (see Show system info under Recipes): the version, platform, engine folder, log file, automatic install, command line, each package with its version and status, the board catalog's version and the board schema. Show it as is; its wording can change in any version, so programs read the fields above |
 
 **Errors:** engine errors only.
 
@@ -1071,7 +1075,8 @@ Output:
     { "name": "oss-cad-suite", "version": "2026-11-20", "status": "installed", "bin_folder": "/Users/user/.myhost/engine/packages/oss-cad-suite/2026-11-20/bin" },
     { "name": "examples", "version": "2026-10-15", "status": "missing" }
   ],
-  "boards_schema": "https://www.openlogix.org/schemas/logix-boards-v1.json",
+  "boards_schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "catalog": { "version": "2026-11-08", "commit": "3cdae93" },
   "report": "Logix Engine 2026-12-01\nPlatform: darwin-arm64\nEngine folder: /Users/user/.myhost/engine\n..."
 }
 ```
@@ -1171,7 +1176,7 @@ This model is only a suggestion for AI sessions that have no other requirements,
   { "board": "alhambra-ii", "board_variant": { "connection": "usb", "memory": "flash" }, "top_module": "main" }
   ```
 
-  `board` is a board ID. For a board that isn't in the catalog, write its definition in a custom boards file, such as `custom-boards.json` in the project folder (see Board specification), and send it as `custom_boards_file` with every request. `board_variant` is optional: without it, requests use the board's first variant. Copy the values into each request. The engine never reads this file: it is only the AI session's notes.
+  `board` is a board ID. For a board that isn't in the catalog, write its definition as a board file in a custom boards folder, such as `boards/my-board.json` in the project folder (see Board specification), and send the folder as `custom_boards_folder` with every request. `board_variant` is optional: without it, requests use the board's first variant. Copy the values into each request. The engine never reads this file: it is only the AI session's notes.
 - **`main.v`** holds the top module, `main`, or **`main.sv`** for SystemVerilog. Other source files sit next to it.
 - **One constraint file,** `pinout` with the extension of the FPGA's format: `pinout.pcf` (iCE40), `pinout.lpf` (ECP5), `pinout.cst` (Gowin) or `pinout.xdc` (Xilinx). `get_catalog` gives the board's FPGA.
 - **Testbenches** are named `<name>_tb.v` or `<name>_tb.sv`, next to the code they test (see Writing testbenches).
@@ -1242,7 +1247,7 @@ Logic that every frontend would need and that doesn't depend on a frontend's own
 
 - Fill a board picker from `get_catalog` with `boards.fetch`, `fpgas.fetch` and `architectures.fetch` true: group boards by their FPGA's `architecture`, with the architecture's `label` and `order`, and use its `constraint_extension` for the board's pin file.
 - Show each board's `dimensions` labels and help as the board variant choices, each variant's `label` as the current choice, and its `tested` and `user_notes` where the user picks. Keep only the values the user chose, such as `{"memory": "ram"}`, and send them as `board_variant`: the engine uses the board's first variant with them, the same rule a host uses to show which variant that is.
-- A user's own boards are custom boards: keep them in a file in the project, such as `custom-boards.json`, so they work on every platform and anyone who opens the project gets them. Send its path as `custom_boards_file` with every request, whatever board is selected, and list its boards with the catalog's by sending it to `get_catalog`. The frontend needn't edit, parse or copy it: users edit it with any editor (with a `"$schema"` line naming `boards_schema` from `get_engine_info`, editors that read JSON Schemas check and complete it), the Logix Engine reads it, and a frontend only notices changes on disk, shows the problems the engine reports at line and column, and marks its boards where the user picks so they aren't mistaken for catalog boards.
+- A user's own boards are custom boards: keep them in a folder in the project, such as `boards/`, a file per board named by its ID, so they work on every platform and anyone who opens the project gets them. Send the folder's path as `custom_boards_folder` with every request, whatever board is selected, and list its boards with the catalog's by sending it to `get_catalog`. The frontend needn't edit, parse or copy them: users edit it with any editor (with a `"$schema"` line naming `boards_schema` from `get_engine_info`, editors that read JSON Schemas check and complete it), the Logix Engine reads it, and a frontend only notices changes on disk, shows the problems the engine reports at line and column, and marks its boards where the user picks so they aren't mistaken for catalog boards.
 - When the user changes a project's board, call `compare_boards` with the old and new boards and decide from its aspects what the change means for your project model: warn about each difference, or adapt the project, such as converting the pin file when `constraint_format` differs. `same_build` tells whether an existing build still fits.
 
 ### Format an unsaved editor buffer

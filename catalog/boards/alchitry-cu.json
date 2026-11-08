@@ -1,0 +1,23 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "Alchitry Cu Development Board",
+  "fpga_id": "ice40hx8k-cb132",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "flash"},
+      "programmer": "iceprog",
+      "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6010", "product_regex": "^Alchitry Cu$"},
+      "tested": true,
+      "maintainer_notes": "USB filter (2026-11-05): was ^Alchitry Cu, which also matched the Alchitry Cu V2, another board; now the exact product name, from Alchitry's own loader, alchitry/Alchitry-Interface src/main/kotlin/com/alchitry/hardware/Board.kt (1c71e16), which finds boards by comparing it for equality: \"Alchitry Au\", \"Alchitry Au+\", \"Alchitry Cu\", and \"Alchitry Au V2\", \"Alchitry Cu V2\", \"Alchitry Pt V2\" for other boards, so the pattern matches the whole name."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "P7", "mhz": 100},
+    "leds": {
+      "type": "leds",
+      "pins": ["J11", "K11", "K12", "K14", "L12", "L14", "M12", "N14"],
+      "active": "high"
+    }
+  }
+}

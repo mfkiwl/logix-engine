@@ -1,0 +1,26 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "ZXTRES+ (Xilinx, Artix7)",
+  "fpga_id": "xc7a100tfgg484-2",
+  "variants": [
+    {
+      "selector": {"connection": "usb-blaster", "memory": "flash"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify -c usb-blaster --fpga-part xc7a100tfgg484 --write-flash ${BITSTREAM}",
+      "usb": {"vid": "09fb", "pid": "6001"},
+      "tested": false,
+      "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a100tfgg484, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+    },
+    {
+      "selector": {"connection": "usb-blaster", "memory": "ram"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify -c usb-blaster ${BITSTREAM}",
+      "usb": {"vid": "09fb", "pid": "6001"},
+      "tested": true
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "Y18", "mhz": 50, "io_standard": "LVCMOS33"},
+    "led": {"type": "leds", "pins": ["H13"], "active": "low", "io_standard": "LVCMOS33"}
+  }
+}

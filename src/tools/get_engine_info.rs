@@ -54,17 +54,37 @@ pub struct GetEngineInfoOutput {
     pub log_file: String,
     /// Every package in the engine's manifest, with its status.
     pub packages: Vec<PackageInfo>,
-    /// The address of the boards schema this engine reads: the JSON Schema
-    /// of custom boards files, which may name it in a "$schema" key so
-    /// editors can check them. A file that names another schema is refused.
+    /// The address of the board schema this engine reads (Logix Catalog's):
+    /// the JSON Schema of each board file, in the catalog and in custom
+    /// boards folders, which may name it in a "$schema" key so editors can
+    /// check them. A file that names another schema is refused.
     pub boards_schema: String,
+    /// The board catalog built into this engine: its Logix Catalog version.
+    pub catalog: CatalogInfo,
     /// The facts above as plain text lines for people, the engine's part of
     /// a frontend's system info (for bug reports), so every frontend shows
     /// them the same way: the version, platform, engine folder, log file,
     /// automatic install, command line, each package with its version and
-    /// status, and the boards schema. Show it as is; its wording can change
+    /// status, the board catalog and the boards schema. Show it as is; its wording can change
     /// in any version, so read the fields above, not this text.
     pub report: String,
+}
+
+/// The board catalog built into the engine (Logix Catalog,
+/// github.com/openlogix/logix-catalog).
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct CatalogInfo {
+    /// The catalog's version: the date (yyyy-mm-dd) of its Logix Catalog
+    /// commit.
+    pub version: String,
+    /// The Logix Catalog commit, a short hash such as 3cdae93.
+    pub commit: String,
+    /// True when this engine was built from a local catalog clone (a
+    /// developer build), which may differ from the commit; omitted
+    /// otherwise.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub local: bool,
 }
 
 /// A toolchain package and whether it's installed.
@@ -115,6 +135,14 @@ pub fn run(
         log_file: state.log_file.display().to_string(),
         packages: package_list(state),
         boards_schema: crate::catalog::BOARDS_SCHEMA.to_string(),
+        catalog: {
+            let (commit, date, local) = crate::catalog::source();
+            CatalogInfo {
+                version: date.to_string(),
+                commit: commit.to_string(),
+                local,
+            }
+        },
         report: String::new(),
     };
     out.report = report(&out);
@@ -159,6 +187,13 @@ fn report(info: &GetEngineInfoOutput) -> String {
             p.name, p.version
         ));
     }
+    let c = &info.catalog;
+    lines.push(format!(
+        "Board catalog: Logix Catalog {} ({}{})",
+        c.version,
+        c.commit,
+        if c.local { ", local build" } else { "" }
+    ));
     lines.push(format!("Boards schema: {}", info.boards_schema));
     lines.join("\n")
 }
@@ -216,6 +251,11 @@ mod tests {
                 },
             ],
             boards_schema: crate::catalog::BOARDS_SCHEMA.into(),
+            catalog: CatalogInfo {
+                version: "2026-11-08".into(),
+                commit: "3cdae93".into(),
+                local: false,
+            },
             report: String::new(),
         };
         info.report = report(&info);
@@ -230,7 +270,8 @@ Command line: --engine-folder /Users/you/.logix/engine
 Packages:
   oss-cad-suite  2026-11-20  installed
   verible        2026-10-22  missing
-Boards schema: https://www.openlogix.org/schemas/logix-boards-v1.json"
+Board catalog: Logix Catalog 2026-11-08 (3cdae93)
+Boards schema: https://www.openlogix.org/schemas/logix-board-v1.json"
         );
     }
 }

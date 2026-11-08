@@ -1,0 +1,24 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "Fomu",
+  "fpga_id": "ice40up5k-uwg30",
+  "variants": [
+    {
+      "selector": {"connection": "bootloader", "memory": "flash"},
+      "programmer": "dfu-util",
+      "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM}",
+      "usb": {
+        "vid": "1209",
+        "pid": "5bf0",
+        "product_regex": "^Fomu Hacker running DFU Bootloader v1.8.8"
+      },
+      "tested": true,
+      "user_notes": "Programming through the USB bootloader needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in.",
+      "maintainer_notes": "Memory flash: Fomu's bootloader (foboot) stores the design in flash, but the board starts its bootloader at power-up, so whether the design comes back by itself is to check on hardware."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "F4", "mhz": 48},
+    "rgb_led": {"type": "rgb_led", "red": "B5", "green": "C5", "blue": "A5", "active": "low"}
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "Sipeed Tang Nano",
+  "fpga_id": "gw1n-lv1qn48c6-i5",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "flash"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify -b tangnano --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6010"},
+      "tested": false,
+      "maintainer_notes": "New variant: the RAM variant's command with --write-flash, which writes the GW1N's internal flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
+    },
+    {
+      "selector": {"connection": "usb", "memory": "ram"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify -b tangnano --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6010"},
+      "tested": true,
+      "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "35", "mhz": 24, "io_standard": "LVCMOS33"},
+    "led": {"type": "leds", "pins": ["18"], "active": "low", "io_standard": "LVCMOS33"}
+  }
+}

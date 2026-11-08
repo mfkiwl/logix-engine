@@ -1,0 +1,19 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "iCEBreaker bitsy v0",
+  "fpga_id": "ice40up5k-sg48",
+  "variants": [
+    {
+      "selector": {"connection": "bootloader", "memory": "flash"},
+      "programmer": "dfu-util",
+      "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM}",
+      "usb": {"vid": "1d50", "pid": "6146", "product_regex": "^iCEBreaker bitsy v0.*"},
+      "tested": true,
+      "user_notes": "Programming through the USB bootloader needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "35", "mhz": 12},
+    "led": {"type": "leds", "pins": ["11"], "active": "low"}
+  }
+}

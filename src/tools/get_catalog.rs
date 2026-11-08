@@ -20,7 +20,7 @@ impl EngineTool for GetCatalog {
         the board of other tools, or to see a board's FPGA and how it is programmed. Each \
         section is returned only when asked for: {\"boards\": {\"fetch\": true}} returns all \
         boards, and {\"boards\": {\"fetch\": true, \"ids\": [\"alhambra-ii\"]}} only the listed \
-        ones. Boards include those of the request's custom_boards_file, marked custom, a custom board \
+        ones. Boards include those of the request's custom_boards_folder, marked custom, a custom board \
         replacing the catalog board with its ID. The architectures section gives each FPGA family's name for people and the \
         extension of its pin constraint files. Board descriptions are the boards' names for \
         people.";
@@ -43,14 +43,15 @@ pub struct GetCatalogInput {
     /// Omitted means none.
     #[serde(default)]
     pub architectures: Option<CatalogQuery>,
-    /// The host's own boards: the absolute path of a JSON file that maps
-    /// board IDs to definitions in the catalog's format. board can name one
+    /// The host's own boards: the absolute path of a folder of board files,
+    /// one board each in the catalog's format, named by board ID, such as
+    /// boards/my-board.json (a project's boards folder). board can name one
     /// of them; one with a catalog board's ID replaces that board in this
-    /// request. Problems in the file come back as a request error with a
-    /// diagnostic for each, at line and column. Send the same file to every
-    /// tool. Omitted means none.
+    /// request. Problems in any file come back as a request error with a
+    /// diagnostic for each, at file, line and column. Send the same folder to
+    /// every tool. Omitted means none.
     #[serde(default)]
-    pub custom_boards_file: Option<String>,
+    pub custom_boards_folder: Option<String>,
     /// How to name paths in what people read (diagnostics, messages,
     /// testbench output, live tool output, diagram labels): files named as
     /// a whole, then folders whose files keep their path below the folder
@@ -98,7 +99,7 @@ pub struct CatalogQuery {
 #[serde(deny_unknown_fields)]
 pub struct CatalogBoard {
     /// The board's name for people, such as "Alhambra II".
-    pub description: String,
+    pub name: String,
     /// The board's FPGA, as a catalog ID of the fpgas section, such as
     /// ice40hx4k-tq144-8k. Every variant uses it. Boards with the same
     /// fpga_id have the same FPGA.
@@ -109,18 +110,21 @@ pub struct CatalogBoard {
     pub dimensions: Vec<Dimension>,
     /// The ways the board can be programmed, the board's default first.
     pub variants: Vec<CatalogVariant>,
-    /// True for a board from the request's custom_boards_file, omitted for
+    /// True for a board from the request's custom_boards_folder, omitted for
     /// catalog boards.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub custom: bool,
-    /// What the board wires to FPGA pins, in groups, such as its clock
-    /// (type clock, with mhz) and LEDs (type led, with active): each group's
-    /// name is a port name, a vector name[N-1:0] for several pins (the first
-    /// is bit 0). For creating designs and pin files for the board, such as
-    /// a blinky. Omitted when none are known; a board may have more than it
-    /// lists.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub pin_groups: Vec<catalog::PinGroup>,
+    /// What the board wires to FPGA pins, by port name, each of a type with
+    /// its own fields: clock (pin, mhz), leds, buttons and switches (pins,
+    /// active), rgb_led (red, green, blue, active), led_matrix (leds,
+    /// colors, active), uart (tx, rx), pmod (its 8 signal pins), header,
+    /// and unclassified (every wired pin no other resource lists). A name
+    /// with one pin is a plain port, with several a vector, bit 0 first.
+    /// For creating designs and pin files for the board, such as a blinky.
+    /// Omitted when none are known; a type a board doesn't list is unknown,
+    /// unless the board has an unclassified resource.
+    #[serde(default, skip_serializing_if = "indexmap::IndexMap::is_empty")]
+    pub resources: catalog::Resources,
 }
 
 /// One way to program a catalog board. Which USB devices are the board is
@@ -166,12 +170,12 @@ impl From<&Variant> for CatalogVariant {
 impl From<&KnownBoard<'_>> for CatalogBoard {
     fn from(b: &KnownBoard<'_>) -> Self {
         CatalogBoard {
-            description: b.description.to_string(),
+            name: b.description.to_string(),
             fpga_id: b.fpga_id.to_string(),
             dimensions: catalog::derive_dimensions(b.variants),
             variants: b.variants.iter().map(Into::into).collect(),
             custom: b.custom,
-            pin_groups: b.pin_groups.to_vec(),
+            resources: b.resources.clone(),
         }
     }
 }
@@ -221,7 +225,7 @@ pub fn run(_state: &EngineState, input: GetCatalogInput) -> Result<GetCatalogOut
 }
 
 fn answer(input: GetCatalogInput) -> Result<GetCatalogOutput, ToolError> {
-    let custom = crate::custom_boards::load(input.custom_boards_file.as_deref())?;
+    let custom = crate::custom_boards::load(input.custom_boards_folder.as_deref())?;
     let known: BTreeMap<String, CatalogBoard> = crate::board::known_boards(&custom)
         .iter()
         .map(|(id, b)| (id.to_string(), b.into()))
@@ -265,19 +269,19 @@ mod tests {
             answer(input)
         };
         let mine = json!({
-            "description": "My board",
+            "name": "My board",
             "fpga_id": "ice40hx1k-tq144",
             "variants": [{"selector": {"connection": "usb", "memory": "flash"},
                 "programmer": "iceprog", "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
                 "usb": {"vid": "0403", "pid": "6010"}, "tested": false}]
         });
         let mut over = mine.clone();
-        over["description"] = json!("My Alhambra");
+        over["name"] = json!("My Alhambra");
         let (_tmp, file) =
-            crate::custom_boards::test_file(&json!({"mine": mine, "alhambra-ii": over}));
+            crate::custom_boards::test_folder(&json!({"mine": mine, "alhambra-ii": over}));
         let out = ask(json!({
             "boards": {"fetch": true, "ids": ["mine", "alhambra-ii", "icestick"]},
-            "custom_boards_file": file
+            "custom_boards_folder": file
         }))
         .unwrap();
         let b = &out.boards["mine"];
@@ -286,17 +290,25 @@ mod tests {
         assert_eq!(b.dimensions.len(), 2);
         // Replaces the catalog board with its ID.
         assert!(out.boards["alhambra-ii"].custom);
-        assert_eq!(out.boards["alhambra-ii"].description, "My Alhambra");
+        assert_eq!(out.boards["alhambra-ii"].name, "My Alhambra");
         let json = serde_json::to_value(&out).unwrap();
         assert!(json["boards"]["icestick"].get("custom").is_none());
         assert!(json["boards"]["icestick"].get("fpga").is_none());
         assert!(json["boards"]["mine"]["variants"][0].get("usb").is_none());
         // A bad board is a request error, with a diagnostic at its line.
         let (_tmp2, bad) =
-            crate::custom_boards::test_file(&json!({"x": {"description": "x", "variants": []}}));
-        let e = ask(json!({"custom_boards_file": bad})).unwrap_err();
+            crate::custom_boards::test_folder(&json!({"x": {"name": "x", "variants": []}}));
+        let e = ask(json!({"custom_boards_folder": bad})).unwrap_err();
         assert_eq!(e.category, crate::errors::Category::Request);
-        assert_eq!(e.diagnostics[0].line, Some(2), "{:?}", e.diagnostics);
+        // The board is the whole file: a missing field is at its start.
+        assert_eq!(e.diagnostics[0].line, Some(1), "{:?}", e.diagnostics);
+        assert!(
+            e.diagnostics[0]
+                .file
+                .as_deref()
+                .unwrap()
+                .ends_with("/boards/x.json")
+        );
     }
 
     #[test]

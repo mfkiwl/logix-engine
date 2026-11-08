@@ -1,0 +1,27 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "ECP5-Mini-25",
+  "fpga_id": "lfe5u-25f-6bg256c",
+  "variants": [
+    {
+      "selector": {"connection": "ft2232h", "memory": "flash"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6010"},
+      "tested": false,
+      "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
+    },
+    {
+      "selector": {"connection": "ft2232h", "memory": "ram"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6010"},
+      "tested": true,
+      "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "B9", "mhz": 16, "io_standard": "LVCMOS33"},
+    "leds": {"type": "leds", "pins": ["B1", "B2"], "active": "high", "io_standard": "LVCMOS33"}
+  }
+}

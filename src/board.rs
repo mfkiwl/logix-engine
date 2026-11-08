@@ -1,6 +1,6 @@
 //! Boards in requests (docs/tool-api.md, Board specification): every tool
 //! that deals with boards names one by ID (`board`) and takes the same
-//! optional custom boards file (`custom_boards_file`, read by
+//! optional custom boards folder (`custom_boards_folder`, read by
 //! `custom_boards`): the host's own boards by ID, in the catalog's format. A custom board with a catalog board's ID replaces that
 //! board for the request. The chosen board is resolved into a complete
 //! board, which the build record keeps.
@@ -19,15 +19,20 @@ use crate::errors::ToolError;
 /// catalog board's ID replaces that catalog board in the request.
 pub type CustomBoards = BTreeMap<String, CustomBoard>;
 
-/// A board definition, the same in the catalog and in custom boards files:
+/// A board definition, the same in the catalog and in custom boards folders:
 /// the board's name, its FPGA and the ways to program it. The FPGA is one of
 /// the catalog's, which has every FPGA the toolchain supports, so a custom
 /// board adds a board and its programming, never an FPGA.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct CustomBoard {
+    /// The file's schema address, for editors (checked when given, not
+    /// kept).
+    #[serde(rename = "$schema", default, skip_serializing)]
+    #[schemars(skip)]
+    pub schema: Option<serde_json::Value>,
     /// The board's name for people.
-    pub description: String,
+    pub name: String,
     /// The board's FPGA, as a catalog ID such as ice40hx4k-tq144-8k
     /// (get_catalog lists them).
     #[schemars(pattern(r"^[a-z0-9-]+$"))]
@@ -41,10 +46,10 @@ pub struct CustomBoard {
     /// the default.
     #[schemars(length(min = 1))]
     pub variants: Vec<Variant>,
-    /// What the board wires to FPGA pins, in groups, as in the catalog,
+    /// What the board wires to FPGA pins, by port name, as in the catalog,
     /// such as its clock and LEDs. Optional.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub pin_groups: Vec<catalog::PinGroup>,
+    #[serde(default, skip_serializing_if = "indexmap::IndexMap::is_empty")]
+    pub resources: catalog::Resources,
 }
 
 /// A board variant in a request: some or all of a selector's values, such
@@ -63,7 +68,7 @@ pub struct KnownBoard<'a> {
     /// The FPGA definition (from the catalog for a catalog ID).
     pub fpga: FpgaDefinition,
     pub variants: &'a [Variant],
-    pub pin_groups: &'a [catalog::PinGroup],
+    pub resources: &'a catalog::Resources,
 }
 
 /// A custom board's FPGA: its catalog ID and definition.
@@ -86,11 +91,11 @@ pub fn known_boards(custom: &CustomBoards) -> BTreeMap<&str, KnownBoard<'_>> {
                 KnownBoard {
                     id,
                     custom: false,
-                    description: &b.description,
+                    description: &b.name,
                     fpga_id: &b.fpga_id,
                     fpga: c.fpgas.get(&b.fpga_id)?.clone(),
                     variants: &b.variants,
-                    pin_groups: &b.pin_groups,
+                    resources: &b.resources,
                 },
             ))
         })
@@ -104,11 +109,11 @@ pub fn known_boards(custom: &CustomBoards) -> BTreeMap<&str, KnownBoard<'_>> {
             KnownBoard {
                 id,
                 custom: true,
-                description: &b.description,
+                description: &b.name,
                 fpga_id: &b.fpga_id,
                 fpga,
                 variants: &b.variants,
-                pin_groups: &b.pin_groups,
+                resources: &b.resources,
             },
         );
     }
@@ -133,8 +138,8 @@ pub struct ResolvedBoard {
     pub variant: Variant,
     /// What the board wires to FPGA pins (facts for people and designs;
     /// builds don't use them).
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
-    pub pin_groups: Vec<catalog::PinGroup>,
+    #[serde(default, skip_serializing_if = "indexmap::IndexMap::is_empty")]
+    pub resources: catalog::Resources,
 }
 
 impl ResolvedBoard {
@@ -204,36 +209,36 @@ pub fn resolve(
 ) -> Result<ResolvedBoard, ToolError> {
     if let Some(b) = custom.get(id) {
         let (fpga_id, fpga) = custom_fpga(b)?;
-        let (variant, name) = configure(&b.description, &b.variants, variant)?;
+        let (variant, name) = configure(&b.name, &b.variants, variant)?;
         log::info!(
             "{}",
-            log_line(id, "the custom boards file", &variant.selector)
+            log_line(id, "the custom boards folder", &variant.selector)
         );
         return Ok(ResolvedBoard {
             board_id: Some(id.to_string()),
-            description: b.description.clone(),
+            description: b.name.clone(),
             name,
             fpga_id,
             fpga,
             variant,
-            pin_groups: b.pin_groups.clone(),
+            resources: b.resources.clone(),
         });
     }
     let b = catalog::builtin().boards.get(id).ok_or_else(|| {
         ToolError::request(format!(
-            "{id:?} isn't a board in the catalog or in the custom boards file. Use get_catalog to list the boards, or add the board to the file custom_boards_file names."
+            "{id:?} isn't a board in the catalog or in the custom boards folder. Use get_catalog to list the boards, or add the board's file to the folder custom_boards_folder names."
         ))
     })?;
-    let (variant, name) = configure(&b.description, &b.variants, variant)?;
+    let (variant, name) = configure(&b.name, &b.variants, variant)?;
     log::info!("{}", log_line(id, "the catalog", &variant.selector));
     Ok(ResolvedBoard {
         board_id: Some(id.to_string()),
-        description: b.description.clone(),
+        description: b.name.clone(),
         name,
         fpga: fpga_by_id(&b.fpga_id)?,
         fpga_id: Some(b.fpga_id.clone()),
         variant,
-        pin_groups: b.pin_groups.clone(),
+        resources: b.resources.clone(),
     })
 }
 
@@ -310,7 +315,7 @@ mod tests {
         assert_eq!(b.variant.selector, catalog::Selector::new("usb", "flash"));
         let err = catalog_board("nope", &None).unwrap_err();
         assert!(
-            err.message.contains("custom boards file"),
+            err.message.contains("custom boards folder"),
             "{}",
             err.message
         );
@@ -352,7 +357,7 @@ mod tests {
 
     pub(crate) fn custom(fpga: serde_json::Value) -> CustomBoard {
         let mut v = json!({
-            "description": "My board",
+            "name": "My board",
             "variants": [{
                 "selector": {"connection": "usb", "memory": "flash"},
                 "programmer": "openfpgaloader",
@@ -378,7 +383,7 @@ mod tests {
         // Only catalog FPGAs: a full FPGA definition isn't a field.
         assert!(
             serde_json::from_value::<CustomBoard>(json!({
-                "description": "X", "fpga_id": "ice40up5k-sg48", "variants": [],
+                "name": "X", "fpga_id": "ice40up5k-sg48", "variants": [],
                 "fpga": {"architecture": "ice40"}
             }))
             .is_err()
@@ -391,7 +396,7 @@ mod tests {
         // A custom board replaces the catalog board with its ID.
         let over = boards([("alhambra-ii", custom(json!({"fpga_id": "ice40up5k-sg48"})))]);
         let b3 = resolve("alhambra-ii", &None, &over).unwrap();
-        assert_eq!(b3.description, "My board");
+        assert_eq!(b3.name, "My board");
         assert_ne!(
             b3.checksum(),
             catalog_board("alhambra-ii", &None).unwrap().checksum()
@@ -402,8 +407,8 @@ mod tests {
     fn the_log_says_where_the_board_comes_from() {
         let sel = catalog::Selector::new("usb", "flash");
         assert_eq!(
-            log_line("mine", "the custom boards file", &sel),
-            "Board: mine from the custom boards file, variant connection usb, memory flash"
+            log_line("mine", "the custom boards folder", &sel),
+            "Board: mine from the custom boards folder, variant connection usb, memory flash"
         );
     }
 
@@ -424,11 +429,12 @@ mod tests {
         let c = catalog::builtin();
         let b = &c.boards["icesugar-pro"];
         let same = CustomBoard {
-            description: b.description.clone(),
+            schema: None,
+            name: b.name.clone(),
             fpga_id: b.fpga_id.clone(),
             dimensions: Vec::new(),
             variants: b.variants.clone(),
-            pin_groups: b.pin_groups.clone(),
+            resources: b.resources.clone(),
         };
         let ram = pick("usb", "ram");
         let from_list = resolve("icesugar-pro", &ram, &boards([("icesugar-pro", same)])).unwrap();

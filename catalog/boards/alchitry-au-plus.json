@@ -1,0 +1,32 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "Alchitry Au+ (Xilinx, Artix7)",
+  "fpga_id": "xc7a100tftg256-1",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "flash"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify --board alchitry_au_plus --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6010", "product_regex": "^Alchitry Au\\+$"},
+      "tested": false,
+      "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a100tftg256, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): the exact product name, from Alchitry's own loader, alchitry/Alchitry-Interface src/main/kotlin/com/alchitry/hardware/Board.kt (1c71e16), which finds boards by comparing it for equality: \"Alchitry Au\", \"Alchitry Au+\", \"Alchitry Cu\", and \"Alchitry Au V2\", \"Alchitry Cu V2\", \"Alchitry Pt V2\" for other boards, so the pattern matches the whole name."
+    },
+    {
+      "selector": {"connection": "usb", "memory": "ram"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify --board alchitry_au_plus --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6010", "product_regex": "^Alchitry Au\\+$"},
+      "tested": true,
+      "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): the exact product name, from Alchitry's own loader, alchitry/Alchitry-Interface src/main/kotlin/com/alchitry/hardware/Board.kt (1c71e16), which finds boards by comparing it for equality: \"Alchitry Au\", \"Alchitry Au+\", \"Alchitry Cu\", and \"Alchitry Au V2\", \"Alchitry Cu V2\", \"Alchitry Pt V2\" for other boards, so the pattern matches the whole name."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "N14", "mhz": 100, "io_standard": "LVCMOS33"},
+    "leds": {
+      "type": "leds",
+      "pins": ["K13", "K12", "L14", "L13", "M16", "M14", "M12", "N16"],
+      "active": "high",
+      "io_standard": "LVCMOS33"
+    }
+  }
+}

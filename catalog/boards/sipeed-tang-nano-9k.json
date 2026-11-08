@@ -1,0 +1,20 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "Sipeed Tang Nano 9k",
+  "fpga_id": "gw1nr-lv9qn88pc6-i5",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "flash"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify -b tangnano9k -f --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6010", "product_regex": "^JTAG Debugger$", "release": "0500"},
+      "tested": true,
+      "user_notes": "Other Sipeed boards with the same USB debugger chip may report the same name, JTAG Debugger.",
+      "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): product name JTAG Debugger (manufacturer SIPEED), as a real Tang Nano 9K reports it. It is generic (any debugger firmware may report it), so it's in FACTORY_DEFAULT_NAMES and the match is possible, not strong; other Tang boards have no product name in their filters until their names are checked. USB filter (2026-11-05): release 0500. The board's USB debugger is a BL702 (Sipeed wiki, Update debugger page: BL702 on Tang Nano 1K, 4K, 9K and Primer 20K; BL616 on Nano 20K), which acts like an FT2232C/D and reports bcdDevice 0500: sipeed/RV-Debugger-BL702 firmware/app/usb2uartjtag/usb_descriptor.c (1b27d3f, FTDI_BCD_DEVICE 0x0500, \"known full-speed FT2232C/D\"), and a real Tang Nano 9K (openFPGALoader issue #382, rev 5.00). The BL702 is a full-speed device, and libftdi picks its packet size from bcdDevice, so its firmware can't claim to be an FT2232H (0700). Rules out the many boards with a real FT2232H."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "52", "mhz": 27, "io_standard": "LVCMOS33"},
+    "led": {"type": "leds", "pins": ["10"], "active": "low"}
+  }
+}

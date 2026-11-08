@@ -1,0 +1,23 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "VSDSquadron FPGA Mini",
+  "fpga_id": "ice40up5k-sg48",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "flash"},
+      "programmer": "iceprog",
+      "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6014", "product_regex": "^.*Single RS232.*"},
+      "tested": true
+    }
+  ],
+  "resources": {
+    "sys_clk": {
+      "type": "clock",
+      "pin": "20",
+      "mhz": 12,
+      "user_notes": "Boards of the first revision (serial number 20241201_J) have a 25 MHz oscillator here."
+    },
+    "rgb_led": {"type": "rgb_led", "red": "41", "green": "39", "blue": "40", "active": "low"}
+  }
+}

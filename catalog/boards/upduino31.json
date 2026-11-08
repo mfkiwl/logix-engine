@@ -1,0 +1,23 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "UPduino v3.1",
+  "fpga_id": "ice40up5k-sg48",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "flash"},
+      "programmer": "iceprog",
+      "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6014", "product_regex": "^UPduino v3\\.1"},
+      "tested": true
+    }
+  ],
+  "resources": {
+    "sys_clk": {
+      "type": "clock",
+      "pin": "20",
+      "mhz": 12,
+      "user_notes": "The 12 MHz oscillator reaches this pin only with the board's OSC jumper (R16) shorted."
+    },
+    "rgb_led": {"type": "rgb_led", "red": "41", "green": "39", "blue": "40", "active": "low"}
+  }
+}

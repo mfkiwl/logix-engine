@@ -25,7 +25,7 @@ impl EngineTool for CompareBoards {
         describe it yet), with both values and a sentence for people, and same_build: whether \
         a build for one board is valid for the other. Facts only: what they mean for a project, \
         such as files to change, is the host's decision. Boards can be catalog boards or the \
-        request's custom_boards_file.";
+        request's custom_boards_folder.";
     const READ_ONLY: bool = true;
     type Input = CompareBoardsInput;
     type Output = CompareBoardsOutput;
@@ -39,12 +39,13 @@ pub struct CompareBoardsInput {
     pub from_board: String,
     /// The second board's ID, such as the board the project may move to.
     pub to_board: String,
-    /// The host's own boards: the absolute path of a JSON file that maps
-    /// board IDs to definitions in the catalog's format. Either board can be
-    /// one of them; one with a catalog board's ID replaces that board in
-    /// this request. Omitted means none.
+    /// The host's own boards: the absolute path of a folder of board files,
+    /// one board each in the catalog's format, named by board ID, such as
+    /// boards/my-board.json. Either board can be one of them; one with a
+    /// catalog board's ID replaces that board in this request. Omitted means
+    /// none.
     #[serde(default)]
-    pub custom_boards_file: Option<String>,
+    pub custom_boards_folder: Option<String>,
 }
 
 /// Whether an aspect is the same for both boards.
@@ -94,7 +95,7 @@ pub struct CompareBoardsOutput {
 }
 
 pub fn run(input: CompareBoardsInput) -> Result<CompareBoardsOutput, ToolError> {
-    let custom = crate::custom_boards::load(input.custom_boards_file.as_deref())?;
+    let custom = crate::custom_boards::load(input.custom_boards_folder.as_deref())?;
     let a = crate::board::resolve(&input.from_board, &None, &custom)?;
     let b = crate::board::resolve(&input.to_board, &None, &custom)?;
     Ok(compare(&a, &b))
@@ -133,28 +134,14 @@ fn plain_aspect(name: &str, same: Same, text: &str) -> Aspect {
     }
 }
 
-/// The board's clock frequencies in MHz, from its pin groups.
+/// The board's clock frequencies in MHz, from its resources.
 fn clocks(b: &ResolvedBoard) -> Vec<f64> {
-    b.pin_groups
-        .iter()
-        .filter(|g| g.group_type == catalog::PinGroupType::Clock)
-        .filter_map(|g| g.mhz)
-        .collect()
+    b.resources.values().filter_map(|r| r.clock_mhz()).collect()
 }
 
 /// How many LEDs the board lists, or None when it lists none.
 fn led_count(b: &ResolvedBoard) -> Option<usize> {
-    let n: usize = b
-        .pin_groups
-        .iter()
-        .filter(|g| {
-            matches!(
-                g.group_type,
-                catalog::PinGroupType::Led | catalog::PinGroupType::LedMatrix
-            )
-        })
-        .map(|g| g.pins.len())
-        .sum();
+    let n: usize = b.resources.values().map(|r| r.led_count()).sum();
     (n > 0).then_some(n)
 }
 
@@ -407,16 +394,16 @@ mod tests {
 
     #[test]
     fn custom_boards_and_unknown_ids() {
-        let (_tmp, file) = crate::custom_boards::test_file(&json!({
+        let (_tmp, file) = crate::custom_boards::test_folder(&json!({
             "my-board": {
-                "description": "My board", "fpga_id": "ice40hx4k-tq144-8k",
+                "name": "My board", "fpga_id": "ice40hx4k-tq144-8k",
                 "variants": [{"selector": {"connection": "usb", "memory": "flash"},
                   "programmer": "iceprog", "args": "${BITSTREAM}",
                   "usb": {"vid": "0403", "pid": "6010"}, "tested": false}]
             }
         }));
         let out = cmp(json!({
-            "from_board": "alhambra-ii", "to_board": "my-board", "custom_boards_file": file
+            "from_board": "alhambra-ii", "to_board": "my-board", "custom_boards_folder": file
         }));
         assert!(out.same_build);
         let e = run(serde_json::from_value(

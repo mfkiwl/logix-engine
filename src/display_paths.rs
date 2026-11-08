@@ -4,7 +4,7 @@
 //! and within each the first match wins. Paths are compared by real
 //! location (symbolic links, the same file on disk), falling back to their
 //! parts for files that don't exist. After the request's own entries come
-//! the request's paths as it gave them: the custom boards file as given,
+//! the request's paths as it gave them: custom board files as given,
 //! and the source folder's files relative to it, as requests name source
 //! files. Any other path is left as a tool printed it.
 
@@ -153,7 +153,7 @@ impl Display {
     pub fn new(
         given: &DisplayPaths,
         source_folder: Option<&str>,
-        custom_boards_file: Option<&str>,
+        custom_boards_folder: Option<&str>,
     ) -> Result<Display, ToolError> {
         for e in given.files.iter().chain(&given.folders) {
             if !Path::new(&e.path).is_absolute() {
@@ -172,7 +172,11 @@ impl Display {
             })
         };
         let mut files: Vec<Entry> = given.files.iter().map(Entry::new).collect();
-        files.extend(custom_boards_file.filter(absolute).map(|f| as_given(f, f)));
+        files.extend(
+            custom_boards_folder
+                .filter(absolute)
+                .map(|f| as_given(f, f)),
+        );
         let mut folders: Vec<Entry> = given.folders.iter().map(Entry::new).collect();
         folders.extend(source_folder.filter(absolute).map(|s| as_given(s, "")));
         Ok(Display {
@@ -183,7 +187,7 @@ impl Display {
     }
 
     /// From a tool call's arguments: their `display_paths`,
-    /// `source_folder` and `custom_boards_file`, if any.
+    /// `source_folder` and `custom_boards_folder`, if any.
     pub fn from_arguments(
         arguments: Option<&serde_json::Map<String, Value>>,
     ) -> Result<Display, ToolError> {
@@ -196,7 +200,7 @@ impl Display {
                 .map_err(|e| ToolError::request(format!("Invalid display_paths: {e}.")))?,
         };
         let text = |key: &str| args.get(key).and_then(Value::as_str);
-        Display::new(&given, text("source_folder"), text("custom_boards_file"))
+        Display::new(&given, text("source_folder"), text("custom_boards_folder"))
     }
 
     fn is_empty(&self) -> bool {
@@ -510,7 +514,7 @@ mod tests {
     #[test]
     fn the_requests_own_paths_read_as_it_gave_them() {
         // No display paths: source files relative to the source folder, as
-        // requests name them; the custom boards file as given, even inside
+        // requests name them; custom board files as given, even inside
         // the source folder; other paths as printed.
         let d = Display::new(
             &DisplayPaths::default(),

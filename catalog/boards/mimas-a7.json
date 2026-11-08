@@ -1,0 +1,32 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "Mimas A7 (Xilinx, Artix7)",
+  "fpga_id": "xc7a50tfgg484-1",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "flash"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify --board mimas_a7 --write-flash --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+      "usb": {"vid": "2a19", "pid": "1009", "product_regex": "^Mimas Artix 7 FPGA Module$"},
+      "tested": false,
+      "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a50tfgg484, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): the product name from Numato's own OpenOCD file (numato/samplecode FPGA/MimasA7/openocd/numato_mimasa7.cfg) and OpenOCD's tcl/board/numato_mimas_a7.cfg; 2a19 is Numato's vendor ID."
+    },
+    {
+      "selector": {"connection": "usb", "memory": "ram"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify --board mimas_a7 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+      "usb": {"vid": "2a19", "pid": "1009", "product_regex": "^Mimas Artix 7 FPGA Module$"},
+      "tested": true,
+      "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): the product name from Numato's own OpenOCD file (numato/samplecode FPGA/MimasA7/openocd/numato_mimasa7.cfg) and OpenOCD's tcl/board/numato_mimas_a7.cfg; 2a19 is Numato's vendor ID."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "H4", "mhz": 100, "io_standard": "LVCMOS33"},
+    "leds": {
+      "type": "leds",
+      "pins": ["K17", "J17", "L14", "L15", "L16", "K16", "M15", "M16"],
+      "active": "high",
+      "io_standard": "LVCMOS33"
+    }
+  }
+}

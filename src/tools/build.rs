@@ -39,7 +39,7 @@ impl EngineTool for Build {
 #[serde(deny_unknown_fields)]
 pub struct BuildInput {
     /// The target board's ID: a catalog ID such as alhambra-ii (get_catalog
-    /// lists them), or the ID of a board in custom_boards_file.
+    /// lists them), or the ID of a board in custom_boards_folder.
     #[schemars(pattern(r"^[a-z0-9-]+$"))]
     pub board: String,
     /// The board variant: some or all of the selector of one of the board's
@@ -49,14 +49,15 @@ pub struct BuildInput {
     /// variant, its default.
     #[serde(default)]
     pub board_variant: Option<crate::catalog::VariantChoice>,
-    /// The host's own boards: the absolute path of a JSON file that maps
-    /// board IDs to definitions in the catalog's format. board can name one
+    /// The host's own boards: the absolute path of a folder of board files,
+    /// one board each in the catalog's format, named by board ID, such as
+    /// boards/my-board.json (a project's boards folder). board can name one
     /// of them; one with a catalog board's ID replaces that board in this
-    /// request. Problems in the file come back as a request error with a
-    /// diagnostic for each, at line and column. Send the same file to every
-    /// tool. Omitted means none.
+    /// request. Problems in any file come back as a request error with a
+    /// diagnostic for each, at file, line and column. Send the same folder to
+    /// every tool. Omitted means none.
     #[serde(default)]
-    pub custom_boards_file: Option<String>,
+    pub custom_boards_folder: Option<String>,
     /// How to name paths in what people read (diagnostics, messages,
     /// testbench output, live tool output, diagram labels): files named as
     /// a whole, then folders whose files keep their path below the folder
@@ -234,7 +235,7 @@ pub fn check(input: BuildInput) -> Result<BuildRequest, ToolError> {
     check_top_module(&input.top_module)?;
     check_defines(&input.defines)?;
     let src = check_source_folder(&input.source_folder)?;
-    let custom = crate::custom_boards::load(input.custom_boards_file.as_deref())?;
+    let custom = crate::custom_boards::load(input.custom_boards_folder.as_deref())?;
     let board = board::resolve(&input.board, &input.board_variant, &custom)?;
     if input.source_files.is_empty() {
         return Err(ToolError::request("source_files is empty."));

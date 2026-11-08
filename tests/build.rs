@@ -116,10 +116,19 @@ async fn build_it(
 }
 
 /// Writes custom boards to `dir/name` and returns the file's absolute path,
-/// for custom_boards_file.
+/// for custom_boards_folder.
+/// Writes `boards` (ID to board) as a custom boards folder `dir/name`, a
+/// file per board, and gives its path.
 fn boards_file(dir: &Path, name: &str, boards: &Value) -> String {
     let path = dir.join(name);
-    std::fs::write(&path, serde_json::to_string_pretty(boards).unwrap()).unwrap();
+    std::fs::create_dir_all(&path).unwrap();
+    for (id, b) in boards.as_object().unwrap() {
+        std::fs::write(
+            path.join(format!("{id}.json")),
+            serde_json::to_string_pretty(b).unwrap(),
+        )
+        .unwrap();
+    }
     path.to_string_lossy().into_owned()
 }
 
@@ -605,7 +614,7 @@ async fn a_custom_board_works() {
     let state = engine().await;
     let (_tmp, src) = project();
     let mine = json!({
-        "description": "My Alhambra II copy",
+        "name": "My Alhambra II copy",
         "fpga_id": "ice40hx4k-tq144-8k",
         "variants": [{
             "selector": {"connection": "usb", "memory": "flash"},
@@ -617,7 +626,7 @@ async fn a_custom_board_works() {
         &state,
         &src,
         json!({"board": "my-alhambra",
-               "custom_boards_file": boards_file(&src, "custom-boards.json", &json!({"my-alhambra": mine}))}),
+               "custom_boards_folder": boards_file(&src, "boards", &json!({"my-alhambra": mine}))}),
     )
     .await
     .unwrap();
@@ -630,18 +639,15 @@ async fn a_custom_board_works() {
     // A file with a problem: a diagnostic at its line and column, named
     // from the source folder, as for a source file; nothing is built.
     std::fs::write(
-        src.join("custom-boards.json"),
-        "{\n  \"my-alhambra\": {\n    \"description\": \"x\",\n  }\n}\n",
+        src.join("boards").join("my-alhambra.json"),
+        "{\n  \"name\": \"x\",\n  \"fpga_id\": \"x\",\n}\n",
     )
     .unwrap();
-    let file = src
-        .join("custom-boards.json")
-        .to_string_lossy()
-        .into_owned();
+    let file = src.join("boards").to_string_lossy().into_owned();
     let err = build_it(
         &state,
         &src,
-        json!({"board": "my-alhambra", "custom_boards_file": file}),
+        json!({"board": "my-alhambra", "custom_boards_folder": file}),
     )
     .await
     .unwrap_err();
@@ -650,7 +656,11 @@ async fn a_custom_board_works() {
     let d = &err.diagnostics[0];
     assert_eq!(
         (d.file.as_deref(), d.line, d.column),
-        (Some(file.as_str()), Some(4), Some(3)),
+        (
+            Some(format!("{file}/my-alhambra.json").as_str()),
+            Some(4),
+            Some(1)
+        ),
         "{d:?}"
     );
 }
@@ -1181,11 +1191,8 @@ async fn program_board_refuses_a_board_with_another_fpga() {
         let mut args = json!({"device": arty.id});
         if let Some(boards) = custom {
             let n = uploads.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
-            args["custom_boards_file"] = json!(boards_file(
-                &boards_dir,
-                &format!("boards-{n}.json"),
-                &boards
-            ));
+            args["custom_boards_folder"] =
+                json!(boards_file(&boards_dir, &format!("boards-{n}"), &boards));
         }
         let input = program_input(&folder, args);
         let devices = vec![arty.clone()];
@@ -1204,7 +1211,7 @@ async fn program_board_refuses_a_board_with_another_fpga() {
     std::fs::write(&detect, a35).unwrap();
     let mine = src.join("_build_mine");
     let custom_build = json!({"board": "my-arty", "board_variant": {"connection": "usb", "memory": "ram"},
-        "custom_boards_file": boards_file(&boards_dir, "build-mine.json", &json!({"my-arty": my_arty.clone()})),
+        "custom_boards_folder": boards_file(&boards_dir, "build-mine", &json!({"my-arty": my_arty.clone()})),
         "constraint_file": "main.xdc", "build_folder": mine});
     build_it(&state, &src, custom_build).await.unwrap();
     upload(mine.clone(), Some(json!({"my-arty": my_arty.clone()})))
@@ -1214,7 +1221,7 @@ async fn program_board_refuses_a_board_with_another_fpga() {
     // upload uses the board as the request has it now, such as new
     // programmer arguments.
     let mut renamed = my_arty.clone();
-    renamed["description"] = json!("Renamed");
+    renamed["name"] = json!("Renamed");
     renamed["variants"][1]["user_notes"] = json!("A new note.");
     renamed["variants"][1]["args"] = json!(format!(
         "{} --skip-reset",
@@ -1249,7 +1256,7 @@ async fn program_board_refuses_a_board_with_another_fpga() {
     let same = my_arty.clone();
     let same_folder = src.join("_build_same");
     let same_build = json!({"board": "arty-a7-35t", "board_variant": {"connection": "usb", "memory": "ram"},
-        "custom_boards_file": boards_file(&boards_dir, "build-same.json", &json!({"arty-a7-35t": same})),
+        "custom_boards_folder": boards_file(&boards_dir, "build-same", &json!({"arty-a7-35t": same})),
         "constraint_file": "main.xdc", "build_folder": same_folder});
     build_it(&state, &src, same_build).await.unwrap();
     upload(same_folder, None).await.unwrap();

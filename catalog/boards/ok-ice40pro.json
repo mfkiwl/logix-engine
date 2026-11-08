@@ -1,0 +1,18 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "OK-iCE40Pro",
+  "fpga_id": "ice40up5k-sg48",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "flash"},
+      "programmer": "iceprog",
+      "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6010", "product_regex": "^Dual RS232-HS"},
+      "tested": true
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "35", "mhz": 12},
+    "led": {"type": "leds", "pins": ["41"], "active": "low"}
+  }
+}

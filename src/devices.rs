@@ -91,7 +91,7 @@ pub struct BoardMatch {
     /// The board's ID: a catalog ID, or a custom board's ID when custom is
     /// true.
     pub board: String,
-    /// True when the board is from the request's custom boards file rather
+    /// True when the board is from the request's custom boards folder rather
     /// than the catalog's.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub custom: bool,

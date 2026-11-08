@@ -1,0 +1,29 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "ULX3S 25K",
+  "fpga_id": "lfe5u-25f-6bg381c",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "ram"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify -b ulx3s --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+      "usb": {
+        "vid": "0403",
+        "pid": "6015",
+        "product_regex": "^ULX3S FPGA 25K |^ULX3S FPGA (board|v1\\.7)$|^FT231X USB UART$"
+      },
+      "tested": false,
+      "user_notes": "Programming writes the FPGA's SRAM, so the design is lost at power-off. A ULX3S whose USB chip has no ULX3S name, or only an early name without the FPGA size, matches every ULX3S size.",
+      "maintainer_notes": "Moved from fujprog, which is legacy, to openFPGALoader's ulx3s board, writing SRAM as fujprog did. Not tried on hardware. USB filter (2026-11-05): the ULX3S's FT231X is programmed with a product name that gives the FPGA size and board revision, such as \"ULX3S FPGA 85K v3.0.8\": kost/fujprog fujprog.c (cable_hw_map, compared for equality) lists 12K to 85K for v2.1.2, v3.0.3, v3.0.7 and v3.0.8, and the early names \"ULX3S FPGA board\" and \"ULX3S FPGA v1.7\" without a size; intergalaktik/ulx3s-bin README sets it with ftx_prog (manufacturer FER-RADIONA-EMARD). Also accepts the FT231X's factory name, for a board whose chip was never named."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "G2", "mhz": 25, "io_standard": "LVCMOS33"},
+    "leds": {
+      "type": "leds",
+      "pins": ["B2", "C2", "C1", "D2", "D1", "E2", "E1", "H3"],
+      "active": "high",
+      "io_standard": "LVCMOS33"
+    }
+  }
+}

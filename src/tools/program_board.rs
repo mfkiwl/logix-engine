@@ -54,14 +54,15 @@ pub struct ProgramBoardInput {
     /// the logs. Not applied to a programmer_command. Defaults to false.
     #[serde(default)]
     pub verbose: bool,
-    /// The host's own boards: the absolute path of a JSON file that maps
-    /// board IDs to definitions in the catalog's format. board can name one
+    /// The host's own boards: the absolute path of a folder of board files,
+    /// one board each in the catalog's format, named by board ID, such as
+    /// boards/my-board.json (a project's boards folder). board can name one
     /// of them; one with a catalog board's ID replaces that board in this
-    /// request. Problems in the file come back as a request error with a
-    /// diagnostic for each, at line and column. Send the same file to every
-    /// tool. Omitted means none.
+    /// request. Problems in any file come back as a request error with a
+    /// diagnostic for each, at file, line and column. Send the same folder to
+    /// every tool. Omitted means none.
     #[serde(default)]
-    pub custom_boards_file: Option<String>,
+    pub custom_boards_folder: Option<String>,
     /// How to name paths in what people read (diagnostics, messages,
     /// testbench output, live tool output, diagram labels): files named as
     /// a whole, then folders whose files keep their path below the folder
@@ -135,7 +136,7 @@ pub async fn run_with_programmers(
             bitstream.display()
         )));
     }
-    let custom = crate::custom_boards::load(input.custom_boards_file.as_deref())?;
+    let custom = crate::custom_boards::load(input.custom_boards_folder.as_deref())?;
     let board = &upload_board(&record.board, &custom, &input.build_folder)?;
     let variant = &board.variant;
     let custom = input.programmer_command.as_deref();
@@ -263,7 +264,7 @@ pub async fn run_with_programmers(
 }
 
 /// The board to program a build with: the build's board ID and variant, as
-/// this request defines them now (its custom boards file, else the catalog), so
+/// this request defines them now (its custom boards folder, else the catalog), so
 /// programming uses the current way to program the board, such as fixed
 /// programmer arguments, without a rebuild. Refused only when the
 /// bitstream doesn't fit it anymore: another FPGA build setting, or the
@@ -280,7 +281,7 @@ pub fn upload_board(
     match crate::board::resolve(id, &Some(built.variant.selector.clone().into()), custom) {
         Ok(now) if now.build_key() == built.build_key() => Ok(now),
         _ => Err(ToolError::request(format!(
-            "The board {id} in this request (from custom_boards_file, else the catalog) isn't the one {build_folder} was built for. Send the custom boards file the build had, or run build again."
+            "The board {id} in this request (from custom_boards_folder, else the catalog) isn't the one {build_folder} was built for. Send the custom boards folder the build had, or run build again."
         ))),
     }
 }
@@ -374,7 +375,7 @@ pub fn boards_with_fpga(code: u32, device: &Device) -> Vec<String> {
     rated
         .iter()
         .filter(|m| Some(m.best_level()) == top)
-        .map(|m| catalog.boards[&m.board].description.clone())
+        .map(|m| catalog.boards[&m.board].name.clone())
         .collect()
 }
 

@@ -1,0 +1,33 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "ColorLight-i5",
+  "fpga_id": "lfe5u-25f-6bg381c",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "flash"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify -c cmsisdap --vid 0x${VID} --pid 0x${PID} --write-flash --unprotect-flash --file-type bin ${BITSTREAM}",
+      "usb": {
+        "vid": "0d28",
+        "pid": "0204",
+        "product_regex": "^DAPLink CMSIS-DAP|^CMSIS-DAP-v1-MuseLab"
+      },
+      "tested": true
+    },
+    {
+      "selector": {"connection": "usb", "memory": "ram"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify -c cmsisdap --vid 0x${VID} --pid 0x${PID} --file-type bin ${BITSTREAM}",
+      "usb": {
+        "vid": "0d28",
+        "pid": "0204",
+        "product_regex": "^DAPLink CMSIS-DAP|^CMSIS-DAP-v1-MuseLab"
+      },
+      "tested": true
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "P3", "mhz": 25, "io_standard": "LVCMOS33"},
+    "led": {"type": "leds", "pins": ["U16"], "active": "low", "io_standard": "LVCMOS33"}
+  }
+}

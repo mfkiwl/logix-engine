@@ -1,0 +1,24 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "Zybo Z7-20 (Xilinx, Zynq7 PL)",
+  "fpga_id": "xc7z020clg400-1",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "ram"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify --board zybo_z7_20 --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6010"},
+      "tested": true,
+      "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "K17", "mhz": 125, "io_standard": "LVCMOS33"},
+    "leds": {
+      "type": "leds",
+      "pins": ["M14", "M15", "G14", "D18"],
+      "active": "high",
+      "io_standard": "LVCMOS33"
+    }
+  }
+}

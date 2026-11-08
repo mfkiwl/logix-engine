@@ -1,0 +1,19 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "OrangeCrab r0.2 25K",
+  "fpga_id": "lfe5u-25f-6mg285c",
+  "variants": [
+    {
+      "selector": {"connection": "bootloader", "memory": "flash"},
+      "programmer": "dfu-util",
+      "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM}",
+      "usb": {"vid": "1209", "pid": "5af0", "product_regex": "^OrangeCrab r0.2 DFU bootloader"},
+      "tested": true,
+      "user_notes": "Programming through the USB bootloader needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the other OrangeCrab r0.2 size (25K or 85K), so the engine can't tell which one is connected."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "A9", "mhz": 48, "io_standard": "LVCMOS33"},
+    "led": {"type": "leds", "pins": ["K4"], "active": "low", "io_standard": "LVCMOS33"}
+  }
+}

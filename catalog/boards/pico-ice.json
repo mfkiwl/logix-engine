@@ -1,0 +1,18 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "pico-ice",
+  "fpga_id": "ice40up5k-sg48",
+  "variants": [
+    {
+      "selector": {"connection": "bootloader", "memory": "flash"},
+      "programmer": "dfu-util",
+      "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM} --reset",
+      "usb": {"vid": "1209", "pid": "b1c0", "product_regex": "^DFU flash"},
+      "tested": true,
+      "user_notes": "Programming through the USB bootloader needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in."
+    }
+  ],
+  "resources": {
+    "rgb_led": {"type": "rgb_led", "red": "41", "green": "39", "blue": "40", "active": "low"}
+  }
+}

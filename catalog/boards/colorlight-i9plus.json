@@ -1,0 +1,26 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "Colorlight i9+ (Xilinx, Artix7)",
+  "fpga_id": "xc7a50tfgg484-1",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "flash"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify --board colorlight-i9+ -c cmsisdap --write-flash ${BITSTREAM}",
+      "usb": {"vid": "0d28", "pid": "0204"},
+      "tested": false,
+      "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader loads its SPI-over-JTAG bridge for the FPGA part (xc7a50tfgg484, in oss-cad-suite's share/openFPGALoader), then writes the board's SPI flash. Not tried on hardware."
+    },
+    {
+      "selector": {"connection": "usb", "memory": "ram"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify --board colorlight-i9+ -c cmsisdap ${BITSTREAM}",
+      "usb": {"vid": "0d28", "pid": "0204"},
+      "tested": true
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "K4", "mhz": 25, "io_standard": "LVCMOS33"},
+    "led": {"type": "leds", "pins": ["A18"], "active": "high", "io_standard": "LVCMOS33"}
+  }
+}

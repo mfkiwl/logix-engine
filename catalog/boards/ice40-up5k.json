@@ -1,0 +1,23 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "iCE40 UltraPlus Breakout",
+  "fpga_id": "ice40up5k-sg48",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "flash"},
+      "programmer": "iceprog",
+      "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+      "usb": {
+        "vid": "0403",
+        "pid": "6010",
+        "product_regex": "^(USB <-> Serial Converter|Lattice iCE40UP5K Breakout)"
+      },
+      "tested": true,
+      "maintainer_notes": "USB filter (2026-11-05): was ^(USB <-> Serial Converter)|(Lattice iCE40UP5K Breakout), whose ^ anchored only the first name; now both names must start the product name."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "35", "mhz": 12},
+    "led": {"type": "leds", "pins": ["41"], "active": "low"}
+  }
+}

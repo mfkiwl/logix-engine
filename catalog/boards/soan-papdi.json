@@ -1,0 +1,23 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "Soan-Papdi",
+  "fpga_id": "ice40up5k-sg48",
+  "variants": [
+    {
+      "selector": {"connection": "bootloader", "memory": "flash"},
+      "programmer": "dfu-util",
+      "args": "-d ${VID}:${PID} -p ${USB_PATH} -a 0 -D ${BITSTREAM}",
+      "usb": {"vid": "1d50", "pid": "6146", "product_regex": "^Soan Papdi.*"},
+      "tested": true,
+      "user_notes": "Programming through the USB bootloader needs the board in its bootloader (DFU) mode; on many boards, hold its button while plugging it in. Its USB filter also matches the Soan-Papdi-Mini."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "35", "mhz": 12},
+    "leds": {
+      "type": "leds",
+      "pins": ["31", "32", "34", "36", "37", "44", "45", "46"],
+      "active": "high"
+    }
+  }
+}

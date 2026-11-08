@@ -14,7 +14,7 @@ impl EngineTool for ListDevices {
     const NAME: &'static str = "list_devices";
     const DESCRIPTION: &'static str = "Lists the USB devices connected to this computer, with \
         their USB IDs, names and serial numbers, and for each the boards it may be: catalog \
-        boards and the request's custom_boards_file, best first, each with the variants it fits and \
+        boards and the request's custom_boards_folder, best first, each with the variants it fits and \
         how well it matches: strong (very likely this board), possible (a few other boards look \
         the same) or weak (many boards fit). Show the level as it is: how the engine decides it \
         is internal and changes without notice. \
@@ -33,14 +33,15 @@ impl EngineTool for ListDevices {
 #[derive(Debug, Default, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ListDevicesInput {
-    /// The host's own boards: the absolute path of a JSON file that maps
-    /// board IDs to definitions in the catalog's format. board can name one
+    /// The host's own boards: the absolute path of a folder of board files,
+    /// one board each in the catalog's format, named by board ID, such as
+    /// boards/my-board.json (a project's boards folder). board can name one
     /// of them; one with a catalog board's ID replaces that board in this
-    /// request. Problems in the file come back as a request error with a
-    /// diagnostic for each, at line and column. Send the same file to every
-    /// tool. Omitted means none.
+    /// request. Problems in any file come back as a request error with a
+    /// diagnostic for each, at file, line and column. Send the same folder to
+    /// every tool. Omitted means none.
     #[serde(default)]
-    pub custom_boards_file: Option<String>,
+    pub custom_boards_folder: Option<String>,
     /// How to name paths in what people read (diagnostics, messages,
     /// testbench output, live tool output, diagram labels): files named as
     /// a whole, then folders whose files keep their path below the folder
@@ -78,7 +79,7 @@ pub fn run_with(
     input: ListDevicesInput,
     scan: impl FnOnce() -> Result<Vec<Device>, ToolError>,
 ) -> Result<ListDevicesOutput, ToolError> {
-    let custom = crate::custom_boards::load(input.custom_boards_file.as_deref())?;
+    let custom = crate::custom_boards::load(input.custom_boards_folder.as_deref())?;
     let known = crate::board::known_boards(&custom);
     let boards: Vec<Candidate> = known
         .values()
@@ -247,7 +248,7 @@ mod tests {
     fn custom_boards_are_matched_too() {
         let mine = |id: &str| {
             json!({id: {
-                "description": "My Alhambra", "fpga_id": "ice40hx4k-tq144-8k",
+                "name": "My Alhambra", "fpga_id": "ice40hx4k-tq144-8k",
                 "variants": [{
                     "selector": {"connection": "usb", "memory": "flash"},
                     "programmer": "iceprog", "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
@@ -257,8 +258,8 @@ mod tests {
             }})
         };
         let alhambra = || vec![device("0403", "6010", Some("Alhambra II"), None, 3)];
-        let (_t1, file) = crate::custom_boards::test_file(&mine("mine"));
-        let out = list(json!({"custom_boards_file": file}), alhambra()).unwrap();
+        let (_t1, file) = crate::custom_boards::test_folder(&mine("mine"));
+        let out = list(json!({"custom_boards_folder": file}), alhambra()).unwrap();
         let strong: Vec<_> = out.devices[0]
             .boards
             .iter()
@@ -267,8 +268,8 @@ mod tests {
             .collect();
         assert_eq!(strong, [("alhambra-ii", false), ("mine", true)]);
         // One with a catalog board's ID replaces it.
-        let (_t2, file) = crate::custom_boards::test_file(&mine("alhambra-ii"));
-        let out = list(json!({"custom_boards_file": file}), alhambra()).unwrap();
+        let (_t2, file) = crate::custom_boards::test_folder(&mine("alhambra-ii"));
+        let out = list(json!({"custom_boards_folder": file}), alhambra()).unwrap();
         let named: Vec<_> = out.devices[0]
             .boards
             .iter()
@@ -277,10 +278,10 @@ mod tests {
             .collect();
         assert_eq!(named, [true]);
         // A bad list is a request error.
-        let (_t3, bad) = crate::custom_boards::test_file(
-            &json!({"Bad ID": {"description": "x", "fpga_id": "x", "variants": []}}),
+        let (_t3, bad) = crate::custom_boards::test_folder(
+            &json!({"Bad ID": {"name": "x", "fpga_id": "x", "variants": []}}),
         );
-        let e = list(json!({"custom_boards_file": bad}), vec![]).unwrap_err();
+        let e = list(json!({"custom_boards_folder": bad}), vec![]).unwrap_err();
         assert_eq!(e.category, crate::errors::Category::Request);
     }
 

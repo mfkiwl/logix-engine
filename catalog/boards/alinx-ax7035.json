@@ -1,0 +1,24 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "Alinx ARTIX-7 AX7035",
+  "fpga_id": "xc7a35tfgg484-2",
+  "variants": [
+    {
+      "selector": {"connection": "ft232h", "memory": "flash"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify -f -c ft232 --fpga-part xc7a35t --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6014", "product_regex": "^Digilent USB Device"},
+      "tested": true,
+      "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "Y18", "mhz": 50, "io_standard": "LVCMOS33"},
+    "leds_n": {
+      "type": "leds",
+      "pins": ["F19", "E21", "D20", "C20"],
+      "active": "low",
+      "io_standard": "LVCMOS33"
+    }
+  }
+}

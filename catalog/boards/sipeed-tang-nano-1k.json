@@ -1,0 +1,20 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "Sipeed Tang Nano 1k",
+  "fpga_id": "gw1nz-lv1qn48c6-i5",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "flash"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify -b tangnano1k -f --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6010", "product_regex": "^JTAG Debugger$", "release": "0500"},
+      "tested": true,
+      "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): release 0500. The board's USB debugger is a BL702 (Sipeed wiki, Update debugger page: BL702 on Tang Nano 1K, 4K, 9K and Primer 20K; BL616 on Nano 20K), which acts like an FT2232C/D and reports bcdDevice 0500: sipeed/RV-Debugger-BL702 firmware/app/usb2uartjtag/usb_descriptor.c (1b27d3f, FTDI_BCD_DEVICE 0x0500, \"known full-speed FT2232C/D\"), and a real Tang Nano 9K (openFPGALoader issue #382, rev 5.00). The BL702 is a full-speed device, and libftdi picks its packet size from bcdDevice, so its firmware can't claim to be an FT2232H (0700). Rules out the many boards with a real FT2232H. USB filter (2026-11-05): product name JTAG Debugger. Sipeed's BL702 debugger firmware reports manufacturer SIPEED and product JTAG Debugger (sipeed/RV-Debugger-BL702 firmware/app/usb2uartjtag/usb_descriptor.c, string descriptors 1 and 2; its emulated FTDI EEPROM says Open-EC, USB Debugger, which USB doesn't report), and Sipeed's Update debugger page offers one BL702 firmware for Tang Nano 1K, 4K, 9K and Primer 20K. Seen on a real Primer 20K (openFPGALoader issues #300, #573) and 9K (#382). Generic (Sipeed's stand-alone debuggers report it too), so the match is possible, not strong.",
+      "user_notes": "Other Sipeed boards with the same USB debugger chip report the same name, JTAG Debugger."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "47", "mhz": 27, "io_standard": "LVCMOS33"},
+    "led": {"type": "leds", "pins": ["9"], "active": "low", "io_standard": "LVCMOS33"}
+  }
+}

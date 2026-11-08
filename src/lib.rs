@@ -23,6 +23,7 @@ pub mod packages;
 pub mod paths;
 pub mod program;
 pub mod progress;
+pub mod resources;
 pub mod runner;
 pub mod server;
 pub mod sim;

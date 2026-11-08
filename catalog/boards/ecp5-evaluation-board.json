@@ -1,0 +1,41 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "ECP5-Evaluation-Board",
+  "fpga_id": "lfe5um5g-85f-8bg381c",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "flash"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify -c ft2232 -v --write-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+      "usb": {
+        "vid": "0403",
+        "pid": "6010",
+        "product_regex": "^(Lattice ECP5 Evaluation Board|Dual RS232-HS)$"
+      },
+      "tested": false,
+      "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): \"Lattice ECP5 Evaluation Board\" is the product name fujprog looks for on 0403:6010 (kost/fujprog fujprog.c, cable_hw_map). Also accepts the FT2232H's factory name, as the Versa's filter accepts its chip's, in case a board ships without the Lattice name (not checked)."
+    },
+    {
+      "selector": {"connection": "usb", "memory": "ram"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify -c ft2232 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+      "usb": {
+        "vid": "0403",
+        "pid": "6010",
+        "product_regex": "^(Lattice ECP5 Evaluation Board|Dual RS232-HS)$"
+      },
+      "tested": true,
+      "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): \"Lattice ECP5 Evaluation Board\" is the product name fujprog looks for on 0403:6010 (kost/fujprog fujprog.c, cable_hw_map). Also accepts the FT2232H's factory name, as the Versa's filter accepts its chip's, in case a board ships without the Lattice name (not checked)."
+    }
+  ],
+  "resources": {
+    "sys_clk": {
+      "type": "clock",
+      "pin": "A10",
+      "mhz": 12,
+      "io_standard": "LVCMOS33",
+      "user_notes": "The 12 MHz clock comes from the board's FTDI chip and reaches the FPGA only with jumper JP2 shorted."
+    },
+    "led": {"type": "leds", "pins": ["A13"], "active": "low", "io_standard": "LVCMOS25"}
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "iCEstick Eval Kit",
+  "fpga_id": "ice40hx1k-tq144",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "flash"},
+      "programmer": "iceprog",
+      "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+      "usb": {
+        "vid": "0403",
+        "pid": "6010",
+        "product_regex": "^(Dual RS232-HS|Lattice FTUSB Interface Cable)"
+      },
+      "tested": true,
+      "maintainer_notes": "USB filter (2026-11-05): was ^(Dual RS232-HS)|(Lattice FTUSB Interface Cable), whose ^ anchored only the first name; now both names must start the product name."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "21", "mhz": 12},
+    "leds": {"type": "leds", "pins": ["99", "98", "97", "96", "95"], "active": "high"}
+  }
+}

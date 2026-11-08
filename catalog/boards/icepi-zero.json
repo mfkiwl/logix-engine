@@ -1,0 +1,34 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "Icepi Zero",
+  "fpga_id": "lfe5u-25f-6bg256c",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "flash"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify -c ft231X --pins=7:3:5:6 -v --write-flash --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6015", "product_regex": "^FT231X USB UART$"},
+      "tested": false,
+      "maintainer_notes": "New variant: the RAM variant's command with --write-flash. openFPGALoader writes the SPI flash through the ECP5's JTAG port. Not tried on hardware. Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): the board's FT231XQ keeps its factory name: the maker's README (github.com/cheyao/icepi-zero gateware/README.md, 46f2b32) tells users to pick \"FT231X USB UART\" in the browser's device list, and DIAMOND.md names the FT231XQ. A factory name, so the match is possible, and a ULX3S whose chip was never named matches too.",
+      "user_notes": "Its USB chip reports the chip's factory name, FT231X USB UART, as other boards with that chip may."
+    },
+    {
+      "selector": {"connection": "usb", "memory": "ram"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify -c ft231X --pins=7:3:5:6 -v --file-type bin --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6015", "product_regex": "^FT231X USB UART$"},
+      "tested": true,
+      "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware. USB filter (2026-11-05): the board's FT231XQ keeps its factory name: the maker's README (github.com/cheyao/icepi-zero gateware/README.md, 46f2b32) tells users to pick \"FT231X USB UART\" in the browser's device list, and DIAMOND.md names the FT231XQ. A factory name, so the match is possible, and a ULX3S whose chip was never named matches too.",
+      "user_notes": "Its USB chip reports the chip's factory name, FT231X USB UART, as other boards with that chip may."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "M1", "mhz": 50, "io_standard": "LVCMOS33"},
+    "leds": {
+      "type": "leds",
+      "pins": ["E13", "D14", "E12", "C13", "D13"],
+      "active": "high",
+      "io_standard": "LVCMOS33"
+    }
+  }
+}

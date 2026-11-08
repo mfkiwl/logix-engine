@@ -1,9 +1,10 @@
-//! The custom boards file (docs/tool-api.md, Board specification): every
-//! tool that deals with boards takes `custom_boards_file`, the absolute path
-//! of a JSON file that maps board IDs to definitions in the catalog's
-//! format. The engine reads only the file the request names, and reports
-//! every problem in it as a diagnostic at file, line and column, as it
-//! reports problems in source files.
+//! Custom boards (docs/tool-api.md, Board specification): every tool that
+//! deals with boards takes `custom_boards_folder`, the absolute path of a
+//! folder of board files in Logix Catalog's format, one board each, named
+//! `<id>.json` (such as a project's `boards/` folder). The engine reads only
+//! the folder the request names: every `*.json` file in it, other files
+//! ignored. It reports every problem in them as a diagnostic at file, line
+//! and column, as it reports problems in source files.
 
 use std::collections::BTreeSet;
 use std::path::Path;
@@ -13,37 +14,74 @@ use crate::catalog::{self, PROGRAMMERS, STANDARD_DIMENSIONS, Variant};
 use crate::errors::{Diagnostic, Severity, ToolError};
 use crate::json_pos::{Position, PositionIndex, segment};
 
-/// The custom boards of a request: none without a file, else the file's
-/// boards when it has no problems. A file that can't be read, isn't valid
-/// JSON or has an invalid board is a request error whose diagnostics name
-/// each problem. Diagnostics name the file as the request gave it (a
-/// request's display paths may rename it, docs/tool-api.md).
-pub fn load(file: Option<&str>) -> Result<CustomBoards, ToolError> {
-    let Some(given) = file else {
+/// A board file to read: its name for diagnostics (the folder as the
+/// request gave it, then the file name), its board ID (the file name
+/// without .json) and its text.
+pub struct BoardFile {
+    pub name: String,
+    pub id: String,
+    pub text: String,
+}
+
+/// The custom boards of a request: none without a folder, else the folder's
+/// boards when none has a problem. A folder that can't be read, or any file
+/// in it that isn't valid JSON or has an invalid board, is a request error
+/// whose diagnostics name each problem. Diagnostics name files by the folder
+/// as the request gave it (a request's display paths may rename it,
+/// docs/tool-api.md).
+pub fn load(folder: Option<&str>) -> Result<CustomBoards, ToolError> {
+    let Some(given) = folder else {
         return Ok(CustomBoards::new());
     };
     let path = Path::new(given);
     if !path.is_absolute() {
         return Err(ToolError::request(format!(
-            "custom_boards_file: {given:?} isn't an absolute path."
+            "custom_boards_folder: {given:?} isn't an absolute path."
         )));
     }
-    let real = crate::paths::resolve(path)
-        .map_err(|e| ToolError::request(format!("custom_boards_file: can't read {given}: {e}.")))?;
-    let text = std::fs::read_to_string(&real)
-        .map_err(|e| ToolError::request(format!("custom_boards_file: can't read {given}: {e}.")))?;
-    let result = parse(&text, given);
-    log::info!("{}", log_line(given, &text, &result));
+    let cant = |e: std::io::Error| {
+        ToolError::request(format!("custom_boards_folder: can't read {given}: {e}."))
+    };
+    let real = crate::paths::resolve(path).map_err(cant)?;
+    let mut names: Vec<String> = std::fs::read_dir(&real)
+        .map_err(cant)?
+        .filter_map(|e| e.ok())
+        .filter(|e| e.path().is_file())
+        .map(|e| e.file_name().to_string_lossy().into_owned())
+        .filter(|n| n.ends_with(".json"))
+        .collect();
+    names.sort();
+    let base = given.trim_end_matches('/');
+    let mut files = Vec::new();
+    for n in &names {
+        let text = std::fs::read_to_string(real.join(n)).map_err(|e| {
+            ToolError::request(format!("custom_boards_folder: can't read {base}/{n}: {e}."))
+        })?;
+        files.push(BoardFile {
+            name: format!("{base}/{n}"),
+            id: n.trim_end_matches(".json").to_string(),
+            text,
+        });
+    }
+    let result = parse(given, &files);
+    log::info!("{}", log_line(given, &files, &result));
     result
 }
 
-/// The log's line about a request's custom boards file: its path, a short
-/// SHA-256 of its contents (to tell which version was used) and its board
-/// IDs, or how many problems it has.
-fn log_line(given: &str, text: &str, result: &Result<CustomBoards, ToolError>) -> String {
+/// The log's line about a request's custom boards folder: its path, a short
+/// SHA-256 of its board files (to tell which version was used) and its board
+/// IDs, or how many problems they have.
+fn log_line(given: &str, files: &[BoardFile], result: &Result<CustomBoards, ToolError>) -> String {
     use sha2::{Digest, Sha256};
-    let digest = hex::encode(Sha256::digest(text.as_bytes()));
-    let head = format!("Custom boards file: {given} (sha256 {})", &digest[..12]);
+    let mut h = Sha256::new();
+    for f in files {
+        h.update(f.id.as_bytes());
+        h.update([0]);
+        h.update(f.text.as_bytes());
+        h.update([0]);
+    }
+    let digest = hex::encode(h.finalize());
+    let head = format!("Custom boards folder: {given} (sha256 {})", &digest[..12]);
     match result {
         Ok(boards) => {
             let ids: Vec<&str> = boards.keys().map(String::as_str).collect();
@@ -65,81 +103,96 @@ fn log_line(given: &str, text: &str, result: &Result<CustomBoards, ToolError>) -
 /// problems at a time are easier to fix than a long list.
 pub const MAX_PROBLEMS: usize = 10;
 
-/// The boards in a custom boards file's `text`, or a request error with a
-/// diagnostic for each problem, in file `name`, in file order. Invalid JSON
-/// is one problem, the parser's. Otherwise each board and each variant is
-/// read on its own, so a wrong type or field in one doesn't hide problems
-/// in the others, and every part that reads cleanly is checked in full.
-pub fn parse(text: &str, name: &str) -> Result<CustomBoards, ToolError> {
-    if text.trim().is_empty() {
-        return Ok(CustomBoards::new());
-    }
-    let root: serde_json::Value = match serde_json::from_str(text) {
-        Ok(v) => v,
-        Err(e) => return Err(problems(name, vec![from_serde(&e, (1, 1))])),
-    };
-    if !root.is_object() {
-        // Not a map of boards: the parser's message, such as "Invalid type:
-        // sequence, expected a map".
-        let e = serde_json::from_str::<CustomBoards>(text)
-            .err()
-            .map(|e| from_serde(&e, (1, 1)))
-            .unwrap_or_else(|| {
-                Found::at(
-                    Some((1, 1)),
-                    "Expected a map of board IDs to boards.".into(),
-                )
-            });
-        return Err(problems(name, vec![e]));
-    }
-    let doc = Doc::new(text, &root);
+/// The boards in `files`, or a request error with a diagnostic for each
+/// problem, by file name, then in file order. `folder` names the folder as
+/// the request gave it.
+pub fn parse(folder: &str, files: &[BoardFile]) -> Result<CustomBoards, ToolError> {
     let mut found = Vec::new();
     let mut boards = CustomBoards::new();
-    for (id, value) in root.as_object().into_iter().flatten() {
-        let base = format!("/{}", segment(id));
-        // The file's schema, for editors: optional, but only this one.
-        if id == catalog::SCHEMA_KEY {
-            if let Some(problem) = catalog::schema_problem(value) {
-                found.push(Found::at(doc.index.value(&base), problem));
-            }
-            continue;
-        }
-        let variants_value = value.get("variants").and_then(|v| v.as_array());
-        let board = doc.read_board(&base);
-        if let Err(e) = &board {
-            found.push(e.clone());
-        }
-        let mut variants = Vec::new();
-        for i in 0..variants_value.map_or(0, Vec::len) {
-            match doc.read::<Variant>(&format!("{base}/variants/{i}")) {
-                Ok(v) => variants.push((i, v)),
-                Err(e) => found.push(e),
-            }
-        }
-        let checks = board_problems(
-            id,
-            board.as_ref().ok(),
-            variants_value.map(Vec::len),
-            &variants,
-        );
-        found.extend(checks.into_iter().map(|p| {
-            let pos = match p.at {
-                At::Key(path) => doc.index.key(&path),
-                At::Value(path) => doc.index.nearest(&path),
-            };
-            Found::at(pos, p.text)
-        }));
-        if let Ok(mut b) = board {
-            b.variants = variants.into_iter().map(|(_, v)| v).collect();
-            boards.insert(id.clone(), b);
+    for f in files {
+        let (board, problems) = parse_board(&f.text, &f.id);
+        found.extend(problems.into_iter().map(|p| (f.name.clone(), p)));
+        if let Some(b) = board {
+            boards.insert(f.id.clone(), b);
         }
     }
     if found.is_empty() {
         return Ok(boards);
     }
-    // File order; a problem without a place last.
-    found.sort_by_key(|f| f.pos.unwrap_or((u32::MAX, u32::MAX)));
-    Err(problems(name, found))
+    // By file, then file order; a problem without a place first in its file.
+    found.sort_by(|(fa, a), (fb, b)| {
+        (fa, a.pos.unwrap_or((0, 0))).cmp(&(fb, b.pos.unwrap_or((0, 0))))
+    });
+    Err(problems(folder, found))
+}
+
+/// One board file's board, when it has no problem, and its problems. Invalid
+/// JSON is one problem, the parser's. Otherwise the board and each variant
+/// are read on their own, so a wrong type or field in one doesn't hide
+/// problems in the others, and every part that reads cleanly is checked in
+/// full.
+fn parse_board(text: &str, id: &str) -> (Option<CustomBoard>, Vec<Found>) {
+    let mut found = Vec::new();
+    if !catalog::is_catalog_id(id) {
+        found.push(Found::at(
+            None,
+            format!("{id:?} isn't a board ID: name the file with lowercase letters, digits and hyphens, then .json."),
+        ));
+    }
+    let root: serde_json::Value = match serde_json::from_str(text) {
+        Ok(v) => v,
+        Err(e) => {
+            found.push(from_serde(&e, (1, 1)));
+            return (None, found);
+        }
+    };
+    if !root.is_object() {
+        found.push(Found::at(
+            Some((1, 1)),
+            "Expected a board: an object with name, fpga_id and variants.".into(),
+        ));
+        return (None, found);
+    }
+    let doc = Doc::new(text, &root);
+    // The file's schema, for editors: optional, but only this one.
+    if let Some(value) = root.get(catalog::SCHEMA_KEY)
+        && let Some(problem) = catalog::schema_problem(value)
+    {
+        found.push(Found::at(
+            doc.index
+                .value(&format!("/{}", segment(catalog::SCHEMA_KEY))),
+            problem,
+        ));
+    }
+    let variants_value = root.get("variants").and_then(|v| v.as_array());
+    let board = doc.read_board("");
+    if let Err(e) = &board {
+        found.push(e.clone());
+    }
+    let mut variants = Vec::new();
+    for i in 0..variants_value.map_or(0, Vec::len) {
+        match doc.read::<Variant>(&format!("/variants/{i}")) {
+            Ok(v) => variants.push((i, v)),
+            Err(e) => found.push(e),
+        }
+    }
+    let checks = board_problems(board.as_ref().ok(), variants_value.map(Vec::len), &variants);
+    found.extend(checks.into_iter().map(|p| {
+        let pos = match p.at {
+            At::Key(path) => doc.index.key(&path),
+            At::Value(path) => doc.index.nearest(&path),
+        };
+        Found::at(pos, p.text)
+    }));
+    let board = match board {
+        Ok(mut b) if found.is_empty() => {
+            b.variants = variants.into_iter().map(|(_, v)| v).collect();
+            b.schema = None;
+            Some(b)
+        }
+        _ => None,
+    };
+    (board, found)
 }
 
 /// A problem found, at its place in the file when known.
@@ -233,15 +286,15 @@ impl<'a> Doc<'a> {
     }
 }
 
-/// The request error for a file's problems: the first ones, at most
+/// The request error for the folder's problems: the first ones, at most
 /// `MAX_PROBLEMS`, then a note with how many more there are.
-fn problems(name: &str, found: Vec<Found>) -> ToolError {
+fn problems(folder: &str, found: Vec<(String, Found)>) -> ToolError {
     let total = found.len();
     let mut diagnostics: Vec<Diagnostic> = found
         .into_iter()
         .take(MAX_PROBLEMS)
-        .map(|f| Diagnostic {
-            file: Some(name.to_string()),
+        .map(|(file, f)| Diagnostic {
+            file: Some(file),
             line: f.pos.map(|p| p.0),
             column: f.pos.map(|p| p.1),
             severity: Severity::Error,
@@ -253,7 +306,7 @@ fn problems(name: &str, found: Vec<Found>) -> ToolError {
     if total > MAX_PROBLEMS {
         let more = total - MAX_PROBLEMS;
         diagnostics.push(Diagnostic {
-            file: Some(name.to_string()),
+            file: Some(folder.to_string()),
             line: None,
             column: None,
             severity: Severity::Info,
@@ -270,10 +323,11 @@ fn problems(name: &str, found: Vec<Found>) -> ToolError {
         });
     }
     let first = &diagnostics[0];
+    let name = first.file.clone().unwrap_or_default();
     let place = match (first.line, first.column) {
         (Some(l), Some(c)) => format!("{name}:{l}:{c}"),
         (Some(l), None) => format!("{name}:{l}"),
-        _ => name.to_string(),
+        _ => name,
     };
     let more = match total {
         1 => String::new(),
@@ -281,7 +335,7 @@ fn problems(name: &str, found: Vec<Found>) -> ToolError {
         n => format!(" (and {} more problems)", n - 1),
     };
     let mut e = ToolError::request(format!(
-        "The custom boards file has problems. {place}: {}{more}",
+        "The custom boards folder has problems. {place}: {}{more}",
         first.text
     ));
     e.diagnostics = diagnostics;
@@ -321,47 +375,49 @@ struct Problem {
     text: String,
 }
 
-/// Every problem with one board's contents: its ID; its FPGA, when `board`
-/// (without its variants) could be read; that it has variants, when
+/// Every problem with one board's contents: its FPGA and resources, when
+/// `board` (without its variants) could be read; that it has variants, when
 /// `variant_count` says how many are listed; and each of `variants`, those
 /// that could be read, with their place in the list.
 fn board_problems(
-    id: &str,
     board: Option<&CustomBoard>,
     variant_count: Option<usize>,
     variants: &[(usize, Variant)],
 ) -> Vec<Problem> {
-    let base = format!("/{}", segment(id));
-    let field = |f: &str| format!("{base}/{f}");
     let mut out = Vec::new();
     let mut add = |at: At, text: String| out.push(Problem { at, text });
-    if !catalog::is_catalog_id(id) {
-        add(
-            At::Key(base.clone()),
-            format!("{id:?} isn't a board ID: use lowercase letters, digits and hyphens."),
-        );
-    }
     if let Some(b) = board {
         let f = &b.fpga_id;
-        if !catalog::builtin().fpgas.contains_key(f) {
+        let fpga = catalog::builtin().fpgas.get(f);
+        if fpga.is_none() {
             add(
-                At::Value(field("fpga_id")),
+                At::Value("/fpga_id".into()),
                 format!("{f:?} isn't an FPGA in the catalog. Use get_catalog to list them."),
             );
         }
-        for (at, text) in catalog::pin_group_problems(&b.pin_groups) {
-            add(At::Value(field(&format!("pin_groups/{at}"))), text);
+        for (name, field, text) in
+            crate::resources::problems(&b.resources, fpga.map(|f| f.architecture))
+        {
+            let base = format!("/resources/{}", segment(&name));
+            add(
+                if field.is_empty() {
+                    At::Key(base)
+                } else {
+                    At::Value(format!("{base}/{field}"))
+                },
+                text,
+            );
         }
     }
     if variant_count == Some(0) {
         add(
-            At::Value(field("variants")),
+            At::Value("/variants".into()),
             "A board needs at least one variant.".into(),
         );
     }
     let mut selectors = BTreeSet::new();
     for (i, v) in variants {
-        let vf = |f: &str| At::Value(format!("{base}/variants/{i}/{f}"));
+        let vf = |f: &str| At::Value(format!("/variants/{i}/{f}"));
         for (dim, _, values) in STANDARD_DIMENSIONS {
             let value = v.value(dim).unwrap_or_default();
             if !values.iter().any(|(x, _, _)| *x == value) {
@@ -432,18 +488,22 @@ fn capitalize(s: &str) -> String {
     }
 }
 
-/// Writes `boards` to a custom boards file in a new temporary folder, for
-/// tests: the folder (kept while it lives) and the file's path.
+/// Writes `boards` (board ID to board) as board files, `<id>.json`, in a new
+/// temporary folder, for tests: the temporary folder (kept while it lives)
+/// and the board folder's path.
 #[cfg(test)]
-pub(crate) fn test_file(boards: &serde_json::Value) -> (tempfile::TempDir, String) {
+pub(crate) fn test_folder(boards: &serde_json::Value) -> (tempfile::TempDir, String) {
     let tmp = tempfile::tempdir().expect("a temporary folder");
-    let path = tmp.path().join("custom-boards.json");
-    std::fs::write(
-        &path,
-        serde_json::to_string_pretty(boards).unwrap_or_default(),
-    )
-    .expect("writing the file");
-    (tmp, path.to_string_lossy().into_owned())
+    let dir = tmp.path().join("boards");
+    std::fs::create_dir(&dir).expect("the boards folder");
+    for (id, b) in boards.as_object().into_iter().flatten() {
+        std::fs::write(
+            dir.join(format!("{id}.json")),
+            serde_json::to_string_pretty(b).unwrap_or_default(),
+        )
+        .expect("writing a board file");
+    }
+    (tmp, dir.to_string_lossy().into_owned())
 }
 
 #[cfg(test)]
@@ -451,19 +511,42 @@ mod tests {
     use super::*;
 
     const GOOD: &str = r#"{
-  "my-board": {
-    "description": "My board",
-    "fpga_id": "ice40up5k-sg48",
-    "variants": [
-      {
-        "selector": {"connection": "usb", "memory": "flash"},
-        "programmer": "iceprog", "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
-        "usb": {"vid": "0403", "pid": "6014"}, "tested": false
-      }
-    ]
-  }
+  "name": "My board",
+  "fpga_id": "ice40up5k-sg48",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "flash"},
+      "programmer": "iceprog", "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6014"}, "tested": false
+    }
+  ]
 }
 "#;
+
+    fn file(id: &str, text: &str) -> BoardFile {
+        BoardFile {
+            name: format!("/proj/boards/{id}.json"),
+            id: id.into(),
+            text: text.into(),
+        }
+    }
+
+    /// The problems with one file named my-board.json, as (line, column, text).
+    fn diags(text: &str) -> Vec<(Option<u32>, Option<u32>, String)> {
+        let e = parse("/proj/boards", &[file("my-board", text)]).unwrap_err();
+        e.diagnostics
+            .iter()
+            .map(|d| (d.line, d.column, d.text.clone()))
+            .collect()
+    }
+
+    #[test]
+    fn a_folder_of_good_files() {
+        let boards = parse("/proj/boards", &[file("a", GOOD), file("b", GOOD)]).unwrap();
+        assert_eq!(boards.keys().collect::<Vec<_>>(), ["a", "b"]);
+        assert_eq!(boards["a"].name, "My board");
+        assert!(parse("/proj/boards", &[]).unwrap().is_empty());
+    }
 
     #[test]
     fn the_schema_key_is_optional_but_must_be_this_one() {
@@ -472,12 +555,11 @@ mod tests {
             &format!("{{\n  \"$schema\": \"{}\",\n", catalog::BOARDS_SCHEMA),
             1,
         );
-        let boards = parse(&named, "custom-boards.json").unwrap();
-        assert_eq!(boards.keys().collect::<Vec<_>>(), ["my-board"]);
-        // Another schema, or a future version, is a problem at its value.
+        let boards = parse("/p", &[file("my-board", &named)]).unwrap();
+        assert!(boards["my-board"].schema.is_none(), "not kept");
         let other = GOOD.replacen(
             "{\n",
-            "{\n  \"$schema\": \"https://www.openlogix.org/schemas/logix-boards-v2.json\",\n",
+            "{\n  \"$schema\": \"https://www.openlogix.org/schemas/logix-boards-v1.json\",\n",
             1,
         );
         assert_eq!(
@@ -486,231 +568,125 @@ mod tests {
                 Some(2),
                 Some(14),
                 format!(
-                    "Unknown $schema \"https://www.openlogix.org/schemas/logix-boards-v2.json\": this Logix Engine reads {}.",
+                    "Unknown $schema \"https://www.openlogix.org/schemas/logix-boards-v1.json\": this Logix Engine reads {}.",
                     catalog::BOARDS_SCHEMA
                 )
             )]
         );
-        let not_text = GOOD.replacen("{\n", "{\n  \"$schema\": 1,\n", 1);
-        assert_eq!(
-            diags(&not_text)[0].2,
-            format!(
-                "Unknown $schema 1: this Logix Engine reads {}.",
-                catalog::BOARDS_SCHEMA
-            )
-        );
     }
 
     #[test]
-    fn pin_group_problems_point_at_their_values() {
-        let with_groups = GOOD.replacen(
-            "    \"variants\": [",
-            "    \"pin_groups\": [\n      {\"name\": \"sys_clk\", \"type\": \"clock\", \"pins\": [\"35\"]}\n    ],\n    \"variants\": [",
-            1,
-        );
-        assert_eq!(
-            diags(&with_groups),
-            [(
-                Some(6),
-                Some(7),
-                "A clock needs its frequency, mhz.".to_string()
-            )]
-        );
-        let ok = with_groups.replace("\"type\": \"clock\",", "\"type\": \"clock\", \"mhz\": 12,");
-        let boards = parse(&ok, "custom-boards.json").unwrap();
-        assert_eq!(boards["my-board"].pin_groups[0].mhz, Some(12.0));
-    }
-
-    #[test]
-    fn the_log_names_the_file_its_version_and_boards() {
-        let ok = parse(GOOD, "custom-boards.json");
-        let line = log_line("/p/custom-boards.json", GOOD, &ok);
-        assert!(
-            line.starts_with("Custom boards file: /p/custom-boards.json (sha256 "),
-            "{line}"
-        );
-        assert!(line.ends_with("), boards: my-board"), "{line}");
-        // The same text gives the same short digest; another text another.
-        assert_eq!(line, log_line("/p/custom-boards.json", GOOD, &ok));
-        assert_ne!(line, log_line("/p/custom-boards.json", "{}", &ok));
-        let bad = parse("{", "custom-boards.json");
-        assert!(log_line("/p/custom-boards.json", "{", &bad).ends_with(", problems: 1"));
-        let none = parse("{}", "custom-boards.json");
-        assert!(log_line("/p/c.json", "{}", &none).ends_with("boards: none"));
-    }
-
-    fn diags(text: &str) -> Vec<(Option<u32>, Option<u32>, String)> {
-        let e = parse(text, "custom-boards.json").unwrap_err();
-        assert_eq!(e.category, crate::errors::Category::Request);
-        assert!(
-            e.message
-                .starts_with("The custom boards file has problems. custom-boards.json:"),
-            "{}",
-            e.message
-        );
-        e.diagnostics
-            .into_iter()
-            .map(|d| {
-                assert_eq!(d.file.as_deref(), Some("custom-boards.json"));
-                (d.line, d.column, d.text)
-            })
-            .collect()
-    }
-
-    #[test]
-    fn a_good_file_and_an_empty_one() {
-        assert_eq!(parse(GOOD, "f").unwrap().len(), 1);
-        assert!(parse(" \n", "f").unwrap().is_empty());
-        assert!(parse("{}", "f").unwrap().is_empty());
-    }
-
-    #[test]
-    fn syntax_and_type_errors_at_their_line_and_column() {
-        let d = diags("{\n  \"x\": {\n    \"description\": \"x\",\n  }\n}\n");
-        assert_eq!((d[0].0, d[0].1), (Some(4), Some(3)), "{d:?}");
-        assert!(d[0].2.starts_with("Trailing comma"), "{d:?}");
-        assert!(!d[0].2.contains(" at line "), "{d:?}");
-        // A list instead of a map.
-        let d = diags("[\n]\n");
-        assert_eq!(d[0].0, Some(1), "{d:?}");
-        assert!(d[0].2.contains("expected a map"), "{d:?}");
-        // A misspelled field.
+    fn syntax_type_and_definition_errors_at_their_line_and_column() {
+        let d = diags("{\n  \"name\": \"x\",\n}\n");
+        assert_eq!((d[0].0, d[0].1), (Some(3), Some(1)), "{d:?}");
+        let d = diags("[]\n");
+        assert_eq!((d[0].0, d[0].1), (Some(1), Some(1)), "{d:?}");
+        assert!(d[0].2.starts_with("Expected a board"), "{d:?}");
         let d = diags(&GOOD.replace("\"tested\"", "\"testd\""));
-        assert_eq!(d[0].2, "Unknown field \"testd\".", "{d:?}");
-        assert_eq!(d[0].0, Some(9), "{d:?}");
-    }
-
-    #[test]
-    fn definition_errors_point_at_the_value() {
-        let bad = GOOD
-            .replace("\"0403\"", "\"04G3\"")
-            .replace("ice40up5k-sg48", "nope")
-            .replace("\"iceprog\"", "\"tinyprog\"");
-        let e = parse(&bad, "custom-boards.json").unwrap_err();
-        assert!(
-            e.message.ends_with(" (and 2 more problems)"),
-            "{}",
-            e.message
+        assert_eq!(d[0].0, Some(8), "{d:?}");
+        assert_eq!(d[0].2, "Unknown field \"testd\".");
+        let d = diags(
+            &GOOD
+                .replace("ice40up5k-sg48", "nope")
+                .replace("\"iceprog\"", "\"tinyprog\""),
         );
-        let d = diags(&bad);
-        assert_eq!(d.len(), 3, "{d:?}");
-        // fpga_id's value, line 4.
-        assert_eq!((d[0].0, d[0].1), (Some(4), Some(16)), "{d:?}");
-        assert!(d[0].2.contains("\"nope\" isn't an FPGA"), "{d:?}");
-        // programmer, line 8.
-        assert_eq!((d[1].0, d[1].1), (Some(8), Some(23)), "{d:?}");
+        assert_eq!((d[0].0, d[0].1), (Some(3), Some(14)), "{d:?}");
+        assert!(
+            d[0].2.starts_with("\"nope\" isn't an FPGA in the catalog"),
+            "{d:?}"
+        );
+        assert_eq!(d[1].0, Some(7), "{d:?}");
         assert!(
             d[1].2.starts_with("Unknown programmer \"tinyprog\""),
             "{d:?}"
         );
-        // usb vid, line 9.
-        assert_eq!((d[2].0, d[2].1), (Some(9), Some(24)), "{d:?}");
-        assert!(d[2].2.starts_with("usb vid must be"), "{d:?}");
+        // The old field, description, is an unknown field.
+        let d = diags(&GOOD.replace("\"name\"", "\"description\""));
+        assert_eq!(d[0].2, "Unknown field \"description\".");
     }
 
     #[test]
     fn selector_problems_point_at_the_selector() {
-        // An unknown memory value: at the memory value, line 7.
         let d = diags(&GOOD.replace("\"memory\": \"flash\"", "\"memory\": \"eeprom\""));
-        assert_eq!(d.len(), 1, "{d:?}");
-        assert_eq!(d[0].0, Some(7), "{d:?}");
+        assert_eq!(d[0].0, Some(6), "{d:?}");
         assert!(
             d[0].2
                 .starts_with("\"eeprom\" isn't a memory value. Known: flash, ram."),
             "{d:?}"
         );
-        // The same selector twice: at the second one, line 12.
-        let variant = "      {\n        \"selector\": {\"connection\": \"usb\", \"memory\": \"flash\"},\n        \"programmer\": \"iceprog\", \"args\": \"${BITSTREAM}\",\n        \"usb\": {\"vid\": \"0403\", \"pid\": \"6014\"}, \"tested\": false\n      }";
-        let twice = GOOD.replace("      }\n    ]", &format!("      }},\n{variant}\n    ]"));
-        let d = diags(&twice);
-        assert_eq!(d.len(), 1, "{d:?}");
-        assert_eq!((d[0].0, d[0].1), (Some(12), Some(21)), "{d:?}");
-        assert_eq!(
-            d[0].2,
-            "Another variant has the same selector (connection usb, memory flash)."
-        );
-        // The old shape, with an ID: an unknown field.
-        let d = diags(&GOOD.replace("\"selector\": {", "\"id\": \"usb-flash\", \"selector\": {"));
-        assert_eq!(d[0].2, "Unknown field \"id\".", "{d:?}");
-        // A selector needs both dimensions.
         let d = diags(&GOOD.replace("\"connection\": \"usb\", ", ""));
         assert!(d[0].2.starts_with("Missing field `connection`"), "{d:?}");
     }
 
-    /// Two boards, in the file in the opposite order to their IDs, with
-    /// problems of every kind: shape and content, in boards and variants.
-    const SEVERAL: &str = r#"{
-  "z-board": {
-    "description": "Z",
-    "fpga_id": "nope",
-    "variants": [
-      {
-        "selector": {"connection": "usb", "memory": "flash"},
-        "programer": "iceprog", "args": "${BITSTREAM}",
-        "usb": {"vid": "0403", "pid": "6014"}, "tested": false
-      },
-      {
-        "selector": {"connection": "usb", "memory": "ram"},
-        "programmer": "iceprog", "args": "${BITSTREAM}",
-        "usb": {"vid": "04G3", "pid": "6014"}, "tested": false
-      },
-      {"selector": {"connection": "usb", "memory": "flash"}, "programmer": 7}
-    ]
-  },
-  "a-board": {
-    "description": 3,
-    "fpga_id": "ice40up5k-sg48",
-    "variants": [
-      {
-        "selector": {"connection": "usb", "memory": "flash"},
-        "programmer": "icepro", "args": "${BITSTREAM}",
-        "usb": {"vid": "0403", "pid": "6014"}, "tested": false
-      }
-    ]
-  }
-}
-"#;
+    #[test]
+    fn resource_problems_point_at_their_values() {
+        let with = GOOD.replacen(
+            "  \"variants\": [",
+            "  \"resources\": {\n    \"sys_clk\": {\"type\": \"clock\", \"pin\": \"35\", \"mhz\": 0},\n    \"2led\": {\"type\": \"leds\", \"pins\": [\"1\"]}\n  },\n  \"variants\": [",
+            1,
+        );
+        let d = diags(&with);
+        assert_eq!(d.len(), 2, "{d:?}");
+        assert_eq!(
+            (d[0].0, d[0].1, d[0].2.as_str()),
+            (Some(5), Some(54), "0 isn't a frequency in MHz.")
+        );
+        assert_eq!(
+            (d[1].0, d[1].1),
+            (Some(6), Some(5)),
+            "the name's key: {d:?}"
+        );
+        let ok = with
+            .replace("\"mhz\": 0", "\"mhz\": 12")
+            .replace("\"2led\"", "\"led\"");
+        let boards = parse("/p", &[file("my-board", &ok)]).unwrap();
+        assert_eq!(
+            boards["my-board"].resources["sys_clk"].clock_mhz(),
+            Some(12.0)
+        );
+        // An unknown resource type is a problem too.
+        let d = diags(&ok.replace("\"type\": \"leds\"", "\"type\": \"lamp\""));
+        assert_eq!(d.len(), 1, "{d:?}");
+    }
 
     #[test]
-    fn every_problem_at_once_in_file_order() {
-        let d = diags(SEVERAL);
-        let got: Vec<_> = d
+    fn every_problem_at_once_by_file_then_line() {
+        let bad = GOOD.replace("ice40up5k-sg48", "nope");
+        let e = parse(
+            "/proj/boards",
+            &[
+                file("b-board", &bad),
+                file("a-board", &bad),
+                file("Bad ID", GOOD),
+            ],
+        )
+        .unwrap_err();
+        let got: Vec<_> = e
+            .diagnostics
             .iter()
-            .map(|(l, c, t)| {
-                (
-                    l.unwrap(),
-                    c.unwrap(),
-                    t.split(['.', ',']).next().unwrap().to_string(),
-                )
-            })
+            .map(|d| (d.file.clone().unwrap(), d.line))
             .collect();
         assert_eq!(
             got,
-            vec![
-                // z-board: its FPGA, then each variant on its own.
-                (4, 16, "\"nope\" isn't an FPGA in the catalog".to_string()),
-                (8, 19, "Unknown field \"programer\"".to_string()),
-                (
-                    14,
-                    24,
-                    "usb vid must be four lowercase hex digits".to_string()
-                ),
-                (16, 76, "Invalid type: integer `7`".to_string()),
-                // a-board: a wrong type in the board doesn't hide its variant.
-                (20, 20, "Invalid type: integer `3`".to_string()),
-                (25, 23, "Unknown programmer \"icepro\"".to_string()),
-            ],
-            "{d:?}"
+            [
+                ("/proj/boards/Bad ID.json".to_string(), None),
+                ("/proj/boards/a-board.json".to_string(), Some(3)),
+                ("/proj/boards/b-board.json".to_string(), Some(3)),
+            ]
         );
-        let e = parse(SEVERAL, "custom-boards.json").unwrap_err();
+        assert!(
+            e.diagnostics[0].text.contains("isn't a board ID"),
+            "{:?}",
+            e.diagnostics
+        );
         assert!(
             e.message
-                .starts_with("The custom boards file has problems. custom-boards.json:4:16: "),
+                .starts_with("The custom boards folder has problems. /proj/boards/Bad ID.json: "),
             "{}",
             e.message
         );
         assert!(
-            e.message.ends_with(" (and 5 more problems)"),
+            e.message.ends_with(" (and 2 more problems)"),
             "{}",
             e.message
         );
@@ -718,86 +694,70 @@ mod tests {
 
     #[test]
     fn at_most_ten_problems_then_how_many_more() {
-        let boards: Vec<String> = (0..13)
-            .map(|i| format!("  \"Board {i}\": {{\"description\": \"x\", \"fpga_id\": \"ice40up5k-sg48\", \"variants\": []}}"))
+        let files: Vec<BoardFile> = (0..13)
+            .map(|i| {
+                file(
+                    &format!("b{i:02}"),
+                    "{\"name\": \"x\", \"fpga_id\": \"ice40up5k-sg48\", \"variants\": []}",
+                )
+            })
             .collect();
-        let text = format!("{{\n{}\n}}\n", boards.join(",\n"));
-        // Each board: a bad ID and no variants.
-        let e = parse(&text, "custom-boards.json").unwrap_err();
+        let e = parse("/proj/boards", &files).unwrap_err();
         assert_eq!(e.diagnostics.len(), MAX_PROBLEMS + 1, "{:?}", e.diagnostics);
-        assert!(
-            e.diagnostics[..MAX_PROBLEMS]
-                .iter()
-                .all(|d| d.severity == Severity::Error)
-        );
-        // In file order: board 0's two problems first.
-        assert_eq!(e.diagnostics[0].line, Some(2));
-        assert_eq!(e.diagnostics[1].line, Some(2));
-        assert_eq!(e.diagnostics[9].line, Some(6));
         let last = &e.diagnostics[MAX_PROBLEMS];
         assert_eq!(last.severity, Severity::Info);
-        assert_eq!((last.line, last.column), (None, None));
+        assert_eq!(last.file.as_deref(), Some("/proj/boards"));
         assert_eq!(
             last.text,
-            "16 more problems not listed. Fix these first, then check again."
+            "3 more problems not listed. Fix these first, then check again."
         );
+    }
+
+    #[test]
+    fn the_log_names_the_folder_its_version_and_boards() {
+        let files = [file("a", GOOD)];
+        let line = log_line("/proj/boards", &files, &parse("/proj/boards", &files));
         assert!(
-            e.message.ends_with(" (and 25 more problems)"),
-            "{}",
-            e.message
+            line.starts_with("Custom boards folder: /proj/boards (sha256 "),
+            "{line}"
         );
+        assert!(line.ends_with(", boards: a"), "{line}");
+        let bad = [file("a", "{")];
+        let line = log_line("/proj/boards", &bad, &parse("/proj/boards", &bad));
+        assert!(line.ends_with(", problems: 1"), "{line}");
     }
 
     #[test]
-    fn a_board_that_isnt_an_object_and_variants_that_arent_a_list() {
-        let d = diags(
-            "{\n  \"a\": 5,\n  \"b\": {\"description\": \"b\", \"fpga_id\": \"ice40up5k-sg48\", \"variants\": {}}\n}\n",
-        );
-        assert_eq!(d.len(), 2, "{d:?}");
-        assert_eq!((d[0].0, d[0].1), (Some(2), Some(8)), "{d:?}");
-        assert!(d[0].2.starts_with("Invalid type: integer `5`"), "{d:?}");
-        assert_eq!((d[1].0, d[1].1), (Some(3), Some(69)), "{d:?}");
-        assert!(d[1].2.starts_with("Invalid type: map"), "{d:?}");
-    }
-
-    #[test]
-    fn a_bad_board_id_points_at_its_key() {
-        let d = diags(&GOOD.replace("\"my-board\"", "\"My Board\""));
-        assert_eq!((d[0].0, d[0].1), (Some(2), Some(3)), "{d:?}");
-        assert!(d[0].2.contains("isn't a board ID"), "{d:?}");
-    }
-
-    #[test]
-    fn missing_fpga_points_at_the_board() {
-        // At the board's object, where the field belongs, not at its end.
-        let d = diags(&GOOD.replace("\"fpga_id\": \"ice40up5k-sg48\",", ""));
-        assert_eq!((d[0].0, d[0].1), (Some(2), Some(15)), "{d:?}");
-        assert_eq!(d[0].2, "Missing field `fpga_id`.");
-        // A full FPGA definition isn't a field: catalog FPGAs only.
-        let d = diags(&GOOD.replace(
-            "\"fpga_id\": \"ice40up5k-sg48\",",
-            "\"fpga_id\": \"ice40up5k-sg48\", \"fpga\": {},",
-        ));
-        assert_eq!(d[0].2, "Unknown field \"fpga\".");
-    }
-
-    #[test]
-    fn files_are_read_by_absolute_path_and_named_as_given() {
+    fn folders_are_read_by_absolute_path_and_named_as_given() {
         let tmp = tempfile::tempdir().unwrap();
-        let src = tmp.path().join("proj");
-        std::fs::create_dir(&src).unwrap();
-        let file = src.join("custom-boards.json");
-        std::fs::write(&file, GOOD.replace("\"0403\"", "\"x\"")).unwrap();
-        let given = file.to_string_lossy().into_owned();
+        let dir = tmp.path().join("boards");
+        std::fs::create_dir(&dir).unwrap();
+        std::fs::write(dir.join("mine.json"), GOOD.replace("\"0403\"", "\"x\"")).unwrap();
+        std::fs::write(dir.join("README.md"), "not a board").unwrap();
+        let given = format!("{}/", dir.to_string_lossy());
         let e = load(Some(&given)).unwrap_err();
-        assert_eq!(e.diagnostics[0].file.as_deref(), Some(given.as_str()));
+        assert_eq!(
+            e.diagnostics.len(),
+            1,
+            "other files are ignored: {:?}",
+            e.diagnostics
+        );
+        assert_eq!(
+            e.diagnostics[0].file.as_deref(),
+            Some(format!("{}/mine.json", dir.to_string_lossy()).as_str())
+        );
+        std::fs::write(dir.join("mine.json"), GOOD).unwrap();
+        assert_eq!(
+            load(Some(&given)).unwrap().keys().collect::<Vec<_>>(),
+            ["mine"]
+        );
         assert!(
-            load(Some("custom-boards.json"))
+            load(Some("boards"))
                 .unwrap_err()
                 .message
                 .contains("absolute")
         );
-        let missing = tmp.path().join("none.json").to_string_lossy().into_owned();
+        let missing = tmp.path().join("none").to_string_lossy().into_owned();
         assert!(
             load(Some(&missing))
                 .unwrap_err()

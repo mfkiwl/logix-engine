@@ -1,0 +1,22 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "Icezum Alhambra",
+  "fpga_id": "ice40hx1k-tq144",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "flash"},
+      "programmer": "iceprog",
+      "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6010", "product_regex": "^IceZUM Alhambra.*"},
+      "tested": true
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "21", "mhz": 12},
+    "leds": {
+      "type": "leds",
+      "pins": ["95", "96", "97", "98", "99", "101", "102", "104"],
+      "active": "high"
+    }
+  }
+}

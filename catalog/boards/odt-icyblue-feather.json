@@ -1,0 +1,17 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "ODT_IcyBlue_Feather",
+  "fpga_id": "ice5lp4k-sg48",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "flash"},
+      "programmer": "iceprog",
+      "args": "-d d:${BUS}/${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6014"},
+      "tested": false,
+      "user_notes": "Its USB filter matches any device with an FTDI FT232H chip.",
+      "maintainer_notes": "Programmed with iceprog through its FTDI FT232H chip, as the board maker's examples do (github.com/skerr92/ice5lp4k_examples). It was defined with icesprog, which can only reach MuseLab's iCELink, not an FTDI chip. Not tried on hardware."
+    }
+  ],
+  "resources": {"led": {"type": "leds", "pins": ["2"], "active": "high"}}
+}

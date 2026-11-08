@@ -1203,6 +1203,7 @@ dependencies = [
  "clap",
  "flate2",
  "hex",
+ "indexmap",
  "jsonschema",
  "libc",
  "log",
@@ -1896,6 +1897,7 @@ checksum = "ab508826f74a77ca9d5aba6ff19b522583ee3eaf28a19384ff3d0e5835fadf6e"
 dependencies = [
  "chrono",
  "dyn-clone",
+ "indexmap",
  "ref-cast",
  "schemars_derive",
  "serde",

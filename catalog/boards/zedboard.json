@@ -1,0 +1,24 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
+  "name": "ZedBoard (Xilinx, Zynq7 PL)",
+  "fpga_id": "xc7z020clg484-1",
+  "variants": [
+    {
+      "selector": {"connection": "usb", "memory": "ram"},
+      "programmer": "openfpgaloader",
+      "args": "--force-terminal-mode --verify --board zedboard --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
+      "usb": {"vid": "0403", "pid": "6014"},
+      "tested": true,
+      "maintainer_notes": "Device selection (2026-11-04): --busdev-num ${BUS}:${DEV} added so openFPGALoader opens the device the engine chose, not the first one with these USB IDs. Low risk, so tested is unchanged: openFPGALoader's FTDI drivers (MPSSE, bitbang, CH552) open the device by bus and address when given (src/ftdipp_mpsse.cpp, ftdi_usb_open_bus_addr); not tried on hardware."
+    }
+  ],
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "Y9", "mhz": 100, "io_standard": "LVCMOS33"},
+    "leds": {
+      "type": "leds",
+      "pins": ["T22", "T21", "U22", "U21"],
+      "active": "high",
+      "io_standard": "LVCMOS33"
+    }
+  }
+}
