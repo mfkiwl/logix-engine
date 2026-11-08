@@ -464,7 +464,7 @@ The project relies heavily on AI-generated tests to catch regressions, since hum
 - **Testing.** GitHub Actions workflows run the engine's test suite on every supported platform for every change.
 - **Releases.** Workflows build the per-platform engine binaries and publish them as GitHub releases with date tags, like the package repos' daily releases.
 - **Hardware tests.** GitHub-hosted runners cannot reach FPGA boards, so the hardware-in-the-loop tests run separately on a lab computer with boards attached. Whether that computer runs as a self-hosted GitHub runner is still open.
-- **License.** The engine's own code is licensed under Apache-2.0, which is permissive and includes an explicit patent grant. The packaged tools keep their own licenses.
+- **License.** The engine's own code is licensed under MIT or Apache-2.0, at the user's option, like every Logix repo: MIT lets GPL-2.0 projects use it, and Apache-2.0 includes an explicit patent grant. The packaged tools keep their own licenses.
 
 ## Open questions
 

@@ -50,4 +50,4 @@ npx @modelcontextprotocol/inspector /path/to/logix-engine/scripts/serve.sh
 
 ## License
 
-[Apache-2.0](LICENSE). The packaged open source tools keep their own licenses.
+[MIT](LICENSE-MIT) or [Apache-2.0](LICENSE-APACHE), at your option. The packaged open source tools keep their own licenses.

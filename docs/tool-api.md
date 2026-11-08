@@ -1182,7 +1182,7 @@ This model is only a suggestion for AI sessions that have no other requirements,
 
 The Logix Engine was designed together with the Logix IDE, and its tools map to what a frontend shows: buttons, panels, a console and a device picker. These recipes give the intended flow for common tasks; the tool sections above have the fields. The Logix IDE is only an example here. The Logix Engine doesn't depend on it or on any of its traits: a frontend can be an editor, a graphical or block-based design tool, a command-line tool, a CI job or anything else.
 
-**Reference frontend.** The Logix IDE ([github.com/openlogix/logix-ide](https://github.com/openlogix/logix-ide), Apache 2.0) implements every recipe below, and its code is meant as a worked example for any frontend, from Open Logix or not. Read it with its AI spec, its `CLAUDE.md`, which says what each part does and why:
+**Reference frontend.** The Logix IDE ([github.com/openlogix/logix-ide](https://github.com/openlogix/logix-ide), MIT or Apache 2.0) implements every recipe below, and its code is meant as a worked example for any frontend, from Open Logix or not. Read it with its AI spec, its `CLAUDE.md`, which says what each part does and why:
 
 | Recipe | In the Logix IDE |
 | --- | --- |

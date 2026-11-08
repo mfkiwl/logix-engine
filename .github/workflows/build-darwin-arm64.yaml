@@ -99,12 +99,12 @@ jobs:
         run: scripts/build.sh
 
       # The package has one top-level folder, logix-engine/, with the
-      # binary and the license.
+      # binary and the licenses.
       - name: Make the package
         run: |
           mkdir -p _pkg/logix-engine
           cp _repo/target/release/logix-engine _pkg/logix-engine/
-          cp _repo/LICENSE _pkg/logix-engine/
+          cp _repo/LICENSE-MIT _repo/LICENSE-APACHE _pkg/logix-engine/
           tar -czf "logix-engine-darwin-arm64-${PACKAGE_TAG}.tgz" -C _pkg logix-engine
           tar -tzvf "logix-engine-darwin-arm64-${PACKAGE_TAG}.tgz"
 
@@ -116,7 +116,8 @@ jobs:
           mkdir _check
           tar -xzf "logix-engine-darwin-arm64-${PACKAGE_TAG}.tgz" -C _check
           bin=_check/logix-engine/logix-engine
-          test -f _check/logix-engine/LICENSE
+          test -f _check/logix-engine/LICENSE-MIT
+          test -f _check/logix-engine/LICENSE-APACHE
           version="$("$bin" --version)"
           echo "$version"
           if [[ "$version" != "logix-engine ${RELEASE_TAG}" ]]; then
