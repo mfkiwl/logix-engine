@@ -90,13 +90,17 @@ pub fn synth_script(fpga: &FpgaDefinition, top: &str, json: &Path) -> String {
 }
 
 /// The place-and-route program and its arguments, plus the log
-/// file. Run in the build folder.
+/// file. Run in the build folder. nextpnr is told the top module too:
+/// otherwise it guesses it from the netlist, and fails ("Failed to
+/// autodetect top module") on a design without logic, such as one whose
+/// only port is an input, or none.
 pub fn pnr_command(
     fpga: &FpgaDefinition,
+    top: &str,
     constraint_file: &Path,
     verbose: bool,
 ) -> (&'static str, Vec<OsString>) {
-    let mut args: Vec<OsString> = Vec::new();
+    let mut args: Vec<OsString> = vec!["--top".into(), top.into()];
     if matches!(fpga.architecture, Architecture::Ice40 | Architecture::Ecp5) {
         args.push(format!("--{}", fpga.nextpnr_device).into());
         args.extend(["--package".into(), fpga.package().into()]);
@@ -629,6 +633,7 @@ pub async fn build(
     phases.start("Placing and routing");
     let (pnr_tool, args) = pnr_command(
         fpga,
+        &req.top_module,
         &req.source_folder.join(&req.constraint_file),
         req.verbose,
     );

@@ -238,7 +238,9 @@ async fn builds_an_ecp5_design() {
             .iter()
             .any(|a| a.starts_with("synth_ecp5 -top main"))
     );
-    let pnr = &out.commands[1].args[1..];
+    // nextpnr gets the top module first.
+    assert_eq!(out.commands[1].args[1..3], ["--top", "main"]);
+    let pnr = &out.commands[1].args[3..];
     assert_eq!(
         &pnr[..6],
         ["--25k", "--package", "CABGA256", "--speed", "6", "--json"]
@@ -355,7 +357,9 @@ async fn builds_a_gowin_design() {
             .iter()
             .any(|a| a.starts_with("synth_gowin -top main; write_json "))
     );
-    let pnr = &out.commands[1].args[1..];
+    // nextpnr gets the top module first.
+    assert_eq!(out.commands[1].args[1..3], ["--top", "main"]);
+    let pnr = &out.commands[1].args[3..];
     assert_eq!(
         &pnr[..10],
         [
@@ -437,7 +441,9 @@ async fn builds_a_xilinx_design() {
             .iter()
             .any(|a| a.starts_with("synth_xilinx -arch xc7 -top main; write_json "))
     );
-    let pnr = &out.commands[1].args[1..];
+    // nextpnr gets the top module first.
+    assert_eq!(out.commands[1].args[1..3], ["--top", "main"]);
+    let pnr = &out.commands[1].args[3..];
     assert_eq!(&pnr[..3], ["--device", "xc7a35tcsg324-1", "-o"]);
     assert!(pnr[3].starts_with("xdc=") && pnr[3].ends_with("main.xdc"));
     assert_eq!(
@@ -481,6 +487,59 @@ async fn builds_a_xilinx_design() {
         "{err:?}"
     );
     assert!(!src.join("_build/hardware.bit").exists());
+}
+
+/// Designs without logic build on every family: one with no ports and a pin
+/// file without pins, and one whose only port is the clock input (nextpnr
+/// gets the top module; it couldn't guess it). Except the last on Xilinx:
+/// nextpnr-xilinx refuses an input without an I/O buffer, which yosys
+/// leaves out when nothing uses it ("IO port 'sys_clk' is missing an IO
+/// buffer"); with any output it builds.
+#[tokio::test]
+async fn designs_without_logic_build() {
+    let state = engine().await;
+    for (board, file, clock) in [
+        ("alhambra-ii", "pinout.pcf", "set_io sys_clk 49\n"),
+        (
+            "icesugar-pro",
+            "pinout.lpf",
+            "LOCATE COMP \"sys_clk\" SITE \"P6\";\n",
+        ),
+        (
+            "sipeed-tang-primer-20k-lite",
+            "pinout.cst",
+            "IO_LOC \"sys_clk\" H11;\n",
+        ),
+        (
+            "arty-a7-35t",
+            "pinout.xdc",
+            "set_property -dict { PACKAGE_PIN E3 IOSTANDARD LVCMOS33 } [get_ports {sys_clk}]\n",
+        ),
+    ] {
+        for (main, pins) in [
+            ("module main;\nendmodule\n", "# No pins yet.\n"),
+            ("module main (input sys_clk);\nendmodule\n", clock),
+        ] {
+            let tmp = tempfile::tempdir().unwrap();
+            let src = tmp.path().canonicalize().unwrap();
+            std::fs::write(src.join("main.v"), main).unwrap();
+            let refused = board == "arty-a7-35t" && main.contains("input");
+            let pins = if file.ends_with(".cst") {
+                pins.replace('#', "//")
+            } else {
+                pins.to_string()
+            };
+            std::fs::write(src.join(file), pins).unwrap();
+            let input = json!({"board": board, "constraint_file": file});
+            let out = build_it(&state, &src, input).await;
+            if refused {
+                let e = out.unwrap_err();
+                assert!(e.message.contains("missing an IO buffer"), "{e:?}");
+            } else {
+                assert!(out.is_ok(), "{board}, {main:?}: {:?}", out.err());
+            }
+        }
+    }
 }
 
 #[tokio::test]
