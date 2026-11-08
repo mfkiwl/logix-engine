@@ -135,13 +135,29 @@ fn report(info: &GetEngineInfoOutput) -> String {
         format!("Command line: {}", info.command_line.join(" ")),
         "Packages:".to_string(),
     ];
+    // In columns: name, version, status.
+    let name_width = info
+        .packages
+        .iter()
+        .map(|p| p.name.len())
+        .max()
+        .unwrap_or(0);
+    let version_width = info
+        .packages
+        .iter()
+        .map(|p| p.version.len())
+        .max()
+        .unwrap_or(0);
     for p in &info.packages {
         let status = match p.status {
             PackageStatus::Installed => "installed",
             PackageStatus::Missing => "missing",
             PackageStatus::Broken => "broken",
         };
-        lines.push(format!("  {} {}: {status}", p.name, p.version));
+        lines.push(format!(
+            "  {:name_width$}  {:version_width$}  {status}",
+            p.name, p.version
+        ));
     }
     lines.push(format!("Boards schema: {}", info.boards_schema));
     lines.join("\n")
@@ -212,8 +228,8 @@ Log file: /Users/you/.logix/engine/logs/20261108-1.log
 Automatic package install: on
 Command line: --engine-folder /Users/you/.logix/engine
 Packages:
-  oss-cad-suite 2026-11-20: installed
-  verible 2026-10-22: missing
+  oss-cad-suite  2026-11-20  installed
+  verible        2026-10-22  missing
 Boards schema: https://www.openlogix.org/schemas/logix-boards-v1.json"
         );
     }
