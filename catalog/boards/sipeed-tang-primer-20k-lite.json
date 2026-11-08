@@ -13,5 +13,43 @@
       "user_notes": "Other Sipeed boards with the same USB debugger chip report the same name, JTAG Debugger."
     }
   ],
-  "resources": {"sys_clk": {"type": "clock", "pin": "H11", "mhz": 27, "io_standard": "LVCMOS33"}}
+  "resources": {
+    "sys_clk": {"type": "clock", "pin": "H11", "mhz": 27, "io_standard": "LVCMOS33"},
+    "pmod_j2": {
+      "type": "pmod",
+      "pins": ["F15", "D16", "C9", "L12", "E16", "E14", "A9", "J11"],
+      "io_standard": "LVCMOS33",
+      "source": {
+        "kind": "schematic",
+        "ref": "Sipeed Tang_Primer_20K_Dock_Lite_3711_Schematic.pdf (rev 1.2, 2024-06-18), connectors J2, J6, J7 and J8 with their FPGA pin labels; the schematic numbers each header's signals 5 to 12, PMOD pins 4 to 1 on the odd side and 10 to 7 on the even side"
+      }
+    },
+    "pmod_j6": {
+      "type": "pmod",
+      "pins": ["L8", "P7", "E10", "D11", "M6", "R7", "D10", "F10"],
+      "io_standard": "LVCMOS33",
+      "source": {
+        "kind": "schematic",
+        "ref": "Sipeed Tang_Primer_20K_Dock_Lite_3711_Schematic.pdf (rev 1.2, 2024-06-18), connectors J2, J6, J7 and J8 with their FPGA pin labels; the schematic numbers each header's signals 5 to 12, PMOD pins 4 to 1 on the odd side and 10 to 7 on the even side"
+      }
+    },
+    "pmod_j7": {
+      "type": "pmod",
+      "pins": ["T6", "T7", "T8", "T9", "P6", "R8", "P8", "P9"],
+      "io_standard": "LVCMOS33",
+      "source": {
+        "kind": "schematic",
+        "ref": "Sipeed Tang_Primer_20K_Dock_Lite_3711_Schematic.pdf (rev 1.2, 2024-06-18), connectors J2, J6, J7 and J8 with their FPGA pin labels; the schematic numbers each header's signals 5 to 12, PMOD pins 4 to 1 on the odd side and 10 to 7 on the even side"
+      }
+    },
+    "pmod_j8": {
+      "type": "pmod",
+      "pins": ["R16", "P16", "N16", "L16", "P15", "N15", "N14", "L14"],
+      "io_standard": "LVCMOS33",
+      "source": {
+        "kind": "schematic",
+        "ref": "Sipeed Tang_Primer_20K_Dock_Lite_3711_Schematic.pdf (rev 1.2, 2024-06-18), connectors J2, J6, J7 and J8 with their FPGA pin labels; the schematic numbers each header's signals 5 to 12, PMOD pins 4 to 1 on the odd side and 10 to 7 on the even side"
+      }
+    }
+  }
 }

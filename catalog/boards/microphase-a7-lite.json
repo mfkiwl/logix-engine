@@ -21,7 +21,25 @@
     }
   ],
   "resources": {
-    "sys_clk": {"type": "clock", "pin": "J19", "mhz": 50, "io_standard": "LVCMOS33"},
-    "leds_n": {"type": "leds", "pins": ["M18", "N18"], "active": "low", "io_standard": "LVCMOS33"}
+    "sys_clk": {
+      "type": "clock",
+      "pin": "J19",
+      "mhz": 50,
+      "io_standard": "LVCMOS33",
+      "source": {
+        "kind": "schematic",
+        "ref": "MicroPhase A7-Lite reference manual and schematic R1.1"
+      }
+    },
+    "leds_n": {
+      "type": "leds",
+      "pins": ["M18", "N18"],
+      "active": "low",
+      "io_standard": "LVCMOS33",
+      "source": {
+        "kind": "schematic",
+        "ref": "MicroPhase A7-Lite reference manual and schematic R1.1"
+      }
+    }
   }
 }

@@ -13,12 +13,25 @@
     }
   ],
   "resources": {
-    "sys_clk": {"type": "clock", "pin": "H16", "mhz": 125, "io_standard": "LVCMOS33"},
+    "sys_clk": {
+      "type": "clock",
+      "pin": "H16",
+      "mhz": 125,
+      "io_standard": "LVCMOS33",
+      "source": {
+        "kind": "maker",
+        "ref": "LEDs: github.com/Xilinx/PYNQ base.xdc; 125 MHz PL clock on H16: PYNQ-Z1 reference manual"
+      }
+    },
     "leds": {
       "type": "leds",
       "pins": ["R14", "P14", "N16", "M14"],
       "active": "high",
-      "io_standard": "LVCMOS33"
+      "io_standard": "LVCMOS33",
+      "source": {
+        "kind": "maker",
+        "ref": "LEDs: github.com/Xilinx/PYNQ base.xdc; 125 MHz PL clock on H16: PYNQ-Z1 reference manual"
+      }
     }
   }
 }

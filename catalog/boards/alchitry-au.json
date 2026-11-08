@@ -21,12 +21,25 @@
     }
   ],
   "resources": {
-    "sys_clk": {"type": "clock", "pin": "N14", "mhz": 100, "io_standard": "LVCMOS33"},
+    "sys_clk": {
+      "type": "clock",
+      "pin": "N14",
+      "mhz": 100,
+      "io_standard": "LVCMOS33",
+      "source": {
+        "kind": "maker",
+        "ref": "github.com/alchitry/Alchitry-Labs-V2 AuPin.kt and alchitry.acf"
+      }
+    },
     "leds": {
       "type": "leds",
       "pins": ["K13", "K12", "L14", "L13", "M16", "M14", "M12", "N16"],
       "active": "high",
-      "io_standard": "LVCMOS33"
+      "io_standard": "LVCMOS33",
+      "source": {
+        "kind": "maker",
+        "ref": "github.com/alchitry/Alchitry-Labs-V2 AuPin.kt and alchitry.acf"
+      }
     }
   }
 }

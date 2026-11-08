@@ -21,12 +21,25 @@
     }
   ],
   "resources": {
-    "sys_clk": {"type": "clock", "pin": "E3", "mhz": 100, "io_standard": "LVCMOS33"},
+    "sys_clk": {
+      "type": "clock",
+      "pin": "E3",
+      "mhz": 100,
+      "io_standard": "LVCMOS33",
+      "source": {
+        "kind": "maker",
+        "ref": "github.com/Digilent/digilent-xdc Arty-A7-100-Master.xdc (the same pins as the 35T)"
+      }
+    },
     "leds": {
       "type": "leds",
       "pins": ["H5", "J5", "T9", "T10"],
       "active": "high",
-      "io_standard": "LVCMOS33"
+      "io_standard": "LVCMOS33",
+      "source": {
+        "kind": "maker",
+        "ref": "github.com/Digilent/digilent-xdc Arty-A7-100-Master.xdc (the same pins as the 35T)"
+      }
     }
   }
 }

@@ -21,12 +21,19 @@
     }
   ],
   "resources": {
-    "sys_clk": {"type": "clock", "pin": "F14", "mhz": 12, "io_standard": "LVCMOS33"},
+    "sys_clk": {
+      "type": "clock",
+      "pin": "F14",
+      "mhz": 12,
+      "io_standard": "LVCMOS33",
+      "source": {"kind": "maker", "ref": "github.com/Digilent/digilent-xdc Arty-S7-50-Master.xdc"}
+    },
     "leds": {
       "type": "leds",
       "pins": ["E18", "F13", "E13", "H15"],
       "active": "high",
-      "io_standard": "LVCMOS33"
+      "io_standard": "LVCMOS33",
+      "source": {"kind": "maker", "ref": "github.com/Digilent/digilent-xdc Arty-S7-50-Master.xdc"}
     }
   }
 }

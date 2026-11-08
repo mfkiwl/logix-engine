@@ -1394,9 +1394,29 @@ mod tests {
         };
         assert_eq!((m.leds.len(), m.colors.red.as_str()), (7, "T1"));
         assert!(m.source.is_some());
-        // The Tang Primer 20K is a board per carrier: only the Dock has LEDs.
+        // The Tang Primer 20K is a board per carrier: only the Dock has LEDs,
+        // the Lite has a clock and four PMODs, from its schematic.
         assert_eq!(c.boards["sipeed-tang-primer-20k-dock"].resources.len(), 2);
-        assert_eq!(c.boards["sipeed-tang-primer-20k-lite"].resources.len(), 1);
+        let lite = &c.boards["sipeed-tang-primer-20k-lite"].resources;
+        let types: Vec<_> = lite
+            .iter()
+            .map(|(name, r)| {
+                (
+                    name.as_str(),
+                    serde_json::to_value(r).unwrap()["type"].clone(),
+                )
+            })
+            .collect();
+        assert_eq!(
+            types,
+            [
+                ("sys_clk", "clock".into()),
+                ("pmod_j2", "pmod".into()),
+                ("pmod_j6", "pmod".into()),
+                ("pmod_j7", "pmod".into()),
+                ("pmod_j8", "pmod".into()),
+            ]
+        );
         // ECP5 and Xilinx pin files name an I/O standard: every resource has it.
         for (id, b) in &c.boards {
             let arch = c.fpgas[&b.fpga_id].architecture;

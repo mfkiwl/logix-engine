@@ -21,12 +21,25 @@
     }
   ],
   "resources": {
-    "sys_clk": {"type": "clock", "pin": "H4", "mhz": 100, "io_standard": "LVCMOS33"},
+    "sys_clk": {
+      "type": "clock",
+      "pin": "H4",
+      "mhz": 100,
+      "io_standard": "LVCMOS33",
+      "source": {
+        "kind": "maker",
+        "ref": "Numato Mimas A7 XDC file (the same pins on revisions V2 and V3)"
+      }
+    },
     "leds": {
       "type": "leds",
       "pins": ["K17", "J17", "L14", "L15", "L16", "K16", "M15", "M16"],
       "active": "high",
-      "io_standard": "LVCMOS33"
+      "io_standard": "LVCMOS33",
+      "source": {
+        "kind": "maker",
+        "ref": "Numato Mimas A7 XDC file (the same pins on revisions V2 and V3)"
+      }
     }
   }
 }

@@ -13,12 +13,25 @@
     }
   ],
   "resources": {
-    "sys_clk": {"type": "clock", "pin": "Y9", "mhz": 100, "io_standard": "LVCMOS33"},
+    "sys_clk": {
+      "type": "clock",
+      "pin": "Y9",
+      "mhz": 100,
+      "io_standard": "LVCMOS33",
+      "source": {
+        "kind": "maker",
+        "ref": "github.com/Digilent/digilent-xdc Zedboard-Master.xdc (GCLK, LD0 to LD3)"
+      }
+    },
     "leds": {
       "type": "leds",
       "pins": ["T22", "T21", "U22", "U21"],
       "active": "high",
-      "io_standard": "LVCMOS33"
+      "io_standard": "LVCMOS33",
+      "source": {
+        "kind": "maker",
+        "ref": "github.com/Digilent/digilent-xdc Zedboard-Master.xdc (GCLK, LD0 to LD3)"
+      }
     }
   }
 }

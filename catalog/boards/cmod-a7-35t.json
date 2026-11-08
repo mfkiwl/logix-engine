@@ -21,7 +21,19 @@
     }
   ],
   "resources": {
-    "sys_clk": {"type": "clock", "pin": "L17", "mhz": 12, "io_standard": "LVCMOS33"},
-    "leds": {"type": "leds", "pins": ["A17", "C16"], "active": "high", "io_standard": "LVCMOS33"}
+    "sys_clk": {
+      "type": "clock",
+      "pin": "L17",
+      "mhz": 12,
+      "io_standard": "LVCMOS33",
+      "source": {"kind": "maker", "ref": "github.com/Digilent/digilent-xdc Cmod-A7-Master.xdc"}
+    },
+    "leds": {
+      "type": "leds",
+      "pins": ["A17", "C16"],
+      "active": "high",
+      "io_standard": "LVCMOS33",
+      "source": {"kind": "maker", "ref": "github.com/Digilent/digilent-xdc Cmod-A7-Master.xdc"}
+    }
   }
 }

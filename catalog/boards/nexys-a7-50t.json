@@ -21,7 +21,13 @@
     }
   ],
   "resources": {
-    "sys_clk": {"type": "clock", "pin": "E3", "mhz": 100, "io_standard": "LVCMOS33"},
+    "sys_clk": {
+      "type": "clock",
+      "pin": "E3",
+      "mhz": 100,
+      "io_standard": "LVCMOS33",
+      "source": {"kind": "maker", "ref": "github.com/Digilent/digilent-xdc Nexys-A7-50T-Master.xdc"}
+    },
     "leds": {
       "type": "leds",
       "pins": [
@@ -43,7 +49,8 @@
         "V11"
       ],
       "active": "high",
-      "io_standard": "LVCMOS33"
+      "io_standard": "LVCMOS33",
+      "source": {"kind": "maker", "ref": "github.com/Digilent/digilent-xdc Nexys-A7-50T-Master.xdc"}
     }
   }
 }

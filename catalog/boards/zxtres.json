@@ -20,7 +20,19 @@
     }
   ],
   "resources": {
-    "sys_clk": {"type": "clock", "pin": "Y18", "mhz": 50, "io_standard": "LVCMOS33"},
-    "led": {"type": "leds", "pins": ["H13"], "active": "low", "io_standard": "LVCMOS33"}
+    "sys_clk": {
+      "type": "clock",
+      "pin": "Y18",
+      "mhz": 50,
+      "io_standard": "LVCMOS33",
+      "source": {"kind": "maker", "ref": "github.com/zxtres/test_carta_ajuste pines_zxtres.xdc"}
+    },
+    "led": {
+      "type": "leds",
+      "pins": ["H13"],
+      "active": "low",
+      "io_standard": "LVCMOS33",
+      "source": {"kind": "maker", "ref": "github.com/zxtres/test_carta_ajuste pines_zxtres.xdc"}
+    }
   }
 }

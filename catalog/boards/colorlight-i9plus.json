@@ -20,7 +20,25 @@
     }
   ],
   "resources": {
-    "sys_clk": {"type": "clock", "pin": "K4", "mhz": 25, "io_standard": "LVCMOS33"},
-    "led": {"type": "leds", "pins": ["A18"], "active": "high", "io_standard": "LVCMOS33"}
+    "sys_clk": {
+      "type": "clock",
+      "pin": "K4",
+      "mhz": 25,
+      "io_standard": "LVCMOS33",
+      "source": {
+        "kind": "user",
+        "ref": "github.com/wuxx/Colorlight-FPGA-Projects, i9plus v6.1 blinky.xdc"
+      }
+    },
+    "led": {
+      "type": "leds",
+      "pins": ["A18"],
+      "active": "high",
+      "io_standard": "LVCMOS33",
+      "source": {
+        "kind": "user",
+        "ref": "github.com/wuxx/Colorlight-FPGA-Projects, i9plus v6.1 blinky.xdc"
+      }
+    }
   }
 }

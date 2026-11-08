@@ -13,7 +13,25 @@
     }
   ],
   "resources": {
-    "sys_clk": {"type": "clock", "pin": "U22", "mhz": 50, "io_standard": "LVCMOS33"},
-    "leds_n": {"type": "leds", "pins": ["T23", "R23"], "active": "low", "io_standard": "LVCMOS33"}
+    "sys_clk": {
+      "type": "clock",
+      "pin": "U22",
+      "mhz": 50,
+      "io_standard": "LVCMOS33",
+      "source": {
+        "kind": "maker",
+        "ref": "QMTECH XC7A75T-100T-200T Core Board V01, Test01_led_key example"
+      }
+    },
+    "leds_n": {
+      "type": "leds",
+      "pins": ["T23", "R23"],
+      "active": "low",
+      "io_standard": "LVCMOS33",
+      "source": {
+        "kind": "maker",
+        "ref": "QMTECH XC7A75T-100T-200T Core Board V01, Test01_led_key example"
+      }
+    }
   }
 }

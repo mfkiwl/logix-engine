@@ -13,12 +13,19 @@
     }
   ],
   "resources": {
-    "sys_clk": {"type": "clock", "pin": "K17", "mhz": 125, "io_standard": "LVCMOS33"},
+    "sys_clk": {
+      "type": "clock",
+      "pin": "K17",
+      "mhz": 125,
+      "io_standard": "LVCMOS33",
+      "source": {"kind": "maker", "ref": "github.com/Digilent/digilent-xdc Zybo-Z7-Master.xdc"}
+    },
     "leds": {
       "type": "leds",
       "pins": ["M14", "M15", "G14", "D18"],
       "active": "high",
-      "io_standard": "LVCMOS33"
+      "io_standard": "LVCMOS33",
+      "source": {"kind": "maker", "ref": "github.com/Digilent/digilent-xdc Zybo-Z7-Master.xdc"}
     }
   }
 }
