@@ -1482,10 +1482,12 @@
         ]
       },
       {
-        "name": "led",
+        "name": "leds",
         "type": "led",
+        "active": "high",
         "io_standard": "LVCMOS33",
         "pins": [
+          "B1",
           "B2"
         ]
       }
@@ -1535,10 +1537,12 @@
         ]
       },
       {
-        "name": "led",
+        "name": "leds",
         "type": "led",
+        "active": "high",
         "io_standard": "LVCMOS33",
         "pins": [
+          "B1",
           "B2"
         ]
       }
@@ -3402,10 +3406,14 @@
         ]
       },
       {
-        "name": "led",
+        "name": "leds",
         "type": "led",
+        "active": "high",
         "pins": [
-          "41"
+          "41",
+          "39",
+          "38",
+          "37"
         ]
       }
     ]
