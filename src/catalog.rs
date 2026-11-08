@@ -1382,8 +1382,7 @@ mod tests {
     #[test]
     fn resources_of_the_catalog() {
         let c = builtin();
-        // Every board has its clock or LEDs; the Soan Papdi Mini's come from
-        // its maker, its LED's active level not yet.
+        // Every board has its clock or LEDs.
         let without: Vec<_> = c
             .boards
             .iter()

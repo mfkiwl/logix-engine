@@ -19,7 +19,7 @@
       "mhz": 12,
       "source": {
         "kind": "maker",
-        "ref": "The maker's reply to the Logix project, 2026-11-08: 12 MHz external clock on pin 35; RGB LED red on 39, green on 40, blue on 41. Polarity not stated yet."
+        "ref": "The maker's reply to the Logix project, 2026-11-08: 12 MHz external clock on pin 35."
       }
     },
     "rgb_led": {
@@ -27,9 +27,10 @@
       "red": "39",
       "green": "40",
       "blue": "41",
+      "active": "low",
       "source": {
         "kind": "maker",
-        "ref": "The maker's reply to the Logix project, 2026-11-08: 12 MHz external clock on pin 35; RGB LED red on 39, green on 40, blue on 41. Polarity not stated yet."
+        "ref": "The maker's replies to the Logix project, 2026-11-08: RGB LED red on 39, green on 40, blue on 41, active low (as pins 39-41, the iCE40 UltraPlus's open-drain RGB outputs, require)."
       }
     }
   }
