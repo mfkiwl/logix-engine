@@ -69,8 +69,22 @@ pub fn bitstream_name(arch: Architecture) -> &'static str {
 }
 
 /// yosys's synthesis script (its -p argument), writing the
-/// netlist to `json`.
+/// netlist to `json`. It starts by making sure the top module isn't a black
+/// box: yosys's read_verilog makes an empty module one (a module whose only
+/// ports are unused inputs, or none, such as a board's starting design), and
+/// then nextpnr can't find the top module, and on Xilinx synth_xilinx adds
+/// no I/O buffers, which nextpnr-xilinx refuses. `hierarchy` first, since
+/// modules are read lazily; `=` because selections skip black boxes. Other
+/// empty modules, such as a primitive's stub, stay black boxes.
 pub fn synth_script(fpga: &FpgaDefinition, top: &str, json: &Path) -> String {
+    format!(
+        "hierarchy -top {top}; setattr -mod -unset blackbox ={top}; {}",
+        synth_command(fpga, top, json)
+    )
+}
+
+/// The architecture's synthesis command.
+fn synth_command(fpga: &FpgaDefinition, top: &str, json: &Path) -> String {
     let json = json.display();
     match fpga.architecture {
         Architecture::Ice40 => format!("synth_ice40 -top {top} -json \"{json}\""),

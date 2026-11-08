@@ -236,7 +236,7 @@ async fn builds_an_ecp5_design() {
         out.commands[0]
             .args
             .iter()
-            .any(|a| a.starts_with("synth_ecp5 -top main"))
+            .any(|a| a.contains("; synth_ecp5 -top main"))
     );
     // nextpnr gets the top module first.
     assert_eq!(out.commands[1].args[1..3], ["--top", "main"]);
@@ -355,7 +355,7 @@ async fn builds_a_gowin_design() {
         out.commands[0]
             .args
             .iter()
-            .any(|a| a.starts_with("synth_gowin -top main; write_json "))
+            .any(|a| a.contains("; synth_gowin -top main; write_json "))
     );
     // nextpnr gets the top module first.
     assert_eq!(out.commands[1].args[1..3], ["--top", "main"]);
@@ -439,7 +439,7 @@ async fn builds_a_xilinx_design() {
         out.commands[0]
             .args
             .iter()
-            .any(|a| a.starts_with("synth_xilinx -arch xc7 -top main; write_json "))
+            .any(|a| a.contains("; synth_xilinx -arch xc7 -top main; write_json "))
     );
     // nextpnr gets the top module first.
     assert_eq!(out.commands[1].args[1..3], ["--top", "main"]);
@@ -489,12 +489,36 @@ async fn builds_a_xilinx_design() {
     assert!(!src.join("_build/hardware.bit").exists());
 }
 
+/// An empty module other than the top, such as a primitive's stub written for
+/// a simulator, stays a black box: synthesis keeps the primitive.
+#[tokio::test]
+async fn an_empty_primitive_stub_keeps_the_primitive() {
+    let state = engine().await;
+    let tmp = tempfile::tempdir().unwrap();
+    let src = tmp.path().canonicalize().unwrap();
+    std::fs::write(
+        src.join("main.v"),
+        "module SB_HFOSC (input CLKHFPU, input CLKHFEN, output CLKHF);\nendmodule\n\n\
+         module main (output led);\n  wire clk;\n  SB_HFOSC osc (.CLKHFPU(1'b1), .CLKHFEN(1'b1), .CLKHF(clk));\n\
+         \x20 reg [3:0] n = 0;\n  always @(posedge clk) n <= n + 1;\n  assign led = n[3];\nendmodule\n",
+    )
+    .unwrap();
+    std::fs::write(src.join("pinout.pcf"), "set_io led 11\n").unwrap();
+    let input = json!({"board": "icebreaker", "constraint_file": "pinout.pcf"});
+    let out = build_it(&state, &src, input).await;
+    assert!(out.is_ok(), "{:?}", out.err());
+    let netlist = std::fs::read_to_string(src.join("_build/hardware.json")).unwrap();
+    assert!(
+        netlist.contains("\"type\": \"SB_HFOSC\""),
+        "the oscillator is gone"
+    );
+}
+
 /// Designs without logic build on every family: one with no ports and a pin
-/// file without pins, and one whose only port is the clock input (nextpnr
-/// gets the top module; it couldn't guess it). Except the last on Xilinx:
-/// nextpnr-xilinx refuses an input without an I/O buffer, which yosys
-/// leaves out when nothing uses it ("IO port 'sys_clk' is missing an IO
-/// buffer"); with any output it builds.
+/// file without pins, and one whose only port is the clock input. yosys
+/// makes such an empty module a black box, unless the synthesis script
+/// unmarks the top module: nextpnr couldn't find it, and on Xilinx the input
+/// got no I/O buffer ("IO port 'sys_clk' is missing an IO buffer").
 #[tokio::test]
 async fn designs_without_logic_build() {
     let state = engine().await;
@@ -523,7 +547,6 @@ async fn designs_without_logic_build() {
             let tmp = tempfile::tempdir().unwrap();
             let src = tmp.path().canonicalize().unwrap();
             std::fs::write(src.join("main.v"), main).unwrap();
-            let refused = board == "arty-a7-35t" && main.contains("input");
             let pins = if file.ends_with(".cst") {
                 pins.replace('#', "//")
             } else {
@@ -532,12 +555,7 @@ async fn designs_without_logic_build() {
             std::fs::write(src.join(file), pins).unwrap();
             let input = json!({"board": board, "constraint_file": file});
             let out = build_it(&state, &src, input).await;
-            if refused {
-                let e = out.unwrap_err();
-                assert!(e.message.contains("missing an IO buffer"), "{e:?}");
-            } else {
-                assert!(out.is_ok(), "{board}, {main:?}: {:?}", out.err());
-            }
+            assert!(out.is_ok(), "{board}, {main:?}: {:?}", out.err());
         }
     }
 }
