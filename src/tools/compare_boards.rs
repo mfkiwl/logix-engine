@@ -147,7 +147,12 @@ fn led_count(b: &ResolvedBoard) -> Option<usize> {
     let n: usize = b
         .pin_groups
         .iter()
-        .filter(|g| g.group_type == catalog::PinGroupType::Led)
+        .filter(|g| {
+            matches!(
+                g.group_type,
+                catalog::PinGroupType::Led | catalog::PinGroupType::LedMatrix
+            )
+        })
         .map(|g| g.pins.len())
         .sum();
     (n > 0).then_some(n)

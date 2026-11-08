@@ -87,7 +87,7 @@
               "type": "null"
             }
           ],
-          "description": "For LEDs whose pins mean more than bit numbers: rgb is one RGB LED,\nthree pins in the order red, green, blue. Omitted for plain LEDs."
+          "description": "For LEDs whose pins mean more than bit numbers: rgb is one RGB LED,\nthree pins in the order red, green, blue (for led_select, the pins\nthat pick each color). Omitted for plain LEDs."
         },
         "mhz": {
           "description": "The clock's frequency in MHz, such as 12. Clocks only.",
@@ -112,7 +112,7 @@
         },
         "type": {
           "$ref": "#/$defs/PinGroupType",
-          "description": "What the pins are wired to: clock (an oscillator, one pin, with mhz)\nor led (LEDs, with active when known). Later versions add types,\nsuch as button and switch."
+          "description": "What the pins are wired to: clock (an oscillator, one pin, with mhz),\nled (LEDs, with active when known), or for LEDs in a matrix,\nled_matrix (one pin per LED) with led_select (the pins that pick\nwhat lights, such as an RGB LED's color: an LED lights when its\nled_matrix pin and a led_select pin are both active). Later versions\nadd types, such as button and switch."
         },
         "user_notes": {
           "description": "Warnings and missing information for users, such as a jumper the\nclock needs.",
@@ -140,6 +140,16 @@
         {
           "const": "led",
           "description": "One or more LEDs.",
+          "type": "string"
+        },
+        {
+          "const": "led_matrix",
+          "description": "LEDs in a matrix: one pin per LED, which lights when a led_select\npin is active too.",
+          "type": "string"
+        },
+        {
+          "const": "led_select",
+          "description": "The pins that pick what lights in the board's led_matrix, such as\nan RGB LED's color.",
           "type": "string"
         }
       ]

@@ -777,10 +777,11 @@ pub mod tests {
                 "sipeed-tang-nano-1k",
                 "sipeed-tang-nano-4k",
                 "sipeed-tang-nano-9k",
-                "sipeed-tang-primer-20k"
+                "sipeed-tang-primer-20k-dock",
+                "sipeed-tang-primer-20k-lite"
             ]
         );
-        assert!(m[4..].iter().all(|m| m.best_level() == MatchLevel::Weak));
+        assert!(m[5..].iter().all(|m| m.best_level() == MatchLevel::Weak));
         // A real FT2232H (release 0700) is none of the BL702 boards, even
         // when the engine can't open it.
         let mut ft2232h = device("0403", "6010", Some("Alhambra II v1.0A"), None, 5);
@@ -793,7 +794,8 @@ pub mod tests {
                 "sipeed-tang-nano-1k",
                 "sipeed-tang-nano-4k",
                 "sipeed-tang-nano-9k",
-                "sipeed-tang-primer-20k",
+                "sipeed-tang-primer-20k-dock",
+                "sipeed-tang-primer-20k-lite",
             ] {
                 assert!(!ids(&m).contains(&bl702.to_string()), "{bl702}");
             }

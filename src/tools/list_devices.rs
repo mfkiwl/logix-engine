@@ -233,14 +233,7 @@ mod tests {
         // USB IDs (weak) aren't.
         assert_eq!(
             out.devices[1].likely_boards,
-            [
-                "arice1",
-                "fpga101",
-                "upduino",
-                "upduino2",
-                "upduino21",
-                "vsdsquadron-fm"
-            ]
+            ["arice1", "fpga101", "vsdsquadron-fm"]
         );
         assert!(
             !out.devices[1]

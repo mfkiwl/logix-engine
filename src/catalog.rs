@@ -64,13 +64,17 @@ pub struct PinGroup {
     /// sys_clk, led or leds.
     #[schemars(pattern(r"^[A-Za-z_][A-Za-z0-9_]*$"))]
     pub name: String,
-    /// What the pins are wired to: clock (an oscillator, one pin, with mhz)
-    /// or led (LEDs, with active when known). Later versions add types,
-    /// such as button and switch.
+    /// What the pins are wired to: clock (an oscillator, one pin, with mhz),
+    /// led (LEDs, with active when known), or for LEDs in a matrix,
+    /// led_matrix (one pin per LED) with led_select (the pins that pick
+    /// what lights, such as an RGB LED's color: an LED lights when its
+    /// led_matrix pin and a led_select pin are both active). Later versions
+    /// add types, such as button and switch.
     #[serde(rename = "type")]
     pub group_type: PinGroupType,
     /// For LEDs whose pins mean more than bit numbers: rgb is one RGB LED,
-    /// three pins in the order red, green, blue. Omitted for plain LEDs.
+    /// three pins in the order red, green, blue (for led_select, the pins
+    /// that pick each color). Omitted for plain LEDs.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub kind: Option<LedKind>,
     /// The clock's frequency in MHz, such as 12. Clocks only.
@@ -104,6 +108,14 @@ pub enum PinGroupType {
     Clock,
     /// One or more LEDs.
     Led,
+    /// LEDs in a matrix: one pin per LED, which lights when a led_select
+    /// pin is active too.
+    #[serde(rename = "led_matrix")]
+    LedMatrix,
+    /// The pins that pick what lights in the board's led_matrix, such as
+    /// an RGB LED's color.
+    #[serde(rename = "led_select")]
+    LedSelect,
 }
 
 /// A group of LEDs whose pins mean more than bit numbers.
@@ -190,9 +202,15 @@ pub fn pin_group_problems(groups: &[PinGroup]) -> Vec<(String, String)> {
                     add("kind", "Only LEDs have a kind.".into());
                 }
             }
-            PinGroupType::Led => {
+            PinGroupType::Led | PinGroupType::LedMatrix | PinGroupType::LedSelect => {
                 if g.mhz.is_some() {
                     add("mhz", "Only clocks have mhz.".into());
+                }
+                if g.group_type == PinGroupType::LedMatrix && g.kind.is_some() {
+                    add(
+                        "kind",
+                        "A led_matrix has no kind: its led_select has it.".into(),
+                    );
                 }
                 if g.kind == Some(LedKind::Rgb) && g.pins.len() != 3 {
                     add(
@@ -202,6 +220,26 @@ pub fn pin_group_problems(groups: &[PinGroup]) -> Vec<(String, String)> {
                 }
             }
         }
+    }
+    // A matrix needs the pins that pick what lights, and they need a matrix.
+    let count = |t| groups.iter().filter(|g| g.group_type == t).count();
+    let (matrices, selects) = (
+        count(PinGroupType::LedMatrix),
+        count(PinGroupType::LedSelect),
+    );
+    for (i, g) in groups.iter().enumerate() {
+        let text = match g.group_type {
+            PinGroupType::LedMatrix if matrices > 1 => "A board has at most one led_matrix.",
+            PinGroupType::LedMatrix if selects == 0 => {
+                "A led_matrix needs a led_select group: the pins that pick what lights."
+            }
+            PinGroupType::LedSelect if selects > 1 => "A board has at most one led_select.",
+            PinGroupType::LedSelect if matrices == 0 => {
+                "A led_select needs a led_matrix group: one pin per LED."
+            }
+            _ => continue,
+        };
+        out.push((format!("{i}/type"), text.into()));
     }
     out
 }
@@ -1228,9 +1266,9 @@ mod tests {
                 .count();
             (fpgas, boards)
         };
-        assert_eq!(count(Architecture::Ice40), (40, 31));
+        assert_eq!(count(Architecture::Ice40), (40, 27));
         assert_eq!(count(Architecture::Ecp5), (39, 22));
-        assert_eq!(count(Architecture::Gowin), (241, 8));
+        assert_eq!(count(Architecture::Gowin), (241, 9));
         assert_eq!(count(Architecture::Xilinx), (212, 23));
         let arty = &c.fpgas[&c.boards["arty-a7-35t"].fpga_id];
         assert_eq!(arty.nextpnr_device, "xc7a35tcsg324-1");
@@ -1241,7 +1279,7 @@ mod tests {
         assert_eq!(nano.nextpnr_family.as_deref(), Some("GW1N-9C"));
         assert_eq!(nano.packer_device.as_deref(), Some("GW1N-9C"));
         assert_eq!(nano.yosys_family, None);
-        let primer = &c.fpgas[&c.boards["sipeed-tang-primer-20k"].fpga_id];
+        let primer = &c.fpgas[&c.boards["sipeed-tang-primer-20k-dock"].fpga_id];
         assert_eq!(primer.yosys_family.as_deref(), Some("gw2a"));
         let sugar = &c.boards["icesugar-pro"];
         let f = &c.fpgas[&sugar.fpga_id];
@@ -1272,8 +1310,8 @@ mod tests {
         assert_eq!(v.selector.memory, "flash");
         assert_eq!(c.fpgas["ice40hx4k-tq144-8k"].package(), "tq144:4k");
         let variants = || c.boards.values().flat_map(|b| &b.variants);
-        assert_eq!(c.boards.len(), 84);
-        assert_eq!(variants().count(), 131);
+        assert_eq!(c.boards.len(), 81);
+        assert_eq!(variants().count(), 128);
         // Users pick boards by description, so no two boards share one.
         let mut descriptions: Vec<&str> =
             c.boards.values().map(|b| b.description.as_str()).collect();
@@ -1524,6 +1562,29 @@ mod tests {
             ("sys_clk", Some(12.0), ["20".to_string()].as_slice())
         );
         assert!(up.user_notes.as_deref().unwrap().contains("R16"));
+        // The ButterStick's RGB LEDs are a matrix (its schematic): an LED's
+        // pin and a color's pin, both active high.
+        let bs = &c.boards["butterstick-r10-2g-85k"].pin_groups;
+        assert_eq!(
+            bs.iter().map(|g| g.group_type).collect::<Vec<_>>(),
+            [
+                PinGroupType::Clock,
+                PinGroupType::LedMatrix,
+                PinGroupType::LedSelect
+            ]
+        );
+        assert_eq!((bs[1].pins.len(), bs[2].kind), (7, Some(LedKind::Rgb)));
+        assert_eq!(bs[2].pins, ["T1", "U1", "R1"]);
+        // The Tang Primer 20K is a board per carrier: only the Dock has LEDs.
+        let primer = |id: &str| c.boards[id].pin_groups.len();
+        assert_eq!(
+            (
+                primer("sipeed-tang-primer-20k-dock"),
+                primer("sipeed-tang-primer-20k-lite")
+            ),
+            (2, 1)
+        );
+        assert!(!c.boards.contains_key("sipeed-tang-primer-20k"));
         let fomu = &c.boards["fomu"].pin_groups[1];
         assert_eq!(
             (fomu.kind, fomu.active),
@@ -1587,6 +1648,39 @@ mod tests {
         assert_eq!(
             problems(&[rgb])[0].1,
             "An RGB LED has three pins: red, green, blue."
+        );
+        // A matrix and its select pins come together.
+        let matrix = group(serde_json::json!(
+            {"name": "leds", "type": "led_matrix", "active": "high", "pins": ["1", "2"]}
+        ));
+        let select = group(serde_json::json!(
+            {"name": "led_color", "type": "led_select", "kind": "rgb", "active": "high",
+             "pins": ["3", "4", "5"]}
+        ));
+        assert!(problems(&[matrix.clone(), select.clone()]).is_empty());
+        assert_eq!(
+            problems(std::slice::from_ref(&matrix)),
+            [(
+                "0/type".to_string(),
+                "A led_matrix needs a led_select group: the pins that pick what lights."
+                    .to_string()
+            )]
+        );
+        assert_eq!(
+            problems(std::slice::from_ref(&select)),
+            [(
+                "0/type".to_string(),
+                "A led_select needs a led_matrix group: one pin per LED.".to_string()
+            )]
+        );
+        let mut kinded = matrix.clone();
+        kinded.kind = Some(LedKind::Rgb);
+        assert_eq!(
+            problems(&[kinded, select])[0],
+            (
+                "0/kind".to_string(),
+                "A led_matrix has no kind: its led_select has it.".to_string()
+            )
         );
         // Unknown types and fields are format errors.
         assert!(
