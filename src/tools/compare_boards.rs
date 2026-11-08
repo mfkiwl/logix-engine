@@ -349,8 +349,8 @@ mod tests {
 
     #[test]
     fn clocks_and_leds_not_listed_are_unknown() {
-        // The UPduino 3.0's example uses the internal oscillator: no clock.
-        let out = cmp(json!({"from_board": "icebreaker", "to_board": "upduino3"}));
+        // The pico-ice's clock comes from its RP2040: no clock listed.
+        let out = cmp(json!({"from_board": "icebreaker", "to_board": "pico-ice"}));
         let clock = &out.aspects[6];
         assert_eq!(
             (clock.aspect.as_str(), clock.same),

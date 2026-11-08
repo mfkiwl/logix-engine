@@ -90,6 +90,10 @@ pub struct PinGroup {
     /// N14. For several pins, the first is bit 0.
     #[schemars(length(min = 1))]
     pub pins: Vec<String>,
+    /// Warnings and missing information for users, such as a jumper the
+    /// clock needs.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub user_notes: Option<String>,
 }
 
 /// What a pin group is wired to.
@@ -1513,6 +1517,13 @@ mod tests {
                  "pins": ["45", "44", "43", "42", "41", "39", "38", "37"]}
             ])
         );
+        // A clock that needs a jumper says so.
+        let up = &c.boards["upduino3"].pin_groups[0];
+        assert_eq!(
+            (up.name.as_str(), up.mhz, up.pins.as_slice()),
+            ("sys_clk", Some(12.0), ["20".to_string()].as_slice())
+        );
+        assert!(up.user_notes.as_deref().unwrap().contains("R16"));
         let fomu = &c.boards["fomu"].pin_groups[1];
         assert_eq!(
             (fomu.kind, fomu.active),

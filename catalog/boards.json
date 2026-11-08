@@ -1418,6 +1418,16 @@
     ],
     "pin_groups": [
       {
+        "name": "sys_clk",
+        "type": "clock",
+        "mhz": 12,
+        "io_standard": "LVCMOS33",
+        "pins": [
+          "A10"
+        ],
+        "user_notes": "The 12 MHz clock comes from the board's FTDI chip and reaches the FPGA only with jumper JP2 shorted."
+      },
+      {
         "name": "led",
         "type": "led",
         "active": "low",
@@ -3704,6 +3714,15 @@
     ],
     "pin_groups": [
       {
+        "name": "sys_clk",
+        "type": "clock",
+        "mhz": 12,
+        "pins": [
+          "20"
+        ],
+        "user_notes": "The 12 MHz oscillator reaches this pin only with the board's OSC jumper (R16) shorted."
+      },
+      {
         "name": "rgb_led",
         "type": "led",
         "kind": "rgb",
@@ -3736,6 +3755,15 @@
       }
     ],
     "pin_groups": [
+      {
+        "name": "sys_clk",
+        "type": "clock",
+        "mhz": 12,
+        "pins": [
+          "20"
+        ],
+        "user_notes": "The 12 MHz oscillator reaches this pin only with the board's OSC jumper (R16) shorted."
+      },
       {
         "name": "rgb_led",
         "type": "led",

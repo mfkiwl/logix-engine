@@ -113,6 +113,13 @@
         "type": {
           "$ref": "#/$defs/PinGroupType",
           "description": "What the pins are wired to: clock (an oscillator, one pin, with mhz)\nor led (LEDs, with active when known). Later versions add types,\nsuch as button and switch."
+        },
+        "user_notes": {
+          "description": "Warnings and missing information for users, such as a jumper the\nclock needs.",
+          "type": [
+            "string",
+            "null"
+          ]
         }
       },
       "required": [
