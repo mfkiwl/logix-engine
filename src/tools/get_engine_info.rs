@@ -58,6 +58,13 @@ pub struct GetEngineInfoOutput {
     /// of custom boards files, which may name it in a "$schema" key so
     /// editors can check them. A file that names another schema is refused.
     pub boards_schema: String,
+    /// The facts above as plain text lines for people, the engine's part of
+    /// a frontend's system info (for bug reports), so every frontend shows
+    /// them the same way: the version, platform, engine folder, log file,
+    /// automatic install, command line, each package with its version and
+    /// status, and the boards schema. Show it as is; its wording can change
+    /// in any version, so read the fields above, not this text.
+    pub report: String,
 }
 
 /// A toolchain package and whether it's installed.
@@ -95,7 +102,7 @@ pub fn run(
     state: &EngineState,
     _input: GetEngineInfoInput,
 ) -> Result<GetEngineInfoOutput, ToolError> {
-    Ok(GetEngineInfoOutput {
+    let mut out = GetEngineInfoOutput {
         engine_version: state::ENGINE_VERSION.to_string(),
         protocol_versions: state::PROTOCOL_VERSIONS
             .iter()
@@ -108,7 +115,36 @@ pub fn run(
         log_file: state.log_file.display().to_string(),
         packages: package_list(state),
         boards_schema: crate::catalog::BOARDS_SCHEMA.to_string(),
-    })
+        report: String::new(),
+    };
+    out.report = report(&out);
+    Ok(out)
+}
+
+/// The engine's part of a system info report (`report`).
+fn report(info: &GetEngineInfoOutput) -> String {
+    let mut lines = vec![
+        format!("Logix Engine {}", info.engine_version),
+        format!("Platform: {}", info.platform),
+        format!("Engine folder: {}", info.engine_folder),
+        format!("Log file: {}", info.log_file),
+        format!(
+            "Automatic package install: {}",
+            if info.auto_install { "on" } else { "off" }
+        ),
+        format!("Command line: {}", info.command_line.join(" ")),
+        "Packages:".to_string(),
+    ];
+    for p in &info.packages {
+        let status = match p.status {
+            PackageStatus::Installed => "installed",
+            PackageStatus::Missing => "missing",
+            PackageStatus::Broken => "broken",
+        };
+        lines.push(format!("  {} {}: {status}", p.name, p.version));
+    }
+    lines.push(format!("Boards schema: {}", info.boards_schema));
+    lines.join("\n")
 }
 
 /// Every package in the manifest, with its status.
@@ -132,5 +168,53 @@ pub fn package_info(packages: &PackageManager, spec: &PackageSpec) -> PackageInf
         status,
         bin_folder: (status == PackageStatus::Installed)
             .then(|| packages.package_dir(spec).join("bin").display().to_string()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn the_report_lists_the_facts_for_people() {
+        let mut info = GetEngineInfoOutput {
+            engine_version: "2026-11-08".into(),
+            protocol_versions: vec!["2025-11-25".into()],
+            platform: "darwin-arm64".into(),
+            engine_folder: "/Users/you/.logix/engine".into(),
+            auto_install: true,
+            command_line: vec!["--engine-folder".into(), "/Users/you/.logix/engine".into()],
+            log_file: "/Users/you/.logix/engine/logs/20261108-1.log".into(),
+            packages: vec![
+                PackageInfo {
+                    name: "oss-cad-suite".into(),
+                    version: "2026-11-20".into(),
+                    status: PackageStatus::Installed,
+                    bin_folder: Some("/x/bin".into()),
+                },
+                PackageInfo {
+                    name: "verible".into(),
+                    version: "2026-10-22".into(),
+                    status: PackageStatus::Missing,
+                    bin_folder: None,
+                },
+            ],
+            boards_schema: crate::catalog::BOARDS_SCHEMA.into(),
+            report: String::new(),
+        };
+        info.report = report(&info);
+        assert_eq!(
+            info.report,
+            "Logix Engine 2026-11-08
+Platform: darwin-arm64
+Engine folder: /Users/you/.logix/engine
+Log file: /Users/you/.logix/engine/logs/20261108-1.log
+Automatic package install: on
+Command line: --engine-folder /Users/you/.logix/engine
+Packages:
+  oss-cad-suite 2026-11-20: installed
+  verible 2026-10-22: missing
+Boards schema: https://www.openlogix.org/schemas/logix-boards-v1.json"
+        );
     }
 }

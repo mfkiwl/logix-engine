@@ -78,6 +78,12 @@ async fn get_engine_info_reports_the_launch_settings() {
         out["boards_schema"],
         "https://www.openlogix.org/schemas/logix-boards-v1.json"
     );
+    let report = out["report"].as_str().unwrap();
+    assert!(report.starts_with("Logix Engine "), "{report}");
+    assert!(
+        report.contains(&format!("Engine folder: {}", engine_folder.display())),
+        "{report}"
+    );
     assert_eq!(
         out["command_line"],
         json!([

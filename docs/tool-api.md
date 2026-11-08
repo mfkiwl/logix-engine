@@ -1047,6 +1047,7 @@ Returns the Logix Engine's version, platform and package status. A host calls it
 | `log_file` | absolute path | The log file this engine process writes, in the `logs` subfolder of the engine folder |
 | `packages` | list of packages | Every package in the engine's manifest. Each has a text `name`, a date tag `version`, a `status`: `installed`, `missing` or `broken`, and, when installed, `bin_folder`: the absolute path of the folder with its programs, for hosts that run one directly, such as Verible's language server `verible-verilog-ls` from the `verible` package |
 | `boards_schema` | text | The address of the boards schema this engine reads, the JSON Schema of custom boards files, such as `https://www.openlogix.org/schemas/logix-boards-v1.json` (see Board specification) |
+| `report` | multiline text | The facts above as lines for people, the engine's part of a frontend's system info (see Show system info under Recipes): the version, platform, engine folder, log file, automatic install, command line, each package with its version and status, and the boards schema. Show it as is; its wording can change in any version, so programs read the fields above |
 
 **Errors:** engine errors only.
 
@@ -1067,7 +1068,8 @@ Output:
     { "name": "oss-cad-suite", "version": "2026-11-20", "status": "installed", "bin_folder": "/Users/user/.myhost/engine/packages/oss-cad-suite/2026-11-20/bin" },
     { "name": "examples", "version": "2026-10-15", "status": "missing" }
   ],
-  "boards_schema": "https://www.openlogix.org/schemas/logix-boards-v1.json"
+  "boards_schema": "https://www.openlogix.org/schemas/logix-boards-v1.json",
+  "report": "Logix Engine 2026-12-01\nPlatform: darwin-arm64\nEngine folder: /Users/user/.myhost/engine\n..."
 }
 ```
 
@@ -1188,6 +1190,7 @@ The Logix Engine was designed together with the Logix IDE, and its tools map to 
 | Pick a board and its board variant | [engine/catalog.rs](https://github.com/openlogix/logix-ide/blob/main/src-tauri/src/engine/catalog.rs), [ui/src/lib/BoardPicker.svelte](https://github.com/openlogix/logix-ide/blob/main/ui/src/lib/BoardPicker.svelte), [ui/src/lib/variants.ts](https://github.com/openlogix/logix-ide/blob/main/ui/src/lib/variants.ts) |
 | A project's own boards | [commands.rs](https://github.com/openlogix/logix-ide/blob/main/src-tauri/src/commands.rs) (`boards_file`, `custom_boards_stamp`), [engine/catalog.rs](https://github.com/openlogix/logix-ide/blob/main/src-tauri/src/engine/catalog.rs) (`project_boards`, `BoardsProblem`, `BoardsFile` for `display_paths`), [ui/src/lib/boards.ts](https://github.com/openlogix/logix-ide/blob/main/ui/src/lib/boards.ts) (`boardsProblemLines`) |
 | Format an unsaved editor buffer | [engine/format.rs](https://github.com/openlogix/logix-ide/blob/main/src-tauri/src/engine/format.rs) |
+| Show system info | [system_info.rs](https://github.com/openlogix/logix-ide/blob/main/src-tauri/src/system_info.rs), [ui/src/lib/SystemInfoDialog.svelte](https://github.com/openlogix/logix-ide/blob/main/ui/src/lib/SystemInfoDialog.svelte) |
 
 Logic that every frontend would need and that doesn't depend on a frontend's own model belongs in the Logix Engine, not in each frontend: when a frontend finds itself repeating engine knowledge, such as FPGA family names or the toolchain's resource names, that is a gap to fill in the engine.
 
@@ -1242,6 +1245,13 @@ Logic that every frontend would need and that doesn't depend on a frontend's own
 ### Format an unsaved editor buffer
 
 Requests never carry source text. Write the buffer to a file in a scratch folder, call `format` on it, and read the result back into the editor.
+
+### Show system info
+
+Give users one place, such as Help > System Info, with a plain text report and a Copy button, for bug reports. Every frontend shows the same report, so a report reads the same whichever frontend it came from:
+
+1. The frontend's own lines: its name and version, the operating system and its version, its own log file, and which Logix Engine it runs: the release it pins, or another binary (such as a local build).
+2. A blank line, then `report` from `get_engine_info`, as is. Call `get_engine_info` when the report is opened, so package status is current. If the engine isn't running, say so in its place.
 
 ## Open questions
 

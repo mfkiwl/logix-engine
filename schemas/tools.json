@@ -112,6 +112,10 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "report": {
+          "description": "The facts above as plain text lines for people, the engine's part of\na frontend's system info (for bug reports), so every frontend shows\nthem the same way: the version, platform, engine folder, log file,\nautomatic install, command line, each package with its version and\nstatus, and the boards schema. Show it as is; its wording can change\nin any version, so read the fields above, not this text.",
+          "type": "string"
         }
       },
       "required": [
@@ -123,7 +127,8 @@
         "command_line",
         "log_file",
         "packages",
-        "boards_schema"
+        "boards_schema",
+        "report"
       ],
       "title": "GetEngineInfoOutput",
       "type": "object"
