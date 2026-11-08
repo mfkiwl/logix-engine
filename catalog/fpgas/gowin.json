@@ -1,4 +1,5 @@
 {
+  "$schema": "https://www.openlogix.org/schemas/logix-fpgas-gowin-v1.json",
   "gw1n-lv1cs30c5-i4": {
     "part_number": "GW1N-LV1CS30C5/I4",
     "size": "1k",

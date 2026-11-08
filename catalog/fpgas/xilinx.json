@@ -1,4 +1,5 @@
 {
+  "$schema": "https://www.openlogix.org/schemas/logix-fpgas-xilinx-v1.json",
   "xc7a100tcsg324-1": {
     "part_number": "XC7A100T-1CSG324",
     "size": "100k",

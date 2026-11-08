@@ -23,7 +23,7 @@ rm -rf catalog
 mkdir -p catalog/schemas
 cp -R "$tmp/catalog/boards" catalog/boards
 cp -R "$tmp/catalog/fpgas" catalog/fpgas
-cp "$tmp/catalog/schemas/logix-board-v1.json" catalog/schemas/
+cp "$tmp/catalog/schemas/"*.json catalog/schemas/
 cp "$tmp/catalog/LICENSE-MIT" "$tmp/catalog/LICENSE-APACHE" catalog/
 printf '{\n  "repo": "https://github.com/openlogix/logix-catalog",\n  "commit": "%s",\n  "date": "%s"\n}\n' "$commit" "$date" > catalog/SOURCE.json
 echo "catalog/ is now logix-catalog $commit ($date): $(ls catalog/boards | wc -l | tr -d ' ') boards."

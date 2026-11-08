@@ -508,6 +508,12 @@ impl Architecture {
 /// changes without a new version.
 pub const BOARDS_SCHEMA: &str = "https://www.openlogix.org/schemas/logix-board-v1.json";
 
+/// The schema an FPGA family's file, `fpgas/<architecture>.json`, names in
+/// its `"$schema"` key: one per family, owned by Logix Catalog.
+pub fn fpgas_schema(architecture: &str) -> String {
+    format!("https://www.openlogix.org/schemas/logix-fpgas-{architecture}-v1.json")
+}
+
 /// The key a board file may use to name its schema.
 pub const SCHEMA_KEY: &str = "$schema";
 
@@ -799,8 +805,14 @@ impl Catalog {
         let mut fpgas = BTreeMap::new();
         for (arch, text) in fpga_files {
             let file = format!("fpgas/{arch}.json");
-            let entries: serde_json::Map<String, serde_json::Value> =
+            let mut entries: serde_json::Map<String, serde_json::Value> =
                 serde_json::from_str(text).map_err(|e| format!("{file}: {e}"))?;
+            let want = fpgas_schema(arch);
+            match entries.remove(SCHEMA_KEY) {
+                Some(v) if v.as_str() == Some(want.as_str()) => {}
+                Some(v) => return Err(format!("{file}: unknown $schema {v}: expected {want}")),
+                None => return Err(format!("{file}: no {SCHEMA_KEY}")),
+            }
             for (id, entry) in entries {
                 let serde_json::Value::Object(mut fields) = entry else {
                     return Err(format!("{file}: {id}: not an object"));
@@ -1496,17 +1508,33 @@ mod tests {
         let names: Vec<&str> = files::FPGA_FILES.iter().map(|(a, _)| *a).collect();
         assert_eq!(names, ["ecp5", "gowin", "ice40", "xilinx"]);
         let f = r#""part_number": "P", "size": "1k", "nextpnr_device": "d", "nextpnr_package": "p", "nextpnr_speed": "6""#;
-        let one = format!(r#"{{"a": {{{f}}}}}"#);
-        let c = Catalog::parse(&[], &[("ecp5", &one)]).unwrap();
+        // Each file names its family's schema.
+        let file = |arch: &str, fields: &str| {
+            let schema = fpgas_schema(arch);
+            format!(r#"{{"$schema": "{schema}", "a": {{{fields}}}}}"#)
+        };
+        let c = Catalog::parse(&[], &[("ecp5", &file("ecp5", f))]).unwrap();
         assert_eq!(c.fpgas["a"].architecture, Architecture::Ecp5);
         let err = |files: &[(&str, &str)]| Catalog::parse(&[], files).unwrap_err();
         assert_eq!(
-            err(&[("ecp5", &one), ("gowin", &one)]),
+            err(&[("ecp5", &file("ecp5", f)), ("gowin", &file("gowin", f))]),
             "fpgas/gowin.json: a: in another FPGA file too"
         );
-        let with_arch = format!(r#"{{"a": {{"architecture": "ecp5", {f}}}}}"#);
-        assert!(err(&[("ecp5", &with_arch)]).contains("the file's name gives it"));
-        assert!(err(&[("other", &one)]).starts_with("fpgas/other.json: a: unknown variant"));
+        let with_arch = format!(r#""architecture": "ecp5", {f}"#);
+        assert!(err(&[("ecp5", &file("ecp5", &with_arch))]).contains("the file's name gives it"));
+        assert!(
+            err(&[("other", &file("other", f))])
+                .starts_with("fpgas/other.json: a: unknown variant")
+        );
+        assert_eq!(
+            err(&[("ecp5", &format!(r#"{{"a": {{{f}}}}}"#))]),
+            "fpgas/ecp5.json: no $schema"
+        );
+        assert_eq!(
+            err(&[("ecp5", &file("gowin", f))]),
+            "fpgas/ecp5.json: unknown $schema \"https://www.openlogix.org/schemas/logix-fpgas-gowin-v1.json\": \
+             expected https://www.openlogix.org/schemas/logix-fpgas-ecp5-v1.json"
+        );
     }
 
     #[test]

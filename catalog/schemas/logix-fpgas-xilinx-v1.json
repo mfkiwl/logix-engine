@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://www.openlogix.org/schemas/logix-fpgas-xilinx-v1.json",
+  "title": "Logix Xilinx 7-series FPGAs",
+  "description": "The Xilinx 7-series FPGAs of Logix Catalog (www.openlogix.org/catalog/): its file, fpgas/xilinx.json, which maps each FPGA ID to its facts. The file's name gives the FPGAs' architecture.",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "const": "https://www.openlogix.org/schemas/logix-fpgas-xilinx-v1.json"
+    }
+  },
+  "required": [
+    "$schema"
+  ],
+  "propertyNames": {
+    "pattern": "^(\\$schema|[a-z0-9]+(-[a-z0-9]+)*)$",
+    "description": "\"$schema\", or an FPGA ID: lowercase letters, digits and dashes, such as ice40hx8k-ct256."
+  },
+  "additionalProperties": {
+    "$ref": "#/$defs/Fpga"
+  },
+  "$defs": {
+    "Fpga": {
+      "type": "object",
+      "description": "One Xilinx 7-series FPGA: its part, its size and the names the toolchain uses for it.",
+      "properties": {
+        "part_number": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The vendor's part number, such as ICE40HX4K-TQ144."
+        },
+        "size": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The device size, such as 8k."
+        },
+        "nextpnr_device": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9:_/-]+$",
+          "description": "The device nextpnr-xilinx uses, such as xc7a35tcsg324-1."
+        },
+        "yosys_arch": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9:_/-]+$",
+          "description": "The architecture yosys synthesizes for (synth_xilinx -arch), such as xc7."
+        },
+        "prjxray_family": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9:_/-]+$",
+          "description": "The FPGA family's folder in the Project X-Ray database, such as artix7, spartan7 or zynq7."
+        },
+        "jtag_idcode": {
+          "type": "string",
+          "pattern": "^0x[0-9a-f]{8}$",
+          "description": "The FPGA's JTAG ID code as openFPGALoader's --detect reports it: 0x and 8 lowercase hex digits. It identifies the chip, so FPGAs made from the same chip share it. Optional: without it, tools can't check the connected FPGA before programming over JTAG."
+        }
+      },
+      "required": [
+        "part_number",
+        "size",
+        "nextpnr_device",
+        "yosys_arch",
+        "prjxray_family"
+      ],
+      "additionalProperties": false
+    }
+  }
+}

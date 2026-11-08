@@ -1,4 +1,5 @@
 {
+  "$schema": "https://www.openlogix.org/schemas/logix-fpgas-ecp5-v1.json",
   "lfe5u-12f-6bg256c": {
     "part_number": "LFE5U-12F-6BG256C",
     "size": "12k",
