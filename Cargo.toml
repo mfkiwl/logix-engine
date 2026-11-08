@@ -36,3 +36,9 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread", "process"] }
 
 [profile.release]
 strip = true
+
+# Dependencies are built without debug info, which keeps the build folder
+# much smaller. The project's own code keeps it, so crashes and debuggers
+# still show its lines.
+[profile.dev.package."*"]
+debug = false
