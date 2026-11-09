@@ -13,6 +13,8 @@ logix-engine is an open source FPGA engine: one Rust binary per platform that ex
 | [docs/tool-api.md](docs/tool-api.md) | Adding or changing a tool, field, error or progress report |
 | [docs/command-line.md](docs/command-line.md) | Changing launch arguments or logging |
 
+[docs/tutorial-claude-code.md](docs/tutorial-claude-code.md) is a step-by-step tutorial for people trying the engine with Claude Code (install, connect, then design, test, simulate and program the board by prompts). Keep its commands and prompts working when installation, the release package or the tools change; its style follows Logix IDE's user docs (numbered steps, short plain sentences, no emoji).
+
 ## Current scope: Milestone 2
 
 Milestone 1 (iCE40, seven tools, tested on an Alhambra II) is done. Milestone 2 is Logix IDE running on the engine without losing any feature it had: Table 15 in [docs/requirements.md](docs/requirements.md#acceptance-and-phasing) lists them (lint, test, simulate, format, graph, live tool output, and every board the IDE offers today across all four toolchains; a board is dropped only for a very good, recorded reason). Examples aren't an engine feature: an example is a project, and project models are defined by the frontends, not the engine, so each frontend provides examples in its own model and source format. For AI sessions with no other requirements, the engine only suggests a default one (docs/tool-api.md, Default project model; a short form is in the server instructions in `src/server.rs`). It isn't a standard for frontends and hosts, and the engine needs no project file in any format. macOS arm64 only. Toolchain packages come from existing open source package releases, pinned in the manifest. Don't build later-phase features unless asked.
