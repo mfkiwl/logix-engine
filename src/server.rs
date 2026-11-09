@@ -34,7 +34,9 @@ const INSTRUCTIONS: &str = "Logix Engine builds and tests FPGA designs and progr
     tools that it installs and runs itself. Every request is self-contained: it names its own \
     board, source folder, source files and build folder, as absolute paths. Errors come back as \
     data with a category (design, setup, request, tool, engine or cancelled), a message and, \
-    when there is one, a suggested action. The engine needs no project file. If your session \
+    when there is one, a suggested action. Before writing a design for a board, read the \
+    board in get_catalog: its resources (clock, LEDs, buttons and their pins), what designs \
+    must drive (requires) and its ai_hints. The engine needs no project file. If your session \
     has no other requirements and the project has no layout of its own, a suggested default \
     project model is: one folder with logix.json (board, board_variant, top_module), \
     main.v, a pinout constraint file, <name>_tb.v testbenches and a _build build folder, as \

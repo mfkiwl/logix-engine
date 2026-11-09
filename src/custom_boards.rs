@@ -402,6 +402,10 @@ fn board_problems(
         ) {
             add(At::Value(format!("/requires/{field}")), text);
         }
+        for (field, text) in crate::resources::ai_hints_problems(b.ai_hints.as_ref()) {
+            let path = format!("/ai_hints/{field}");
+            add(At::Value(path.trim_end_matches('/').to_string()), text);
+        }
         for (name, field, text) in crate::resources::problems(&b.resources, fpga.map(|f| f.family))
         {
             let base = format!("/resources/{}", segment(&name));
@@ -682,6 +686,51 @@ mod tests {
         // An unknown requirement type is a problem too.
         let d = diags(&ok.replace("\"type\": \"setup\"", "\"type\": \"jumper\""));
         assert_eq!(d.len(), 1, "{d:?}");
+    }
+
+    #[test]
+    fn ai_hints_are_read_checked_and_written_last() {
+        // On the board and on a resource: an empty hint, and one too long.
+        let long = "x".repeat(crate::resources::MAX_AI_HINT_CHARS + 1);
+        let with = GOOD.replacen(
+            "  ]\n}\n",
+            &format!("  ],\n  \"resources\": {{\n    \"led\": {{\"ai_hints\": [\"\"], \"type\": \"leds\", \"pins\": [\"1\"]}}\n  }},\n  \"ai_hints\": [\"One line.\", \"{long}\"]\n}}\n"),
+            1,
+        );
+        let d = diags(&with);
+        let got: Vec<_> = d.iter().map(|d| (d.0, d.2.as_str())).collect();
+        assert_eq!(
+            got,
+            [
+                (Some(12), "An empty hint."),
+                (
+                    Some(14),
+                    "A hint is at most 90 characters, this one 91: split it."
+                ),
+            ],
+            "{d:?}"
+        );
+        // An empty list is left out instead.
+        let d = diags(&with.replace(&format!("[\"One line.\", \"{long}\"]"), "[]"));
+        assert!(
+            d.iter().any(|d| d.2.starts_with("Leave ai_hints out")),
+            "{d:?}"
+        );
+        // Fixed: read, and written last in the board and the resource,
+        // wherever the file has them.
+        let ok = with
+            .replace("[\"\"]", "[\"A resource hint.\"]")
+            .replace(&format!(", \"{long}\""), "");
+        let boards = parse("/p", &[file("my-board", &ok)]).unwrap();
+        let b = &boards["my-board"];
+        assert_eq!(b.ai_hints, Some(vec!["One line.".to_string()]));
+        let led = serde_json::to_string(&b.resources["led"]).unwrap();
+        assert!(
+            led.ends_with(r#""ai_hints":["A resource hint."]}"#),
+            "{led}"
+        );
+        let board = serde_json::to_string(b).unwrap();
+        assert!(board.ends_with(r#""ai_hints":["One line."]}"#), "{board}");
     }
 
     #[test]

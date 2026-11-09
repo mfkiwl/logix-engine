@@ -142,6 +142,47 @@ pub struct Setup {
     pub source: Option<Source>,
 }
 
+/// `ai_hints`, on a board or a resource: lines of text for AI agents, and
+/// people, writing designs for the board, never read by tools (Logix
+/// Catalog's docs/model.md, AI hints).
+pub type AiHints = Vec<String>;
+
+/// The longest line of `ai_hints`, in characters, as Logix Catalog's schema
+/// allows.
+pub const MAX_AI_HINT_CHARS: usize = 90;
+
+/// Problems in an `ai_hints` list, each as (field path under it, such as
+/// "1", or "" for the list, message): the schema's rules, a non-empty list
+/// of non-empty single lines of at most `MAX_AI_HINT_CHARS` characters.
+pub fn ai_hints_problems(hints: Option<&AiHints>) -> Vec<(String, String)> {
+    let Some(hints) = hints else {
+        return Vec::new();
+    };
+    if hints.is_empty() {
+        return vec![(
+            String::new(),
+            "Leave ai_hints out instead of an empty list.".into(),
+        )];
+    }
+    let mut out = Vec::new();
+    for (i, h) in hints.iter().enumerate() {
+        let text = if h.trim().is_empty() {
+            "An empty hint.".to_string()
+        } else if h.contains(['\n', '\r']) {
+            "A hint is one line: make each line its own hint.".to_string()
+        } else if h.chars().count() > MAX_AI_HINT_CHARS {
+            format!(
+                "A hint is at most {MAX_AI_HINT_CHARS} characters, this one {}: split it.",
+                h.chars().count()
+            )
+        } else {
+            continue;
+        };
+        out.push((i.to_string(), text));
+    }
+    out
+}
+
 /// Defines a resource type's struct: its own fields, then the fields every
 /// resource may have.
 macro_rules! resource_type {
@@ -166,6 +207,12 @@ macro_rules! resource_type {
             /// Warnings and missing information for users.
             #[serde(default, skip_serializing_if = "Option::is_none")]
             pub user_notes: Option<String>,
+            /// Hints for AI agents, and people, writing designs that use
+            /// this resource: only what its other fields can't express, such
+            /// as an LED on the FPGA's RGB LED driver pins. Advice to weigh,
+            /// not instructions. Short lines, always last. Omitted when none.
+            #[serde(default, skip_serializing_if = "Option::is_none")]
+            pub ai_hints: Option<AiHints>,
         }
     };
 }
@@ -357,6 +404,19 @@ impl Resource {
         }
     }
 
+    /// Its hints for whoever writes designs.
+    pub fn ai_hints(&self) -> Option<&AiHints> {
+        match self {
+            Resource::Clock(c) => c.ai_hints.as_ref(),
+            Resource::Leds(p) | Resource::Buttons(p) | Resource::Switches(p) => p.ai_hints.as_ref(),
+            Resource::RgbLed(r) => r.ai_hints.as_ref(),
+            Resource::LedMatrix(m) => m.ai_hints.as_ref(),
+            Resource::Uart(u) => u.ai_hints.as_ref(),
+            Resource::Pmod(p) | Resource::Unclassified(p) => p.ai_hints.as_ref(),
+            Resource::Header(h) => h.ai_hints.as_ref(),
+        }
+    }
+
     /// How many LEDs it is: a resource of LEDs counts each, an RGB LED one.
     pub fn led_count(&self) -> usize {
         match self {
@@ -437,6 +497,9 @@ pub fn problems(resources: &Resources, family: Option<Family>) -> Vec<(String, S
         }
         if let Some(text) = io_standard_problem(r.io_standard(), family) {
             add("io_standard", text);
+        }
+        for (field, text) in ai_hints_problems(r.ai_hints()) {
+            add(format!("ai_hints/{field}").trim_end_matches('/'), text);
         }
     }
     out
@@ -585,6 +648,22 @@ mod tests {
         ] {
             assert!(serde_json::from_value::<Resources>(bad).is_err());
         }
+    }
+
+    #[test]
+    fn ai_hints_follow_the_schema_rules() {
+        let check = |h: &[&str]| {
+            let h: AiHints = h.iter().map(|s| s.to_string()).collect();
+            ai_hints_problems(Some(&h))
+        };
+        assert!(ai_hints_problems(None).is_empty());
+        assert!(check(&["A hint.", &"x".repeat(MAX_AI_HINT_CHARS)]).is_empty());
+        assert_eq!(check(&[])[0].0, "");
+        let got: Vec<_> = check(&["ok", " ", "two\nlines", &"é".repeat(91)])
+            .into_iter()
+            .map(|(f, _)| f)
+            .collect();
+        assert_eq!(got, ["1", "2", "3"]);
     }
 
     #[test]

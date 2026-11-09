@@ -87,6 +87,11 @@ pub struct BoardDefinition {
     /// unclassified resource, which lists every wired pin.
     #[serde(default, skip_serializing_if = "IndexMap::is_empty")]
     pub resources: Resources,
+    /// Hints for AI agents, and people, writing designs for the board: only
+    /// what its other fields can't express. Advice to weigh, not
+    /// instructions. Short lines, always last. Omitted when none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ai_hints: Option<crate::resources::AiHints>,
 }
 
 /// One kind of choice, such as the memory to program.
@@ -943,6 +948,12 @@ impl Catalog {
             .next()
             {
                 return Err(format!("board {id}: requires/{field}: {text}"));
+            }
+            if let Some((field, text)) = crate::resources::ai_hints_problems(b.ai_hints.as_ref())
+                .into_iter()
+                .next()
+            {
+                return Err(format!("board {id}: ai_hints/{field}: {text}"));
             }
         }
         Ok(())

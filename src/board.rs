@@ -54,6 +54,11 @@ pub struct CustomBoard {
     /// such as its clock and LEDs. Optional.
     #[serde(default, skip_serializing_if = "indexmap::IndexMap::is_empty")]
     pub resources: catalog::Resources,
+    /// Hints for AI agents, and people, writing designs for the board: only
+    /// what its other fields can't express. Advice to weigh, not
+    /// instructions. Short lines, always last. Omitted when none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ai_hints: Option<crate::resources::AiHints>,
 }
 
 /// A board variant in a request: some or all of a selector's values, such
@@ -74,6 +79,7 @@ pub struct KnownBoard<'a> {
     pub variants: &'a [Variant],
     pub requires: &'a crate::resources::Requires,
     pub resources: &'a catalog::Resources,
+    pub ai_hints: Option<&'a crate::resources::AiHints>,
 }
 
 /// A custom board's FPGA: its catalog ID and definition.
@@ -102,6 +108,7 @@ pub fn known_boards(custom: &CustomBoards) -> BTreeMap<&str, KnownBoard<'_>> {
                     variants: &b.variants,
                     requires: &b.requires,
                     resources: &b.resources,
+                    ai_hints: b.ai_hints.as_ref(),
                 },
             ))
         })
@@ -121,6 +128,7 @@ pub fn known_boards(custom: &CustomBoards) -> BTreeMap<&str, KnownBoard<'_>> {
                 variants: &b.variants,
                 requires: &b.requires,
                 resources: &b.resources,
+                ai_hints: b.ai_hints.as_ref(),
             },
         );
     }
@@ -449,6 +457,7 @@ mod tests {
             variants: b.variants.clone(),
             requires: b.requires.clone(),
             resources: b.resources.clone(),
+            ai_hints: b.ai_hints.clone(),
         };
         let ram = pick("usb", "ram");
         let from_list = resolve("icesugar-pro", &ram, &boards([("icesugar-pro", same)])).unwrap();

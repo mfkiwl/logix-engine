@@ -490,6 +490,16 @@
               "additionalProperties": {
                 "$ref": "#/$defs/Resource"
               }
+            },
+            "ai_hints": {
+              "description": "Hints for AI agents, and people, writing designs for the board: only\nwhat its other fields can't express. Resources may have their own\nai_hints. Advice to weigh, not instructions. Omitted when none.",
+              "type": [
+                "array",
+                "null"
+              ],
+              "items": {
+                "type": "string"
+              }
             }
           },
           "additionalProperties": false,
@@ -822,6 +832,16 @@
                     "string",
                     "null"
                   ]
+                },
+                "ai_hints": {
+                  "description": "Hints for AI agents, and people, writing designs that use\nthis resource: only what its other fields can't express, such\nas an LED on the FPGA's RGB LED driver pins. Advice to weigh,\nnot instructions. Short lines, always last. Omitted when none.",
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
                 }
               },
               "additionalProperties": false,
@@ -893,6 +913,16 @@
                     "string",
                     "null"
                   ]
+                },
+                "ai_hints": {
+                  "description": "Hints for AI agents, and people, writing designs that use\nthis resource: only what its other fields can't express, such\nas an LED on the FPGA's RGB LED driver pins. Advice to weigh,\nnot instructions. Short lines, always last. Omitted when none.",
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
                 }
               },
               "additionalProperties": false,
@@ -964,6 +994,16 @@
                     "string",
                     "null"
                   ]
+                },
+                "ai_hints": {
+                  "description": "Hints for AI agents, and people, writing designs that use\nthis resource: only what its other fields can't express, such\nas an LED on the FPGA's RGB LED driver pins. Advice to weigh,\nnot instructions. Short lines, always last. Omitted when none.",
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
                 }
               },
               "additionalProperties": false,
@@ -1040,6 +1080,16 @@
                     "string",
                     "null"
                   ]
+                },
+                "ai_hints": {
+                  "description": "Hints for AI agents, and people, writing designs that use\nthis resource: only what its other fields can't express, such\nas an LED on the FPGA's RGB LED driver pins. Advice to weigh,\nnot instructions. Short lines, always last. Omitted when none.",
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
                 }
               },
               "additionalProperties": false,
@@ -1111,6 +1161,16 @@
                     "string",
                     "null"
                   ]
+                },
+                "ai_hints": {
+                  "description": "Hints for AI agents, and people, writing designs that use\nthis resource: only what its other fields can't express, such\nas an LED on the FPGA's RGB LED driver pins. Advice to weigh,\nnot instructions. Short lines, always last. Omitted when none.",
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
                 }
               },
               "additionalProperties": false,
@@ -1181,6 +1241,16 @@
                     "string",
                     "null"
                   ]
+                },
+                "ai_hints": {
+                  "description": "Hints for AI agents, and people, writing designs that use\nthis resource: only what its other fields can't express, such\nas an LED on the FPGA's RGB LED driver pins. Advice to weigh,\nnot instructions. Short lines, always last. Omitted when none.",
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
                 }
               },
               "additionalProperties": false,
@@ -1250,6 +1320,16 @@
                     "string",
                     "null"
                   ]
+                },
+                "ai_hints": {
+                  "description": "Hints for AI agents, and people, writing designs that use\nthis resource: only what its other fields can't express, such\nas an LED on the FPGA's RGB LED driver pins. Advice to weigh,\nnot instructions. Short lines, always last. Omitted when none.",
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
                 }
               },
               "additionalProperties": false,
@@ -1309,6 +1389,16 @@
                     "string",
                     "null"
                   ]
+                },
+                "ai_hints": {
+                  "description": "Hints for AI agents, and people, writing designs that use\nthis resource: only what its other fields can't express, such\nas an LED on the FPGA's RGB LED driver pins. Advice to weigh,\nnot instructions. Short lines, always last. Omitted when none.",
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
                 }
               },
               "additionalProperties": false,
@@ -1370,6 +1460,16 @@
                     "string",
                     "null"
                   ]
+                },
+                "ai_hints": {
+                  "description": "Hints for AI agents, and people, writing designs that use\nthis resource: only what its other fields can't express, such\nas an LED on the FPGA's RGB LED driver pins. Advice to weigh,\nnot instructions. Short lines, always last. Omitted when none.",
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
                 }
               },
               "additionalProperties": false,
@@ -1428,6 +1528,16 @@
                     "string",
                     "null"
                   ]
+                },
+                "ai_hints": {
+                  "description": "Hints for AI agents, and people, writing designs that use\nthis resource: only what its other fields can't express, such\nas an LED on the FPGA's RGB LED driver pins. Advice to weigh,\nnot instructions. Short lines, always last. Omitted when none.",
+                  "type": [
+                    "array",
+                    "null"
+                  ],
+                  "items": {
+                    "type": "string"
+                  }
                 }
               },
               "additionalProperties": false,

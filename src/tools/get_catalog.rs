@@ -136,6 +136,11 @@ pub struct CatalogBoard {
     /// unless the board has an unclassified resource.
     #[serde(default, skip_serializing_if = "indexmap::IndexMap::is_empty")]
     pub resources: catalog::Resources,
+    /// Hints for AI agents, and people, writing designs for the board: only
+    /// what its other fields can't express. Resources may have their own
+    /// ai_hints. Advice to weigh, not instructions. Omitted when none.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ai_hints: Option<crate::resources::AiHints>,
 }
 
 /// One way to program a catalog board. Which USB devices are the board is
@@ -188,6 +193,7 @@ impl From<&KnownBoard<'_>> for CatalogBoard {
             custom: b.custom,
             requires: b.requires.clone(),
             resources: b.resources.clone(),
+            ai_hints: b.ai_hints.cloned(),
         }
     }
 }
