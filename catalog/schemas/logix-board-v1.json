@@ -57,6 +57,17 @@
       ],
       "additionalProperties": false
     },
+    "AiHints": {
+      "type": "array",
+      "description": "Hints for AI, and people, writing designs that use the board or resource: only what its structured fields can't express. One line each, at most 90 characters, so each fits on one line of the file. Always the entity's last field.",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 90,
+        "pattern": "^[^\\n\\r]*$"
+      },
+      "minItems": 1
+    },
     "Clock": {
       "type": "object",
       "description": "An oscillator wired to one FPGA pin.",
@@ -84,6 +95,9 @@
         "user_notes": {
           "type": "string",
           "description": "Warnings and missing information for users, such as a jumper a clock needs."
+        },
+        "ai_hints": {
+          "$ref": "#/$defs/AiHints"
         }
       },
       "required": [
@@ -126,6 +140,9 @@
         "user_notes": {
           "type": "string",
           "description": "Warnings and missing information for users, such as a jumper a clock needs."
+        },
+        "ai_hints": {
+          "$ref": "#/$defs/AiHints"
         }
       },
       "required": [
@@ -169,6 +186,9 @@
         "user_notes": {
           "type": "string",
           "description": "Warnings and missing information for users, such as a jumper a clock needs."
+        },
+        "ai_hints": {
+          "$ref": "#/$defs/AiHints"
         }
       },
       "required": [
@@ -232,6 +252,9 @@
         "user_notes": {
           "type": "string",
           "description": "Warnings and missing information for users, such as a jumper a clock needs."
+        },
+        "ai_hints": {
+          "$ref": "#/$defs/AiHints"
         }
       },
       "required": [
@@ -274,6 +297,9 @@
         "user_notes": {
           "type": "string",
           "description": "Warnings and missing information for users, such as a jumper a clock needs."
+        },
+        "ai_hints": {
+          "$ref": "#/$defs/AiHints"
         }
       },
       "required": [
@@ -315,6 +341,9 @@
         "user_notes": {
           "type": "string",
           "description": "Warnings and missing information for users, such as a jumper a clock needs."
+        },
+        "ai_hints": {
+          "$ref": "#/$defs/AiHints"
         }
       },
       "required": [
@@ -354,6 +383,9 @@
         "user_notes": {
           "type": "string",
           "description": "Warnings and missing information for users, such as a jumper a clock needs."
+        },
+        "ai_hints": {
+          "$ref": "#/$defs/AiHints"
         }
       },
       "required": [
@@ -390,6 +422,9 @@
         "user_notes": {
           "type": "string",
           "description": "Warnings and missing information for users, such as a jumper a clock needs."
+        },
+        "ai_hints": {
+          "$ref": "#/$defs/AiHints"
         }
       },
       "required": [
@@ -431,6 +466,9 @@
         "user_notes": {
           "type": "string",
           "description": "Warnings and missing information for users, such as a jumper a clock needs."
+        },
+        "ai_hints": {
+          "$ref": "#/$defs/AiHints"
         }
       },
       "required": [
@@ -465,6 +503,9 @@
         "user_notes": {
           "type": "string",
           "description": "Warnings and missing information for users, such as a jumper a clock needs."
+        },
+        "ai_hints": {
+          "$ref": "#/$defs/AiHints"
         }
       },
       "required": [
@@ -722,6 +763,10 @@
         "requires": {
           "$ref": "#/$defs/Requires",
           "description": "What every design for the board must do, such as driving a pin that would otherwise reset the FPGA."
+        },
+        "ai_hints": {
+          "$ref": "#/$defs/AiHints",
+          "description": "Hints for the board as a whole."
         }
       },
       "required": [

@@ -15,6 +15,14 @@
   ],
   "resources": {
     "sys_clk": {"type": "clock", "pin": "35", "mhz": 12},
-    "led": {"type": "leds", "pins": ["40"], "active": "low"}
+    "led": {
+      "type": "leds",
+      "pins": ["40"],
+      "active": "low",
+      "ai_hints": [
+        "Wired to the FPGA's RGB LED driver pad RGB1.",
+        "Drive it through SB_RGBA_DRV, the iCE40 UltraPlus's RGB LED driver cell (sink only)."
+      ]
+    }
   }
 }

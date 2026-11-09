@@ -31,7 +31,11 @@
       "source": {
         "kind": "maker",
         "ref": "The maker's replies to the Logix project, 2026-11-08: RGB LED red on 39, green on 40, blue on 41, active low (as pins 39-41, the iCE40 UltraPlus's open-drain RGB outputs, require)."
-      }
+      },
+      "ai_hints": [
+        "Wired to the FPGA's RGB LED driver pads: red RGB0, green RGB1, blue RGB2.",
+        "Drive it through SB_RGBA_DRV, the iCE40 UltraPlus's RGB LED driver cell (sink only)."
+      ]
     }
   }
 }
