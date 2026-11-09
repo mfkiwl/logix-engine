@@ -1,0 +1,489 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-fpgas-openxc7-v1.json",
+  "xc7z007sclg225-1": {
+    "part_number": "XC7Z007S-1CLG225",
+    "size": "23k",
+    "nextpnr_device": "xc7z007sclg225-1",
+    "jtag_idcode": "0x13723093"
+  },
+  "xc7z007sclg225-2": {
+    "part_number": "XC7Z007S-2CLG225",
+    "size": "23k",
+    "nextpnr_device": "xc7z007sclg225-2",
+    "jtag_idcode": "0x13723093"
+  },
+  "xc7z007sclg400-1": {
+    "part_number": "XC7Z007S-1CLG400",
+    "size": "23k",
+    "nextpnr_device": "xc7z007sclg400-1",
+    "jtag_idcode": "0x13723093"
+  },
+  "xc7z007sclg400-2": {
+    "part_number": "XC7Z007S-2CLG400",
+    "size": "23k",
+    "nextpnr_device": "xc7z007sclg400-2",
+    "jtag_idcode": "0x13723093"
+  },
+  "xc7z010clg225-1": {
+    "part_number": "XC7Z010-1CLG225",
+    "size": "28k",
+    "nextpnr_device": "xc7z010clg225-1",
+    "jtag_idcode": "0x03722093"
+  },
+  "xc7z010clg225-2": {
+    "part_number": "XC7Z010-2CLG225",
+    "size": "28k",
+    "nextpnr_device": "xc7z010clg225-2",
+    "jtag_idcode": "0x03722093"
+  },
+  "xc7z010clg225-3": {
+    "part_number": "XC7Z010-3CLG225",
+    "size": "28k",
+    "nextpnr_device": "xc7z010clg225-3",
+    "jtag_idcode": "0x03722093"
+  },
+  "xc7z010clg400-1": {
+    "part_number": "XC7Z010-1CLG400",
+    "size": "28k",
+    "nextpnr_device": "xc7z010clg400-1",
+    "jtag_idcode": "0x03722093"
+  },
+  "xc7z010clg400-2": {
+    "part_number": "XC7Z010-2CLG400",
+    "size": "28k",
+    "nextpnr_device": "xc7z010clg400-2",
+    "jtag_idcode": "0x03722093"
+  },
+  "xc7z010clg400-3": {
+    "part_number": "XC7Z010-3CLG400",
+    "size": "28k",
+    "nextpnr_device": "xc7z010clg400-3",
+    "jtag_idcode": "0x03722093"
+  },
+  "xc7z020clg400-1": {
+    "part_number": "XC7Z020-1CLG400",
+    "size": "85k",
+    "nextpnr_device": "xc7z020clg400-1",
+    "jtag_idcode": "0x03727093"
+  },
+  "xc7z020clg400-2": {
+    "part_number": "XC7Z020-2CLG400",
+    "size": "85k",
+    "nextpnr_device": "xc7z020clg400-2",
+    "jtag_idcode": "0x03727093"
+  },
+  "xc7z020clg400-3": {
+    "part_number": "XC7Z020-3CLG400",
+    "size": "85k",
+    "nextpnr_device": "xc7z020clg400-3",
+    "jtag_idcode": "0x03727093"
+  },
+  "xc7z020clg484-1": {
+    "part_number": "XC7Z020-1CLG484",
+    "size": "85k",
+    "nextpnr_device": "xc7z020clg484-1",
+    "jtag_idcode": "0x03727093"
+  },
+  "xc7z020clg484-2": {
+    "part_number": "XC7Z020-2CLG484",
+    "size": "85k",
+    "nextpnr_device": "xc7z020clg484-2",
+    "jtag_idcode": "0x03727093"
+  },
+  "xc7z020clg484-3": {
+    "part_number": "XC7Z020-3CLG484",
+    "size": "85k",
+    "nextpnr_device": "xc7z020clg484-3",
+    "jtag_idcode": "0x03727093"
+  },
+  "xc7z030fbg484-1": {
+    "part_number": "XC7Z030-1FBG484",
+    "size": "125k",
+    "nextpnr_device": "xc7z030fbg484-1",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030fbg484-2": {
+    "part_number": "XC7Z030-2FBG484",
+    "size": "125k",
+    "nextpnr_device": "xc7z030fbg484-2",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030fbg484-3": {
+    "part_number": "XC7Z030-3FBG484",
+    "size": "125k",
+    "nextpnr_device": "xc7z030fbg484-3",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030fbg676-1": {
+    "part_number": "XC7Z030-1FBG676",
+    "size": "125k",
+    "nextpnr_device": "xc7z030fbg676-1",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030fbg676-2": {
+    "part_number": "XC7Z030-2FBG676",
+    "size": "125k",
+    "nextpnr_device": "xc7z030fbg676-2",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030fbg676-3": {
+    "part_number": "XC7Z030-3FBG676",
+    "size": "125k",
+    "nextpnr_device": "xc7z030fbg676-3",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030fbv484-1": {
+    "part_number": "XC7Z030-1FBV484",
+    "size": "125k",
+    "nextpnr_device": "xc7z030fbv484-1",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030fbv484-2": {
+    "part_number": "XC7Z030-2FBV484",
+    "size": "125k",
+    "nextpnr_device": "xc7z030fbv484-2",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030fbv484-3": {
+    "part_number": "XC7Z030-3FBV484",
+    "size": "125k",
+    "nextpnr_device": "xc7z030fbv484-3",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030fbv676-1": {
+    "part_number": "XC7Z030-1FBV676",
+    "size": "125k",
+    "nextpnr_device": "xc7z030fbv676-1",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030fbv676-2": {
+    "part_number": "XC7Z030-2FBV676",
+    "size": "125k",
+    "nextpnr_device": "xc7z030fbv676-2",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030fbv676-3": {
+    "part_number": "XC7Z030-3FBV676",
+    "size": "125k",
+    "nextpnr_device": "xc7z030fbv676-3",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030ffg676-1": {
+    "part_number": "XC7Z030-1FFG676",
+    "size": "125k",
+    "nextpnr_device": "xc7z030ffg676-1",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030ffg676-2": {
+    "part_number": "XC7Z030-2FFG676",
+    "size": "125k",
+    "nextpnr_device": "xc7z030ffg676-2",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030ffg676-3": {
+    "part_number": "XC7Z030-3FFG676",
+    "size": "125k",
+    "nextpnr_device": "xc7z030ffg676-3",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030ffv676-1": {
+    "part_number": "XC7Z030-1FFV676",
+    "size": "125k",
+    "nextpnr_device": "xc7z030ffv676-1",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030ffv676-2": {
+    "part_number": "XC7Z030-2FFV676",
+    "size": "125k",
+    "nextpnr_device": "xc7z030ffv676-2",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030ffv676-3": {
+    "part_number": "XC7Z030-3FFV676",
+    "size": "125k",
+    "nextpnr_device": "xc7z030ffv676-3",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030sbg485-1": {
+    "part_number": "XC7Z030-1SBG485",
+    "size": "125k",
+    "nextpnr_device": "xc7z030sbg485-1",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030sbg485-2": {
+    "part_number": "XC7Z030-2SBG485",
+    "size": "125k",
+    "nextpnr_device": "xc7z030sbg485-2",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030sbg485-3": {
+    "part_number": "XC7Z030-3SBG485",
+    "size": "125k",
+    "nextpnr_device": "xc7z030sbg485-3",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030sbv485-1": {
+    "part_number": "XC7Z030-1SBV485",
+    "size": "125k",
+    "nextpnr_device": "xc7z030sbv485-1",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030sbv485-2": {
+    "part_number": "XC7Z030-2SBV485",
+    "size": "125k",
+    "nextpnr_device": "xc7z030sbv485-2",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z030sbv485-3": {
+    "part_number": "XC7Z030-3SBV485",
+    "size": "125k",
+    "nextpnr_device": "xc7z030sbv485-3",
+    "jtag_idcode": "0x1372c093"
+  },
+  "xc7z035fbg676-1": {
+    "part_number": "XC7Z035-1FBG676",
+    "size": "275k",
+    "nextpnr_device": "xc7z035fbg676-1"
+  },
+  "xc7z035fbg676-2": {
+    "part_number": "XC7Z035-2FBG676",
+    "size": "275k",
+    "nextpnr_device": "xc7z035fbg676-2"
+  },
+  "xc7z035fbg676-3": {
+    "part_number": "XC7Z035-3FBG676",
+    "size": "275k",
+    "nextpnr_device": "xc7z035fbg676-3"
+  },
+  "xc7z035fbv676-1": {
+    "part_number": "XC7Z035-1FBV676",
+    "size": "275k",
+    "nextpnr_device": "xc7z035fbv676-1"
+  },
+  "xc7z035fbv676-2": {
+    "part_number": "XC7Z035-2FBV676",
+    "size": "275k",
+    "nextpnr_device": "xc7z035fbv676-2"
+  },
+  "xc7z035fbv676-3": {
+    "part_number": "XC7Z035-3FBV676",
+    "size": "275k",
+    "nextpnr_device": "xc7z035fbv676-3"
+  },
+  "xc7z035ffg676-1": {
+    "part_number": "XC7Z035-1FFG676",
+    "size": "275k",
+    "nextpnr_device": "xc7z035ffg676-1"
+  },
+  "xc7z035ffg676-2": {
+    "part_number": "XC7Z035-2FFG676",
+    "size": "275k",
+    "nextpnr_device": "xc7z035ffg676-2"
+  },
+  "xc7z035ffg676-3": {
+    "part_number": "XC7Z035-3FFG676",
+    "size": "275k",
+    "nextpnr_device": "xc7z035ffg676-3"
+  },
+  "xc7z035ffg900-1": {
+    "part_number": "XC7Z035-1FFG900",
+    "size": "275k",
+    "nextpnr_device": "xc7z035ffg900-1"
+  },
+  "xc7z035ffg900-2": {
+    "part_number": "XC7Z035-2FFG900",
+    "size": "275k",
+    "nextpnr_device": "xc7z035ffg900-2"
+  },
+  "xc7z035ffg900-3": {
+    "part_number": "XC7Z035-3FFG900",
+    "size": "275k",
+    "nextpnr_device": "xc7z035ffg900-3"
+  },
+  "xc7z035ffv676-1": {
+    "part_number": "XC7Z035-1FFV676",
+    "size": "275k",
+    "nextpnr_device": "xc7z035ffv676-1"
+  },
+  "xc7z035ffv676-2": {
+    "part_number": "XC7Z035-2FFV676",
+    "size": "275k",
+    "nextpnr_device": "xc7z035ffv676-2"
+  },
+  "xc7z035ffv676-3": {
+    "part_number": "XC7Z035-3FFV676",
+    "size": "275k",
+    "nextpnr_device": "xc7z035ffv676-3"
+  },
+  "xc7z035ffv900-1": {
+    "part_number": "XC7Z035-1FFV900",
+    "size": "275k",
+    "nextpnr_device": "xc7z035ffv900-1"
+  },
+  "xc7z035ffv900-2": {
+    "part_number": "XC7Z035-2FFV900",
+    "size": "275k",
+    "nextpnr_device": "xc7z035ffv900-2"
+  },
+  "xc7z035ffv900-3": {
+    "part_number": "XC7Z035-3FFV900",
+    "size": "275k",
+    "nextpnr_device": "xc7z035ffv900-3"
+  },
+  "xc7z045fbg676-1": {
+    "part_number": "XC7Z045-1FBG676",
+    "size": "350k",
+    "nextpnr_device": "xc7z045fbg676-1",
+    "jtag_idcode": "0x23731093"
+  },
+  "xc7z045fbg676-2": {
+    "part_number": "XC7Z045-2FBG676",
+    "size": "350k",
+    "nextpnr_device": "xc7z045fbg676-2",
+    "jtag_idcode": "0x23731093"
+  },
+  "xc7z045fbg676-3": {
+    "part_number": "XC7Z045-3FBG676",
+    "size": "350k",
+    "nextpnr_device": "xc7z045fbg676-3",
+    "jtag_idcode": "0x23731093"
+  },
+  "xc7z045fbv676-1": {
+    "part_number": "XC7Z045-1FBV676",
+    "size": "350k",
+    "nextpnr_device": "xc7z045fbv676-1",
+    "jtag_idcode": "0x23731093"
+  },
+  "xc7z045fbv676-2": {
+    "part_number": "XC7Z045-2FBV676",
+    "size": "350k",
+    "nextpnr_device": "xc7z045fbv676-2",
+    "jtag_idcode": "0x23731093"
+  },
+  "xc7z045fbv676-3": {
+    "part_number": "XC7Z045-3FBV676",
+    "size": "350k",
+    "nextpnr_device": "xc7z045fbv676-3",
+    "jtag_idcode": "0x23731093"
+  },
+  "xc7z045ffg676-1": {
+    "part_number": "XC7Z045-1FFG676",
+    "size": "350k",
+    "nextpnr_device": "xc7z045ffg676-1",
+    "jtag_idcode": "0x23731093"
+  },
+  "xc7z045ffg676-2": {
+    "part_number": "XC7Z045-2FFG676",
+    "size": "350k",
+    "nextpnr_device": "xc7z045ffg676-2",
+    "jtag_idcode": "0x23731093"
+  },
+  "xc7z045ffg676-3": {
+    "part_number": "XC7Z045-3FFG676",
+    "size": "350k",
+    "nextpnr_device": "xc7z045ffg676-3",
+    "jtag_idcode": "0x23731093"
+  },
+  "xc7z045ffg900-1": {
+    "part_number": "XC7Z045-1FFG900",
+    "size": "350k",
+    "nextpnr_device": "xc7z045ffg900-1",
+    "jtag_idcode": "0x23731093"
+  },
+  "xc7z045ffg900-2": {
+    "part_number": "XC7Z045-2FFG900",
+    "size": "350k",
+    "nextpnr_device": "xc7z045ffg900-2",
+    "jtag_idcode": "0x23731093"
+  },
+  "xc7z045ffg900-3": {
+    "part_number": "XC7Z045-3FFG900",
+    "size": "350k",
+    "nextpnr_device": "xc7z045ffg900-3",
+    "jtag_idcode": "0x23731093"
+  },
+  "xc7z045ffv676-1": {
+    "part_number": "XC7Z045-1FFV676",
+    "size": "350k",
+    "nextpnr_device": "xc7z045ffv676-1",
+    "jtag_idcode": "0x23731093"
+  },
+  "xc7z045ffv676-2": {
+    "part_number": "XC7Z045-2FFV676",
+    "size": "350k",
+    "nextpnr_device": "xc7z045ffv676-2",
+    "jtag_idcode": "0x23731093"
+  },
+  "xc7z045ffv676-3": {
+    "part_number": "XC7Z045-3FFV676",
+    "size": "350k",
+    "nextpnr_device": "xc7z045ffv676-3",
+    "jtag_idcode": "0x23731093"
+  },
+  "xc7z045ffv900-1": {
+    "part_number": "XC7Z045-1FFV900",
+    "size": "350k",
+    "nextpnr_device": "xc7z045ffv900-1",
+    "jtag_idcode": "0x23731093"
+  },
+  "xc7z045ffv900-2": {
+    "part_number": "XC7Z045-2FFV900",
+    "size": "350k",
+    "nextpnr_device": "xc7z045ffv900-2",
+    "jtag_idcode": "0x23731093"
+  },
+  "xc7z045ffv900-3": {
+    "part_number": "XC7Z045-3FFV900",
+    "size": "350k",
+    "nextpnr_device": "xc7z045ffv900-3",
+    "jtag_idcode": "0x23731093"
+  },
+  "xc7z100ffg1156-1": {
+    "part_number": "XC7Z100-1FFG1156",
+    "size": "444k",
+    "nextpnr_device": "xc7z100ffg1156-1",
+    "jtag_idcode": "0x03736093"
+  },
+  "xc7z100ffg1156-2": {
+    "part_number": "XC7Z100-2FFG1156",
+    "size": "444k",
+    "nextpnr_device": "xc7z100ffg1156-2",
+    "jtag_idcode": "0x03736093"
+  },
+  "xc7z100ffg900-1": {
+    "part_number": "XC7Z100-1FFG900",
+    "size": "444k",
+    "nextpnr_device": "xc7z100ffg900-1",
+    "jtag_idcode": "0x03736093"
+  },
+  "xc7z100ffg900-2": {
+    "part_number": "XC7Z100-2FFG900",
+    "size": "444k",
+    "nextpnr_device": "xc7z100ffg900-2",
+    "jtag_idcode": "0x03736093"
+  },
+  "xc7z100ffv1156-1": {
+    "part_number": "XC7Z100-1FFV1156",
+    "size": "444k",
+    "nextpnr_device": "xc7z100ffv1156-1",
+    "jtag_idcode": "0x03736093"
+  },
+  "xc7z100ffv1156-2": {
+    "part_number": "XC7Z100-2FFV1156",
+    "size": "444k",
+    "nextpnr_device": "xc7z100ffv1156-2",
+    "jtag_idcode": "0x03736093"
+  },
+  "xc7z100ffv900-1": {
+    "part_number": "XC7Z100-1FFV900",
+    "size": "444k",
+    "nextpnr_device": "xc7z100ffv900-1",
+    "jtag_idcode": "0x03736093"
+  },
+  "xc7z100ffv900-2": {
+    "part_number": "XC7Z100-2FFV900",
+    "size": "444k",
+    "nextpnr_device": "xc7z100ffv900-2",
+    "jtag_idcode": "0x03736093"
+  }
+}

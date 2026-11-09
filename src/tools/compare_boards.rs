@@ -20,7 +20,7 @@ pub struct CompareBoards;
 impl EngineTool for CompareBoards {
     const NAME: &'static str = "compare_boards";
     const DESCRIPTION: &'static str = "Compares two boards, such as a project's board and one \
-        it may move to. Returns every aspect (board, architecture, fpga, size, \
+        it may move to. Returns every aspect (board, family, fpga, size, \
         constraint_format, pins, clock, leds), each the same, different or unknown (the catalog doesn't \
         describe it yet), with both values and a sentence for people, and same_build: whether \
         a build for one board is valid for the other. Facts only: what they mean for a project, \
@@ -62,7 +62,7 @@ pub enum Same {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct Aspect {
-    /// What is compared: board, architecture, fpga, size, constraint_format,
+    /// What is compared: board, family, fpga, size, constraint_format,
     /// pins, clock (the clocks' frequencies in MHz, a list of numbers) or
     /// leds (how many LEDs, a number). Later versions add aspects; hosts
     /// skip those they don't know, or show their text.
@@ -89,7 +89,7 @@ pub struct CompareBoardsOutput {
     /// True when a build for one board is valid for the other: their FPGAs
     /// have the same build settings, so the same bitstream fits both.
     pub same_build: bool,
-    /// Every aspect, in a fixed order: board, architecture, fpga, size,
+    /// Every aspect, in a fixed order: board, family, fpga, size,
     /// constraint_format, pins, clock, leds.
     pub aspects: Vec<Aspect>,
 }
@@ -197,8 +197,8 @@ pub fn compare(a: &ResolvedBoard, b: &ResolvedBoard) -> CompareBoardsOutput {
         (Some(x), Some(y)) if x == y => true,
         _ => same_build,
     };
-    let (arch_a, arch_b) = (a.fpga.architecture, b.fpga.architecture);
-    let ext = |x: catalog::Architecture| format!(".{}", x.constraint_extension());
+    let (fam_a, fam_b) = (a.fpga.family, b.fpga.family);
+    let ext = |x: catalog::Family| format!(".{}", x.constraint_extension());
     CompareBoardsOutput {
         same_build,
         aspects: vec![
@@ -210,11 +210,11 @@ pub fn compare(a: &ResolvedBoard, b: &ResolvedBoard) -> CompareBoardsOutput {
                 same_board,
             ),
             text_aspect(
-                "architecture",
-                ("Architecture", "Same architecture"),
-                arch_a.full_label(),
-                arch_b.full_label(),
-                arch_a == arch_b,
+                "family",
+                ("FPGA family", "Same FPGA family"),
+                fam_a.full_label(),
+                fam_b.full_label(),
+                fam_a == fam_b,
             ),
             text_aspect(
                 "fpga",
@@ -233,9 +233,9 @@ pub fn compare(a: &ResolvedBoard, b: &ResolvedBoard) -> CompareBoardsOutput {
             text_aspect(
                 "constraint_format",
                 ("Pin file format", "Same pin file format"),
-                &ext(arch_a),
-                &ext(arch_b),
-                arch_a.constraint_extension() == arch_b.constraint_extension(),
+                &ext(fam_a),
+                &ext(fam_b),
+                fam_a.constraint_extension() == fam_b.constraint_extension(),
             ),
             if same_board {
                 plain_aspect("pins", Same::Yes, "Same pins: the same board.")
@@ -303,7 +303,7 @@ mod tests {
     }
 
     #[test]
-    fn another_fpga_of_the_same_architecture() {
+    fn another_fpga_of_the_same_family() {
         let out = cmp(json!({"from_board": "alhambra-ii", "to_board": "icebreaker"}));
         assert!(!out.same_build);
         use Same::*;
@@ -311,12 +311,7 @@ mod tests {
             table(&out),
             [
                 row("board", No, Some("Alhambra II"), Some("iCEBreaker")),
-                row(
-                    "architecture",
-                    Yes,
-                    Some("Lattice iCE40"),
-                    Some("Lattice iCE40")
-                ),
+                row("family", Yes, Some("Lattice iCE40"), Some("Lattice iCE40")),
                 row("fpga", No, Some("ICE40HX4K-TQ144"), Some("ICE40UP5K-SG48")),
                 row("size", No, Some("8k"), Some("5k")),
                 row("constraint_format", Yes, Some(".pcf"), Some(".pcf")),
@@ -332,7 +327,7 @@ mod tests {
         );
         let texts: Vec<_> = out.aspects.iter().map(|a| a.text.as_str()).collect();
         assert_eq!(texts[0], "Board: Alhambra II → iCEBreaker.");
-        assert_eq!(texts[1], "Same architecture: Lattice iCE40.");
+        assert_eq!(texts[1], "Same FPGA family: Lattice iCE40.");
         assert_eq!(texts[2], "FPGA: ICE40HX4K-TQ144 → ICE40UP5K-SG48.");
         assert_eq!(texts[4], "Same pin file format: .pcf.");
         assert_eq!(texts[6], "Same clock: 12 MHz.");
@@ -361,7 +356,7 @@ mod tests {
     }
 
     #[test]
-    fn another_architecture() {
+    fn another_family() {
         let out = cmp(json!({"from_board": "alhambra-ii", "to_board": "ulx3s-85f"}));
         let by = |name: &str| {
             out.aspects
@@ -370,7 +365,7 @@ mod tests {
                 .unwrap()
                 .clone()
         };
-        assert_eq!(by("architecture").same, Same::No);
+        assert_eq!(by("family").same, Same::No);
         assert_eq!(
             by("constraint_format").text,
             "Pin file format: .pcf → .lpf."

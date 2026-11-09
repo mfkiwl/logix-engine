@@ -398,12 +398,11 @@ fn board_problems(
         for (field, text) in crate::resources::board_requires_problems(
             &b.requires,
             &b.resources,
-            fpga.map(|f| f.architecture),
+            fpga.map(|f| f.family),
         ) {
             add(At::Value(format!("/requires/{field}")), text);
         }
-        for (name, field, text) in
-            crate::resources::problems(&b.resources, fpga.map(|f| f.architecture))
+        for (name, field, text) in crate::resources::problems(&b.resources, fpga.map(|f| f.family))
         {
             let base = format!("/resources/{}", segment(&name));
             add(

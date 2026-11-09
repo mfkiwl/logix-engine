@@ -272,12 +272,13 @@ pub struct UsbFilter {
     pub release: Option<String>,
 }
 
-/// An FPGA: its architecture, part and toolchain parameters.
+/// An FPGA: its family, part and toolchain parameters.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct FpgaDefinition {
-    /// The FPGA family: ice40, ecp5, gowin or xilinx.
-    pub architecture: Architecture,
+    /// The FPGA family, the name on the chip: ice40, ecp5, gw1n, gw2a,
+    /// gw5a, artix7, spartan7 or zynq7000.
+    pub family: Family,
     /// The vendor's part number, such as ICE40HX4K-TQ144.
     pub part_number: String,
     /// The device size, such as 8k.
@@ -302,19 +303,6 @@ pub struct FpgaDefinition {
     /// Gowin only, where it's required.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub packer_device: Option<String>,
-    /// The family yosys synthesizes for, such as gw2a. Gowin only,
-    /// optional: omitted means yosys's default, the GW1N family.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub yosys_family: Option<String>,
-    /// The architecture yosys synthesizes for (synth_xilinx -arch), such
-    /// as xc7. Xilinx only, where it's required.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub yosys_arch: Option<String>,
-    /// The FPGA family's folder in the Project X-Ray database, which the
-    /// bitstream tools read, such as artix7, spartan7 or zynq7. Xilinx
-    /// only, where it's required.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub prjxray_family: Option<String>,
     /// The FPGA's JTAG ID code, such as 0x0362d093, as openFPGALoader's
     /// --detect reports it. Before programming over JTAG, the engine reads
     /// the connected FPGA's ID code and refuses to program a different
@@ -333,15 +321,12 @@ impl FpgaDefinition {
     /// rebuild.
     pub fn build_key(&self) -> serde_json::Value {
         serde_json::json!({
-            "architecture": self.architecture,
+            "family": self.family,
             "nextpnr_device": self.nextpnr_device,
             "nextpnr_package": self.nextpnr_package,
             "nextpnr_speed": self.nextpnr_speed,
             "nextpnr_family": self.nextpnr_family,
             "packer_device": self.packer_device,
-            "yosys_family": self.yosys_family,
-            "yosys_arch": self.yosys_arch,
-            "prjxray_family": self.prjxray_family,
         })
     }
 }
@@ -361,7 +346,12 @@ pub fn parse_idcode(code: &str) -> Option<u32> {
 }
 
 impl FpgaDefinition {
-    /// Checks that the FPGA has the fields its architecture needs, and only
+    /// The toolchain that builds the FPGA, from its family.
+    pub fn toolchain(&self) -> Toolchain {
+        self.family.toolchain()
+    }
+
+    /// Checks that the FPGA has the fields its toolchain needs, and only
     /// those.
     pub fn validate(&self) -> Result<(), String> {
         let word = |name: &str, v: &str| {
@@ -376,35 +366,31 @@ impl FpgaDefinition {
             }
         };
         word("nextpnr_device", &self.nextpnr_device)?;
-        let arch = format!("{:?}", self.architecture).to_lowercase();
+        let family = self.family.id();
         let fields = [
             ("nextpnr_package", &self.nextpnr_package),
             ("nextpnr_speed", &self.nextpnr_speed),
             ("nextpnr_family", &self.nextpnr_family),
             ("packer_device", &self.packer_device),
-            ("yosys_family", &self.yosys_family),
-            ("yosys_arch", &self.yosys_arch),
-            ("prjxray_family", &self.prjxray_family),
         ];
         for (name, value) in fields {
-            let (allowed, required) = match (self.architecture, name) {
-                (Architecture::Ice40, "nextpnr_package") => (true, true),
-                (Architecture::Ecp5, "nextpnr_package" | "nextpnr_speed") => (true, true),
-                (Architecture::Gowin, "packer_device") => (true, true),
-                (Architecture::Gowin, "nextpnr_family" | "yosys_family") => (true, false),
-                (Architecture::Xilinx, "yosys_arch" | "prjxray_family") => (true, true),
+            let (allowed, required) = match (self.toolchain(), name) {
+                (Toolchain::Ice40, "nextpnr_package") => (true, true),
+                (Toolchain::Ecp5, "nextpnr_package" | "nextpnr_speed") => (true, true),
+                (Toolchain::Gowin, "packer_device") => (true, true),
+                (Toolchain::Gowin, "nextpnr_family") => (true, false),
                 _ => (false, false),
             };
             match value {
                 Some(v) if allowed => word(name, v)?,
-                Some(_) => return Err(format!("{arch} FPGAs have no {name}")),
-                None if required => return Err(format!("{arch} FPGAs need {name}")),
+                Some(_) => return Err(format!("{family} FPGAs have no {name}")),
+                None if required => return Err(format!("{family} FPGAs need {name}")),
                 None => {}
             }
         }
         if let Some(code) = &self.jtag_idcode {
-            if self.architecture == Architecture::Ice40 {
-                return Err(format!("{arch} FPGAs have no jtag_idcode"));
+            if self.toolchain() == Toolchain::Ice40 {
+                return Err(format!("{family} FPGAs have no jtag_idcode"));
             }
             if parse_idcode(code).is_none() {
                 return Err(format!(
@@ -412,18 +398,9 @@ impl FpgaDefinition {
                 ));
             }
         }
-        // These name folders in the Project X-Ray database.
-        if self.architecture == Architecture::Xilinx {
-            for (name, v) in [
-                ("nextpnr_device", Some(&self.nextpnr_device)),
-                ("prjxray_family", self.prjxray_family.as_ref()),
-            ] {
-                if let Some(v) = v
-                    && v.contains('/')
-                {
-                    return Err(format!("bad {name} {v:?}"));
-                }
-            }
+        // It names a folder in the Project X-Ray database.
+        if self.toolchain() == Toolchain::Openxc7 && self.nextpnr_device.contains('/') {
+            return Err(format!("bad nextpnr_device {:?}", self.nextpnr_device));
         }
         Ok(())
     }
@@ -434,69 +411,165 @@ impl FpgaDefinition {
     }
 }
 
-/// FPGA families.
+/// FPGA families: the names on the chips and their datasheets. Each
+/// family's FPGAs are in the catalog's `fpgas/<family>.json`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
-pub enum Architecture {
+pub enum Family {
     /// Lattice iCE40.
     Ice40,
     /// Lattice ECP5.
     Ecp5,
-    /// Gowin (GW1N, GW2A and GW5A).
-    Gowin,
-    /// AMD/Xilinx 7 Series (Artix-7, Spartan-7 and Zynq-7000).
-    Xilinx,
+    /// Gowin GW1N (LittleBee).
+    Gw1n,
+    /// Gowin GW2A (Arora).
+    Gw2a,
+    /// Gowin GW5A (Arora V).
+    Gw5a,
+    /// AMD/Xilinx Artix-7.
+    Artix7,
+    /// AMD/Xilinx Spartan-7.
+    Spartan7,
+    /// AMD/Xilinx Zynq-7000.
+    Zynq7000,
 }
 
-impl Architecture {
+impl Family {
     /// Every family, in the engine's order.
-    pub const ALL: [Architecture; 4] = [
-        Architecture::Ice40,
-        Architecture::Ecp5,
-        Architecture::Gowin,
-        Architecture::Xilinx,
+    pub const ALL: [Family; 8] = [
+        Family::Ice40,
+        Family::Ecp5,
+        Family::Gw1n,
+        Family::Gw2a,
+        Family::Gw5a,
+        Family::Artix7,
+        Family::Spartan7,
+        Family::Zynq7000,
     ];
 
-    /// The family's ID, as FPGA definitions name it, such as "ice40".
+    /// The family's ID, as FPGA definitions and the catalog's file names
+    /// give it, such as "ice40".
     pub fn id(self) -> &'static str {
         match self {
-            Architecture::Ice40 => "ice40",
-            Architecture::Ecp5 => "ecp5",
-            Architecture::Gowin => "gowin",
-            Architecture::Xilinx => "xilinx",
+            Family::Ice40 => "ice40",
+            Family::Ecp5 => "ecp5",
+            Family::Gw1n => "gw1n",
+            Family::Gw2a => "gw2a",
+            Family::Gw5a => "gw5a",
+            Family::Artix7 => "artix7",
+            Family::Spartan7 => "spartan7",
+            Family::Zynq7000 => "zynq7000",
         }
+    }
+
+    /// The family with this ID.
+    pub fn from_id(id: &str) -> Option<Family> {
+        Family::ALL.into_iter().find(|f| f.id() == id)
     }
 
     /// The family's full name for people, with its vendor, such as
     /// "Lattice iCE40".
     pub fn full_label(self) -> &'static str {
         match self {
-            Architecture::Ice40 => "Lattice iCE40",
-            Architecture::Ecp5 => "Lattice ECP5",
-            Architecture::Gowin => "Gowin",
-            Architecture::Xilinx => "Xilinx",
+            Family::Ice40 => "Lattice iCE40",
+            Family::Ecp5 => "Lattice ECP5",
+            Family::Gw1n => "Gowin GW1N",
+            Family::Gw2a => "Gowin GW2A",
+            Family::Gw5a => "Gowin GW5A",
+            Family::Artix7 => "Xilinx Artix-7",
+            Family::Spartan7 => "Xilinx Spartan-7",
+            Family::Zynq7000 => "Xilinx Zynq-7000",
         }
     }
 
     /// The family's name for people, such as "iCE40".
     pub fn label(self) -> &'static str {
         match self {
-            Architecture::Ice40 => "iCE40",
-            Architecture::Ecp5 => "ECP5",
-            Architecture::Gowin => "Gowin",
-            Architecture::Xilinx => "Xilinx",
+            Family::Ice40 => "iCE40",
+            Family::Ecp5 => "ECP5",
+            Family::Gw1n => "GW1N",
+            Family::Gw2a => "GW2A",
+            Family::Gw5a => "GW5A",
+            Family::Artix7 => "Artix-7",
+            Family::Spartan7 => "Spartan-7",
+            Family::Zynq7000 => "Zynq-7000",
         }
     }
 
-    /// The extension of the family's constraint file format, without the dot.
-    /// Each family's place-and-route tool reads only its own format, and
-    /// takes the format from its command-line option, not the file name.
+    /// The toolchain that builds the family's FPGAs.
+    pub fn toolchain(self) -> Toolchain {
+        match self {
+            Family::Ice40 => Toolchain::Ice40,
+            Family::Ecp5 => Toolchain::Ecp5,
+            Family::Gw1n | Family::Gw2a | Family::Gw5a => Toolchain::Gowin,
+            Family::Artix7 | Family::Spartan7 | Family::Zynq7000 => Toolchain::Openxc7,
+        }
+    }
+
+    /// The family yosys's synth_gowin synthesizes for (-family), when not
+    /// its default, GW1N. Gowin only.
+    pub fn yosys_family(self) -> Option<&'static str> {
+        match self {
+            Family::Gw2a => Some("gw2a"),
+            Family::Gw5a => Some("gw5a"),
+            _ => None,
+        }
+    }
+
+    /// The family's folder in the Project X-Ray database, which the
+    /// openXC7 bitstream tools read. Xilinx only.
+    pub fn prjxray_family(self) -> Option<&'static str> {
+        match self {
+            Family::Artix7 => Some("artix7"),
+            Family::Spartan7 => Some("spartan7"),
+            Family::Zynq7000 => Some("zynq7"),
+            _ => None,
+        }
+    }
+
+    /// The extension of the family's constraint file format, without the
+    /// dot: its toolchain's.
+    pub fn constraint_extension(self) -> &'static str {
+        self.toolchain().constraint_extension()
+    }
+}
+
+/// The toolchains: how the engine builds a family's FPGAs, each with its
+/// own flow. For logs, diagnostics and the API; people see families.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum Toolchain {
+    /// iCE40: nextpnr-ice40 and icepack.
+    Ice40,
+    /// ECP5: nextpnr-ecp5 and ecppack.
+    Ecp5,
+    /// Gowin: nextpnr-himbaechel's gowin uarch and gowin_pack.
+    Gowin,
+    /// openXC7, for Xilinx 7-series: nextpnr-xilinx and the openXC7 tools.
+    Openxc7,
+}
+
+impl Toolchain {
+    /// The toolchain's ID, such as "openxc7". It also names the schema of
+    /// its families' FPGA files.
+    pub fn id(self) -> &'static str {
+        match self {
+            Toolchain::Ice40 => "ice40",
+            Toolchain::Ecp5 => "ecp5",
+            Toolchain::Gowin => "gowin",
+            Toolchain::Openxc7 => "openxc7",
+        }
+    }
+
+    /// The extension of the constraint file format, without the dot. Each
+    /// place-and-route tool reads only its own format, and takes the format
+    /// from its command-line option, not the file name.
     pub fn constraint_extension(self) -> &'static str {
         match self {
-            Architecture::Ice40 => "pcf",
-            Architecture::Ecp5 => "lpf",
-            Architecture::Gowin => "cst",
-            Architecture::Xilinx => "xdc",
+            Toolchain::Ice40 => "pcf",
+            Toolchain::Ecp5 => "lpf",
+            Toolchain::Gowin => "cst",
+            Toolchain::Openxc7 => "xdc",
         }
     }
 }
@@ -508,10 +581,12 @@ impl Architecture {
 /// changes without a new version.
 pub const BOARDS_SCHEMA: &str = "https://www.openlogix.org/schemas/logix-board-v1.json";
 
-/// The schema an FPGA family's file, `fpgas/<architecture>.json`, names in
-/// its `"$schema"` key: one per family, owned by Logix Catalog.
-pub fn fpgas_schema(architecture: &str) -> String {
-    format!("https://www.openlogix.org/schemas/logix-fpgas-{architecture}-v1.json")
+/// The schema an FPGA family's file, `fpgas/<family>.json`, names in its
+/// `"$schema"` key: one per toolchain, shared by its families, owned by
+/// Logix Catalog.
+pub fn fpgas_schema(family: Family) -> String {
+    let name = family.toolchain().id();
+    format!("https://www.openlogix.org/schemas/logix-fpgas-{name}-v1.json")
 }
 
 /// The key a board file may use to name its schema.
@@ -781,8 +856,8 @@ impl BoardDefinition {
 
 impl Catalog {
     /// The catalog from its files: each board's file by ID (its file name
-    /// without .json), with its `$schema`, and each `fpgas/<architecture>.json`
-    /// by architecture: its FPGAs by ID, their architecture the file's name.
+    /// without .json), with its `$schema`, and each `fpgas/<family>.json`
+    /// by family: its FPGAs by ID, their family the file's name.
     pub fn parse(
         board_files: &[(&str, &str)],
         fpga_files: &[(&str, &str)],
@@ -803,11 +878,13 @@ impl Catalog {
             boards.insert(id.to_string(), b);
         }
         let mut fpgas = BTreeMap::new();
-        for (arch, text) in fpga_files {
-            let file = format!("fpgas/{arch}.json");
+        for (name, text) in fpga_files {
+            let file = format!("fpgas/{name}.json");
+            let family = Family::from_id(name)
+                .ok_or_else(|| format!("{file}: {name:?} isn't an FPGA family"))?;
             let mut entries: serde_json::Map<String, serde_json::Value> =
                 serde_json::from_str(text).map_err(|e| format!("{file}: {e}"))?;
-            let want = fpgas_schema(arch);
+            let want = fpgas_schema(family);
             match entries.remove(SCHEMA_KEY) {
                 Some(v) if v.as_str() == Some(want.as_str()) => {}
                 Some(v) => return Err(format!("{file}: unknown $schema {v}: expected {want}")),
@@ -817,12 +894,12 @@ impl Catalog {
                 let serde_json::Value::Object(mut fields) = entry else {
                     return Err(format!("{file}: {id}: not an object"));
                 };
-                if fields.contains_key("architecture") {
+                if fields.contains_key("family") {
                     return Err(format!(
-                        "{file}: {id}: no architecture field: the file's name gives it"
+                        "{file}: {id}: no family field: the file's name gives it"
                     ));
                 }
-                fields.insert("architecture".into(), serde_json::Value::from(*arch));
+                fields.insert("family".into(), serde_json::Value::from(family.id()));
                 let f: FpgaDefinition = serde_json::from_value(serde_json::Value::Object(fields))
                     .map_err(|e| format!("{file}: {id}: {e}"))?;
                 if fpgas.insert(id.clone(), f).is_some() {
@@ -851,7 +928,7 @@ impl Catalog {
                 return Err(format!("board {id}: unknown FPGA {}", b.fpga_id));
             };
             if let Some((name, field, text)) =
-                crate::resources::problems(&b.resources, Some(fpga.architecture))
+                crate::resources::problems(&b.resources, Some(fpga.family))
                     .into_iter()
                     .next()
             {
@@ -860,7 +937,7 @@ impl Catalog {
             if let Some((field, text)) = crate::resources::board_requires_problems(
                 &b.requires,
                 &b.resources,
-                Some(fpga.architecture),
+                Some(fpga.family),
             )
             .into_iter()
             .next()
@@ -886,9 +963,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn fpgas_need_their_architectures_fields() {
+    fn fpgas_need_their_toolchains_fields() {
         let ecp5 = FpgaDefinition {
-            architecture: Architecture::Ecp5,
+            family: Family::Ecp5,
             part_number: "LFE5U-25F-6BG256C".into(),
             size: "25k".into(),
             nextpnr_device: "25k".into(),
@@ -896,9 +973,6 @@ mod tests {
             nextpnr_speed: Some("6".into()),
             nextpnr_family: None,
             packer_device: None,
-            yosys_family: None,
-            yosys_arch: None,
-            prjxray_family: None,
             jtag_idcode: Some("0x41111043".into()),
         };
         assert!(ecp5.validate().is_ok());
@@ -911,7 +985,7 @@ mod tests {
             "ecp5 FPGAs need nextpnr_speed"
         );
         let ice40 = FpgaDefinition {
-            architecture: Architecture::Ice40,
+            family: Family::Ice40,
             ..ecp5.clone()
         };
         assert_eq!(
@@ -925,7 +999,7 @@ mod tests {
         assert!(bad.validate().unwrap_err().contains("nextpnr_package"));
 
         let gowin = FpgaDefinition {
-            architecture: Architecture::Gowin,
+            family: Family::Gw1n,
             part_number: "GW1NR-LV9QN88PC6/I5".into(),
             size: "9k".into(),
             nextpnr_device: "GW1NR-LV9QN88PC6/I5".into(),
@@ -933,9 +1007,6 @@ mod tests {
             nextpnr_speed: None,
             nextpnr_family: Some("GW1N-9C".into()),
             packer_device: Some("GW1N-9C".into()),
-            yosys_family: None,
-            yosys_arch: None,
-            prjxray_family: None,
             jtag_idcode: Some("0x0100481b".into()),
         };
         assert!(gowin.validate().is_ok());
@@ -945,7 +1016,7 @@ mod tests {
         };
         assert_eq!(
             no_packer.validate().unwrap_err(),
-            "gowin FPGAs need packer_device"
+            "gw1n FPGAs need packer_device"
         );
         let with_package = FpgaDefinition {
             nextpnr_package: Some("QN88".into()),
@@ -953,14 +1024,18 @@ mod tests {
         };
         assert_eq!(
             with_package.validate().unwrap_err(),
-            "gowin FPGAs have no nextpnr_package"
+            "gw1n FPGAs have no nextpnr_package"
         );
         let ecp5_with_family = FpgaDefinition {
-            yosys_family: Some("gw2a".into()),
-            ..ecp5
+            nextpnr_family: Some("GW1N-9C".into()),
+            ..ecp5.clone()
         };
+        assert_eq!(
+            ecp5_with_family.validate().unwrap_err(),
+            "ecp5 FPGAs have no nextpnr_family"
+        );
         let xilinx = FpgaDefinition {
-            architecture: Architecture::Xilinx,
+            family: Family::Artix7,
             part_number: "XC7A35T-1CSG324".into(),
             size: "35k".into(),
             nextpnr_device: "xc7a35tcsg324-1".into(),
@@ -968,9 +1043,6 @@ mod tests {
             nextpnr_speed: None,
             nextpnr_family: None,
             packer_device: None,
-            yosys_family: None,
-            yosys_arch: Some("xc7".into()),
-            prjxray_family: Some("artix7".into()),
             jtag_idcode: Some("0x0362d093".into()),
         };
         assert!(xilinx.validate().is_ok());
@@ -994,38 +1066,49 @@ mod tests {
         );
         assert_eq!(parse_idcode("0x0362d093"), Some(0x0362d093));
         let ice40_with_idcode = FpgaDefinition {
-            architecture: Architecture::Ice40,
+            family: Family::Ice40,
             nextpnr_speed: None,
-            yosys_family: None,
-            ..ecp5_with_family.clone()
+            ..ecp5.clone()
         };
         assert_eq!(
             ice40_with_idcode.validate().unwrap_err(),
             "ice40 FPGAs have no jtag_idcode"
         );
-        let no_family = FpgaDefinition {
-            prjxray_family: None,
-            ..xilinx.clone()
-        };
-        assert_eq!(
-            no_family.validate().unwrap_err(),
-            "xilinx FPGAs need prjxray_family"
-        );
-        let bad_family = FpgaDefinition {
-            prjxray_family: Some("/etc".into()),
+        // It names a folder in the Project X-Ray database.
+        let bad_device = FpgaDefinition {
+            nextpnr_device: "../etc".into(),
             ..xilinx
         };
         assert!(
-            bad_family
+            bad_device
                 .validate()
                 .unwrap_err()
-                .contains("prjxray_family")
+                .contains("nextpnr_device")
         );
-        assert!(
-            ecp5_with_family
-                .validate()
-                .unwrap_err()
-                .contains("yosys_family")
+    }
+
+    #[test]
+    fn families_name_their_toolchains_and_tool_families() {
+        use Family::*;
+        let gowin: Vec<_> = Family::ALL
+            .into_iter()
+            .filter(|f| f.toolchain() == Toolchain::Gowin)
+            .collect();
+        assert_eq!(gowin, [Gw1n, Gw2a, Gw5a]);
+        assert_eq!(
+            [Gw1n, Gw2a, Gw5a].map(Family::yosys_family),
+            [None, Some("gw2a"), Some("gw5a")]
+        );
+        assert_eq!(
+            [Artix7, Spartan7, Zynq7000].map(Family::prjxray_family),
+            [Some("artix7"), Some("spartan7"), Some("zynq7")]
+        );
+        assert_eq!(Zynq7000.toolchain(), Toolchain::Openxc7);
+        assert_eq!(Family::from_id("gw5a"), Some(Gw5a));
+        assert_eq!(Family::from_id("gowin"), None);
+        assert_eq!(
+            fpgas_schema(Gw2a),
+            "https://www.openlogix.org/schemas/logix-fpgas-gowin-v1.json"
         );
     }
 
@@ -1088,7 +1171,7 @@ mod tests {
         for (name, b) in &c.boards {
             let fpga = &c.fpgas[&b.fpga_id];
             for v in &b.variants {
-                if v.programmer == "openfpgaloader" && fpga.architecture != Architecture::Ice40 {
+                if v.programmer == "openfpgaloader" && fpga.toolchain() != Toolchain::Ice40 {
                     assert!(
                         crate::program::checks_fpga(v, fpga),
                         "{name} ({}): {} has no jtag_idcode",
@@ -1113,32 +1196,35 @@ mod tests {
     }
 
     #[test]
-    fn builtin_catalog_has_every_architectures_boards() {
+    fn builtin_catalog_has_every_toolchains_boards() {
         let c = builtin();
-        let count = |a: Architecture| {
-            let fpgas = c.fpgas.values().filter(|f| f.architecture == a).count();
+        let count = |a: Toolchain| {
+            let fpgas = c.fpgas.values().filter(|f| f.toolchain() == a).count();
             let boards = c
                 .boards
                 .values()
-                .filter(|b| c.fpgas[&b.fpga_id].architecture == a)
+                .filter(|b| c.fpgas[&b.fpga_id].toolchain() == a)
                 .count();
             (fpgas, boards)
         };
-        assert_eq!(count(Architecture::Ice40), (40, 27));
-        assert_eq!(count(Architecture::Ecp5), (39, 22));
-        assert_eq!(count(Architecture::Gowin), (241, 9));
-        assert_eq!(count(Architecture::Xilinx), (212, 23));
+        assert_eq!(count(Toolchain::Ice40), (40, 27));
+        assert_eq!(count(Toolchain::Ecp5), (39, 22));
+        assert_eq!(count(Toolchain::Gowin), (241, 9));
+        assert_eq!(count(Toolchain::Openxc7), (212, 23));
+        // Every family has FPGAs.
+        for family in Family::ALL {
+            assert!(c.fpgas.values().any(|f| f.family == family), "{family:?}");
+        }
         let arty = &c.fpgas[&c.boards["arty-a7-35t"].fpga_id];
         assert_eq!(arty.nextpnr_device, "xc7a35tcsg324-1");
-        assert_eq!(arty.yosys_arch.as_deref(), Some("xc7"));
-        assert_eq!(arty.prjxray_family.as_deref(), Some("artix7"));
+        assert_eq!(arty.family, Family::Artix7);
         let nano = &c.fpgas[&c.boards["sipeed-tang-nano-9k"].fpga_id];
         assert_eq!(nano.nextpnr_device, "GW1NR-LV9QN88PC6/I5");
         assert_eq!(nano.nextpnr_family.as_deref(), Some("GW1N-9C"));
         assert_eq!(nano.packer_device.as_deref(), Some("GW1N-9C"));
-        assert_eq!(nano.yosys_family, None);
+        assert_eq!(nano.family, Family::Gw1n);
         let primer = &c.fpgas[&c.boards["sipeed-tang-primer-20k-dock"].fpga_id];
-        assert_eq!(primer.yosys_family.as_deref(), Some("gw2a"));
+        assert_eq!(primer.family, Family::Gw2a);
         let sugar = &c.boards["icesugar-pro"];
         let f = &c.fpgas[&sugar.fpga_id];
         assert_eq!(
@@ -1218,7 +1304,7 @@ mod tests {
         // Where openFPGALoader can't tell the part (no --board), the flash
         // command names it, so it loads the right SPI-over-JTAG bridge.
         for b in c.boards.values() {
-            if c.fpgas[&b.fpga_id].architecture != Architecture::Xilinx {
+            if c.fpgas[&b.fpga_id].toolchain() != Toolchain::Openxc7 {
                 continue;
             }
             for v in &b.variants {
@@ -1248,7 +1334,7 @@ mod tests {
             for v in &b.variants {
                 let flag = v.args.split(' ').any(|w| w == "-f" || w == "--write-flash");
                 if v.programmer == "openfpgaloader"
-                    && c.fpgas[&b.fpga_id].architecture != Architecture::Ice40
+                    && c.fpgas[&b.fpga_id].toolchain() != Toolchain::Ice40
                 {
                     assert_eq!(v.selector.memory == "flash", flag, "{}", b.name);
                 }
@@ -1494,8 +1580,8 @@ mod tests {
         );
         // ECP5 and Xilinx pin files name an I/O standard: every resource has it.
         for (id, b) in &c.boards {
-            let arch = c.fpgas[&b.fpga_id].architecture;
-            if matches!(arch, Architecture::Ecp5 | Architecture::Xilinx) {
+            let arch = c.fpgas[&b.fpga_id].toolchain();
+            if matches!(arch, Toolchain::Ecp5 | Toolchain::Openxc7) {
                 for (name, r) in &b.resources {
                     assert!(r.io_standard().is_some(), "{id} {name}");
                 }
@@ -1504,27 +1590,40 @@ mod tests {
     }
 
     #[test]
-    fn fpga_files_give_their_architecture() {
+    fn fpga_files_give_their_family() {
         let names: Vec<&str> = files::FPGA_FILES.iter().map(|(a, _)| *a).collect();
-        assert_eq!(names, ["ecp5", "gowin", "ice40", "xilinx"]);
+        assert_eq!(
+            names,
+            [
+                "artix7", "ecp5", "gw1n", "gw2a", "gw5a", "ice40", "spartan7", "zynq7000"
+            ]
+        );
         let f = r#""part_number": "P", "size": "1k", "nextpnr_device": "d", "nextpnr_package": "p", "nextpnr_speed": "6""#;
-        // Each file names its family's schema.
-        let file = |arch: &str, fields: &str| {
-            let schema = fpgas_schema(arch);
+        // Each file names its toolchain's schema.
+        let file = |schema: &str, fields: &str| {
+            let schema = format!("https://www.openlogix.org/schemas/logix-fpgas-{schema}-v1.json");
             format!(r#"{{"$schema": "{schema}", "a": {{{fields}}}}}"#)
         };
         let c = Catalog::parse(&[], &[("ecp5", &file("ecp5", f))]).unwrap();
-        assert_eq!(c.fpgas["a"].architecture, Architecture::Ecp5);
+        assert_eq!(c.fpgas["a"].family, Family::Ecp5);
         let err = |files: &[(&str, &str)]| Catalog::parse(&[], files).unwrap_err();
         assert_eq!(
-            err(&[("ecp5", &file("ecp5", f)), ("gowin", &file("gowin", f))]),
-            "fpgas/gowin.json: a: in another FPGA file too"
+            err(&[("ecp5", &file("ecp5", f)), ("ice40", &file("ice40", f))]),
+            "fpgas/ice40.json: a: in another FPGA file too"
         );
-        let with_arch = format!(r#""architecture": "ecp5", {f}"#);
-        assert!(err(&[("ecp5", &file("ecp5", &with_arch))]).contains("the file's name gives it"));
+        let with_family = format!(r#""family": "ecp5", {f}"#);
+        assert!(err(&[("ecp5", &file("ecp5", &with_family))]).contains("the file's name gives it"));
+        assert_eq!(
+            err(&[("gowin", &file("gowin", f))]),
+            "fpgas/gowin.json: \"gowin\" isn't an FPGA family"
+        );
+        // Families of one toolchain share its schema.
+        let g = r#""part_number": "P", "size": "1k", "nextpnr_device": "d", "packer_device": "p""#;
+        let c = Catalog::parse(&[], &[("gw5a", &file("gowin", g))]).unwrap();
+        assert_eq!(c.fpgas["a"].family, Family::Gw5a);
         assert!(
-            err(&[("other", &file("other", f))])
-                .starts_with("fpgas/other.json: a: unknown variant")
+            err(&[("gw5a", &file("gw5a", g))])
+                .contains("expected https://www.openlogix.org/schemas/logix-fpgas-gowin-v1.json")
         );
         assert_eq!(
             err(&[("ecp5", &format!(r#"{{"a": {{{f}}}}}"#))]),

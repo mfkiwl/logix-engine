@@ -271,7 +271,7 @@ async fn get_catalog_returns_the_requested_entries() {
         .await
         .structured_content
         .unwrap();
-    assert_eq!(out, json!({"boards": {}, "fpgas": {}, "architectures": {}}));
+    assert_eq!(out, json!({"boards": {}, "fpgas": {}, "families": {}}));
 
     // One board and all FPGAs.
     let result = call(
@@ -303,7 +303,8 @@ async fn get_catalog_returns_the_requested_entries() {
     assert_eq!(gowin["packer_device"], "GW1N-9C");
     assert!(gowin.get("nextpnr_package").is_none(), "{gowin}");
     assert_eq!(out["fpgas"]["lfe5u-25f-6bg256c"]["nextpnr_speed"], "6");
-    assert_eq!(out["fpgas"]["ice40hx4k-tq144-8k"]["architecture"], "ice40");
+    assert_eq!(out["fpgas"]["ice40hx4k-tq144-8k"]["family"], "ice40");
+    assert_eq!(out["fpgas"]["gw1nr-lv9qn88pc6-i5"]["family"], "gw1n");
 
     // An unknown ID is a request error.
     let result = call(

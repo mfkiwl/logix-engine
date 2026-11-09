@@ -9,7 +9,7 @@ use indexmap::IndexMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::catalog::Architecture;
+use crate::catalog::{Family, Toolchain};
 
 /// A board's resources: port name to resource, in the board file's order.
 /// The name is the port a design uses, a Verilog identifier: one pin gives a
@@ -50,13 +50,13 @@ pub enum IoStandard {
 }
 
 impl IoStandard {
-    /// Whether pin files for the architecture can name it: none on iCE40;
+    /// Whether pin files for the toolchain can name it: none on iCE40;
     /// ECP5 has no LVTTL.
-    pub fn fits(self, arch: Architecture) -> bool {
-        match arch {
-            Architecture::Ice40 => false,
-            Architecture::Ecp5 => self != IoStandard::Lvttl,
-            Architecture::Gowin | Architecture::Xilinx => true,
+    pub fn fits(self, toolchain: Toolchain) -> bool {
+        match toolchain {
+            Toolchain::Ice40 => false,
+            Toolchain::Ecp5 => self != IoStandard::Lvttl,
+            Toolchain::Gowin | Toolchain::Openxc7 => true,
         }
     }
 
@@ -388,12 +388,9 @@ fn is_identifier(s: &str) -> bool {
 
 /// A board's resource problems, each as (resource name, field path under it
 /// such as "pins/1", or "" for the name itself, message), for the catalog's
-/// checks and custom boards' diagnostics. `arch` is the board's FPGA family,
+/// checks and custom boards' diagnostics. `family` is the board's FPGA family,
 /// when known.
-pub fn problems(
-    resources: &Resources,
-    arch: Option<Architecture>,
-) -> Vec<(String, String, String)> {
+pub fn problems(resources: &Resources, family: Option<Family>) -> Vec<(String, String, String)> {
     let mut out = Vec::new();
     let mut names: std::collections::BTreeSet<String> = resources.keys().cloned().collect();
     for (name, r) in resources {
@@ -415,7 +412,7 @@ pub fn problems(
                 add(field, format!("Pin {p} is in this resource twice."));
             }
         }
-        for (field, text) in requirement_problems(r.requires(), arch, &mut names) {
+        for (field, text) in requirement_problems(r.requires(), family, &mut names) {
             add(&format!("requires/{field}"), text);
         }
         match r {
@@ -438,7 +435,7 @@ pub fn problems(
             }
             _ => {}
         }
-        if let Some(text) = io_standard_problem(r.io_standard(), arch) {
+        if let Some(text) = io_standard_problem(r.io_standard(), family) {
             add("io_standard", text);
         }
     }
@@ -451,7 +448,7 @@ pub fn problems(
 pub fn board_requires_problems(
     requires: &Requires,
     resources: &Resources,
-    arch: Option<Architecture>,
+    family: Option<Family>,
 ) -> Vec<(String, String)> {
     let mut names: std::collections::BTreeSet<String> = resources.keys().cloned().collect();
     for r in resources.values() {
@@ -461,7 +458,7 @@ pub fn board_requires_problems(
             }
         }
     }
-    requirement_problems(requires, arch, &mut names)
+    requirement_problems(requires, family, &mut names)
 }
 
 /// Problems in a list of requirements, each as (field path under it, such
@@ -469,7 +466,7 @@ pub fn board_requires_problems(
 /// gets each drive's.
 fn requirement_problems(
     requires: &Requires,
-    arch: Option<Architecture>,
+    family: Option<Family>,
     names: &mut std::collections::BTreeSet<String>,
 ) -> Vec<(String, String)> {
     let mut out = Vec::new();
@@ -505,7 +502,7 @@ fn requirement_problems(
                         );
                     }
                 }
-                if let Some(text) = io_standard_problem(d.io_standard, arch) {
+                if let Some(text) = io_standard_problem(d.io_standard, family) {
                     add("io_standard", text);
                 }
                 if d.why.as_deref().is_some_and(|w| w.trim().is_empty()) {
@@ -528,14 +525,14 @@ fn is_pin(p: &str) -> bool {
 }
 
 /// The problem with an I/O standard the FPGA family's pin files can't name.
-fn io_standard_problem(std: Option<IoStandard>, arch: Option<Architecture>) -> Option<String> {
-    let (std, arch) = (std?, arch?);
-    (!std.fits(arch)).then(|| {
+fn io_standard_problem(std: Option<IoStandard>, family: Option<Family>) -> Option<String> {
+    let (std, family) = (std?, family?);
+    (!std.fits(family.toolchain())).then(|| {
         format!(
             "{} isn't an I/O standard for {}{}.",
             std.name(),
-            arch.full_label(),
-            if arch == Architecture::Ice40 {
+            family.full_label(),
+            if family.toolchain() == Toolchain::Ice40 {
                 ": its pin files have none"
             } else {
                 ""
@@ -599,7 +596,7 @@ mod tests {
             "p": {"type": "pmod", "pins": ["1"], "io_standard": "LVCMOS33"}
         }));
         assert_eq!(
-            problems(&r, Some(Architecture::Ice40)),
+            problems(&r, Some(Family::Ice40)),
             [
                 t(
                     "2clk",
@@ -632,7 +629,7 @@ mod tests {
             ]}
         }));
         assert_eq!(
-            problems(&r, Some(Architecture::Ice40)),
+            problems(&r, Some(Family::Ice40)),
             [
                 t("clk", "requires/0/text", "Say what to do."),
                 t("clk", "requires/1/pins/1", "Pin 2 is in this drive twice."),
@@ -658,7 +655,7 @@ mod tests {
         .unwrap();
         let s = |a: &str, b: &str| (a.to_string(), b.to_string());
         assert_eq!(
-            board_requires_problems(&board, &r, Some(Architecture::Ice40)),
+            board_requires_problems(&board, &r, Some(Family::Ice40)),
             [
                 s("0/name", "Another resource or drive is named en."),
                 s("1/name", "Another resource or drive is named clk."),
@@ -670,6 +667,6 @@ mod tests {
             "led": {"type": "leds", "pins": ["1"]},
             "p": {"type": "pmod", "pins": ["1", "2", "3", "4", "5", "6", "7", "8"]}
         }));
-        assert!(problems(&shared, Some(Architecture::Ice40)).is_empty());
+        assert!(problems(&shared, Some(Family::Ice40)).is_empty());
     }
 }

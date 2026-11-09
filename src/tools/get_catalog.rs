@@ -21,8 +21,8 @@ impl EngineTool for GetCatalog {
         section is returned only when asked for: {\"boards\": {\"fetch\": true}} returns all \
         boards, and {\"boards\": {\"fetch\": true, \"ids\": [\"alhambra-ii\"]}} only the listed \
         ones. Boards include those of the request's custom_boards_folder, marked custom, a custom board \
-        replacing the catalog board with its ID. The architectures section gives each FPGA family's name for people and the \
-        extension of its pin constraint files. Board descriptions are the boards' names for \
+        replacing the catalog board with its ID. The families section gives each FPGA family's name for people, the \
+        extension of its pin constraint files and the toolchain that builds it. Board descriptions are the boards' names for \
         people.";
     const READ_ONLY: bool = true;
     type Input = GetCatalogInput;
@@ -39,10 +39,10 @@ pub struct GetCatalogInput {
     /// Which FPGAs to return. Omitted means none.
     #[serde(default)]
     pub fpgas: Option<CatalogQuery>,
-    /// Which FPGA architectures (families) to return, by ID, such as ice40.
+    /// Which FPGA families to return, by ID, such as ice40 or gw1n.
     /// Omitted means none.
     #[serde(default)]
-    pub architectures: Option<CatalogQuery>,
+    pub families: Option<CatalogQuery>,
     /// The host's own boards: the absolute path of a folder of board files,
     /// one board each in the catalog's format, named by board ID, such as
     /// boards/my-board.json (a project's boards folder). board can name one
@@ -63,10 +63,10 @@ pub struct GetCatalogInput {
     pub display_paths: Option<crate::display_paths::DisplayPaths>,
 }
 
-/// An FPGA architecture (family), as FPGA definitions name it.
+/// An FPGA family, as FPGA definitions name it.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
-pub struct ArchitectureInfo {
+pub struct FamilyInfo {
     /// The family's name for people, with its vendor, such as "Lattice
     /// iCE40", for grouping boards.
     pub label: String,
@@ -79,6 +79,9 @@ pub struct ArchitectureInfo {
     /// The family's place in the engine's order (0 first), for listing
     /// families in a fixed order.
     pub order: u32,
+    /// The toolchain that builds the family's FPGAs: ice40, ecp5, gowin or
+    /// openxc7. For logs and diagnostics; show people the family.
+    pub toolchain: catalog::Toolchain,
 }
 
 /// Selects entries from one catalog section.
@@ -197,9 +200,9 @@ pub struct GetCatalogOutput {
     pub boards: BTreeMap<String, CatalogBoard>,
     /// FPGA definitions, by catalog ID.
     pub fpgas: BTreeMap<String, FpgaDefinition>,
-    /// FPGA architectures (families), by ID, such as ice40.
+    /// FPGA families, by ID, such as ice40 or gw1n.
     #[serde(default)]
-    pub architectures: BTreeMap<String, ArchitectureInfo>,
+    pub families: BTreeMap<String, FamilyInfo>,
 }
 
 fn select<T: Clone>(
@@ -242,23 +245,24 @@ fn answer(input: GetCatalogInput) -> Result<GetCatalogOutput, ToolError> {
     Ok(GetCatalogOutput {
         boards: select("boards", &known, input.boards)?,
         fpgas: select("fpgas", &catalog::builtin().fpgas, input.fpgas)?,
-        architectures: select("architectures", &architectures(), input.architectures)?,
+        families: select("families", &families(), input.families)?,
     })
 }
 
-/// Every architecture the engine supports, by ID.
-fn architectures() -> BTreeMap<String, ArchitectureInfo> {
-    catalog::Architecture::ALL
+/// Every family the engine supports, by ID.
+fn families() -> BTreeMap<String, FamilyInfo> {
+    catalog::Family::ALL
         .iter()
         .enumerate()
         .map(|(i, a)| {
             (
                 a.id().to_string(),
-                ArchitectureInfo {
+                FamilyInfo {
                     label: a.full_label().to_string(),
                     short_label: a.label().to_string(),
                     constraint_extension: a.constraint_extension().to_string(),
                     order: i as u32,
+                    toolchain: a.toolchain(),
                 },
             )
         })
@@ -268,7 +272,7 @@ fn architectures() -> BTreeMap<String, ArchitectureInfo> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::catalog::Architecture;
+    use crate::catalog::{Family, Toolchain};
     use serde_json::json;
 
     #[test]
@@ -321,12 +325,12 @@ mod tests {
     }
 
     #[test]
-    fn architectures_have_labels_and_pin_file_extensions() {
-        let all = architectures();
+    fn families_have_labels_pin_file_extensions_and_toolchains() {
+        let all = families();
         let q: CatalogQuery = serde_json::from_value(serde_json::json!({"fetch": true})).unwrap();
-        let out = select("architectures", &all, Some(q)).unwrap();
+        let out = select("families", &all, Some(q)).unwrap();
         assert!(
-            select("architectures", &all, None).unwrap().is_empty(),
+            select("families", &all, None).unwrap().is_empty(),
             "only when asked"
         );
         let ice40 = &out["ice40"];
@@ -334,11 +338,20 @@ mod tests {
         assert_eq!(ice40.short_label, "iCE40");
         assert_eq!(ice40.constraint_extension, "pcf");
         assert_eq!(ice40.order, 0);
-        assert_eq!(out["xilinx"].constraint_extension, "xdc");
-        assert_eq!(out.len(), Architecture::ALL.len());
-        // Each ID is the one FPGA definitions use.
-        for a in Architecture::ALL {
+        assert_eq!(ice40.toolchain, Toolchain::Ice40);
+        assert_eq!(out["gw2a"].short_label, "GW2A");
+        assert_eq!(out["gw2a"].toolchain, Toolchain::Gowin);
+        assert_eq!(out["zynq7000"].label, "Xilinx Zynq-7000");
+        assert_eq!(out["zynq7000"].constraint_extension, "xdc");
+        assert_eq!(out["zynq7000"].toolchain, Toolchain::Openxc7);
+        assert_eq!(out.len(), Family::ALL.len());
+        // Each ID is the one FPGA definitions and catalog file names use.
+        for a in Family::ALL {
             assert_eq!(serde_json::to_value(a).unwrap(), a.id());
+            assert_eq!(
+                serde_json::to_value(a.toolchain()).unwrap(),
+                a.toolchain().id()
+            );
         }
     }
 }

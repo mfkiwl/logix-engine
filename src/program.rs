@@ -5,7 +5,7 @@
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
-use crate::catalog::{self, Architecture, FpgaDefinition, Variant};
+use crate::catalog::{self, FpgaDefinition, Toolchain, Variant};
 use crate::devices::{self, Device};
 use crate::errors::{ActionCode, Category, ToolError};
 
@@ -258,7 +258,7 @@ const CONNECTION_OPTIONS: &[(&str, bool)] = &[
 /// jtag_idcode.
 pub fn checks_fpga(variant: &Variant, fpga: &FpgaDefinition) -> bool {
     variant.programmer == "openfpgaloader"
-        && fpga.architecture != Architecture::Ice40
+        && fpga.toolchain() != Toolchain::Ice40
         && fpga.jtag_idcode.is_some()
         && !variant
             .args

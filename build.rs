@@ -71,7 +71,7 @@ fn civil_from_days(z: i64) -> (i64, u32, u32) {
 }
 
 // Writes $OUT_DIR/catalog_files.rs: the catalog's board files (by ID, sorted),
-// the FPGA files (by architecture, sorted) and the board schema, all as include_str!, plus where they came
+// the FPGA files (by family, sorted) and the board schema, all as include_str!, plus where they came
 // from. From LOGIX_ENGINE_DEV_CATALOG, an absolute path to a logix-catalog
 // clone, when set (local builds; the version is the clone's commit and date,
 // marked local), else from catalog/ (its version in catalog/SOURCE.json).

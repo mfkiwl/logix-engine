@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://www.openlogix.org/schemas/logix-fpgas-gowin-v1.json",
   "title": "Logix Gowin FPGAs",
-  "description": "The Gowin FPGAs of Logix Catalog (www.openlogix.org/catalog/): its file, fpgas/gowin.json, which maps each FPGA ID to its facts. The file's name gives the FPGAs' architecture.",
+  "description": "The Gowin FPGAs of Logix Catalog (www.openlogix.org/catalog/): the schema of fpgas/gw1n.json, fpgas/gw2a.json and fpgas/gw5a.json, one file per family, each mapping FPGA IDs to their facts. A file's name gives its FPGAs' family.",
   "type": "object",
   "properties": {
     "$schema": {
@@ -42,17 +42,12 @@
         "nextpnr_family": {
           "type": "string",
           "pattern": "^[A-Za-z0-9:_/-]+$",
-          "description": "The device family nextpnr-himbaechel uses (-o family=), such as GW1N-9C, when nextpnr can't tell it from nextpnr_device. Optional."
+          "description": "The die nextpnr-himbaechel uses (-o family=), such as GW1N-9C, when nextpnr can't tell it from nextpnr_device. Optional."
         },
         "packer_device": {
           "type": "string",
           "pattern": "^[A-Za-z0-9:_/-]+$",
           "description": "The device gowin_pack uses (-d), such as GW1N-9C."
-        },
-        "yosys_family": {
-          "type": "string",
-          "pattern": "^[A-Za-z0-9:_/-]+$",
-          "description": "The family yosys synthesizes for (synth_gowin -family), such as gw2a. Optional: left out, yosys's default, the GW1N family."
         },
         "jtag_idcode": {
           "type": "string",

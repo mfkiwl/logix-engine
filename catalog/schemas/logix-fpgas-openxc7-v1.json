@@ -1,12 +1,12 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://www.openlogix.org/schemas/logix-fpgas-xilinx-v1.json",
+  "$id": "https://www.openlogix.org/schemas/logix-fpgas-openxc7-v1.json",
   "title": "Logix Xilinx 7-series FPGAs",
-  "description": "The Xilinx 7-series FPGAs of Logix Catalog (www.openlogix.org/catalog/): its file, fpgas/xilinx.json, which maps each FPGA ID to its facts. The file's name gives the FPGAs' architecture.",
+  "description": "The Xilinx 7-series FPGAs of Logix Catalog (www.openlogix.org/catalog/): the schema of fpgas/artix7.json, fpgas/spartan7.json and fpgas/zynq7000.json, one file per family, each mapping FPGA IDs to their facts. A file's name gives its FPGAs' family.",
   "type": "object",
   "properties": {
     "$schema": {
-      "const": "https://www.openlogix.org/schemas/logix-fpgas-xilinx-v1.json"
+      "const": "https://www.openlogix.org/schemas/logix-fpgas-openxc7-v1.json"
     }
   },
   "required": [
@@ -39,16 +39,6 @@
           "pattern": "^[A-Za-z0-9:_/-]+$",
           "description": "The device nextpnr-xilinx uses, such as xc7a35tcsg324-1."
         },
-        "yosys_arch": {
-          "type": "string",
-          "pattern": "^[A-Za-z0-9:_/-]+$",
-          "description": "The architecture yosys synthesizes for (synth_xilinx -arch), such as xc7."
-        },
-        "prjxray_family": {
-          "type": "string",
-          "pattern": "^[A-Za-z0-9:_/-]+$",
-          "description": "The FPGA family's folder in the Project X-Ray database, such as artix7, spartan7 or zynq7."
-        },
         "jtag_idcode": {
           "type": "string",
           "pattern": "^0x[0-9a-f]{8}$",
@@ -58,9 +48,7 @@
       "required": [
         "part_number",
         "size",
-        "nextpnr_device",
-        "yosys_arch",
-        "prjxray_family"
+        "nextpnr_device"
       ],
       "additionalProperties": false
     }

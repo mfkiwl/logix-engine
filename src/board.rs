@@ -471,8 +471,7 @@ mod tests {
         assert!(same(&|b| b.variant.args = "--other".into()));
         assert!(same(&|b| b.variant.tested = false));
         assert!(!same(&|b| b.fpga.nextpnr_device = "xc7a100tcsg324-1".into()));
-        assert!(!same(&|b| b.fpga.prjxray_family = Some("spartan7".into())));
-        assert!(!same(&|b| b.fpga.architecture = catalog::Architecture::Ecp5));
+        assert!(!same(&|b| b.fpga.family = catalog::Family::Spartan7));
     }
 
     #[test]

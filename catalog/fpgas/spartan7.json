@@ -1,0 +1,243 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-fpgas-openxc7-v1.json",
+  "xc7s100fgga484-1": {
+    "part_number": "XC7S100-1FGGA484",
+    "size": "100k",
+    "nextpnr_device": "xc7s100fgga484-1",
+    "jtag_idcode": "0x037c7093"
+  },
+  "xc7s100fgga484-1il": {
+    "part_number": "XC7S100-1ILFGGA484",
+    "size": "100k",
+    "nextpnr_device": "xc7s100fgga484-1IL",
+    "jtag_idcode": "0x037c7093"
+  },
+  "xc7s100fgga484-1q": {
+    "part_number": "XC7S100-1QFGGA484",
+    "size": "100k",
+    "nextpnr_device": "xc7s100fgga484-1Q",
+    "jtag_idcode": "0x037c7093"
+  },
+  "xc7s100fgga484-2": {
+    "part_number": "XC7S100-2FGGA484",
+    "size": "100k",
+    "nextpnr_device": "xc7s100fgga484-2",
+    "jtag_idcode": "0x037c7093"
+  },
+  "xc7s100fgga676-1": {
+    "part_number": "XC7S100-1FGGA676",
+    "size": "100k",
+    "nextpnr_device": "xc7s100fgga676-1",
+    "jtag_idcode": "0x037c7093"
+  },
+  "xc7s100fgga676-1il": {
+    "part_number": "XC7S100-1ILFGGA676",
+    "size": "100k",
+    "nextpnr_device": "xc7s100fgga676-1IL",
+    "jtag_idcode": "0x037c7093"
+  },
+  "xc7s100fgga676-1q": {
+    "part_number": "XC7S100-1QFGGA676",
+    "size": "100k",
+    "nextpnr_device": "xc7s100fgga676-1Q",
+    "jtag_idcode": "0x037c7093"
+  },
+  "xc7s100fgga676-2": {
+    "part_number": "XC7S100-2FGGA676",
+    "size": "100k",
+    "nextpnr_device": "xc7s100fgga676-2",
+    "jtag_idcode": "0x037c7093"
+  },
+  "xc7s25csga225-1": {
+    "part_number": "XC7S25-1CSGA225",
+    "size": "25k",
+    "nextpnr_device": "xc7s25csga225-1",
+    "jtag_idcode": "0x037c4093"
+  },
+  "xc7s25csga225-1il": {
+    "part_number": "XC7S25-1ILCSGA225",
+    "size": "25k",
+    "nextpnr_device": "xc7s25csga225-1IL",
+    "jtag_idcode": "0x037c4093"
+  },
+  "xc7s25csga225-1q": {
+    "part_number": "XC7S25-1QCSGA225",
+    "size": "25k",
+    "nextpnr_device": "xc7s25csga225-1Q",
+    "jtag_idcode": "0x037c4093"
+  },
+  "xc7s25csga225-2": {
+    "part_number": "XC7S25-2CSGA225",
+    "size": "25k",
+    "nextpnr_device": "xc7s25csga225-2",
+    "jtag_idcode": "0x037c4093"
+  },
+  "xc7s25csga324-1": {
+    "part_number": "XC7S25-1CSGA324",
+    "size": "25k",
+    "nextpnr_device": "xc7s25csga324-1",
+    "jtag_idcode": "0x037c4093"
+  },
+  "xc7s25csga324-1il": {
+    "part_number": "XC7S25-1ILCSGA324",
+    "size": "25k",
+    "nextpnr_device": "xc7s25csga324-1IL",
+    "jtag_idcode": "0x037c4093"
+  },
+  "xc7s25csga324-1q": {
+    "part_number": "XC7S25-1QCSGA324",
+    "size": "25k",
+    "nextpnr_device": "xc7s25csga324-1Q",
+    "jtag_idcode": "0x037c4093"
+  },
+  "xc7s25csga324-2": {
+    "part_number": "XC7S25-2CSGA324",
+    "size": "25k",
+    "nextpnr_device": "xc7s25csga324-2",
+    "jtag_idcode": "0x037c4093"
+  },
+  "xc7s25ftgb196-1": {
+    "part_number": "XC7S25-1FTGB196",
+    "size": "25k",
+    "nextpnr_device": "xc7s25ftgb196-1",
+    "jtag_idcode": "0x037c4093"
+  },
+  "xc7s25ftgb196-1il": {
+    "part_number": "XC7S25-1ILFTGB196",
+    "size": "25k",
+    "nextpnr_device": "xc7s25ftgb196-1IL",
+    "jtag_idcode": "0x037c4093"
+  },
+  "xc7s25ftgb196-1q": {
+    "part_number": "XC7S25-1QFTGB196",
+    "size": "25k",
+    "nextpnr_device": "xc7s25ftgb196-1Q",
+    "jtag_idcode": "0x037c4093"
+  },
+  "xc7s25ftgb196-2": {
+    "part_number": "XC7S25-2FTGB196",
+    "size": "25k",
+    "nextpnr_device": "xc7s25ftgb196-2",
+    "jtag_idcode": "0x037c4093"
+  },
+  "xc7s50csga324-1": {
+    "part_number": "XC7S50-1CSGA324",
+    "size": "50k",
+    "nextpnr_device": "xc7s50csga324-1",
+    "jtag_idcode": "0x0362f093"
+  },
+  "xc7s50csga324-1il": {
+    "part_number": "XC7S50-1ILCSGA324",
+    "size": "50k",
+    "nextpnr_device": "xc7s50csga324-1IL",
+    "jtag_idcode": "0x0362f093"
+  },
+  "xc7s50csga324-1q": {
+    "part_number": "XC7S50-1QCSGA324",
+    "size": "50k",
+    "nextpnr_device": "xc7s50csga324-1Q",
+    "jtag_idcode": "0x0362f093"
+  },
+  "xc7s50csga324-2": {
+    "part_number": "XC7S50-2CSGA324",
+    "size": "50k",
+    "nextpnr_device": "xc7s50csga324-2",
+    "jtag_idcode": "0x0362f093"
+  },
+  "xc7s50fgga484-1": {
+    "part_number": "XC7S50-1FGGA484",
+    "size": "50k",
+    "nextpnr_device": "xc7s50fgga484-1",
+    "jtag_idcode": "0x0362f093"
+  },
+  "xc7s50fgga484-1il": {
+    "part_number": "XC7S50-1ILFGGA484",
+    "size": "50k",
+    "nextpnr_device": "xc7s50fgga484-1IL",
+    "jtag_idcode": "0x0362f093"
+  },
+  "xc7s50fgga484-1q": {
+    "part_number": "XC7S50-1QFGGA484",
+    "size": "50k",
+    "nextpnr_device": "xc7s50fgga484-1Q",
+    "jtag_idcode": "0x0362f093"
+  },
+  "xc7s50fgga484-2": {
+    "part_number": "XC7S50-2FGGA484",
+    "size": "50k",
+    "nextpnr_device": "xc7s50fgga484-2",
+    "jtag_idcode": "0x0362f093"
+  },
+  "xc7s50ftgb196-1": {
+    "part_number": "XC7S50-1FTGB196",
+    "size": "50k",
+    "nextpnr_device": "xc7s50ftgb196-1",
+    "jtag_idcode": "0x0362f093"
+  },
+  "xc7s50ftgb196-1il": {
+    "part_number": "XC7S50-1ILFTGB196",
+    "size": "50k",
+    "nextpnr_device": "xc7s50ftgb196-1IL",
+    "jtag_idcode": "0x0362f093"
+  },
+  "xc7s50ftgb196-1q": {
+    "part_number": "XC7S50-1QFTGB196",
+    "size": "50k",
+    "nextpnr_device": "xc7s50ftgb196-1Q",
+    "jtag_idcode": "0x0362f093"
+  },
+  "xc7s50ftgb196-2": {
+    "part_number": "XC7S50-2FTGB196",
+    "size": "50k",
+    "nextpnr_device": "xc7s50ftgb196-2",
+    "jtag_idcode": "0x0362f093"
+  },
+  "xc7s75fgga484-1": {
+    "part_number": "XC7S75-1FGGA484",
+    "size": "75k",
+    "nextpnr_device": "xc7s75fgga484-1",
+    "jtag_idcode": "0x037c8093"
+  },
+  "xc7s75fgga484-1il": {
+    "part_number": "XC7S75-1ILFGGA484",
+    "size": "75k",
+    "nextpnr_device": "xc7s75fgga484-1IL",
+    "jtag_idcode": "0x037c8093"
+  },
+  "xc7s75fgga484-1q": {
+    "part_number": "XC7S75-1QFGGA484",
+    "size": "75k",
+    "nextpnr_device": "xc7s75fgga484-1Q",
+    "jtag_idcode": "0x037c8093"
+  },
+  "xc7s75fgga484-2": {
+    "part_number": "XC7S75-2FGGA484",
+    "size": "75k",
+    "nextpnr_device": "xc7s75fgga484-2",
+    "jtag_idcode": "0x037c8093"
+  },
+  "xc7s75fgga676-1": {
+    "part_number": "XC7S75-1FGGA676",
+    "size": "75k",
+    "nextpnr_device": "xc7s75fgga676-1",
+    "jtag_idcode": "0x037c8093"
+  },
+  "xc7s75fgga676-1il": {
+    "part_number": "XC7S75-1ILFGGA676",
+    "size": "75k",
+    "nextpnr_device": "xc7s75fgga676-1IL",
+    "jtag_idcode": "0x037c8093"
+  },
+  "xc7s75fgga676-1q": {
+    "part_number": "XC7S75-1QFGGA676",
+    "size": "75k",
+    "nextpnr_device": "xc7s75fgga676-1Q",
+    "jtag_idcode": "0x037c8093"
+  },
+  "xc7s75fgga676-2": {
+    "part_number": "XC7S75-2FGGA676",
+    "size": "75k",
+    "nextpnr_device": "xc7s75fgga676-2",
+    "jtag_idcode": "0x037c8093"
+  }
+}

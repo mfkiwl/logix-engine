@@ -1,4 +1,4 @@
-//! The build (docs/tool-api.md, "build tool"), run with each architecture's
+//! The build (docs/tool-api.md, "build tool"), run with each toolchain's
 //! standard open source flow: yosys, nextpnr-ice40 and icepack for
 //! iCE40; yosys, nextpnr-ecp5 and ecppack for ECP5; yosys,
 //! nextpnr-himbaechel and gowin_pack for Gowin; yosys, nextpnr-xilinx,
@@ -28,7 +28,7 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
 use crate::board::ResolvedBoard;
-use crate::catalog::{Architecture, FpgaDefinition};
+use crate::catalog::{FpgaDefinition, Toolchain};
 use crate::errors::{Category, Diagnostic, ToolError};
 use crate::packages::manifest::PackageSpec;
 use crate::progress::Phases;
@@ -40,7 +40,7 @@ use parse::ResourceUsage;
 
 pub const MARKER: &str = ".logix-build";
 pub const RECORD: &str = "build-record.json";
-/// Every file a build makes, for any architecture, deleted before a build
+/// Every file a build makes, for any toolchain, deleted before a build
 /// runs again.
 pub const OUTPUTS: &[&str] = &[
     RECORD,
@@ -59,12 +59,12 @@ pub const OUTPUTS: &[&str] = &[
 ];
 
 /// The bitstream's file name in the build folder.
-pub fn bitstream_name(arch: Architecture) -> &'static str {
+pub fn bitstream_name(arch: Toolchain) -> &'static str {
     match arch {
-        Architecture::Ice40 => "hardware.bin",
-        Architecture::Ecp5 => "hardware.bit",
-        Architecture::Gowin => "hardware.fs",
-        Architecture::Xilinx => "hardware.bit",
+        Toolchain::Ice40 => "hardware.bin",
+        Toolchain::Ecp5 => "hardware.bit",
+        Toolchain::Gowin => "hardware.fs",
+        Toolchain::Openxc7 => "hardware.bit",
     }
 }
 
@@ -83,22 +83,21 @@ pub fn synth_script(fpga: &FpgaDefinition, top: &str, json: &Path) -> String {
     )
 }
 
-/// The architecture's synthesis command.
+/// The toolchain's synthesis command.
 fn synth_command(fpga: &FpgaDefinition, top: &str, json: &Path) -> String {
     let json = json.display();
-    match fpga.architecture {
-        Architecture::Ice40 => format!("synth_ice40 -top {top} -json \"{json}\""),
-        Architecture::Ecp5 => format!("synth_ecp5 -top {top} -json \"{json}\""),
-        Architecture::Gowin => {
-            let family = match &fpga.yosys_family {
+    match fpga.toolchain() {
+        Toolchain::Ice40 => format!("synth_ice40 -top {top} -json \"{json}\""),
+        Toolchain::Ecp5 => format!("synth_ecp5 -top {top} -json \"{json}\""),
+        Toolchain::Gowin => {
+            let family = match fpga.family.yosys_family() {
                 Some(f) => format!(" -family {f}"),
                 None => String::new(),
             };
             format!("synth_gowin -top {top}{family}; write_json \"{json}\"")
         }
-        Architecture::Xilinx => {
-            let arch = fpga.yosys_arch.as_deref().unwrap_or_default();
-            format!("synth_xilinx -arch {arch} -top {top}; write_json \"{json}\"")
+        Toolchain::Openxc7 => {
+            format!("synth_xilinx -arch xc7 -top {top}; write_json \"{json}\"")
         }
     }
 }
@@ -115,12 +114,12 @@ pub fn pnr_command(
     verbose: bool,
 ) -> (&'static str, Vec<OsString>) {
     let mut args: Vec<OsString> = vec!["--top".into(), top.into()];
-    if matches!(fpga.architecture, Architecture::Ice40 | Architecture::Ecp5) {
+    if matches!(fpga.toolchain(), Toolchain::Ice40 | Toolchain::Ecp5) {
         args.push(format!("--{}", fpga.nextpnr_device).into());
         args.extend(["--package".into(), fpga.package().into()]);
     }
-    let tool = match fpga.architecture {
-        Architecture::Ice40 => {
+    let tool = match fpga.toolchain() {
+        Toolchain::Ice40 => {
             for a in ["--json", "hardware.json", "--asc", "hardware.asc"] {
                 args.push(a.into());
             }
@@ -128,7 +127,7 @@ pub fn pnr_command(
             args.push(constraint_file.into());
             "nextpnr-ice40"
         }
-        Architecture::Ecp5 => {
+        Toolchain::Ecp5 => {
             args.push("--speed".into());
             args.push(fpga.nextpnr_speed.clone().unwrap_or_default().into());
             for a in ["--json", "hardware.json", "--textcfg", "hardware.config"] {
@@ -139,7 +138,7 @@ pub fn pnr_command(
             args.extend(["--timing-allow-fail".into(), "--force".into()]);
             "nextpnr-ecp5"
         }
-        Architecture::Gowin => {
+        Toolchain::Gowin => {
             args.extend(["--device".into(), fpga.nextpnr_device.clone().into()]);
             for a in ["--json", "hardware.json", "--write", "hardware.pnr.json"] {
                 args.push(a.into());
@@ -153,7 +152,7 @@ pub fn pnr_command(
             args.extend(["--vopt".into(), cst]);
             "nextpnr-himbaechel"
         }
-        Architecture::Xilinx => {
+        Toolchain::Openxc7 => {
             args.extend(["--device".into(), fpga.nextpnr_device.clone().into()]);
             let mut xdc = OsString::from("xdc=");
             xdc.push(constraint_file);
@@ -178,12 +177,12 @@ pub fn pack_commands(
     fpga: &FpgaDefinition,
     package_dir: &Path,
 ) -> Vec<(&'static str, Vec<OsString>)> {
-    match fpga.architecture {
-        Architecture::Ice40 => vec![(
+    match fpga.toolchain() {
+        Toolchain::Ice40 => vec![(
             "icepack",
             vec!["hardware.asc".into(), "hardware.bin".into()],
         )],
-        Architecture::Ecp5 => vec![(
+        Toolchain::Ecp5 => vec![(
             "ecppack",
             vec![
                 "--compress".into(),
@@ -193,7 +192,7 @@ pub fn pack_commands(
                 "hardware.bit".into(),
             ],
         )],
-        Architecture::Gowin => vec![(
+        Toolchain::Gowin => vec![(
             "gowin_pack",
             vec![
                 "-d".into(),
@@ -203,11 +202,11 @@ pub fn pack_commands(
                 "hardware.pnr.json".into(),
             ],
         )],
-        Architecture::Xilinx => {
+        Toolchain::Openxc7 => {
             let device = &fpga.nextpnr_device;
             let db = package_dir
                 .join("share/nextpnr/external/prjxray-db")
-                .join(fpga.prjxray_family.as_deref().unwrap_or_default());
+                .join(fpga.family.prjxray_family().unwrap_or_default());
             vec![
                 (
                     "fasm2frames",
@@ -238,16 +237,16 @@ pub fn pack_commands(
     }
 }
 
-/// The package with the build tools: yosys, and every architecture's
+/// The package with the build tools: yosys, and every toolchain's
 /// place-and-route and packing tools except Xilinx's.
 pub const TOOLCHAIN: &str = "oss-cad-suite";
 /// The package with Xilinx's place-and-route and packing tools.
 pub const XILINX_TOOLCHAIN: &str = "openxc7";
 
-/// The package with the architecture's place-and-route and packing tools.
-pub fn pnr_package(arch: Architecture) -> &'static str {
+/// The package with the toolchain's place-and-route and packing tools.
+pub fn pnr_package(arch: Toolchain) -> &'static str {
     match arch {
-        Architecture::Xilinx => XILINX_TOOLCHAIN,
+        Toolchain::Openxc7 => XILINX_TOOLCHAIN,
         _ => TOOLCHAIN,
     }
 }
@@ -541,7 +540,7 @@ pub async fn build(
         .cloned()
         .ok_or_else(|| ToolError::engine(format!("{TOOLCHAIN} isn't in the manifest.")))?;
     let fpga = &req.board.fpga;
-    let pnr_spec = match pnr_package(fpga.architecture) {
+    let pnr_spec = match pnr_package(fpga.toolchain()) {
         TOOLCHAIN => None,
         name => Some(
             state
@@ -683,7 +682,7 @@ pub async fn build(
     let mut seen = std::collections::HashSet::new();
     warnings.retain(|w| seen.insert((w.file.clone(), w.line, w.text.clone())));
     let result = BuildResult {
-        bitstream: bitstream_name(fpga.architecture).into(),
+        bitstream: bitstream_name(fpga.toolchain()).into(),
         up_to_date: false,
         resources_usage,
         timing,

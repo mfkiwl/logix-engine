@@ -283,7 +283,7 @@
   },
   {
     "name": "get_catalog",
-    "description": "Returns board and FPGA definitions from the engine's read-only catalog. Use it to find a board's catalog ID, such as alhambra-ii, to pass as the board of other tools, or to see a board's FPGA and how it is programmed. Each section is returned only when asked for: {\"boards\": {\"fetch\": true}} returns all boards, and {\"boards\": {\"fetch\": true, \"ids\": [\"alhambra-ii\"]}} only the listed ones. Boards include those of the request's custom_boards_folder, marked custom, a custom board replacing the catalog board with its ID. The architectures section gives each FPGA family's name for people and the extension of its pin constraint files. Board descriptions are the boards' names for people.",
+    "description": "Returns board and FPGA definitions from the engine's read-only catalog. Use it to find a board's catalog ID, such as alhambra-ii, to pass as the board of other tools, or to see a board's FPGA and how it is programmed. Each section is returned only when asked for: {\"boards\": {\"fetch\": true}} returns all boards, and {\"boards\": {\"fetch\": true, \"ids\": [\"alhambra-ii\"]}} only the listed ones. Boards include those of the request's custom_boards_folder, marked custom, a custom board replacing the catalog board with its ID. The families section gives each FPGA family's name for people, the extension of its pin constraint files and the toolchain that builds it. Board descriptions are the boards' names for people.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "title": "GetCatalogInput",
@@ -312,8 +312,8 @@
             }
           ]
         },
-        "architectures": {
-          "description": "Which FPGA architectures (families) to return, by ID, such as ice40.\nOmitted means none.",
+        "families": {
+          "description": "Which FPGA families to return, by ID, such as ice40 or gw1n.\nOmitted means none.",
           "anyOf": [
             {
               "$ref": "#/$defs/CatalogQuery"
@@ -432,11 +432,11 @@
             "$ref": "#/$defs/FpgaDefinition"
           }
         },
-        "architectures": {
-          "description": "FPGA architectures (families), by ID, such as ice40.",
+        "families": {
+          "description": "FPGA families, by ID, such as ice40 or gw1n.",
           "type": "object",
           "additionalProperties": {
-            "$ref": "#/$defs/ArchitectureInfo"
+            "$ref": "#/$defs/FamilyInfo"
           },
           "default": {}
         }
@@ -1460,12 +1460,12 @@
           ]
         },
         "FpgaDefinition": {
-          "description": "An FPGA: its architecture, part and toolchain parameters.",
+          "description": "An FPGA: its family, part and toolchain parameters.",
           "type": "object",
           "properties": {
-            "architecture": {
-              "description": "The FPGA family: ice40, ecp5, gowin or xilinx.",
-              "$ref": "#/$defs/Architecture"
+            "family": {
+              "description": "The FPGA family, the name on the chip: ice40, ecp5, gw1n, gw2a,\ngw5a, artix7, spartan7 or zynq7000.",
+              "$ref": "#/$defs/Family"
             },
             "part_number": {
               "description": "The vendor's part number, such as ICE40HX4K-TQ144.",
@@ -1507,27 +1507,6 @@
                 "null"
               ]
             },
-            "yosys_family": {
-              "description": "The family yosys synthesizes for, such as gw2a. Gowin only,\noptional: omitted means yosys's default, the GW1N family.",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "yosys_arch": {
-              "description": "The architecture yosys synthesizes for (synth_xilinx -arch), such\nas xc7. Xilinx only, where it's required.",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
-            "prjxray_family": {
-              "description": "The FPGA family's folder in the Project X-Ray database, which the\nbitstream tools read, such as artix7, spartan7 or zynq7. Xilinx\nonly, where it's required.",
-              "type": [
-                "string",
-                "null"
-              ]
-            },
             "jtag_idcode": {
               "description": "The FPGA's JTAG ID code, such as 0x0362d093, as openFPGALoader's\n--detect reports it. Before programming over JTAG, the engine reads\nthe connected FPGA's ID code and refuses to program a different\nFPGA, such as a board of another size than the build's. It\nidentifies the chip, not the size a board uses it as, so FPGAs made\nfrom the same chip share it. ECP5, Gowin and Xilinx only, optional:\nwithout it there is no check.",
               "type": [
@@ -1538,14 +1517,14 @@
           },
           "additionalProperties": false,
           "required": [
-            "architecture",
+            "family",
             "part_number",
             "size",
             "nextpnr_device"
           ]
         },
-        "Architecture": {
-          "description": "FPGA families.",
+        "Family": {
+          "description": "FPGA families: the names on the chips and their datasheets. Each\nfamily's FPGAs are in the catalog's `fpgas/<family>.json`.",
           "oneOf": [
             {
               "description": "Lattice iCE40.",
@@ -1558,19 +1537,39 @@
               "const": "ecp5"
             },
             {
-              "description": "Gowin (GW1N, GW2A and GW5A).",
+              "description": "Gowin GW1N (LittleBee).",
               "type": "string",
-              "const": "gowin"
+              "const": "gw1n"
             },
             {
-              "description": "AMD/Xilinx 7 Series (Artix-7, Spartan-7 and Zynq-7000).",
+              "description": "Gowin GW2A (Arora).",
               "type": "string",
-              "const": "xilinx"
+              "const": "gw2a"
+            },
+            {
+              "description": "Gowin GW5A (Arora V).",
+              "type": "string",
+              "const": "gw5a"
+            },
+            {
+              "description": "AMD/Xilinx Artix-7.",
+              "type": "string",
+              "const": "artix7"
+            },
+            {
+              "description": "AMD/Xilinx Spartan-7.",
+              "type": "string",
+              "const": "spartan7"
+            },
+            {
+              "description": "AMD/Xilinx Zynq-7000.",
+              "type": "string",
+              "const": "zynq7000"
             }
           ]
         },
-        "ArchitectureInfo": {
-          "description": "An FPGA architecture (family), as FPGA definitions name it.",
+        "FamilyInfo": {
+          "description": "An FPGA family, as FPGA definitions name it.",
           "type": "object",
           "properties": {
             "label": {
@@ -1589,6 +1588,10 @@
               "description": "The family's place in the engine's order (0 first), for listing\nfamilies in a fixed order.",
               "type": "integer",
               "minimum": 0
+            },
+            "toolchain": {
+              "description": "The toolchain that builds the family's FPGAs: ice40, ecp5, gowin or\nopenxc7. For logs and diagnostics; show people the family.",
+              "$ref": "#/$defs/Toolchain"
             }
           },
           "additionalProperties": false,
@@ -1596,7 +1599,33 @@
             "label",
             "short_label",
             "constraint_extension",
-            "order"
+            "order",
+            "toolchain"
+          ]
+        },
+        "Toolchain": {
+          "description": "The toolchains: how the engine builds a family's FPGAs, each with its\nown flow. For logs, diagnostics and the API; people see families.",
+          "oneOf": [
+            {
+              "description": "iCE40: nextpnr-ice40 and icepack.",
+              "type": "string",
+              "const": "ice40"
+            },
+            {
+              "description": "ECP5: nextpnr-ecp5 and ecppack.",
+              "type": "string",
+              "const": "ecp5"
+            },
+            {
+              "description": "Gowin: nextpnr-himbaechel's gowin uarch and gowin_pack.",
+              "type": "string",
+              "const": "gowin"
+            },
+            {
+              "description": "openXC7, for Xilinx 7-series: nextpnr-xilinx and the openXC7 tools.",
+              "type": "string",
+              "const": "openxc7"
+            }
           ]
         }
       }
@@ -1609,7 +1638,7 @@
   },
   {
     "name": "compare_boards",
-    "description": "Compares two boards, such as a project's board and one it may move to. Returns every aspect (board, architecture, fpga, size, constraint_format, pins, clock, leds), each the same, different or unknown (the catalog doesn't describe it yet), with both values and a sentence for people, and same_build: whether a build for one board is valid for the other. Facts only: what they mean for a project, such as files to change, is the host's decision. Boards can be catalog boards or the request's custom_boards_folder.",
+    "description": "Compares two boards, such as a project's board and one it may move to. Returns every aspect (board, family, fpga, size, constraint_format, pins, clock, leds), each the same, different or unknown (the catalog doesn't describe it yet), with both values and a sentence for people, and same_build: whether a build for one board is valid for the other. Facts only: what they mean for a project, such as files to change, is the host's decision. Boards can be catalog boards or the request's custom_boards_folder.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "title": "CompareBoardsInput",
@@ -1650,7 +1679,7 @@
           "type": "boolean"
         },
         "aspects": {
-          "description": "Every aspect, in a fixed order: board, architecture, fpga, size,\nconstraint_format, pins, clock, leds.",
+          "description": "Every aspect, in a fixed order: board, family, fpga, size,\nconstraint_format, pins, clock, leds.",
           "type": "array",
           "items": {
             "$ref": "#/$defs/Aspect"
@@ -1668,7 +1697,7 @@
           "type": "object",
           "properties": {
             "aspect": {
-              "description": "What is compared: board, architecture, fpga, size, constraint_format,\npins, clock (the clocks' frequencies in MHz, a list of numbers) or\nleds (how many LEDs, a number). Later versions add aspects; hosts\nskip those they don't know, or show their text.",
+              "description": "What is compared: board, family, fpga, size, constraint_format,\npins, clock (the clocks' frequencies in MHz, a list of numbers) or\nleds (how many LEDs, a number). Later versions add aspects; hosts\nskip those they don't know, or show their text.",
               "type": "string"
             },
             "same": {

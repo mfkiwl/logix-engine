@@ -18,7 +18,7 @@ use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
 use crate::board::ResolvedBoard;
-use crate::catalog::Architecture;
+use crate::catalog::Toolchain;
 use crate::errors::ToolError;
 use crate::progress::Phases;
 use crate::state::EngineState;
@@ -41,7 +41,7 @@ pub struct Sources {
     pub verbose: bool,
 }
 
-/// The architecture's simulation models: the FPGA's primitives, such as
+/// The toolchain's simulation models: the FPGA's primitives, such as
 /// SB_IO and SB_PLL40_CORE for iCE40, so designs that use them can be
 /// linted and simulated.
 pub struct SimLibrary {
@@ -66,8 +66,8 @@ impl SimLibrary {
     /// The models for the board's FPGA, from the toolchain package in
     /// `package_dir`. The FPGA's model files and macros.
     pub fn for_board(board: &ResolvedBoard, package_dir: &Path) -> SimLibrary {
-        match board.fpga.architecture {
-            Architecture::Ice40 => {
+        match board.fpga.toolchain() {
+            Toolchain::Ice40 => {
                 let dir = package_dir.join("share/yosys/ice40");
                 let defines = vec!["-DNO_ICE40_DEFAULT_ASSIGNMENTS".to_string()];
                 SimLibrary {
@@ -79,7 +79,7 @@ impl SimLibrary {
                     verilator_rules_off: vec!["COMBDLY"],
                 }
             }
-            Architecture::Ecp5 => {
+            Toolchain::Ecp5 => {
                 let dir = package_dir.join("share/yosys/ecp5");
                 SimLibrary {
                     files: vec![dir.join("cells_sim.v")],
@@ -94,18 +94,12 @@ impl SimLibrary {
                     verilator_rules_off: vec!["MODDUP", "WIDTHEXPAND", "PINMISSING"],
                 }
             }
-            Architecture::Gowin => {
+            Toolchain::Gowin => {
                 let dir = package_dir.join("share/yosys/gowin");
                 let mut lint_files = vec![dir.join("cells_sim.v")];
-                // Black boxes for the primitives without a model, per family,
-                // chosen by the device name.
-                let device = board.fpga.nextpnr_device.to_uppercase();
-                for (prefix, family) in [("GW1N", "gw1n"), ("GW2A", "gw2a"), ("GW5A", "gw5a")] {
-                    if device.starts_with(prefix) {
-                        lint_files.push(dir.join(format!("cells_xtra_{family}.v")));
-                        break;
-                    }
-                }
+                // Black boxes for the primitives without a model, per family.
+                let family = board.fpga.family.id();
+                lint_files.push(dir.join(format!("cells_xtra_{family}.v")));
                 SimLibrary {
                     files: vec![dir.join("cells_sim.v")],
                     lint_files,
@@ -117,7 +111,7 @@ impl SimLibrary {
                     verilator_rules_off: vec!["SPECIFYIGN", "MODDUP"],
                 }
             }
-            Architecture::Xilinx => {
+            Toolchain::Openxc7 => {
                 let dir = package_dir.join("share/yosys/xilinx");
                 SimLibrary {
                     files: vec![dir.join("cells_sim.v")],

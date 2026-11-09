@@ -1,0 +1,531 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-fpgas-openxc7-v1.json",
+  "xc7a100tcsg324-1": {
+    "part_number": "XC7A100T-1CSG324",
+    "size": "100k",
+    "nextpnr_device": "xc7a100tcsg324-1",
+    "jtag_idcode": "0x03631093"
+  },
+  "xc7a100tcsg324-2": {
+    "part_number": "XC7A100T-2CSG324",
+    "size": "100k",
+    "nextpnr_device": "xc7a100tcsg324-2",
+    "jtag_idcode": "0x03631093"
+  },
+  "xc7a100tcsg324-2l": {
+    "part_number": "XC7A100T-2LCSG324",
+    "size": "100k",
+    "nextpnr_device": "xc7a100tcsg324-2L",
+    "jtag_idcode": "0x03631093"
+  },
+  "xc7a100tcsg324-3": {
+    "part_number": "XC7A100T-3CSG324",
+    "size": "100k",
+    "nextpnr_device": "xc7a100tcsg324-3",
+    "jtag_idcode": "0x03631093"
+  },
+  "xc7a100tfgg484-1": {
+    "part_number": "XC7A100T-1FGG484",
+    "size": "100k",
+    "nextpnr_device": "xc7a100tfgg484-1",
+    "jtag_idcode": "0x03631093"
+  },
+  "xc7a100tfgg484-2": {
+    "part_number": "XC7A100T-2FGG484",
+    "size": "100k",
+    "nextpnr_device": "xc7a100tfgg484-2",
+    "jtag_idcode": "0x03631093"
+  },
+  "xc7a100tfgg484-2l": {
+    "part_number": "XC7A100T-2LFGG484",
+    "size": "100k",
+    "nextpnr_device": "xc7a100tfgg484-2L",
+    "jtag_idcode": "0x03631093"
+  },
+  "xc7a100tfgg484-3": {
+    "part_number": "XC7A100T-3FGG484",
+    "size": "100k",
+    "nextpnr_device": "xc7a100tfgg484-3",
+    "jtag_idcode": "0x03631093"
+  },
+  "xc7a100tfgg676-1": {
+    "part_number": "XC7A100T-1FGG676",
+    "size": "100k",
+    "nextpnr_device": "xc7a100tfgg676-1",
+    "jtag_idcode": "0x03631093"
+  },
+  "xc7a100tfgg676-2": {
+    "part_number": "XC7A100T-2FGG676",
+    "size": "100k",
+    "nextpnr_device": "xc7a100tfgg676-2",
+    "jtag_idcode": "0x03631093"
+  },
+  "xc7a100tfgg676-2l": {
+    "part_number": "XC7A100T-2LFGG676",
+    "size": "100k",
+    "nextpnr_device": "xc7a100tfgg676-2L",
+    "jtag_idcode": "0x03631093"
+  },
+  "xc7a100tfgg676-3": {
+    "part_number": "XC7A100T-3FGG676",
+    "size": "100k",
+    "nextpnr_device": "xc7a100tfgg676-3",
+    "jtag_idcode": "0x03631093"
+  },
+  "xc7a100tftg256-1": {
+    "part_number": "XC7A100T-1FTG256",
+    "size": "100k",
+    "nextpnr_device": "xc7a100tftg256-1",
+    "jtag_idcode": "0x03631093"
+  },
+  "xc7a100tftg256-2": {
+    "part_number": "XC7A100T-2FTG256",
+    "size": "100k",
+    "nextpnr_device": "xc7a100tftg256-2",
+    "jtag_idcode": "0x03631093"
+  },
+  "xc7a100tftg256-2l": {
+    "part_number": "XC7A100T-2LFTG256",
+    "size": "100k",
+    "nextpnr_device": "xc7a100tftg256-2L",
+    "jtag_idcode": "0x03631093"
+  },
+  "xc7a100tftg256-3": {
+    "part_number": "XC7A100T-3FTG256",
+    "size": "100k",
+    "nextpnr_device": "xc7a100tftg256-3",
+    "jtag_idcode": "0x03631093"
+  },
+  "xc7a200tfbg484-1": {
+    "part_number": "XC7A200T-1FBG484",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tfbg484-1",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tfbg484-2": {
+    "part_number": "XC7A200T-2FBG484",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tfbg484-2",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tfbg484-2l": {
+    "part_number": "XC7A200T-2LFBG484",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tfbg484-2L",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tfbg484-3": {
+    "part_number": "XC7A200T-3FBG484",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tfbg484-3",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tfbg676-1": {
+    "part_number": "XC7A200T-1FBG676",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tfbg676-1",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tfbg676-2": {
+    "part_number": "XC7A200T-2FBG676",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tfbg676-2",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tfbg676-2l": {
+    "part_number": "XC7A200T-2LFBG676",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tfbg676-2L",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tfbg676-3": {
+    "part_number": "XC7A200T-3FBG676",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tfbg676-3",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tfbv484-1": {
+    "part_number": "XC7A200T-1FBV484",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tfbv484-1",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tfbv484-2": {
+    "part_number": "XC7A200T-2FBV484",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tfbv484-2",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tfbv484-2l": {
+    "part_number": "XC7A200T-2LFBV484",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tfbv484-2L",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tfbv484-3": {
+    "part_number": "XC7A200T-3FBV484",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tfbv484-3",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tfbv676-1": {
+    "part_number": "XC7A200T-1FBV676",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tfbv676-1",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tfbv676-2": {
+    "part_number": "XC7A200T-2FBV676",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tfbv676-2",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tfbv676-2l": {
+    "part_number": "XC7A200T-2LFBV676",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tfbv676-2L",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tfbv676-3": {
+    "part_number": "XC7A200T-3FBV676",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tfbv676-3",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tffg1156-1": {
+    "part_number": "XC7A200T-1FFG1156",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tffg1156-1",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tffg1156-2": {
+    "part_number": "XC7A200T-2FFG1156",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tffg1156-2",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tffg1156-2l": {
+    "part_number": "XC7A200T-2LFFG1156",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tffg1156-2L",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tffg1156-3": {
+    "part_number": "XC7A200T-3FFG1156",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tffg1156-3",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tffv1156-1": {
+    "part_number": "XC7A200T-1FFV1156",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tffv1156-1",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tffv1156-2": {
+    "part_number": "XC7A200T-2FFV1156",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tffv1156-2",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tffv1156-2l": {
+    "part_number": "XC7A200T-2LFFV1156",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tffv1156-2L",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tffv1156-3": {
+    "part_number": "XC7A200T-3FFV1156",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tffv1156-3",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tsbg484-1": {
+    "part_number": "XC7A200T-1SBG484",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tsbg484-1",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tsbg484-2": {
+    "part_number": "XC7A200T-2SBG484",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tsbg484-2",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tsbg484-2l": {
+    "part_number": "XC7A200T-2LSBG484",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tsbg484-2L",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tsbg484-3": {
+    "part_number": "XC7A200T-3SBG484",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tsbg484-3",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tsbv484-1": {
+    "part_number": "XC7A200T-1SBV484",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tsbv484-1",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tsbv484-2": {
+    "part_number": "XC7A200T-2SBV484",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tsbv484-2",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tsbv484-2l": {
+    "part_number": "XC7A200T-2LSBV484",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tsbv484-2L",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a200tsbv484-3": {
+    "part_number": "XC7A200T-3SBV484",
+    "size": "200k",
+    "nextpnr_device": "xc7a200tsbv484-3",
+    "jtag_idcode": "0x03636093"
+  },
+  "xc7a35tcpg236-1": {
+    "part_number": "XC7A35T-1CPG236",
+    "size": "35k",
+    "nextpnr_device": "xc7a35tcpg236-1",
+    "jtag_idcode": "0x0362d093"
+  },
+  "xc7a35tcpg236-2": {
+    "part_number": "XC7A35T-2CPG236",
+    "size": "35k",
+    "nextpnr_device": "xc7a35tcpg236-2",
+    "jtag_idcode": "0x0362d093"
+  },
+  "xc7a35tcpg236-2l": {
+    "part_number": "XC7A35T-2LCPG236",
+    "size": "35k",
+    "nextpnr_device": "xc7a35tcpg236-2L",
+    "jtag_idcode": "0x0362d093"
+  },
+  "xc7a35tcpg236-3": {
+    "part_number": "XC7A35T-3CPG236",
+    "size": "35k",
+    "nextpnr_device": "xc7a35tcpg236-3",
+    "jtag_idcode": "0x0362d093"
+  },
+  "xc7a35tcsg324-1": {
+    "part_number": "XC7A35T-1CSG324",
+    "size": "35k",
+    "nextpnr_device": "xc7a35tcsg324-1",
+    "jtag_idcode": "0x0362d093"
+  },
+  "xc7a35tcsg324-2": {
+    "part_number": "XC7A35T-2CSG324",
+    "size": "35k",
+    "nextpnr_device": "xc7a35tcsg324-2",
+    "jtag_idcode": "0x0362d093"
+  },
+  "xc7a35tcsg324-2l": {
+    "part_number": "XC7A35T-2LCSG324",
+    "size": "35k",
+    "nextpnr_device": "xc7a35tcsg324-2L",
+    "jtag_idcode": "0x0362d093"
+  },
+  "xc7a35tcsg324-3": {
+    "part_number": "XC7A35T-3CSG324",
+    "size": "35k",
+    "nextpnr_device": "xc7a35tcsg324-3",
+    "jtag_idcode": "0x0362d093"
+  },
+  "xc7a35tcsg325-1": {
+    "part_number": "XC7A35T-1CSG325",
+    "size": "35k",
+    "nextpnr_device": "xc7a35tcsg325-1",
+    "jtag_idcode": "0x0362d093"
+  },
+  "xc7a35tcsg325-2": {
+    "part_number": "XC7A35T-2CSG325",
+    "size": "35k",
+    "nextpnr_device": "xc7a35tcsg325-2",
+    "jtag_idcode": "0x0362d093"
+  },
+  "xc7a35tcsg325-2l": {
+    "part_number": "XC7A35T-2LCSG325",
+    "size": "35k",
+    "nextpnr_device": "xc7a35tcsg325-2L",
+    "jtag_idcode": "0x0362d093"
+  },
+  "xc7a35tcsg325-3": {
+    "part_number": "XC7A35T-3CSG325",
+    "size": "35k",
+    "nextpnr_device": "xc7a35tcsg325-3",
+    "jtag_idcode": "0x0362d093"
+  },
+  "xc7a35tfgg484-1": {
+    "part_number": "XC7A35T-1FGG484",
+    "size": "35k",
+    "nextpnr_device": "xc7a35tfgg484-1",
+    "jtag_idcode": "0x0362d093"
+  },
+  "xc7a35tfgg484-2": {
+    "part_number": "XC7A35T-2FGG484",
+    "size": "35k",
+    "nextpnr_device": "xc7a35tfgg484-2",
+    "jtag_idcode": "0x0362d093"
+  },
+  "xc7a35tfgg484-2l": {
+    "part_number": "XC7A35T-2LFGG484",
+    "size": "35k",
+    "nextpnr_device": "xc7a35tfgg484-2L",
+    "jtag_idcode": "0x0362d093"
+  },
+  "xc7a35tfgg484-3": {
+    "part_number": "XC7A35T-3FGG484",
+    "size": "35k",
+    "nextpnr_device": "xc7a35tfgg484-3",
+    "jtag_idcode": "0x0362d093"
+  },
+  "xc7a35tftg256-1": {
+    "part_number": "XC7A35T-1FTG256",
+    "size": "35k",
+    "nextpnr_device": "xc7a35tftg256-1",
+    "jtag_idcode": "0x0362d093"
+  },
+  "xc7a35tftg256-2": {
+    "part_number": "XC7A35T-2FTG256",
+    "size": "35k",
+    "nextpnr_device": "xc7a35tftg256-2",
+    "jtag_idcode": "0x0362d093"
+  },
+  "xc7a35tftg256-2l": {
+    "part_number": "XC7A35T-2LFTG256",
+    "size": "35k",
+    "nextpnr_device": "xc7a35tftg256-2L",
+    "jtag_idcode": "0x0362d093"
+  },
+  "xc7a35tftg256-3": {
+    "part_number": "XC7A35T-3FTG256",
+    "size": "35k",
+    "nextpnr_device": "xc7a35tftg256-3",
+    "jtag_idcode": "0x0362d093"
+  },
+  "xc7a50tcpg236-1": {
+    "part_number": "XC7A50T-1CPG236",
+    "size": "50k",
+    "nextpnr_device": "xc7a50tcpg236-1",
+    "jtag_idcode": "0x0362c093"
+  },
+  "xc7a50tcpg236-2": {
+    "part_number": "XC7A50T-2CPG236",
+    "size": "50k",
+    "nextpnr_device": "xc7a50tcpg236-2",
+    "jtag_idcode": "0x0362c093"
+  },
+  "xc7a50tcpg236-2l": {
+    "part_number": "XC7A50T-2LCPG236",
+    "size": "50k",
+    "nextpnr_device": "xc7a50tcpg236-2L",
+    "jtag_idcode": "0x0362c093"
+  },
+  "xc7a50tcpg236-3": {
+    "part_number": "XC7A50T-3CPG236",
+    "size": "50k",
+    "nextpnr_device": "xc7a50tcpg236-3",
+    "jtag_idcode": "0x0362c093"
+  },
+  "xc7a50tcsg324-1": {
+    "part_number": "XC7A50T-1CSG324",
+    "size": "50k",
+    "nextpnr_device": "xc7a50tcsg324-1",
+    "jtag_idcode": "0x0362c093"
+  },
+  "xc7a50tcsg324-2": {
+    "part_number": "XC7A50T-2CSG324",
+    "size": "50k",
+    "nextpnr_device": "xc7a50tcsg324-2",
+    "jtag_idcode": "0x0362c093"
+  },
+  "xc7a50tcsg324-2l": {
+    "part_number": "XC7A50T-2LCSG324",
+    "size": "50k",
+    "nextpnr_device": "xc7a50tcsg324-2L",
+    "jtag_idcode": "0x0362c093"
+  },
+  "xc7a50tcsg324-3": {
+    "part_number": "XC7A50T-3CSG324",
+    "size": "50k",
+    "nextpnr_device": "xc7a50tcsg324-3",
+    "jtag_idcode": "0x0362c093"
+  },
+  "xc7a50tcsg325-1": {
+    "part_number": "XC7A50T-1CSG325",
+    "size": "50k",
+    "nextpnr_device": "xc7a50tcsg325-1",
+    "jtag_idcode": "0x0362c093"
+  },
+  "xc7a50tcsg325-2": {
+    "part_number": "XC7A50T-2CSG325",
+    "size": "50k",
+    "nextpnr_device": "xc7a50tcsg325-2",
+    "jtag_idcode": "0x0362c093"
+  },
+  "xc7a50tcsg325-2l": {
+    "part_number": "XC7A50T-2LCSG325",
+    "size": "50k",
+    "nextpnr_device": "xc7a50tcsg325-2L",
+    "jtag_idcode": "0x0362c093"
+  },
+  "xc7a50tcsg325-3": {
+    "part_number": "XC7A50T-3CSG325",
+    "size": "50k",
+    "nextpnr_device": "xc7a50tcsg325-3",
+    "jtag_idcode": "0x0362c093"
+  },
+  "xc7a50tfgg484-1": {
+    "part_number": "XC7A50T-1FGG484",
+    "size": "50k",
+    "nextpnr_device": "xc7a50tfgg484-1",
+    "jtag_idcode": "0x0362c093"
+  },
+  "xc7a50tfgg484-2": {
+    "part_number": "XC7A50T-2FGG484",
+    "size": "50k",
+    "nextpnr_device": "xc7a50tfgg484-2",
+    "jtag_idcode": "0x0362c093"
+  },
+  "xc7a50tfgg484-2l": {
+    "part_number": "XC7A50T-2LFGG484",
+    "size": "50k",
+    "nextpnr_device": "xc7a50tfgg484-2L",
+    "jtag_idcode": "0x0362c093"
+  },
+  "xc7a50tfgg484-3": {
+    "part_number": "XC7A50T-3FGG484",
+    "size": "50k",
+    "nextpnr_device": "xc7a50tfgg484-3",
+    "jtag_idcode": "0x0362c093"
+  },
+  "xc7a50tftg256-1": {
+    "part_number": "XC7A50T-1FTG256",
+    "size": "50k",
+    "nextpnr_device": "xc7a50tftg256-1",
+    "jtag_idcode": "0x0362c093"
+  },
+  "xc7a50tftg256-2": {
+    "part_number": "XC7A50T-2FTG256",
+    "size": "50k",
+    "nextpnr_device": "xc7a50tftg256-2",
+    "jtag_idcode": "0x0362c093"
+  },
+  "xc7a50tftg256-2l": {
+    "part_number": "XC7A50T-2LFTG256",
+    "size": "50k",
+    "nextpnr_device": "xc7a50tftg256-2L",
+    "jtag_idcode": "0x0362c093"
+  },
+  "xc7a50tftg256-3": {
+    "part_number": "XC7A50T-3FTG256",
+    "size": "50k",
+    "nextpnr_device": "xc7a50tftg256-3",
+    "jtag_idcode": "0x0362c093"
+  }
+}

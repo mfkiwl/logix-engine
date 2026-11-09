@@ -209,8 +209,8 @@ pub fn check_constraint_extension(
     board: &board::ResolvedBoard,
     rel: &str,
 ) -> Result<(), ToolError> {
-    let arch = board.fpga.architecture;
-    let wanted = arch.constraint_extension();
+    let family = board.fpga.family;
+    let wanted = family.constraint_extension();
     let ext = Path::new(rel).extension().and_then(|e| e.to_str());
     if ext.is_some_and(|e| e.eq_ignore_ascii_case(wanted)) {
         return Ok(());
@@ -220,7 +220,7 @@ pub fn check_constraint_extension(
     Err(ToolError::request(format!(
         "The pin file {rel} is the wrong kind for the {}: {} FPGAs use .{wanted} pin files.",
         board.description,
-        arch.label(),
+        family.label(),
     )))
 }
 
@@ -264,7 +264,7 @@ pub async fn run(
     call: &Call,
 ) -> Result<BuildOutput, ToolError> {
     let request = check(input)?;
-    let arch = request.board.fpga.architecture;
+    let arch = request.board.fpga.toolchain();
     let board_variant = request.board.variant.selector.clone();
     let r = build::build(state, request, call).await?;
     Ok(BuildOutput {

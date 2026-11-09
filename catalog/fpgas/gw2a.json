@@ -1,0 +1,371 @@
+{
+  "$schema": "https://www.openlogix.org/schemas/logix-fpgas-gowin-v1.json",
+  "gw2a-lv18eq144c7-i6": {
+    "part_number": "GW2A-LV18EQ144C7/I6",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18EQ144C7/I6",
+    "nextpnr_family": "GW2A-18",
+    "packer_device": "GW2A-18",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18eq144c8-i7": {
+    "part_number": "GW2A-LV18EQ144C8/I7",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18EQ144C8/I7",
+    "nextpnr_family": "GW2A-18",
+    "packer_device": "GW2A-18",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18mg196c7-i6": {
+    "part_number": "GW2A-LV18MG196C7/I6",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18MG196C7/I6",
+    "nextpnr_family": "GW2A-18",
+    "packer_device": "GW2A-18",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18mg196c8-i7": {
+    "part_number": "GW2A-LV18MG196C8/I7",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18MG196C8/I7",
+    "nextpnr_family": "GW2A-18",
+    "packer_device": "GW2A-18",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18pg256a6": {
+    "part_number": "GW2A-LV18PG256A6",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18PG256A6",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18pg256c7-i6": {
+    "part_number": "GW2A-LV18PG256C7/I6",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18PG256C7/I6",
+    "nextpnr_family": "GW2A-18",
+    "packer_device": "GW2A-18",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18pg256c8-i7": {
+    "part_number": "GW2A-LV18PG256C8/I7",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18PG256C8/I7",
+    "nextpnr_family": "GW2A-18",
+    "packer_device": "GW2A-18",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18pg256c9-i8": {
+    "part_number": "GW2A-LV18PG256C9/I8",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18PG256C9/I8",
+    "nextpnr_family": "GW2A-18",
+    "packer_device": "GW2A-18",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18pg256cc7-i6": {
+    "part_number": "GW2A-LV18PG256CC7/I6",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18PG256CC7/I6",
+    "nextpnr_family": "GW2A-18",
+    "packer_device": "GW2A-18",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18pg256cc8-i7": {
+    "part_number": "GW2A-LV18PG256CC8/I7",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18PG256CC8/I7",
+    "nextpnr_family": "GW2A-18",
+    "packer_device": "GW2A-18",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18pg256cfc7-i6": {
+    "part_number": "GW2A-LV18PG256CFC7/I6",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18PG256CFC7/I6",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18pg256cfc8-i7": {
+    "part_number": "GW2A-LV18PG256CFC8/I7",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18PG256CFC8/I7",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18pg256ec8-i7": {
+    "part_number": "GW2A-LV18PG256EC8/I7",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18PG256EC8/I7",
+    "nextpnr_family": "GW2A-18",
+    "packer_device": "GW2A-18",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18pg256ees": {
+    "part_number": "GW2A-LV18PG256EES",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18PG256EES",
+    "nextpnr_family": "GW2A-18",
+    "packer_device": "GW2A-18",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18pg256sc7-i6": {
+    "part_number": "GW2A-LV18PG256SC7/I6",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18PG256SC7/I6",
+    "nextpnr_family": "GW2A-18",
+    "packer_device": "GW2A-18",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18pg256sc8-i7": {
+    "part_number": "GW2A-LV18PG256SC8/I7",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18PG256SC8/I7",
+    "nextpnr_family": "GW2A-18",
+    "packer_device": "GW2A-18",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18pg256sfc7-i6": {
+    "part_number": "GW2A-LV18PG256SFC7/I6",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18PG256SFC7/I6",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18pg256sfc8-i7": {
+    "part_number": "GW2A-LV18PG256SFC8/I7",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18PG256SFC8/I7",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18pg484c7-i6": {
+    "part_number": "GW2A-LV18PG484C7/I6",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18PG484C7/I6",
+    "nextpnr_family": "GW2A-18",
+    "packer_device": "GW2A-18",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18pg484c8-i7": {
+    "part_number": "GW2A-LV18PG484C8/I7",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18PG484C8/I7",
+    "nextpnr_family": "GW2A-18",
+    "packer_device": "GW2A-18",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18pg484c9-i8": {
+    "part_number": "GW2A-LV18PG484C9/I8",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18PG484C9/I8",
+    "nextpnr_family": "GW2A-18",
+    "packer_device": "GW2A-18",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18pg484cc8-i7": {
+    "part_number": "GW2A-LV18PG484CC8/I7",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18PG484CC8/I7",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18qn88a6": {
+    "part_number": "GW2A-LV18QN88A6",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18QN88A6",
+    "nextpnr_family": "GW2A-18",
+    "packer_device": "GW2A-18",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18qn88c7-i6": {
+    "part_number": "GW2A-LV18QN88C7/I6",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18QN88C7/I6",
+    "nextpnr_family": "GW2A-18",
+    "packer_device": "GW2A-18",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18qn88c8-i7": {
+    "part_number": "GW2A-LV18QN88C8/I7",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18QN88C8/I7",
+    "nextpnr_family": "GW2A-18",
+    "packer_device": "GW2A-18",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18ug324c7-i6": {
+    "part_number": "GW2A-LV18UG324C7/I6",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18UG324C7/I6",
+    "nextpnr_family": "GW2A-18",
+    "packer_device": "GW2A-18",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18ug324c8-i7": {
+    "part_number": "GW2A-LV18UG324C8/I7",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18UG324C8/I7",
+    "nextpnr_family": "GW2A-18",
+    "packer_device": "GW2A-18",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18ug484c7-i6": {
+    "part_number": "GW2A-LV18UG484C7/I6",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18UG484C7/I6",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2a-lv18ug484c8-i7": {
+    "part_number": "GW2A-LV18UG484C8/I7",
+    "size": "20k",
+    "nextpnr_device": "GW2A-LV18UG484C8/I7",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2ar-lv18eq144c7-i6": {
+    "part_number": "GW2AR-LV18EQ144C7/I6",
+    "size": "20k",
+    "nextpnr_device": "GW2AR-LV18EQ144C7/I6",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2ar-lv18eq144c8-i7": {
+    "part_number": "GW2AR-LV18EQ144C8/I7",
+    "size": "20k",
+    "nextpnr_device": "GW2AR-LV18EQ144C8/I7",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2ar-lv18eq144pc7-i6": {
+    "part_number": "GW2AR-LV18EQ144PC7/I6",
+    "size": "20k",
+    "nextpnr_device": "GW2AR-LV18EQ144PC7/I6",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2ar-lv18eq144pc8-i7": {
+    "part_number": "GW2AR-LV18EQ144PC8/I7",
+    "size": "20k",
+    "nextpnr_device": "GW2AR-LV18EQ144PC8/I7",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2ar-lv18eq144pc9-i8": {
+    "part_number": "GW2AR-LV18EQ144PC9/I8",
+    "size": "20k",
+    "nextpnr_device": "GW2AR-LV18EQ144PC9/I8",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2ar-lv18eq144pfc7-i6": {
+    "part_number": "GW2AR-LV18EQ144PFC7/I6",
+    "size": "20k",
+    "nextpnr_device": "GW2AR-LV18EQ144PFC7/I6",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2ar-lv18eq144pfc8-i7": {
+    "part_number": "GW2AR-LV18EQ144PFC8/I7",
+    "size": "20k",
+    "nextpnr_device": "GW2AR-LV18EQ144PFC8/I7",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2ar-lv18eq144pfc9-i8": {
+    "part_number": "GW2AR-LV18EQ144PFC9/I8",
+    "size": "20k",
+    "nextpnr_device": "GW2AR-LV18EQ144PFC9/I8",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2ar-lv18eq176c7-i6": {
+    "part_number": "GW2AR-LV18EQ176C7/I6",
+    "size": "20k",
+    "nextpnr_device": "GW2AR-LV18EQ176C7/I6",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2ar-lv18eq176c8-i7": {
+    "part_number": "GW2AR-LV18EQ176C8/I7",
+    "size": "20k",
+    "nextpnr_device": "GW2AR-LV18EQ176C8/I7",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2ar-lv18qn88c7-i6": {
+    "part_number": "GW2AR-LV18QN88C7/I6",
+    "size": "20k",
+    "nextpnr_device": "GW2AR-LV18QN88C7/I6",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2ar-lv18qn88c8-i7": {
+    "part_number": "GW2AR-LV18QN88C8/I7",
+    "size": "20k",
+    "nextpnr_device": "GW2AR-LV18QN88C8/I7",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2ar-lv18qn88pc7-i6": {
+    "part_number": "GW2AR-LV18QN88PC7/I6",
+    "size": "20k",
+    "nextpnr_device": "GW2AR-LV18QN88PC7/I6",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2ar-lv18qn88pc8-i7": {
+    "part_number": "GW2AR-LV18QN88PC8/I7",
+    "size": "20k",
+    "nextpnr_device": "GW2AR-LV18QN88PC8/I7",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2ar-lv18qn88pfc7-i6": {
+    "part_number": "GW2AR-LV18QN88PFC7/I6",
+    "size": "20k",
+    "nextpnr_device": "GW2AR-LV18QN88PFC7/I6",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2ar-lv18qn88pfc8-i7": {
+    "part_number": "GW2AR-LV18QN88PFC8/I7",
+    "size": "20k",
+    "nextpnr_device": "GW2AR-LV18QN88PFC8/I7",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  },
+  "gw2ar-lv18qn88pfc9-i8": {
+    "part_number": "GW2AR-LV18QN88PFC9/I8",
+    "size": "20k",
+    "nextpnr_device": "GW2AR-LV18QN88PFC9/I8",
+    "nextpnr_family": "GW2A-18C",
+    "packer_device": "GW2A-18C",
+    "jtag_idcode": "0x0000081b"
+  }
+}

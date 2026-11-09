@@ -9,7 +9,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use super::parse::ResourceUsage;
-use crate::catalog::Architecture;
+use crate::catalog::Toolchain;
 
 /// One kind of FPGA resource, in plain words, with how much the design uses.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -29,16 +29,16 @@ pub struct ResourceSummary {
 
 /// Per family, the kinds of resources, the family's main capacity measure
 /// first, each with the toolchain names whose counts are added up.
-fn kinds(arch: Architecture) -> &'static [(&'static str, &'static str, &'static [&'static str])] {
+fn kinds(arch: Toolchain) -> &'static [(&'static str, &'static str, &'static [&'static str])] {
     match arch {
-        Architecture::Ice40 => &[
+        Toolchain::Ice40 => &[
             ("logic_cells", "logic cells", &["ICESTORM_LC"]),
             ("ram_blocks", "RAM blocks", &["ICESTORM_RAM"]),
             ("multipliers", "multipliers", &["ICESTORM_DSP"]),
             ("plls", "PLLs", &["ICESTORM_PLL"]),
             ("io_pins", "I/O pins", &["SB_IO"]),
         ],
-        Architecture::Ecp5 => &[
+        Toolchain::Ecp5 => &[
             ("luts", "LUTs", &["TRELLIS_COMB"]),
             ("flip_flops", "flip-flops", &["TRELLIS_FF"]),
             ("ram_blocks", "RAM blocks", &["DP16KD"]),
@@ -46,7 +46,7 @@ fn kinds(arch: Architecture) -> &'static [(&'static str, &'static str, &'static 
             ("plls", "PLLs", &["EHXPLLL"]),
             ("io_pins", "I/O pins", &["TRELLIS_IO"]),
         ],
-        Architecture::Gowin => &[
+        Toolchain::Gowin => &[
             ("luts", "LUTs", &["LUT4"]),
             ("flip_flops", "flip-flops", &["DFF"]),
             ("ram_blocks", "RAM blocks", &["BSRAM"]),
@@ -54,7 +54,7 @@ fn kinds(arch: Architecture) -> &'static [(&'static str, &'static str, &'static 
             ("plls", "PLLs", &["rPLL", "PLLVR"]),
             ("io_pins", "I/O pins", &["IOB"]),
         ],
-        Architecture::Xilinx => &[
+        Toolchain::Openxc7 => &[
             ("luts", "LUTs", &["SLICE_LUTX"]),
             ("flip_flops", "flip-flops", &["SLICE_FFX"]),
             ("ram_blocks", "RAM blocks", &["RAMB36E1", "RAMB18E1"]),
@@ -68,10 +68,7 @@ fn kinds(arch: Architecture) -> &'static [(&'static str, &'static str, &'static 
 /// The summary of a build's resource use: the family's main capacity
 /// measure first, then the other kinds, each when the FPGA has any. Kinds
 /// whose resources the report doesn't list are left out.
-pub fn summarize(
-    arch: Architecture,
-    usage: &BTreeMap<String, ResourceUsage>,
-) -> Vec<ResourceSummary> {
+pub fn summarize(arch: Toolchain, usage: &BTreeMap<String, ResourceUsage>) -> Vec<ResourceSummary> {
     let mut out = Vec::new();
     for (i, (kind, label, names)) in kinds(arch).iter().enumerate() {
         let found: Vec<&ResourceUsage> = names.iter().filter_map(|n| usage.get(*n)).collect();
@@ -121,13 +118,13 @@ pub struct ClockSummary {
 ///   signal; a fix may come from the openxc7 tools.
 ///
 /// A net that doesn't follow the pattern keeps its full name.
-pub fn clock_name(arch: Architecture, net: &str) -> String {
+pub fn clock_name(arch: Toolchain, net: &str) -> String {
     let parts: Vec<&str> = net.split('$').collect();
     let name = match arch {
-        Architecture::Ice40 => parts[0].trim_end_matches('_'),
-        Architecture::Ecp5 => parts.get(2).copied().unwrap_or(""),
-        Architecture::Gowin => parts[0].trim_end_matches("_IBUF_I_O"),
-        Architecture::Xilinx => parts
+        Toolchain::Ice40 => parts[0].trim_end_matches('_'),
+        Toolchain::Ecp5 => parts.get(2).copied().unwrap_or(""),
+        Toolchain::Gowin => parts[0].trim_end_matches("_IBUF_I_O"),
+        Toolchain::Openxc7 => parts
             .iter()
             .rev()
             .find(|p| !p.is_empty())
@@ -138,7 +135,7 @@ pub fn clock_name(arch: Architecture, net: &str) -> String {
 }
 
 /// The design's clocks with plain names, in the order of timing (by net).
-pub fn summarize_clocks(arch: Architecture, timing: &BTreeMap<String, f64>) -> Vec<ClockSummary> {
+pub fn summarize_clocks(arch: Toolchain, timing: &BTreeMap<String, f64>) -> Vec<ClockSummary> {
     timing
         .iter()
         .map(|(net, mhz)| ClockSummary {
@@ -155,13 +152,16 @@ mod tests {
 
     #[test]
     fn names_clocks_as_the_design_does() {
-        use Architecture::*;
+        use Toolchain::*;
         assert_eq!(clock_name(Ice40, "CLK$SB_IO_IN_$glb_clk"), "CLK");
         assert_eq!(clock_name(Ice40, "sys_clk$SB_IO_IN"), "sys_clk");
         assert_eq!(clock_name(Ecp5, "$glbnet$CLK$TRELLIS_IO_IN"), "CLK");
         assert_eq!(clock_name(Gowin, "sys_clk_IBUF_I_O"), "sys_clk");
-        assert_eq!(clock_name(Xilinx, "$abc$21083$aiger$o100"), "o100");
-        assert_eq!(clock_name(Xilinx, "sys_clk_IBUF_BUFG"), "sys_clk_IBUF_BUFG");
+        assert_eq!(clock_name(Openxc7, "$abc$21083$aiger$o100"), "o100");
+        assert_eq!(
+            clock_name(Openxc7, "sys_clk_IBUF_BUFG"),
+            "sys_clk_IBUF_BUFG"
+        );
         // Nets that don't follow the pattern keep their name.
         assert_eq!(clock_name(Ecp5, "clk"), "clk");
         assert_eq!(clock_name(Ice40, "$glb$x"), "$glb$x");
@@ -200,7 +200,7 @@ mod tests {
             ("SB_IO", 2, 107),
             ("SB_GB", 1, 8),
         ]);
-        let s = summarize(Architecture::Ice40, &ice40);
+        let s = summarize(Toolchain::Ice40, &ice40);
         let kinds: Vec<_> = s
             .iter()
             .map(|r| (r.kind.as_str(), r.used, r.available))
@@ -223,7 +223,7 @@ mod tests {
             ("RAMB18E1", 2, 100),
             ("DSP48E1", 0, 0),
         ]);
-        let s = summarize(Architecture::Xilinx, &xilinx);
+        let s = summarize(Toolchain::Openxc7, &xilinx);
         let kinds: Vec<_> = s
             .iter()
             .map(|r| (r.kind.as_str(), r.used, r.available))
