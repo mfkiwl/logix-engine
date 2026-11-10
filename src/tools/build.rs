@@ -25,7 +25,7 @@ impl EngineTool for Build {
         the build folder. Give the source files explicitly; the engine doesn't search for them, \
         though `include files are found next to the including file or in the source folder. A \
         build with no changes since the last one returns at once with up_to_date set. The first \
-        build may install the toolchain package first, which takes a few minutes. Design \
+        build may download the toolchain package first, which takes a few minutes. Design \
         problems come back as a design error with diagnostics at file and line. After a \
         successful build, program_board programs the bitstream into the board.";
     const READ_ONLY: bool = false;

@@ -1,7 +1,7 @@
 [
   {
     "name": "get_engine_info",
-    "description": "Returns the engine's version, platform, launch settings and package status. Call it first, to check that the engine is new enough and to see which toolchain packages are installed. It is fast and local: it never uses the network. Missing packages are installed automatically by the tools that need them, unless auto_install is off.",
+    "description": "Returns the engine's version, platform, launch settings and package status. Call it first, to check that the engine is new enough and to see which toolchain packages are downloaded. It is fast and local: it never uses the network. Missing packages are downloaded automatically by the tools that need them, unless auto_download is off.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "title": "GetEngineInfoInput",
@@ -35,8 +35,8 @@
           "description": "The engine folder, as the host set it with the --engine-folder\ncommand-line argument. The engine keeps its packages and logs there.",
           "type": "string"
         },
-        "auto_install": {
-          "description": "Whether the engine installs and repairs packages automatically when a\ntool needs them. On by default. The host turns it off with the\n--no-auto-install command-line argument.",
+        "auto_download": {
+          "description": "Whether the engine downloads and repairs packages automatically when a\ntool needs them. On by default. The host turns it off with the\n--no-auto-download command-line argument.",
           "type": "boolean"
         },
         "command_line": {
@@ -66,7 +66,7 @@
           "$ref": "#/$defs/CatalogInfo"
         },
         "report": {
-          "description": "The facts above as plain text lines for people, the engine's part of\na frontend's system info (for bug reports), so every frontend shows\nthem the same way: the version, platform, engine folder, log file,\nautomatic install, command line, each package with its version and\nstatus, the board catalog and the boards schema. Show it as is; its wording can change\nin any version, so read the fields above, not this text.",
+          "description": "The facts above as plain text lines for people, the engine's part of\na frontend's system info (for bug reports), so every frontend shows\nthem the same way: the version, platform, engine folder, log file,\nautomatic download, command line, each package with its version and\nstatus, the board catalog and the boards schema. Show it as is; its wording can change\nin any version, so read the fields above, not this text.",
           "type": "string"
         }
       },
@@ -76,7 +76,7 @@
         "protocol_versions",
         "platform",
         "engine_folder",
-        "auto_install",
+        "auto_download",
         "command_line",
         "log_file",
         "packages",
@@ -86,7 +86,7 @@
       ],
       "$defs": {
         "PackageInfo": {
-          "description": "A toolchain package and whether it's installed.",
+          "description": "A toolchain package and whether it's downloaded.",
           "type": "object",
           "properties": {
             "name": {
@@ -102,7 +102,7 @@
               "$ref": "#/$defs/PackageStatus"
             },
             "bin_folder": {
-              "description": "The folder with the package's programs, as an absolute path, when\nthe package is installed. For hosts that run one of its programs\ndirectly, such as Verible's language server verible-verilog-ls from\nthe verible package. Omitted when the package isn't installed.",
+              "description": "The folder with the package's programs, as an absolute path, when\nthe package is downloaded. For hosts that run one of its programs\ndirectly, such as Verible's language server verible-verilog-ls from\nthe verible package. Omitted when the package isn't downloaded.",
               "type": [
                 "string",
                 "null"
@@ -120,17 +120,17 @@
           "description": "Whether a package is ready to use.",
           "oneOf": [
             {
-              "description": "Installed and intact.",
+              "description": "Downloaded and intact.",
               "type": "string",
-              "const": "installed"
+              "const": "ready"
             },
             {
-              "description": "Not installed.",
+              "description": "Not downloaded.",
               "type": "string",
               "const": "missing"
             },
             {
-              "description": "Installed but incomplete or damaged. It is repaired when a tool needs\nit, unless auto-install is off.",
+              "description": "Downloaded but incomplete or damaged. It is repaired when a tool needs\nit, unless auto-download is off.",
               "type": "string",
               "const": "broken"
             }
@@ -168,16 +168,16 @@
     }
   },
   {
-    "name": "install_packages",
-    "description": "Installs or repairs the engine's toolchain packages, downloading them from the internet. Packages that are already installed and intact are left alone, unless force is set to download and install them again. Other tools install the packages they need on their own, so call this only to install ahead of time, such as before going offline, or when a tool returns a setup error with the install_packages action (for example when the engine was launched with automatic install turned off). A download can take a few minutes; the tool reports progress and can be cancelled.",
+    "name": "download_packages",
+    "description": "Downloads or repairs the engine's toolchain packages from the internet, into its engine folder. Packages that are already ready are left alone, unless force is set to download them again. Other tools download the packages they need on their own, so call this only to download ahead of time, such as before going offline, or when a tool returns a setup error with the download_packages action (for example when the engine was launched with automatic download turned off). A download can take a few minutes; the tool reports progress and can be cancelled.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "title": "InstallPackagesInput",
-      "description": "Which packages to install or repair.",
+      "title": "DownloadPackagesInput",
+      "description": "Which packages to download or repair.",
       "type": "object",
       "properties": {
         "packages": {
-          "description": "Names of the packages to install or repair, as get_engine_info lists\nthem, such as oss-cad-suite. Omitted means every package in the\nengine's manifest.",
+          "description": "Names of the packages to download or repair, as get_engine_info lists\nthem, such as oss-cad-suite. Omitted means every package in the\nengine's manifest.",
           "type": [
             "array",
             "null"
@@ -188,7 +188,7 @@
           "default": null
         },
         "force": {
-          "description": "Download and install the packages again even if they are installed,\nreplacing the installed copies. Use it when a package's tools fail in\nways that suggest damaged files. Defaults to false. Don't use it while\nother operations are running.",
+          "description": "Download the packages again even if they are ready, replacing the\ncurrent copies. Use it when a package's tools fail in\nways that suggest damaged files. Defaults to false. Don't use it while\nother operations are running.",
           "type": "boolean",
           "default": false
         }
@@ -197,12 +197,12 @@
     },
     "outputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "title": "InstallPackagesOutput",
-      "description": "What was installed, and every package's status afterwards.",
+      "title": "DownloadPackagesOutput",
+      "description": "What was downloaded, and every package's status afterwards.",
       "type": "object",
       "properties": {
-        "installed": {
-          "description": "Names of the packages this call installed, repaired or reinstalled.\nEmpty when they were all installed already and force was off.",
+        "downloaded": {
+          "description": "Names of the packages this call downloaded, repaired or downloaded again.\nEmpty when they were all downloaded already and force was off.",
           "type": "array",
           "items": {
             "type": "string"
@@ -218,12 +218,12 @@
       },
       "additionalProperties": false,
       "required": [
-        "installed",
+        "downloaded",
         "packages"
       ],
       "$defs": {
         "PackageInfo": {
-          "description": "A toolchain package and whether it's installed.",
+          "description": "A toolchain package and whether it's downloaded.",
           "type": "object",
           "properties": {
             "name": {
@@ -239,7 +239,7 @@
               "$ref": "#/$defs/PackageStatus"
             },
             "bin_folder": {
-              "description": "The folder with the package's programs, as an absolute path, when\nthe package is installed. For hosts that run one of its programs\ndirectly, such as Verible's language server verible-verilog-ls from\nthe verible package. Omitted when the package isn't installed.",
+              "description": "The folder with the package's programs, as an absolute path, when\nthe package is downloaded. For hosts that run one of its programs\ndirectly, such as Verible's language server verible-verilog-ls from\nthe verible package. Omitted when the package isn't downloaded.",
               "type": [
                 "string",
                 "null"
@@ -257,17 +257,17 @@
           "description": "Whether a package is ready to use.",
           "oneOf": [
             {
-              "description": "Installed and intact.",
+              "description": "Downloaded and intact.",
               "type": "string",
-              "const": "installed"
+              "const": "ready"
             },
             {
-              "description": "Not installed.",
+              "description": "Not downloaded.",
               "type": "string",
               "const": "missing"
             },
             {
-              "description": "Installed but incomplete or damaged. It is repaired when a tool needs\nit, unless auto-install is off.",
+              "description": "Downloaded but incomplete or damaged. It is repaired when a tool needs\nit, unless auto-download is off.",
               "type": "string",
               "const": "broken"
             }
@@ -1859,7 +1859,7 @@
   },
   {
     "name": "lint",
-    "description": "Checks Verilog and SystemVerilog sources for errors and likely mistakes with Verilator, without building. It is much faster than build and finds problems synthesis accepts, such as width mismatches. List the design files and, optionally, the testbenches; the engine doesn't search for them. The board selects the FPGA's primitive models, so designs that use them lint cleanly. Problems found are the result, not an error: passed is false and diagnostics lists each problem at file and line, with Verilator's warning code at the end of the text, which a /* verilator lint_off CODE */ comment can silence. The first call may install the toolchain package first, which takes a few minutes. Writes nothing.",
+    "description": "Checks Verilog and SystemVerilog sources for errors and likely mistakes with Verilator, without building. It is much faster than build and finds problems synthesis accepts, such as width mismatches. List the design files and, optionally, the testbenches; the engine doesn't search for them. The board selects the FPGA's primitive models, so designs that use them lint cleanly. Problems found are the result, not an error: passed is false and diagnostics lists each problem at file and line, with Verilator's warning code at the end of the text, which a /* verilator lint_off CODE */ comment can silence. The first call may download the toolchain package first, which takes a few minutes. Writes nothing.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "title": "LintInput",
@@ -2165,7 +2165,7 @@
   },
   {
     "name": "test",
-    "description": "Runs testbenches with Icarus Verilog: compiles the design files with each testbench, runs it, and reports whether it passed. A testbench fails by calling $fatal or $error, or by printing a failure line from common testbench assertion macros (*** ASSERTION FAILED or ERROR at file:line); it must end with $finish, and must not call $dumpfile, since the engine sets where its waveform goes (call $dumpvars to write one). Every listed testbench runs, even after one fails; each stops at its first failure unless stop_at_first_failure is false. A failing testbench is the result, not an error: passed is false, and each testbench's diagnostics and output say why. Compile errors are a design error with diagnostics at file and line. The first call may install the toolchain package first, which takes a few minutes. To look at a testbench's signals in a waveform viewer, use simulate.",
+    "description": "Runs testbenches with Icarus Verilog: compiles the design files with each testbench, runs it, and reports whether it passed. A testbench fails by calling $fatal or $error, or by printing a failure line from common testbench assertion macros (*** ASSERTION FAILED or ERROR at file:line); it must end with $finish, and must not call $dumpfile, since the engine sets where its waveform goes (call $dumpvars to write one). Every listed testbench runs, even after one fails; each stops at its first failure unless stop_at_first_failure is false. A failing testbench is the result, not an error: passed is false, and each testbench's diagnostics and output say why. Compile errors are a design error with diagnostics at file and line. The first call may download the toolchain package first, which takes a few minutes. To look at a testbench's signals in a waveform viewer, use simulate.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "title": "TestInput",
@@ -2956,7 +2956,7 @@
   },
   {
     "name": "format",
-    "description": "Formats Verilog and SystemVerilog files in place with Verible's formatter. List the files to format (.v, .sv, .vh or .svh); the engine doesn't search for them. Formatting changes only layout, never meaning. Each file is rewritten only when its layout changes; files lists each one as formatted, unchanged or failed. A file Verible can't parse, such as one with a syntax error, is left unchanged: passed is false and diagnostics gives the error at file and line. That is a result, not an error. Code between // verilog_format: off and // verilog_format: on comments is left as is. The first call may install the Verible package first.",
+    "description": "Formats Verilog and SystemVerilog files in place with Verible's formatter. List the files to format (.v, .sv, .vh or .svh); the engine doesn't search for them. Formatting changes only layout, never meaning. Each file is rewritten only when its layout changes; files lists each one as formatted, unchanged or failed. A file Verible can't parse, such as one with a syntax error, is left unchanged: passed is false and diagnostics gives the error at file and line. That is a result, not an error. Code between // verilog_format: off and // verilog_format: on comments is left as is. The first call may download the Verible package first.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "title": "FormatInput",
@@ -3240,7 +3240,7 @@
   },
   {
     "name": "graph",
-    "description": "Draws a diagram of a design module, its cells, ports and the wires between them: yosys reads the design without synthesizing it and Graphviz draws the module. Writes graph.svg (or .pdf or .png) and Graphviz's graph.dot in the build folder, replacing the last ones; graph_file gives its path relative to the build folder. List the design files; the engine doesn't search for them. Errors in the design, such as a syntax error or a top module that isn't in the files, are design errors with diagnostics at file and line. The first call may install the toolchain package first, which takes a few minutes.",
+    "description": "Draws a diagram of a design module, its cells, ports and the wires between them: yosys reads the design without synthesizing it and Graphviz draws the module. Writes graph.svg (or .pdf or .png) and Graphviz's graph.dot in the build folder, replacing the last ones; graph_file gives its path relative to the build folder. List the design files; the engine doesn't search for them. Errors in the design, such as a syntax error or a top module that isn't in the files, are design errors with diagnostics at file and line. The first call may download the toolchain package first, which takes a few minutes.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "title": "GraphInput",
@@ -3513,7 +3513,7 @@
   },
   {
     "name": "build",
-    "description": "Builds an FPGA design into a bitstream: synthesizes the Verilog or SystemVerilog sources, places and routes them on the board's FPGA using the constraint file, which maps top-level ports to pins (.pcf for iCE40, .lpf for ECP5, .cst for Gowin, .xdc for Xilinx), and packs the bitstream into the build folder. Give the source files explicitly; the engine doesn't search for them, though `include files are found next to the including file or in the source folder. A build with no changes since the last one returns at once with up_to_date set. The first build may install the toolchain package first, which takes a few minutes. Design problems come back as a design error with diagnostics at file and line. After a successful build, program_board programs the bitstream into the board.",
+    "description": "Builds an FPGA design into a bitstream: synthesizes the Verilog or SystemVerilog sources, places and routes them on the board's FPGA using the constraint file, which maps top-level ports to pins (.pcf for iCE40, .lpf for ECP5, .cst for Gowin, .xdc for Xilinx), and packs the bitstream into the build folder. Give the source files explicitly; the engine doesn't search for them, though `include files are found next to the including file or in the source folder. A build with no changes since the last one returns at once with up_to_date set. The first build may download the toolchain package first, which takes a few minutes. Design problems come back as a design error with diagnostics at file and line. After a successful build, program_board programs the bitstream into the board.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "title": "BuildInput",
@@ -4374,9 +4374,9 @@
           "description": "A fix the host can offer the user.",
           "oneOf": [
             {
-              "description": "Required packages are missing or broken and weren't installed\nautomatically, because auto-install is off or the install failed.",
+              "description": "Required packages are missing or broken and weren't downloaded\nautomatically, because auto-download is off or the download failed.",
               "type": "string",
-              "const": "install_packages"
+              "const": "download_packages"
             },
             {
               "description": "No matching board is connected.",

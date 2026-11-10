@@ -141,13 +141,13 @@ pub async fn run_with_programmers(
     let variant = &board.variant;
     let custom = input.programmer_command.as_deref();
 
-    let needed = state.packages.needing_install(&[TOOLCHAIN])?;
+    let needed = state.packages.needing_download(&[TOOLCHAIN])?;
     let checks_fpga = custom.is_none() && program::checks_fpga(variant, &board.fpga);
     let steps = if custom.is_some() { 2 } else { 3 } + usize::from(checks_fpga);
     let phases = Phases::new(call.progress.clone(), needed.len() + steps);
     state
         .packages
-        .ensure(&needed, state.auto_install, &phases, &call.cancel)
+        .ensure(&needed, state.auto_download, &phases, &call.cancel)
         .await?;
     let spec = state
         .packages
@@ -257,8 +257,8 @@ pub async fn run_with_programmers(
             format!("Can't start {}: {e}", program.display()),
         )
         .with_action(
-            ActionCode::InstallPackages,
-            format!("Reinstall the {TOOLCHAIN} package, which may be damaged."),
+            ActionCode::DownloadPackages,
+            format!("Download the {TOOLCHAIN} package again, which may be damaged."),
         )),
     }
 }
@@ -318,8 +318,8 @@ async fn check_fpga(
                 format!("Can't start {}: {e}", exe.display()),
             )
             .with_action(
-                ActionCode::InstallPackages,
-                format!("Reinstall the {TOOLCHAIN} package, which may be damaged."),
+                ActionCode::DownloadPackages,
+                format!("Download the {TOOLCHAIN} package again, which may be damaged."),
             ));
         }
     };

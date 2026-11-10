@@ -15,9 +15,9 @@ impl EngineTool for GetEngineInfo {
     const NAME: &'static str = "get_engine_info";
     const DESCRIPTION: &'static str = "Returns the engine's version, platform, launch settings and \
         package status. Call it first, to check that the engine is new enough and to see which \
-        toolchain packages are installed. It is fast and local: it never uses the network. \
-        Missing packages are installed automatically by the tools that need them, unless \
-        auto_install is off.";
+        toolchain packages are downloaded. It is fast and local: it never uses the network. \
+        Missing packages are downloaded automatically by the tools that need them, unless \
+        auto_download is off.";
     const READ_ONLY: bool = true;
     type Input = GetEngineInfoInput;
     type Output = GetEngineInfoOutput;
@@ -43,10 +43,10 @@ pub struct GetEngineInfoOutput {
     /// The engine folder, as the host set it with the --engine-folder
     /// command-line argument. The engine keeps its packages and logs there.
     pub engine_folder: String,
-    /// Whether the engine installs and repairs packages automatically when a
+    /// Whether the engine downloads and repairs packages automatically when a
     /// tool needs them. On by default. The host turns it off with the
-    /// --no-auto-install command-line argument.
-    pub auto_install: bool,
+    /// --no-auto-download command-line argument.
+    pub auto_download: bool,
     /// The command-line arguments the engine was launched with, as given.
     pub command_line: Vec<String>,
     /// The log file this engine process writes, in the logs subfolder of the
@@ -64,7 +64,7 @@ pub struct GetEngineInfoOutput {
     /// The facts above as plain text lines for people, the engine's part of
     /// a frontend's system info (for bug reports), so every frontend shows
     /// them the same way: the version, platform, engine folder, log file,
-    /// automatic install, command line, each package with its version and
+    /// automatic download, command line, each package with its version and
     /// status, the board catalog and the boards schema. Show it as is; its wording can change
     /// in any version, so read the fields above, not this text.
     pub report: String,
@@ -87,7 +87,7 @@ pub struct CatalogInfo {
     pub local: bool,
 }
 
-/// A toolchain package and whether it's installed.
+/// A toolchain package and whether it's downloaded.
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct PackageInfo {
@@ -98,9 +98,9 @@ pub struct PackageInfo {
     pub version: String,
     pub status: PackageStatus,
     /// The folder with the package's programs, as an absolute path, when
-    /// the package is installed. For hosts that run one of its programs
+    /// the package is downloaded. For hosts that run one of its programs
     /// directly, such as Verible's language server verible-verilog-ls from
-    /// the verible package. Omitted when the package isn't installed.
+    /// the verible package. Omitted when the package isn't downloaded.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub bin_folder: Option<String>,
 }
@@ -109,12 +109,12 @@ pub struct PackageInfo {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum PackageStatus {
-    /// Installed and intact.
-    Installed,
-    /// Not installed.
+    /// Downloaded and intact.
+    Ready,
+    /// Not downloaded.
     Missing,
-    /// Installed but incomplete or damaged. It is repaired when a tool needs
-    /// it, unless auto-install is off.
+    /// Downloaded but incomplete or damaged. It is repaired when a tool needs
+    /// it, unless auto-download is off.
     Broken,
 }
 
@@ -130,7 +130,7 @@ pub fn run(
             .collect(),
         platform: state::platform(),
         engine_folder: state.engine_folder.clone(),
-        auto_install: state.auto_install,
+        auto_download: state.auto_download,
         command_line: state.command_line.clone(),
         log_file: state.log_file.display().to_string(),
         packages: package_list(state),
@@ -157,8 +157,8 @@ fn report(info: &GetEngineInfoOutput) -> String {
         format!("Engine folder: {}", info.engine_folder),
         format!("Log file: {}", info.log_file),
         format!(
-            "Automatic package install: {}",
-            if info.auto_install { "on" } else { "off" }
+            "Automatic package download: {}",
+            if info.auto_download { "on" } else { "off" }
         ),
         format!("Command line: {}", info.command_line.join(" ")),
         "Packages:".to_string(),
@@ -178,7 +178,7 @@ fn report(info: &GetEngineInfoOutput) -> String {
         .unwrap_or(0);
     for p in &info.packages {
         let status = match p.status {
-            PackageStatus::Installed => "installed",
+            PackageStatus::Ready => "ready",
             PackageStatus::Missing => "missing",
             PackageStatus::Broken => "broken",
         };
@@ -209,7 +209,7 @@ pub fn package_list(state: &EngineState) -> Vec<PackageInfo> {
         .collect()
 }
 
-/// One package's name, version, status and, when installed, its programs'
+/// One package's name, version, status and, when downloaded, its programs'
 /// folder.
 pub fn package_info(packages: &PackageManager, spec: &PackageSpec) -> PackageInfo {
     let status = packages.status(spec);
@@ -217,7 +217,7 @@ pub fn package_info(packages: &PackageManager, spec: &PackageSpec) -> PackageInf
         name: spec.name.clone(),
         version: spec.version.clone(),
         status,
-        bin_folder: (status == PackageStatus::Installed)
+        bin_folder: (status == PackageStatus::Ready)
             .then(|| packages.package_dir(spec).join("bin").display().to_string()),
     }
 }
@@ -233,14 +233,14 @@ mod tests {
             protocol_versions: vec!["2025-11-25".into()],
             platform: "darwin-arm64".into(),
             engine_folder: "/Users/you/.logix/engine".into(),
-            auto_install: true,
+            auto_download: true,
             command_line: vec!["--engine-folder".into(), "/Users/you/.logix/engine".into()],
             log_file: "/Users/you/.logix/engine/logs/20261108-1.log".into(),
             packages: vec![
                 PackageInfo {
                     name: "oss-cad-suite".into(),
                     version: "2026-11-20".into(),
-                    status: PackageStatus::Installed,
+                    status: PackageStatus::Ready,
                     bin_folder: Some("/x/bin".into()),
                 },
                 PackageInfo {
@@ -265,10 +265,10 @@ mod tests {
 Platform: darwin-arm64
 Engine folder: /Users/you/.logix/engine
 Log file: /Users/you/.logix/engine/logs/20261108-1.log
-Automatic package install: on
+Automatic package download: on
 Command line: --engine-folder /Users/you/.logix/engine
 Packages:
-  oss-cad-suite  2026-11-20  installed
+  oss-cad-suite  2026-11-20  ready
   verible        2026-10-22  missing
 Board catalog: Logix Catalog 2026-11-08 (3cdae93)
 Boards schema: https://www.openlogix.org/schemas/logix-board-v1.json"

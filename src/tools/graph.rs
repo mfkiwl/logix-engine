@@ -24,7 +24,7 @@ impl EngineTool for Graph {
         graph_file gives its path relative to the build folder. List the design files; the \
         engine doesn't search for them. Errors in the design, such as a syntax error or a \
         top module that isn't in the files, are design errors with diagnostics at file and \
-        line. The first call may install the toolchain package first, which takes a few \
+        line. The first call may download the toolchain package first, which takes a few \
         minutes.";
     const READ_ONLY: bool = false;
     const OPEN_WORLD: bool = true;

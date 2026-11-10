@@ -2,13 +2,13 @@
 
 One open engine to build and test FPGA designs and program boards, for any IDE or AI agent.
 
-The engine is a single native executable, written in Rust, that offers FPGA operations as [MCP](https://modelcontextprotocol.io) tools over stdin/stdout. Frontends such as Logix IDE, Logix CLI, IceStudio, IDE extensions, CI scripts and AI coding agents launch it as a child process and call its tools. The engine installs and drives proven open source tools, such as Yosys, nextpnr and openFPGALoader, so each frontend can focus on its own user experience instead of reimplementing the toolchain.
+The engine is a single native executable, written in Rust, that offers FPGA operations as [MCP](https://modelcontextprotocol.io) tools over stdin/stdout. Frontends such as Logix IDE, Logix CLI, IceStudio, IDE extensions, CI scripts and AI coding agents launch it as a child process and call its tools. The engine downloads and drives proven open source tools, such as Yosys, nextpnr and openFPGALoader, so each frontend can focus on its own user experience instead of reimplementing the toolchain.
 
 ## Status
 
 In development, macOS on Apple Silicon only.
 
-- **Milestone 1, done:** a proof of concept for iCE40 boards with seven tools: `get_engine_info`, `install_packages`, `get_catalog` (22 iCE40 boards), `build`, `clean_build`, `list_devices` and `program_board`. An AI agent, Claude Code, changed a design, built it and programmed an Alhambra II board through the engine alone.
+- **Milestone 1, done:** a proof of concept for iCE40 boards with seven tools: `get_engine_info`, `download_packages`, `get_catalog` (22 iCE40 boards), `build`, `clean_build`, `list_devices` and `program_board`. An AI agent, Claude Code, changed a design, built it and programmed an Alhambra II board through the engine alone.
 - **Milestone 2, next:** Logix IDE running on the engine, keeping every feature it has today: lint, test, simulate, format, graph, live tool output, and the same boards across the iCE40, ECP5, Gowin and Xilinx 7-series FPGA families. See [Acceptance and phasing](docs/requirements.md#acceptance-and-phasing).
 
 Daily development builds are on the [Releases](https://github.com/openlogix/logix-engine/releases) page.

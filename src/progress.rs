@@ -191,7 +191,7 @@ pub mod tests {
         let rec = Arc::new(Recorder::default());
         let phases = Phases::new(rec.clone(), 2);
         phases.percent(10.0); // before any phase: ignored
-        phases.start("Installing x");
+        phases.start("Downloading x");
         phases.percent(10.4);
         phases.percent(10.9); // same whole percent: not sent
         phases.percent(5.0); // lower: not sent
@@ -202,7 +202,7 @@ pub mod tests {
         assert_eq!(
             got,
             vec![
-                (0.0, 200.0, Some("Installing x".into())),
+                (0.0, 200.0, Some("Downloading x".into())),
                 (10.0, 200.0, None),
                 (99.0, 200.0, None),
                 (100.0, 200.0, Some("Synthesizing".into())),

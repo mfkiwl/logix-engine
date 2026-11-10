@@ -24,7 +24,7 @@ impl EngineTool for Lint {
         board selects the FPGA's primitive models, so designs that use them lint cleanly. \
         Problems found are the result, not an error: passed is false and diagnostics lists \
         each problem at file and line, with Verilator's warning code at the end of the text, \
-        which a /* verilator lint_off CODE */ comment can silence. The first call may install \
+        which a /* verilator lint_off CODE */ comment can silence. The first call may download \
         the toolchain package first, which takes a few minutes. Writes nothing.";
     const READ_ONLY: bool = true;
     const OPEN_WORLD: bool = true;

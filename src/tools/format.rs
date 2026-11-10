@@ -22,7 +22,7 @@ impl EngineTool for Format {
         as formatted, unchanged or failed. A file Verible can't parse, such as one with a \
         syntax error, is left unchanged: passed is false and diagnostics gives the error \
         at file and line. That is a result, not an error. Code between // verilog_format: \
-        off and // verilog_format: on comments is left as is. The first call may install \
+        off and // verilog_format: on comments is left as is. The first call may download \
         the Verible package first.";
     const READ_ONLY: bool = false;
     const OPEN_WORLD: bool = true;

@@ -337,9 +337,9 @@ pub fn launch_detached(
             format!("Can't start {}: {e}", program.display()),
         )
         .with_action(
-            ActionCode::InstallPackages,
+            ActionCode::DownloadPackages,
             format!(
-                "Reinstall the {} package, which may be damaged.",
+                "Download the {} package again, which may be damaged.",
                 super::TOOLCHAIN
             ),
         )

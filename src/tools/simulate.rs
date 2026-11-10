@@ -227,7 +227,7 @@ pub async fn run(
     testbench::check_no_dumpfile(&src, &tb)?;
     let includes = sources.include_args()?;
 
-    let needed = state.packages.needing_install(&[TOOLCHAIN])?;
+    let needed = state.packages.needing_download(&[TOOLCHAIN])?;
     let phases = Phases::new(call.progress.clone(), needed.len() + 2);
     let (bin, package) = toolchain(state, &needed, &phases, call).await?;
     let lib = SimLibrary::for_board(&sources.board, &package);

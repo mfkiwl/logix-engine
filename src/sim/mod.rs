@@ -180,8 +180,8 @@ impl Sources {
     }
 }
 
-/// Makes sure the toolchain is installed and returns its bin folder and
-/// package folder. `phases` already counts one phase per package to install.
+/// Makes sure the toolchain is downloaded and returns its bin folder and
+/// package folder. `phases` already counts one phase per package to download.
 pub async fn toolchain(
     state: &EngineState,
     needed: &[crate::packages::manifest::PackageSpec],
@@ -196,7 +196,7 @@ pub async fn toolchain(
         .ok_or_else(|| ToolError::engine(format!("{TOOLCHAIN} isn't in the manifest.")))?;
     state
         .packages
-        .ensure(needed, state.auto_install, phases, &call.cancel)
+        .ensure(needed, state.auto_download, phases, &call.cancel)
         .await?;
     let dir = state.packages.package_dir(&spec);
     Ok((dir.join("bin"), dir))

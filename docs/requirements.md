@@ -54,7 +54,7 @@ The engine is not:
 - **A project manager.** No project files, settings, environments or examples. The host owns its project model.
 - **A design-format converter.** Block diagrams, Amaranth, LiteX and other formats are turned into Verilog or SystemVerilog by the host before they reach the engine.
 - **A network server.** Remote access goes only through the separate, optional network adapter.
-- **A new toolchain.** The engine does not implement synthesis, place and route or programming itself. It installs and drives existing open source tools.
+- **A new toolchain.** The engine does not implement synthesis, place and route or programming itself. It downloads and drives existing open source tools.
 - **A front for proprietary vendor tools.** Tools such as Vivado, Quartus or Gowin's own IDE are out of scope. The engine uses open source toolchains only.
 - **Self-updating.** The engine never updates itself or its packages unless a host asks.
 
@@ -125,7 +125,7 @@ Logix's own frontends, starting with Logix IDE, and other open source FPGA tools
 | Progress and cancellation | Reporting progress during long operations, and stopping an operation when the host cancels it | IceStudio, Logix |
 | Results as data | Resource utilization, timing and test results as structured data, not only as text reports | IceStudio, Logix |
 | Board pinouts | Each board's pins and their names in the catalog, so a graphical host can let users pick pins | IceStudio |
-| Setup from a GUI | Installing and updating toolchain packages and drivers with progress reporting, without a terminal | IceStudio, Logix |
+| Setup from a GUI | Downloading and updating toolchain packages, and installing drivers, with progress reporting, without a terminal | IceStudio, Logix |
 | Bundled engine | A host shipping a specific engine version, with its own engine folder | IceStudio, Logix |
 | Packaged tools for hosts | Letting local hosts run packaged tools themselves, such as the Verible language server for live checks in an editor. An engine request returns the tool's command and environment, so hosts never depend on the engine folder's layout | Logix |
 | Parallel work | Running a check while a build is in progress, met by the host running a second engine instance | Logix (to confirm) |
@@ -150,7 +150,7 @@ The engine must support at least the capabilities below, which today's open sour
 | Reports and graphs | Resource utilization and timing reports, and design graphs in SVG, PNG and PDF |
 | Catalog | Boards and FPGAs, with each board's variants. A project's custom definitions are sent by the host in requests, as described in [Custom definitions](#custom-definitions) |
 | Devices and drivers | Listing USB devices, and installing or removing the drivers boards need, such as FTDI drivers on Windows |
-| Packages | Installing, updating, listing and repairing toolchain packages for each platform |
+| Packages | Downloading, updating, listing and repairing toolchain packages for each platform |
 | Examples | Not an engine feature. An example is a project, and the project model belongs to the frontend: the engine has none (see [Project model](#project-model)). Each frontend defines its own project model and source format, such as IceStudio's block diagrams, and provides examples in it. |
 | Raw tool access | Running any packaged tool directly, with the right environment, using the same engine request that returns a tool's command and environment |
 | Machine-readable info | Versions, platform, catalog and package details in structured form |
@@ -213,7 +213,7 @@ The engine works with three shared folders. The engine has no hard-wired disk lo
 
 | Folder | Access | Contents |
 | --- | --- | --- |
-| Engine folder | Read and write | Files the engine installs and maintains, such as toolchain tools and packages |
+| Engine folder | Read and write | Files the engine downloads and maintains, such as toolchain tools and packages |
 | Source folder | Read and write | The design's HDL sources and testbenches, e.g. read for builds and written when formatting |
 | Build folder | Read and write | Generated files such as bitstreams, reports, waveforms and intermediate build files |
 
@@ -271,20 +271,20 @@ The engine, its packages and the catalog all use date versions. The canonical fo
 | Package registries, such as PyPI and npm | `yyyy.m.d`, without leading zeros | `2026.1.5` | `2026.1.5.2` |
 
 - **Comparison.** Versions are always compared by their canonical date, never as strings in mixed forms.
-- **Pinned packages.** Each engine release includes a manifest that names the exact date and checksum of every package it was tested with. By default, the engine installs exactly those, so a given engine version always produces the same toolchain.
+- **Pinned packages.** Each engine release includes a manifest that names the exact date and checksum of every package it was tested with. By default, the engine downloads exactly those, so a given engine version always produces the same toolchain.
 - **Immutable releases.** Once a published engine release pins a package release, that package release never changes, and a fix gets a new date. During development, daily package releases may still be replaced, and development builds of the engine refresh their manifest to match.
 - **Side-by-side packages.** The engine folder can hold several dates of the same package, so engine versions that share an engine folder do not overwrite each other. Unused dates can be removed.
 - **Override for testing.** A host can request a different package date, such as a newer daily build. The engine reports that it is running an untested combination.
 - **Catalog.** The catalog ships with each engine release and has the same version.
 - **Tool API never breaks.** Changes only add tools or optional fields. A breaking change gets a new tool name, and the old tool keeps working until it is retired in a documented, announced way.
-- **Version check.** A host asks the engine for its version and installed package dates when it starts. Each host declares the minimum engine version it needs and tells the user clearly when the engine is older.
+- **Version check.** A host asks the engine for its version and downloaded package dates when it starts. Each host declares the minimum engine version it needs and tells the user clearly when the engine is older.
 - **No silent upgrades.** The engine never updates itself or its packages on its own. Upgrades happen only when a host asks.
 
 ## Packages
 
 - **Source.** Packages are downloaded only from GitHub releases, identified by owner, repo and release tag. The engine's manifest lists the owner, repo, tag and checksum of each package file for each platform.
-- **Verification.** After downloading a file, the engine checks it against the checksum in the manifest. If it does not match, the engine refuses to install it and reports a setup error.
-- **Automatic install and repair.** An operation that needs a missing or broken package installs or repairs it first, with progress, so hosts don't manage packages themselves. A launch option turns this off for offline or managed setups. The engine then reports a setup error instead. Since the manifest pins every package, packages change only when the engine version changes.
+- **Verification.** After downloading a file, the engine checks it against the checksum in the manifest. If it does not match, the engine refuses to use it and reports a setup error.
+- **Automatic download and repair.** An operation that needs a missing or broken package downloads or repairs it first, with progress, so hosts don't manage packages themselves. A launch option turns this off for offline or managed setups. The engine then reports a setup error instead. Since the manifest pins every package, packages change only when the engine version changes.
 - **Licenses.** The tools in each package carry their own respective licenses.
 
 ## Error model
@@ -298,7 +298,7 @@ A failing test or an unmet timing constraint is not an error. The operation did 
 | Category | Meaning | Example | Typical host reaction |
 | --- | --- | --- | --- |
 | Design error | A problem in the user's design files | A syntax error in `main.v`, or an unknown pin name in the constraint file | Show the diagnostics at the file and line |
-| Setup error | Something missing or wrong on the computer | A package is not installed, the board is not connected, or USB permission is denied | Tell the user what to fix, or offer to fix it, such as installing packages |
+| Setup error | Something missing or wrong on the computer | A package is not downloaded, the board is not connected, or USB permission is denied | Tell the user what to fix, or offer to fix it, such as downloading packages |
 | Request error | The host sent an invalid request | An unknown board name, a source folder that does not exist, or a missing required field | A bug or bad configuration in the host. Report it to the user |
 | Tool failure | A packaged tool crashed or misbehaved | nextpnr crashed | Show the tool's output and suggest a bug report |
 | Engine error | A bug in the engine itself | An unexpected internal failure | Suggest a bug report with the error details |
@@ -310,9 +310,9 @@ Every error report includes:
 - **Message,** short and written for end users.
 - **Details** for troubleshooting, such as the relevant tool output.
 - **Diagnostics** with file, line and column, for design errors.
-- **Suggested action,** when there is one, such as installing packages or connecting the board, with a machine-readable code so hosts can offer a one-click fix.
+- **Suggested action,** when there is one, such as downloading packages or connecting the board, with a machine-readable code so hosts can offer a one-click fix.
 
-Messages never assume a particular host. For example, the engine says that a package is not installed, not which command to run, so each host can phrase the fix in its own terms.
+Messages never assume a particular host. For example, the engine says that a package is not downloaded, not which command to run, so each host can phrase the fix in its own terms.
 
 ## Boards and board variants
 
@@ -380,9 +380,9 @@ The built-in catalog is fixed for each engine version. Hosts extend or override 
 
 CLI hosts start a new engine instance for every command, so the engine's own overhead must stay small next to the time the tools take. These are targets, to be confirmed by measurement.
 
-- **Startup.** An instance is ready to accept requests within 200 ms of launch, excluding first-time package installation.
-- **No network at startup.** Starting an instance never contacts the network. Network access happens only to install or repair packages that an operation needs, or when a host asks for it.
-- **Verification on install.** Package checksums are verified when packages are installed, not every time an instance starts.
+- **Startup.** An instance is ready to accept requests within 200 ms of launch, excluding first-time package downloads.
+- **No network at startup.** Starting an instance never contacts the network. Network access happens only to download or repair packages that an operation needs, or when a host asks for it.
+- **Verification on download.** Package checksums are verified when packages are downloaded, not every time an instance starts.
 - **Operation overhead.** The engine adds no more than 100 ms to an operation beyond the time its tools take.
 - **Up-to-date builds.** A build with no changes since the last build finishes within 1 second, using the incremental state in the build folder.
 
@@ -404,7 +404,7 @@ The 109 boards of the original board list split by architecture roughly as iCE40
 
 | Phase | Scope | Done when |
 | --- | --- | --- |
-| Milestone 1. Proof of concept (done 2026-10-29) | A proof of concept of the engine, built on the real design so it evolves into the full engine rather than being thrown away: MCP interface, automatic package install and versioning, read-only catalog, error model, iCE40 only, and seven tools: `get_engine_info`, `install_packages`, `get_catalog`, `build`, `clean_build`, `list_devices` and `program_board`. macOS only, with no Linux or Windows yet. GitHub workflows that build and test the engine. Developer scripts to run, build, clean and test it locally. The underlying tools come from existing open source toolchain packages | An AI coding agent, such as Claude Code, is the host, connected to the engine over MCP, with no frontend. From prompts alone, it changes or creates an iCE40 design, builds it and programs it on an Alhambra II board. Met on 2026-10-29 |
+| Milestone 1. Proof of concept (done 2026-10-29) | A proof of concept of the engine, built on the real design so it evolves into the full engine rather than being thrown away: MCP interface, automatic package download and versioning, read-only catalog, error model, iCE40 only, and seven tools: `get_engine_info`, `download_packages`, `get_catalog`, `build`, `clean_build`, `list_devices` and `program_board`. macOS only, with no Linux or Windows yet. GitHub workflows that build and test the engine. Developer scripts to run, build, clean and test it locally. The underlying tools come from existing open source toolchain packages | An AI coding agent, such as Claude Code, is the host, connected to the engine over MCP, with no frontend. From prompts alone, it changes or creates an iCE40 design, builds it and programs it on an Alhambra II board. Met on 2026-10-29 |
 | Milestone 2. Logix IDE on the engine | Everything Logix IDE offered before it moved to the engine, as listed in Table 15: lint, test and simulate with a waveform viewer, format, graph, live tool output, and every board Logix IDE offers today, across iCE40, ECP5, Gowin and Xilinx 7 Series, with the programmers they need. A board is dropped only for a very good reason, recorded in this document with the reason. macOS only, like Logix IDE's releases | Logix IDE's macOS release runs on the engine alone and keeps every feature in Table 15. Its board selector offers the same boards as before, apart from boards dropped for a recorded reason. Every toolchain builds and programs a board, tested on hardware where a board is available |
 | 3. More platforms and boards | Linux and Windows, the remaining boards and programmers as decided in the open questions, and the acceptance criteria above | The acceptance criteria are met |
 | 4. More hosts | More Logix frontends, such as Logix CLI and Logix Studio, and other tools as hosts, with the requirements in Table 6 | Each runs its core flows on the engine |
@@ -425,7 +425,7 @@ Milestone 1 tested the interface with an AI coding agent as the host, before any
 | Auto Format | A `format` tool and the package with Verible |
 | Show Diagram | A `graph` tool that writes the diagram as SVG |
 | Console | Live tool output, line by line, while each operation runs |
-| First start | `install_packages`, with progress |
+| First start | `download_packages`, with progress |
 | Stop | Cancellation of every tool |
 
 **Boards dropped from Milestone 2 (decided 2026-11-03).** The catalog covers 95 of the 109 boards of the original board list (as 84 boards, some with board variants; 81 boards now, after the later changes below). The 14 others are dropped because their programmers are legacy or inactive, or not in the packages the engine uses. None of the programmers the engine supports can program them:
@@ -482,7 +482,7 @@ The project relies heavily on AI-generated tests to catch regressions, since hum
 - **Board files and a Board Wizard** (built 2026-11-05, dropped 2026-11-06). Engine-made, opaque board files (`make_board_file` from a connected device and a catalog board, upload evidence recorded by `program_board`, a shareable report from `share_board_file`) and the Logix IDE's wizard for them were built, then dropped: the user found the result confusing, and chose plain custom boards in one consistent list across all tools (see Custom definitions). Ideas kept for later: the engine writing a custom board's USB filter from a connected device (product name, release, serial number to tell identical boards apart), and a report users can paste into a GitHub issue, with the serial number only as a shape.
 - Which more frontend logic to move into the engine (the Logix IDE is the reference frontend; see CLAUDE.md, A reference for frontends). Candidates from the IDE, 2026-11-05: choosing a board variant from dimension values (the IDE's `variant_id`: the first variant with all chosen values), a device's name for people (product, else manufacturer, else its USB IDs), the strongest matches of a device versus the weaker ones to count (the IDE's `likelyBoards` and `otherBoards`), and the plain summary of a test run. Each should move only if it doesn't depend on a frontend's own model.
 - How to name Xilinx clocks after the design's clock signal (raised 2026-11-05). nextpnr-xilinx reports a clock net name that synthesis made up, such as `$abc$21083$aiger$o100`, so `build`'s `clocks_summary` says `o100` where the design says `sys_clk` (Apio's report has the same problem). A fix may come from the openxc7 tools.
-- **Done (2026-11-08): the catalog is Logix Catalog** (`openlogix/logix-catalog`; its `docs/model.md` and `docs/design.md` are the source of truth). The engine reads its format (one board file each, typed `resources`, one schema `logix-board-v1.json`), builds in a pinned copy (`catalog/`, made by `scripts/update-catalog.sh`) or a local clone given by `LOGIX_ENGINE_DEV_CATALOG` at build time, reports the catalog version in `get_engine_info`, and takes custom boards as `custom_boards_folder`. Later: newer catalog releases installed like packages, only when a host asks.
+- **Done (2026-11-08): the catalog is Logix Catalog** (`openlogix/logix-catalog`; its `docs/model.md` and `docs/design.md` are the source of truth). The engine reads its format (one board file each, typed `resources`, one schema `logix-board-v1.json`), builds in a pinned copy (`catalog/`, made by `scripts/update-catalog.sh`) or a local clone given by `LOGIX_ENGINE_DEV_CATALOG` at build time, reports the catalog version in `get_engine_info`, and takes custom boards as `custom_boards_folder`. Later: newer catalog releases downloaded like packages, only when a host asks.
 - Whether to move more boards to openFPGALoader, which would simplify packages and testing. Its DFU support may cover the dfu-util boards, but each moved board must be tested on hardware.
 - Whether to offer flash on the ULX3S: some boards have a DFU bootloader at the start of the flash, which a JTAG flash write (`-f`) would overwrite. openFPGALoader's `ulx3s_dfu` board writes through that bootloader instead, but only on boards that have it.
 - How to program one particular board when several boards of the same model are connected. Device IDs tell them apart by USB port, and Upload asks which one, but the user may not know which physical board each entry is: identical boards report the same names, and many have no serial number or the same one. Some programmers can't be told which device to open at all (icesprog, openFPGALoader with USB-Blaster or CMSIS-DAP adapters), so today the engine refuses when another device with the same USB IDs is connected; dfu-util is told the USB port since 2026-11-04. Ideas to weigh: show where each board is plugged in, in words a user can follow (such as the port or hub); let the user identify a board by unplugging it and watching which entry disappears; pass a serial number where the programmer supports it; and let a host remember a name the user gives a board, keyed by its serial number when it has a unique one.

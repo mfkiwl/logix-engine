@@ -12,7 +12,7 @@ pub enum Category {
     /// A problem in the user's design files, such as a syntax error.
     Design,
     /// Something missing or wrong on the computer, such as a package that
-    /// isn't installed or a board that isn't connected.
+    /// isn't downloaded or a board that isn't connected.
     Setup,
     /// The host sent an invalid request, such as an unknown board or a
     /// missing field. Fix the request and retry.
@@ -64,9 +64,9 @@ pub enum Severity {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum ActionCode {
-    /// Required packages are missing or broken and weren't installed
-    /// automatically, because auto-install is off or the install failed.
-    InstallPackages,
+    /// Required packages are missing or broken and weren't downloaded
+    /// automatically, because auto-download is off or the download failed.
+    DownloadPackages,
     /// No matching board is connected.
     ConnectBoard,
     /// A device was found but cannot be opened.
@@ -196,7 +196,7 @@ mod tests {
                 .clone()
         );
         let codes: Vec<_> = [
-            ActionCode::InstallPackages,
+            ActionCode::DownloadPackages,
             ActionCode::ConnectBoard,
             ActionCode::FixDevicePermissions,
             ActionCode::InstallDrivers,
@@ -208,7 +208,7 @@ mod tests {
         assert_eq!(
             codes,
             json!([
-                "install_packages",
+                "download_packages",
                 "connect_board",
                 "fix_device_permissions",
                 "install_drivers",

@@ -2,7 +2,7 @@
 
 The AI-proposed design for the engine. It follows the [requirements](requirements.md) and is one candidate design, open to change. [Tool API](tool-api.md) details its first operations.
 
-The engine is a single native executable, written in Rust, that exposes its operations as MCP tools over stdin/stdout. Every host launches it as a child process, either for a long session or for a single call. The FPGA work itself is done by proven open source tools that the engine installs and drives.
+The engine is a single native executable, written in Rust, that exposes its operations as MCP tools over stdin/stdout. Every host launches it as a child process, either for a long session or for a single call. The FPGA work itself is done by proven open source tools that the engine downloads and drives.
 
 ![Proposed architecture: hosts, engine layers, tools and shared folders](images/architecture.svg)
 
@@ -35,7 +35,7 @@ All hosts launch the engine as a child process and use MCP over stdin/stdout. [T
 | MCP interface | Accepts MCP sessions over stdin/stdout and exposes each operation as a tool |
 | Protocol core | Defines the input and output schema of every tool, plus progress and cancellation. The schema is generated from the code |
 | Operation engine | Runs operations such as build, simulate and program board as isolated subprocesses, using the inputs and folders given in each request |
-| Package manager | Installs, updates and verifies toolchain packages in the engine folder |
+| Package manager | Downloads, updates and verifies toolchain packages in the engine folder |
 | Catalog | Board and FPGA definitions kept as versioned data files, not code |
 
 ## Technology selection
@@ -64,7 +64,7 @@ All hosts launch the engine as a child process and use MCP over stdin/stdout. [T
 - **Tool environment.** The engine starts each tool from an empty environment with only `PATH` (the package's `bin` folder, then `/usr/bin:/bin`), `HOME` and `TMPDIR`, so results never depend on the user's shell setup, such as a `PYTHONPATH` that would confuse the packaged Python. On macOS and Linux, oss-cad-suite's `bin` programs are launcher scripts that set each tool's own variables, such as `VERILATOR_ROOT` for Verilator, `PYTHONHOME` for nextpnr and vvp, `OPENFPGALOADER_SOJ_DIR` for openFPGALoader and the GTK settings for GTKWave, so the engine sets nothing else. Later platforms and packages need more: Windows has no launcher scripts, so the engine must set what the tools need there (the packages' `lib` folders on `PATH`, `VERILATOR_ROOT`, `OPENFPGALOADER_SOJ_DIR`), and the ECP5 and Xilinx flows pass Trellis and Project X-Ray database paths in their commands. Every result lists the exact commands and environment (see the tool API's Commands section).
 - **Display paths.** How paths read for people is applied in one place, `src/display_paths.rs`, around every tool call (`tools::call`): the result's diagnostics, messages and testbench output, and the live output through a wrapping sink. Tools only use it for text they write elsewhere, such as the diagram's labels (the `.dot` file, before `dot` draws it). After the request's `display_paths` entries come the request's own paths as it gave them (custom board files as given, the source folder's files relative to it), so the default needs no special cases in tools. Paths are matched by real location: spellings (as given and resolved) and the file's identity on disk.
 - **Output rules.** What the engine knows about how particular tools print lives in one table, `src/output_rules.rs`. A rule names the tools it applies to (or any tool), a pattern on the line as printed, and an action: hide the line from the live output, show it at another level, remove noise around the message (never its words), add a note from the engine after it (once per tool run), start a progress phase, or read the phase's percentage. Rules change only the live output and progress, never results or diagnostics, which come from the raw output. Hidden lines go to the engine log with the rule's ID. Each rule records why it exists and where its lines come from, with real lines it must match and nearby lines it must not, checked by a test, along with a check that it never fires for other tools. Rules are internal and can change in any version; frontends never repeat them. Which lines a tool prints over (a bare carriage return) isn't a rule: the runner reads it from the tool's output and sends it as `redraw`.
-- **Concurrency.** Each instance serves one session. Several instances can run at once and share an engine folder, using file locks during package installs.
+- **Concurrency.** Each instance serves one session. Several instances can run at once and share an engine folder, using file locks during package downloads.
 - **Long operations.** Every operation is a plain tool call with progress and cancellation, which is all local hosts need. MCP 2026-07-28 supports both on stdin/stdout: the host requests progress with a progress token and receives progress notifications, and cancels by sending a cancellation notification with the request ID. The MCP Tasks extension is added later for AI agents, whose tool calls may time out, and for the network adapter, where connections can drop. Inside the engine, both use the same operation model.
 
 ## Engine testing

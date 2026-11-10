@@ -53,7 +53,7 @@ async fn get_engine_info_reports_the_launch_settings() {
     let engine_folder = tmp.path().join("engine");
     let client = start(
         &engine_folder,
-        &["--no-auto-install", "--log-level", "debug"],
+        &["--no-auto-download", "--log-level", "debug"],
     )
     .await;
 
@@ -73,7 +73,7 @@ async fn get_engine_info_reports_the_launch_settings() {
 
     let folder = engine_folder.to_str().unwrap();
     assert_eq!(out["engine_folder"], folder);
-    assert_eq!(out["auto_install"], false);
+    assert_eq!(out["auto_download"], false);
     assert_eq!(
         out["boards_schema"],
         "https://www.openlogix.org/schemas/logix-board-v1.json"
@@ -96,7 +96,7 @@ async fn get_engine_info_reports_the_launch_settings() {
         json!([
             "--engine-folder",
             folder,
-            "--no-auto-install",
+            "--no-auto-download",
             "--log-level",
             "debug"
         ])
@@ -105,7 +105,7 @@ async fn get_engine_info_reports_the_launch_settings() {
         out["protocol_versions"],
         json!(["2026-07-28", "2025-11-25"])
     );
-    // A fresh engine folder has the manifest's packages, not yet installed.
+    // A fresh engine folder has the manifest's packages, not yet downloaded.
     assert_eq!(
         out["packages"],
         json!([
@@ -134,14 +134,14 @@ async fn get_engine_info_reports_the_launch_settings() {
 }
 
 #[tokio::test]
-async fn auto_install_is_on_by_default() {
+async fn auto_download_is_on_by_default() {
     let tmp = tempfile::tempdir().unwrap();
     let client = start(&tmp.path().join("engine"), &[]).await;
     let out = call(&client, "get_engine_info", json!({}))
         .await
         .structured_content
         .unwrap();
-    assert_eq!(out["auto_install"], true);
+    assert_eq!(out["auto_download"], true);
     client.cancel().await.unwrap();
 }
 
@@ -185,10 +185,10 @@ async fn tools_list_matches_the_published_schemas() {
 }
 
 #[tokio::test]
-async fn install_packages_refuses_unknown_packages() {
+async fn download_packages_refuses_unknown_packages() {
     let tmp = tempfile::tempdir().unwrap();
     let client = start(&tmp.path().join("engine"), &[]).await;
-    let result = call(&client, "install_packages", json!({"packages": ["nope"]})).await;
+    let result = call(&client, "download_packages", json!({"packages": ["nope"]})).await;
     assert_eq!(result.is_error, Some(true));
     assert_eq!(result.structured_content.unwrap()["category"], "request");
     client.cancel().await.unwrap();
@@ -208,11 +208,11 @@ impl ClientHandler for ProgressClient {
     }
 }
 
-/// Installs the real packages (oss-cad-suite is about 526 MB) through MCP,
+/// Downloads the real packages (oss-cad-suite is about 526 MB) through MCP,
 /// with progress. Run: cargo test --test mcp -- --ignored
 #[tokio::test]
 #[ignore]
-async fn real_install_packages_with_progress() {
+async fn real_download_packages_with_progress() {
     let tmp = tempfile::tempdir().unwrap();
     let mut cmd = Command::new(ENGINE);
     cmd.arg("--engine-folder").arg(tmp.path().join("engine"));
@@ -223,7 +223,7 @@ async fn real_install_packages_with_progress() {
         .await
         .unwrap();
 
-    let mut params = CallToolRequestParams::new("install_packages");
+    let mut params = CallToolRequestParams::new("download_packages");
     let mut meta = RequestMetaObject::new();
     meta.set_progress_token(ProgressToken(NumberOrString::Number(7)));
     params.meta = Some(meta);
@@ -231,21 +231,21 @@ async fn real_install_packages_with_progress() {
     assert_ne!(result.is_error, Some(true), "{result:?}");
     let out = result.structured_content.unwrap();
     assert_eq!(
-        out["installed"],
+        out["downloaded"],
         json!(["oss-cad-suite", "openxc7", "verible"])
     );
     for p in out["packages"].as_array().unwrap() {
-        assert_eq!(p["status"], "installed", "{p}");
+        assert_eq!(p["status"], "ready", "{p}");
     }
 
     let progress = handler.0.lock().unwrap().clone();
     assert!(progress.len() > 10, "{}", progress.len());
     assert_eq!(
         progress[0].message.as_deref(),
-        Some("Installing oss-cad-suite")
+        Some("Downloading oss-cad-suite")
     );
     for name in ["openxc7", "verible"] {
-        let message = format!("Installing {name}");
+        let message = format!("Downloading {name}");
         assert!(
             progress
                 .iter()

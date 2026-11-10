@@ -151,8 +151,8 @@ pub fn parse_verible(output: &str, file: &str, source_folder: &str) -> Vec<Diagn
     out
 }
 
-/// Makes sure Verible is installed and returns its bin folder. `phases`
-/// already counts one phase per package to install.
+/// Makes sure Verible is downloaded and returns its bin folder. `phases`
+/// already counts one phase per package to download.
 async fn verible(
     state: &EngineState,
     needed: &[crate::packages::manifest::PackageSpec],
@@ -167,7 +167,7 @@ async fn verible(
         .ok_or_else(|| ToolError::engine(format!("{VERIBLE} isn't in the manifest.")))?;
     state
         .packages
-        .ensure(needed, state.auto_install, phases, &call.cancel)
+        .ensure(needed, state.auto_download, phases, &call.cancel)
         .await?;
     Ok(state.packages.package_dir(&spec).join("bin"))
 }
@@ -179,7 +179,7 @@ pub async fn format(
     req: FormatRequest,
     call: &Call,
 ) -> Result<FormatResult, ToolError> {
-    let needed = state.packages.needing_install(&[VERIBLE])?;
+    let needed = state.packages.needing_download(&[VERIBLE])?;
     let phases = Phases::new(call.progress.clone(), needed.len() + 1);
     let bin = verible(state, &needed, &phases, call).await?;
     phases.start("Formatting");

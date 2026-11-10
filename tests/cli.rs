@@ -31,7 +31,7 @@ fn help_lists_the_arguments_and_exits() {
     let stdout = String::from_utf8(out.stdout).unwrap();
     for arg in [
         "--engine-folder",
-        "--no-auto-install",
+        "--no-auto-download",
         "--log-level",
         "--version",
         "--help",

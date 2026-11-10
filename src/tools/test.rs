@@ -28,7 +28,7 @@ impl EngineTool for Test {
         each stops at its first failure unless stop_at_first_failure is false. A failing testbench is \
         the result, not an error: passed is false, and each testbench's diagnostics and output \
         say why. Compile errors are a design error with diagnostics at file and line. The \
-        first call may install the toolchain package first, which takes a few minutes. To \
+        first call may download the toolchain package first, which takes a few minutes. To \
         look at a testbench's signals in a waveform viewer, use simulate.";
     const READ_ONLY: bool = false;
     const OPEN_WORLD: bool = true;
@@ -217,7 +217,7 @@ pub async fn run(
     }
     let includes = sources.include_args()?;
 
-    let needed = state.packages.needing_install(&[TOOLCHAIN])?;
+    let needed = state.packages.needing_download(&[TOOLCHAIN])?;
     let phases = Phases::new(
         call.progress.clone(),
         needed.len() + 2 * sources.testbench_files.len(),

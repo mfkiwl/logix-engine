@@ -44,7 +44,7 @@ jobs:
           rustup toolchain install
           rustup show active-toolchain
 
-      # The build tests install the toolchain package (about 526 MB) into
+      # The build tests download the toolchain package (about 526 MB) into
       # target/tmp/test-engine. Cached until the package manifest changes.
       - name: Cache the test toolchain
         uses: actions/cache@v6

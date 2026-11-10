@@ -7,7 +7,7 @@ In this tutorial, [Claude Code](https://claude.com/claude-code) designs
 hardware for you through Logix Engine. You describe what you want, such as
 "make the LEDs sweep back and forth", and Claude writes the Verilog,
 builds it, tests it, shows the waveforms and programs the board. You don't
-install a toolchain or write Verilog yourself, unless you want to. It
+set up a toolchain or write Verilog yourself, unless you want to. It
 takes about an hour.
 
 Logix Engine is in development: this tutorial uses its daily development
@@ -98,14 +98,14 @@ permission: choose **Yes, and don't ask again** for the `logix-engine`
 tools, so the rest of the tutorial flows. Claude also asks before it
 writes files in your folder.
 
-Now install the FPGA tools. This is the one long wait, a download of
+Now download the FPGA tools. This is the one long wait, a download of
 about 650 MB:
 
 ```text
-Install the FPGA tools the engine needs, and show me the progress.
+Download the FPGA tools the engine needs, and show me the progress.
 ```
 
-The engine installs three packages: `oss-cad-suite` (Yosys, nextpnr,
+The engine downloads three packages: `oss-cad-suite` (Yosys, nextpnr,
 Icarus Verilog, GTKWave, openFPGALoader and more), `openxc7` (for Xilinx
 boards) and `verible` (a Verilog formatter). They stay in the engine
 folder, so this happens only once.

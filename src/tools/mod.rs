@@ -5,11 +5,11 @@
 pub mod build;
 pub mod clean_build;
 pub mod compare_boards;
+pub mod download_packages;
 pub mod format;
 pub mod get_catalog;
 pub mod get_engine_info;
 pub mod graph;
-pub mod install_packages;
 pub mod lint;
 pub mod list_devices;
 pub mod program_board;
@@ -117,7 +117,7 @@ pub fn definition<T: EngineTool>() -> Tool {
 pub fn all_definitions() -> Vec<Tool> {
     vec![
         definition::<get_engine_info::GetEngineInfo>(),
-        definition::<install_packages::InstallPackages>(),
+        definition::<download_packages::DownloadPackages>(),
         definition::<get_catalog::GetCatalog>(),
         definition::<compare_boards::CompareBoards>(),
         definition::<lint::Lint>(),
@@ -197,11 +197,11 @@ pub async fn call(
     use build::Build;
     use clean_build::CleanBuild;
     use compare_boards::CompareBoards;
+    use download_packages::DownloadPackages;
     use format::Format;
     use get_catalog::GetCatalog;
     use get_engine_info::GetEngineInfo;
     use graph::Graph;
-    use install_packages::InstallPackages;
     use lint::Lint;
     use list_devices::ListDevices;
     use program_board::ProgramBoard;
@@ -332,11 +332,11 @@ pub async fn call(
                 call,
             ),
         ),
-        InstallPackages::NAME => to_call_result(
+        DownloadPackages::NAME => to_call_result(
             display,
             with_commands(
-                match parse_input::<InstallPackages>(arguments) {
-                    Ok(input) => install_packages::run(state, input, call).await,
+                match parse_input::<DownloadPackages>(arguments) {
+                    Ok(input) => download_packages::run(state, input, call).await,
                     Err(e) => Err(e),
                 },
                 call,

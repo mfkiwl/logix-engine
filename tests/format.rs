@@ -30,7 +30,7 @@ fn engine() -> EngineState {
     EngineState {
         engine_folder: folder.display().to_string(),
         engine_folder_resolved: folder.clone(),
-        auto_install: true,
+        auto_download: true,
         command_line: vec![],
         log_file: folder.join("logs/test.log"),
         packages,

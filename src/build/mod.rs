@@ -459,9 +459,9 @@ pub async fn run_watched(
         Err(RunError::Spawn(e)) => {
             Err(
                 ToolError::new(Category::Tool, format!("Can't start {tool}: {e}")).with_action(
-                    crate::errors::ActionCode::InstallPackages,
+                    crate::errors::ActionCode::DownloadPackages,
                     format!(
-                        "Reinstall the {} package, which may be damaged.",
+                        "Download the {} package again, which may be damaged.",
                         package_of(bin_dir)
                     ),
                 ),
@@ -580,11 +580,11 @@ pub async fn build(
     if let Some(p) = &pnr_spec {
         names.push(&p.name);
     }
-    let needed = state.packages.needing_install(&names)?;
+    let needed = state.packages.needing_download(&names)?;
     let phases = Phases::new(call.progress.clone(), needed.len() + 3);
     state
         .packages
-        .ensure(&needed, state.auto_install, &phases, &call.cancel)
+        .ensure(&needed, state.auto_download, &phases, &call.cancel)
         .await?;
     let package_dir = state.packages.package_dir(&spec);
     let bin = package_dir.join("bin");

@@ -22,9 +22,9 @@ struct Args {
     #[arg(long, value_name = "absolute path")]
     engine_folder: String,
 
-    /// Turn off automatic package install and repair.
+    /// Turn off automatic package download and repair.
     #[arg(long)]
-    no_auto_install: bool,
+    no_auto_download: bool,
 
     /// How much goes into the log file.
     #[arg(long, value_name = "level", default_value = "info")]
@@ -89,7 +89,7 @@ fn main() -> ExitCode {
         engine_folder: args.engine_folder.clone(),
         engine_folder_resolved: resolved,
         packages,
-        auto_install: !args.no_auto_install,
+        auto_download: !args.no_auto_download,
         command_line,
         log_file,
     };

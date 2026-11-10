@@ -1,14 +1,14 @@
-//! Package install and repair (docs/tool-api.md, "Packages").
+//! Package download and repair (docs/tool-api.md, "Packages").
 //!
 //! Engine folder layout:
 //!
-//! - `packages/<name>/<version>/`: an installed package, with its install
+//! - `packages/<name>/<version>/`: a downloaded package, with its download
 //!   record `logix-install.json`. Several versions can sit side by side.
 //! - `packages/<name>/.tmp-<version>-<pid>/`: a package being unpacked. It is
 //!   renamed to `<version>` only when complete, so a crash never leaves a
-//!   package that looks installed.
+//!   package that looks downloaded.
 //! - `downloads/`: partial downloads, deleted when done.
-//! - `locks/<name>.lock`: stops two engine processes from installing the same
+//! - `locks/<name>.lock`: stops two engine processes from downloading the same
 //!   package at once.
 
 pub mod manifest;
@@ -29,15 +29,15 @@ use crate::progress::Phases;
 use crate::tools::get_engine_info::PackageStatus;
 use manifest::{Manifest, PackageFile, PackageSpec};
 
-/// The install record, written into a package folder when it is complete.
+/// The download record, written into a package folder when it is complete.
 pub const RECORD_FILE: &str = "logix-install.json";
 
-/// Share of an install's progress taken by the download. Unpacking takes
+/// Share of a package's progress taken by the download. Unpacking takes
 /// the rest.
 const DOWNLOAD_SHARE: f64 = 80.0;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
-pub struct InstallRecord {
+pub struct DownloadRecord {
     pub name: String,
     pub version: String,
     pub platform: String,
@@ -46,7 +46,7 @@ pub struct InstallRecord {
     pub engine_version: String,
 }
 
-/// Installs, repairs and finds the packages of a manifest in an engine folder.
+/// Downloads, repairs and finds the packages of a manifest in an engine folder.
 #[derive(Debug, Clone)]
 pub struct PackageManager {
     /// The engine folder, with symbolic links resolved.
@@ -58,11 +58,11 @@ pub struct PackageManager {
     download_base: String,
 }
 
-fn install_error(name: &str, problem: impl std::fmt::Display) -> ToolError {
-    ToolError::setup(format!("Can't install the {name} package: {problem}"))
+fn download_error(name: &str, problem: impl std::fmt::Display) -> ToolError {
+    ToolError::setup(format!("Can't download the {name} package: {problem}"))
         .with_action(
-            ActionCode::InstallPackages,
-            format!("Install the {name} package, then retry. Check the network connection and the free disk space."),
+            ActionCode::DownloadPackages,
+            format!("Download the {name} package, then retry. Check the network connection and the free disk space."),
         )
 }
 
@@ -89,7 +89,7 @@ impl PackageManager {
         self.engine_folder.join("packages").join(name)
     }
 
-    /// The folder of an installed package version.
+    /// The folder of a downloaded package version.
     pub fn package_dir(&self, spec: &PackageSpec) -> PathBuf {
         self.packages_dir(&spec.name).join(&spec.version)
     }
@@ -98,42 +98,42 @@ impl PackageManager {
         spec.files.get(&self.platform)
     }
 
-    /// A package's status, from its folder and install record. Fast: it
+    /// A package's status, from its folder and download record. Fast: it
     /// doesn't verify checksums.
     pub fn status(&self, spec: &PackageSpec) -> PackageStatus {
         let dir = self.package_dir(spec);
         if !dir.exists() {
             return PackageStatus::Missing;
         }
-        let record: Option<InstallRecord> = fs::read_to_string(dir.join(RECORD_FILE))
+        let record: Option<DownloadRecord> = fs::read_to_string(dir.join(RECORD_FILE))
             .ok()
             .and_then(|s| serde_json::from_str(&s).ok());
         match (record, self.file_for(spec)) {
             (Some(r), Some(f))
                 if r.name == spec.name && r.version == spec.version && r.sha256 == f.sha256 =>
             {
-                PackageStatus::Installed
+                PackageStatus::Ready
             }
             _ => PackageStatus::Broken,
         }
     }
 
-    /// The packages, by name, that aren't installed and intact.
-    pub fn needing_install(&self, names: &[&str]) -> Result<Vec<PackageSpec>, ToolError> {
+    /// The packages, by name, that aren't downloaded and intact.
+    pub fn needing_download(&self, names: &[&str]) -> Result<Vec<PackageSpec>, ToolError> {
         let mut out = Vec::new();
         for name in names {
             let spec = self.manifest.get(name).ok_or_else(|| {
                 ToolError::engine(format!("Package {name} isn't in the manifest."))
             })?;
-            if self.status(spec) != PackageStatus::Installed {
+            if self.status(spec) != PackageStatus::Ready {
                 out.push(spec.clone());
             }
         }
         Ok(out)
     }
 
-    /// The error for packages that need installing when auto-install is off.
-    pub fn not_installed_error(&self, specs: &[PackageSpec]) -> ToolError {
+    /// The error for packages that need downloading when auto-download is off.
+    pub fn not_ready_error(&self, specs: &[PackageSpec]) -> ToolError {
         let list: Vec<String> = specs
             .iter()
             .map(|s| {
@@ -145,42 +145,44 @@ impl PackageManager {
             })
             .collect();
         ToolError::setup(format!(
-            "Required packages aren't installed: {}.",
+            "Required packages aren't downloaded: {}.",
             list.join(", ")
         ))
         .with_action(
-            ActionCode::InstallPackages,
-            "Install the required packages, then retry. Automatic install is turned off.",
+            ActionCode::DownloadPackages,
+            "Download the required packages, then retry. Automatic download is turned off.",
         )
     }
 
-    /// Installs or repairs a package. `phases` must be in the package's
-    /// install phase: this reports its percentage. Waits while another
-    /// process installs the same package, and does nothing if that leaves it
-    /// installed.
-    pub async fn install(
+    /// Downloads or repairs a package. `phases` must be in the package's
+    /// download phase: this reports its percentage. Waits while another
+    /// process downloads the same package, and does nothing if that leaves it
+    /// downloaded.
+    pub async fn download(
         &self,
         spec: &PackageSpec,
         phases: &Phases,
         cancel: &CancellationToken,
     ) -> Result<(), ToolError> {
-        self.install_or_reinstall(spec, phases, cancel, false).await
+        self.download_or_redownload(spec, phases, cancel, false)
+            .await
     }
 
-    /// Downloads and installs a package again, even if it looks installed,
-    /// replacing the installed copy. This fixes files damaged or deleted
-    /// after the install, which the status check doesn't see. The old copy
+    /// Downloads a package again, even if it looks ready, replacing the
+    /// current copy. This fixes files damaged or deleted
+    /// after the download, which the status check doesn't see. The old copy
     /// stays until the new one is complete.
-    pub async fn reinstall(
+    pub async fn redownload(
         &self,
         spec: &PackageSpec,
         phases: &Phases,
         cancel: &CancellationToken,
     ) -> Result<(), ToolError> {
-        self.install_or_reinstall(spec, phases, cancel, true).await
+        self.download_or_redownload(spec, phases, cancel, true)
+            .await
     }
 
-    async fn install_or_reinstall(
+    async fn download_or_redownload(
         &self,
         spec: &PackageSpec,
         phases: &Phases,
@@ -196,22 +198,26 @@ impl PackageManager {
         })?;
         for dir in ["packages", "downloads", "locks"] {
             fs::create_dir_all(self.engine_folder.join(dir))
-                .map_err(|e| install_error(name, format!("can't create the {dir} folder: {e}")))?;
+                .map_err(|e| download_error(name, format!("can't create the {dir} folder: {e}")))?;
         }
         let pkg_dir = self.packages_dir(name);
-        fs::create_dir_all(&pkg_dir).map_err(|e| install_error(name, e))?;
+        fs::create_dir_all(&pkg_dir).map_err(|e| download_error(name, e))?;
 
         let _lock = self.lock(name, cancel).await?;
-        if !force && self.status(spec) == PackageStatus::Installed {
+        if !force && self.status(spec) == PackageStatus::Ready {
             log::info!(
-                "Package {name} {} was installed by another process",
+                "Package {name} {} was downloaded by another process",
                 spec.version
             );
             return Ok(());
         }
         log::info!(
             "{} package {name} {} from {}",
-            if force { "Reinstalling" } else { "Installing" },
+            if force {
+                "Downloading again"
+            } else {
+                "Downloading"
+            },
             spec.version,
             file.url(&self.download_base)
         );
@@ -225,7 +231,8 @@ impl PackageManager {
         remove_stale(&pkg_dir, &final_dir);
         let _cleanup = Cleanup(vec![tmp_dir.clone(), part.clone()]);
 
-        self.download(file, &part, name, phases, cancel).await?;
+        self.download_file(file, &part, name, phases, cancel)
+            .await?;
 
         let (tmp, archive) = (tmp_dir.clone(), part.clone());
         let (cancel2, total) = (cancel.clone(), file.size);
@@ -248,16 +255,16 @@ impl PackageManager {
             Ok(Ok(())) => {}
             Ok(Err(UnpackError::Cancelled)) => {
                 return Err(ToolError::cancelled(format!(
-                    "Installing {name} was cancelled."
+                    "Downloading {name} was cancelled."
                 )));
             }
             Ok(Err(UnpackError::Failed(e))) => {
-                return Err(install_error(name, format!("can't unpack it: {e}")));
+                return Err(download_error(name, format!("can't unpack it: {e}")));
             }
             Err(e) => return Err(ToolError::engine(format!("Unpacking {name} failed: {e}"))),
         }
 
-        let record = InstallRecord {
+        let record = DownloadRecord {
             name: spec.name.clone(),
             version: spec.version.clone(),
             platform: self.platform.clone(),
@@ -266,23 +273,23 @@ impl PackageManager {
             engine_version: crate::state::ENGINE_VERSION.to_string(),
         };
         let json = serde_json::to_string_pretty(&record).unwrap_or_default() + "\n";
-        fs::write(tmp_dir.join(RECORD_FILE), json).map_err(|e| install_error(name, e))?;
+        fs::write(tmp_dir.join(RECORD_FILE), json).map_err(|e| download_error(name, e))?;
         if final_dir.exists() {
-            // A broken install, replaced now that the new one is complete.
+            // A broken download, replaced now that the new one is complete.
             fs::remove_dir_all(&final_dir).map_err(|e| {
-                install_error(name, format!("can't remove the broken install: {e}"))
+                download_error(name, format!("can't remove the broken download: {e}"))
             })?;
         }
-        fs::rename(&tmp_dir, &final_dir).map_err(|e| install_error(name, e))?;
+        fs::rename(&tmp_dir, &final_dir).map_err(|e| download_error(name, e))?;
         log::info!(
-            "Installed package {name} {} in {}",
+            "Downloaded package {name} {} in {}",
             spec.version,
             final_dir.display()
         );
         Ok(())
     }
 
-    /// Takes the package's install lock, waiting while another process holds
+    /// Takes the package's download lock, waiting while another process holds
     /// it. The lock is released when the returned file is dropped.
     async fn lock(&self, name: &str, cancel: &CancellationToken) -> Result<fs::File, ToolError> {
         let path = self
@@ -294,32 +301,32 @@ impl PackageManager {
             .truncate(false)
             .write(true)
             .open(&path)
-            .map_err(|e| install_error(name, format!("can't open the lock file: {e}")))?;
+            .map_err(|e| download_error(name, format!("can't open the lock file: {e}")))?;
         let mut logged = false;
         loop {
             match file.try_lock() {
                 Ok(()) => return Ok(file),
                 Err(fs::TryLockError::WouldBlock) => {
                     if !logged {
-                        log::info!("Waiting for another engine process installing {name}");
+                        log::info!("Waiting for another engine process downloading {name}");
                         logged = true;
                     }
                     tokio::select! {
                         _ = cancel.cancelled() => {
-                            return Err(ToolError::cancelled(format!("Installing {name} was cancelled.")));
+                            return Err(ToolError::cancelled(format!("Downloading {name} was cancelled.")));
                         }
                         _ = tokio::time::sleep(Duration::from_millis(250)) => {}
                     }
                 }
                 Err(fs::TryLockError::Error(e)) => {
-                    return Err(install_error(name, format!("can't lock: {e}")));
+                    return Err(download_error(name, format!("can't lock: {e}")));
                 }
             }
         }
     }
 
     /// Downloads a package file to `part`, checking its size and checksum.
-    async fn download(
+    async fn download_file(
         &self,
         file: &PackageFile,
         part: &Path,
@@ -340,37 +347,37 @@ impl PackageManager {
         };
         let mut response = tokio::select! {
             _ = cancel.cancelled() => {
-                return Err(ToolError::cancelled(format!("Installing {name} was cancelled.")));
+                return Err(ToolError::cancelled(format!("Downloading {name} was cancelled.")));
             }
             r = request => r.map_err(|e| {
-                install_error(name, "the download failed").with_details(format!("{url}\n{e}"))
+                download_error(name, "the download failed").with_details(format!("{url}\n{e}"))
             })?,
         };
-        let mut out = fs::File::create(part).map_err(|e| install_error(name, e))?;
+        let mut out = fs::File::create(part).map_err(|e| download_error(name, e))?;
         let mut hasher = Sha256::new();
         let mut received: u64 = 0;
         loop {
             let chunk = tokio::select! {
                 _ = cancel.cancelled() => {
-                    return Err(ToolError::cancelled(format!("Installing {name} was cancelled.")));
+                    return Err(ToolError::cancelled(format!("Downloading {name} was cancelled.")));
                 }
                 c = response.chunk() => c.map_err(|e| {
-                    install_error(name, "the download was interrupted").with_details(format!("{url}\n{e}"))
+                    download_error(name, "the download was interrupted").with_details(format!("{url}\n{e}"))
                 })?,
             };
             let Some(chunk) = chunk else { break };
             received += chunk.len() as u64;
             if received > file.size {
-                return Err(install_error(name, "the download is larger than expected")
+                return Err(download_error(name, "the download is larger than expected")
                     .with_details(url.clone()));
             }
             hasher.update(&chunk);
-            out.write_all(&chunk).map_err(|e| install_error(name, e))?;
+            out.write_all(&chunk).map_err(|e| download_error(name, e))?;
             phases.percent(DOWNLOAD_SHARE * received as f64 / file.size as f64);
         }
-        out.flush().map_err(|e| install_error(name, e))?;
+        out.flush().map_err(|e| download_error(name, e))?;
         if received != file.size {
-            return Err(install_error(
+            return Err(download_error(
                 name,
                 format!("the download has {received} bytes, expected {}", file.size),
             )
@@ -379,7 +386,7 @@ impl PackageManager {
         let digest = hex::encode(hasher.finalize());
         if digest != file.sha256 {
             return Err(
-                install_error(name, "the downloaded file failed its checksum check").with_details(
+                download_error(name, "the downloaded file failed its checksum check").with_details(
                     format!(
                         "{url}\nexpected sha256 {}\ngot      sha256 {digest}",
                         file.sha256
@@ -390,31 +397,31 @@ impl PackageManager {
         Ok(())
     }
 
-    /// Checks that packages are installed, installing or repairing them when
-    /// auto-install is on. Each package to install is one progress phase:
-    /// the caller counts `needing_install` in its phases and passes them here.
+    /// Checks that packages are downloaded, downloading or repairing them when
+    /// auto-download is on. Each package to download is one progress phase:
+    /// the caller counts `needing_download` in its phases and passes them here.
     pub async fn ensure(
         &self,
         specs: &[PackageSpec],
-        auto_install: bool,
+        auto_download: bool,
         phases: &Phases,
         cancel: &CancellationToken,
     ) -> Result<(), ToolError> {
         if specs.is_empty() {
             return Ok(());
         }
-        if !auto_install {
-            return Err(self.not_installed_error(specs));
+        if !auto_download {
+            return Err(self.not_ready_error(specs));
         }
         for spec in specs {
-            phases.start(format!("Installing {}", spec.name));
-            self.install(spec, phases, cancel).await?;
+            phases.start(format!("Downloading {}", spec.name));
+            self.download(spec, phases, cancel).await?;
         }
         Ok(())
     }
 }
 
-/// Deletes leftovers of interrupted installs of this package: unpack
+/// Deletes leftovers of interrupted downloads of this package: unpack
 /// folders of processes that are gone. Never touches `keep`.
 fn remove_stale(pkg_dir: &Path, keep: &Path) {
     let Ok(entries) = fs::read_dir(pkg_dir) else {
@@ -424,7 +431,7 @@ fn remove_stale(pkg_dir: &Path, keep: &Path) {
         let path = entry.path();
         let is_tmp = entry.file_name().to_string_lossy().starts_with(".tmp-");
         if is_tmp && path != keep {
-            log::info!("Removing an interrupted install: {}", path.display());
+            log::info!("Removing an interrupted download: {}", path.display());
             let _ = fs::remove_dir_all(&path);
         }
     }

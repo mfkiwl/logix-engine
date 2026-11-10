@@ -157,7 +157,7 @@ pub async fn graph(
     req: GraphRequest,
     call: &Call,
 ) -> Result<GraphResult, ToolError> {
-    let needed = state.packages.needing_install(&[TOOLCHAIN])?;
+    let needed = state.packages.needing_download(&[TOOLCHAIN])?;
     let phases = Phases::new(call.progress.clone(), needed.len() + 2);
     let (bin, _) = toolchain(state, &needed, &phases, call).await?;
     graph_with(&bin, &req, call, &phases).await

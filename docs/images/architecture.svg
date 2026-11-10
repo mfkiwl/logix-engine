@@ -102,7 +102,7 @@
 
     <rect class="box edge" x="272" y="512" width="216" height="56" rx="8"/>
     <text x="380" y="536" text-anchor="middle" class="ink name">Package manager</text>
-    <text x="380" y="552" text-anchor="middle" class="quiet sub">installs toolchain packages</text>
+    <text x="380" y="552" text-anchor="middle" class="quiet sub">downloads toolchain packages</text>
 
     <rect class="box edge" x="504" y="512" width="216" height="56" rx="8"/>
     <text x="612" y="536" text-anchor="middle" class="ink name">Catalog</text>

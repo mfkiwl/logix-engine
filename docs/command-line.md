@@ -7,7 +7,7 @@ A host launches the engine as a child process on the same computer and talks MCP
 | Argument | Required | Description |
 | --- | --- | --- |
 | `--engine-folder <absolute path>` | Yes | The host's engine folder. It must satisfy the path keyword rules. Hosts don't share engine folders by default |
-| `--no-auto-install` | No | Turns off automatic package install and repair. A missing or broken package is then a setup error with `install_packages` |
+| `--no-auto-download` | No | Turns off automatic package download and repair. A missing or broken package is then a setup error with `download_packages` |
 | `--log-level <level>` | No | One of `error`, `warn`, `info` and `debug`. Defaults to `info` |
 | `--version` | No | Prints the engine version and exits, without starting MCP |
 | `--help` | No | Prints the arguments and exits, without starting MCP |

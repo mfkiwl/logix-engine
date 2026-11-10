@@ -209,7 +209,7 @@ On success, a tool returns its output object as structured content. On failure, 
 
 | Action code | Meaning |
 | --- | --- |
-| `install_packages` | Required packages are missing or broken and weren't installed automatically, because auto-install is off or the install failed |
+| `download_packages` | Required packages are missing or broken and weren't downloaded automatically, because auto-download is off or the download failed |
 | `connect_board` | No matching board is connected |
 | `fix_device_permissions` | A device was found but cannot be opened |
 | `install_drivers` | A driver required by the board is missing |
@@ -273,30 +273,30 @@ A host that wants progress adds an MCP progress token to its request. The engine
 
 Every operation that can take more than a second or two reports progress by phase:
 
-- **Phase messages.** Each phase sends a message when it starts, such as "Installing oss-cad-suite", "Synthesizing", "Placing and routing", "Packing bitstream", "Finding device", "Checking FPGA", "Writing flash" or "Verifying".
+- **Phase messages.** Each phase sends a message when it starts, such as "Downloading oss-cad-suite", "Synthesizing", "Placing and routing", "Packing bitstream", "Finding device", "Checking FPGA", "Writing flash" or "Verifying".
 - **Percentages.** Within a phase, the engine also reports a percentage wherever the underlying tool or download prints one, such as package downloads and openFPGALoader writing and verifying flash. Phases without one send only their start message, and the host shows a spinner.
-- **One increasing scale.** MCP requires the progress value to only increase within one operation. So when the operation starts, the engine decides its phases, including any package installs it needs. It sets total to 100 times the number of phases and reports progress as 100 times the phase index plus the phase's percentage. A host can show an overall bar from progress and total, and the current phase's percentage as progress modulo 100.
+- **One increasing scale.** MCP requires the progress value to only increase within one operation. So when the operation starts, the engine decides its phases, including any package downloads it needs. It sets total to 100 times the number of phases and reports progress as 100 times the phase index plus the phase's percentage. A host can show an overall bar from progress and total, and the current phase's percentage as progress modulo 100.
 - **Unparsed output.** When the engine can't read a tool's output, such as with a custom `programmer_command`, that phase sends only its start message.
 
 ### Packages
 
-Before running, each tool checks that the packages it needs from the manifest are installed and intact. It installs missing packages and repairs broken ones itself. A package is broken when its install record is missing or incomplete, or when one of its tools fails to start. Install progress is sent as the operation's progress notifications, and cancelling the operation cancels the install. Two Logix Engine instances never install the same package at the same time.
+Before running, each tool checks that the packages it needs from the manifest are downloaded and intact. It downloads missing packages and repairs broken ones itself. A package is broken when its download record is missing or incomplete, or when one of its tools fails to start. Download progress is sent as the operation's progress notifications, and cancelling the operation cancels the download. Two Logix Engine instances never download the same package at the same time.
 
-The `--no-auto-install` command-line argument, described in [Command line](command-line.md), turns this off for offline or managed setups. A missing or broken package is then a setup error with `install_packages`, and so is an install that fails, such as when there's no network. To install, the host calls the install_packages tool, which works whether automatic install is on or off.
+The `--no-auto-download` command-line argument, described in [Command line](command-line.md), turns this off for offline or managed setups. A missing or broken package is then a setup error with `download_packages`, and so is a download that fails, such as when there's no network. To download, the host calls the download_packages tool, which works whether automatic download is on or off.
 
-Install progress is one phase per package, such as "Installing oss-cad-suite". Its percentage covers the download (the first 80%) and then unpacking.
+Download progress is one phase per package, such as "Downloading oss-cad-suite". Its percentage covers the download (the first 80%) and then unpacking.
 
 **Engine folder layout.** Hosts don't need to know it, but it helps when troubleshooting:
 
 | Path in the engine folder | Contents |
 | --- | --- |
-| `packages/<name>/<version>/` | An installed package, such as `packages/oss-cad-suite/2026-10-22/`. Several versions can sit side by side. Its install record, `logix-install.json`, is written last |
-| `downloads/` | Partial downloads, deleted when an install ends |
-| `locks/` | One lock file per package, held while installing it |
+| `packages/<name>/<version>/` | A downloaded package, such as `packages/oss-cad-suite/2026-10-22/`. Several versions can sit side by side. Its download record, `logix-install.json`, is written last |
+| `downloads/` | Partial downloads, deleted when a download ends |
+| `locks/` | One lock file per package, held while downloading it |
 | `logs/` | Log files, described in [Command line](command-line.md) |
 | `tmp/` | Small files the engine generates for the tools, such as the Verilator config that turns off warnings in the FPGA models. Safe to delete |
 
-An interrupted install never leaves a package that looks installed, so the next call installs it again.
+An interrupted download never leaves a package that looks downloaded, so the next call downloads it again.
 
 ## lint tool
 
@@ -329,7 +329,7 @@ The Logix Engine adds the FPGA's primitive models, so designs that use primitive
 | `diagnostics` | list of diagnostics | The problems found, at file, line and column where known. A Verilator warning code, such as `WIDTHTRUNC`, ends the text in parentheses, since a `/* verilator lint_off WIDTHTRUNC */` comment names it. Problems in the primitive models keep their location in the text |
 | `commands` | list of commands | The programs this call ran, in order, so they can be run again without the Logix Engine. See Commands |
 
-**Errors:** setup errors with `install_packages`. Request errors, such as an unknown board, a missing file or an included file outside the source folder. Tool failures, when Verilator fails without reporting a problem. Engine errors and cancellation.
+**Errors:** setup errors with `download_packages`. Request errors, such as an unknown board, a missing file or an included file outside the source folder. Tool failures, when Verilator fails without reporting a problem. Engine errors and cancellation.
 
 **Includes.** The source file rules in Table 8 (build tool) apply. Verilator and Icarus Verilog don't look for an included file in the including file's folder as yosys does, so the engine passes the folder of every listed and included file as an include folder. An include is then found in the source folder first, then in those folders. Hosts don't deal with the toolchain's own files, such as the primitive models and black boxes for each FPGA family: the Logix Engine adds the right ones for the board's FPGA in lint, test, simulate and build, and doesn't expose toolchain files to hosts, except where a tool says so, such as `bin_folder` in get_engine_info for running Verible's language server. Source files and includes are only the user's own files.
 
@@ -408,7 +408,7 @@ Testbenches run in the source folder, so they read data files, such as with `$re
 | `ending` | enum | How the run ended: `finished` (the testbench ended itself, with `$finish` or `$fatal`), `first_failure`, `sim_time_limit` or `timeout` (the engine stopped it; its output and waveform end there), or `no_finish` (it ran out of things to simulate without calling `$finish`, which usually means it stopped early by mistake) |
 | `failure_count` | integer | How many failures the testbench reported. `diagnostics` lists the first 100, each with its time; a check that fails again at another time is another failure |
 
-**Errors:** design errors for compile errors and `$dumpfile`. Setup errors with `install_packages`. Request errors, such as an unknown board, a missing file or a build folder that breaks the keyword rules. Tool failures, engine errors and cancellation.
+**Errors:** design errors for compile errors and `$dumpfile`. Setup errors with `download_packages`. Request errors, such as an unknown board, a missing file or a build folder that breaks the keyword rules. Tool failures, engine errors and cancellation.
 
 **Build folder files.** For a testbench `rtl/uart_tb.v`, the build folder gets `rtl/uart_tb.out` (the compiled simulation) and `rtl/uart_tb.vcd` (the waveform): the testbench's path without its extension. Each run replaces them. Like a build, the first run writes the `.logix-build` marker, so `clean_build` can delete the folder.
 
@@ -496,7 +496,7 @@ This is the one case where the engine creates or deletes a file in the source fo
 | `viewer_opened` | boolean | True if GTKWave was started |
 | `commands` | list of commands | The programs this call ran, in order, so they can be run again without the engine. See Commands |
 
-**Errors:** design errors for compile errors, `$dumpfile` and a testbench without `$dumpvars`. Setup errors with `install_packages`, or when the layout file can't be written. Request errors, such as a missing file, a layout file that isn't `.gtkw` or whose folder doesn't exist, or a build folder that breaks the keyword rules. Tool failures, such as when GTKWave can't start, engine errors and cancellation.
+**Errors:** design errors for compile errors, `$dumpfile` and a testbench without `$dumpvars`. Setup errors with `download_packages`, or when the layout file can't be written. Request errors, such as a missing file, a layout file that isn't `.gtkw` or whose folder doesn't exist, or a build folder that breaks the keyword rules. Tool failures, such as when GTKWave can't start, engine errors and cancellation.
 
 **Example**
 
@@ -618,7 +618,7 @@ Each file is formatted on its own, in order, with the request's `verible_options
 | `diagnostics` | list of diagnostics | Why files failed, such as syntax errors at file, line and column |
 | `commands` | list of commands | The programs this call ran, one per file. See Commands |
 
-**Errors:** setup errors with `install_packages`, for the `verible` package. Request errors, such as a missing file, a file that isn't Verilog or SystemVerilog, a file outside the source folder or an option that isn't allowed. Tool failures, when Verible fails without reporting a problem, such as for an option it doesn't know. Engine errors and cancellation.
+**Errors:** setup errors with `download_packages`, for the `verible` package. Request errors, such as a missing file, a file that isn't Verilog or SystemVerilog, a file outside the source folder or an option that isn't allowed. Tool failures, when Verible fails without reporting a problem, such as for an option it doesn't know. Engine errors and cancellation.
 
 **Example**
 
@@ -675,7 +675,7 @@ The module is drawn as written, without synthesis, with `SYNTHESIZE` defined. FP
 | `diagnostics` | list of diagnostics | Yosys warnings while reading the design, at file and line where known. Often empty |
 | `commands` | list of commands | The programs this call ran: yosys, then dot. See Commands |
 
-**Errors:** design errors, with diagnostics, for errors in the design, such as a syntax error, or a `top_module` that isn't in the files. Setup errors with `install_packages`, for the toolchain package. Request errors, such as a missing file. Tool failures, when yosys or dot fails without reporting a problem. Engine errors and cancellation.
+**Errors:** design errors, with diagnostics, for errors in the design, such as a syntax error, or a `top_module` that isn't in the files. Setup errors with `download_packages`, for the toolchain package. Request errors, such as a missing file. Tool failures, when yosys or dot fails without reporting a problem. Engine errors and cancellation.
 
 **Example**
 
@@ -736,7 +736,7 @@ Xilinx builds use two packages, `oss-cad-suite` and `openxc7`. Two Xilinx builds
 | `warnings` | list of diagnostics | Warnings from the tools. See diagnostic fields in Table 4 |
 | `commands` | list of commands | The programs this call ran, in order, so they can be run again without the Logix Engine. See Commands |
 
-**Errors:** design errors, such as syntax errors or unknown pin names. Setup errors with `install_packages`. Request errors, such as an unknown board, a constraint file whose extension isn't the board's FPGA family's format, or a build folder that breaks the keyword rules. Tool failures, engine errors and cancellation. A clock that misses its intended frequency is not an error: the host compares the frequencies in `timing` with its own targets.
+**Errors:** design errors, such as syntax errors or unknown pin names. Setup errors with `download_packages`. Request errors, such as an unknown board, a constraint file whose extension isn't the board's FPGA family's format, or a build folder that breaks the keyword rules. Tool failures, engine errors and cancellation. A clock that misses its intended frequency is not an error: the host compares the frequencies in `timing` with its own targets.
 
 **Table 8.** build tool source file rules
 
@@ -1035,7 +1035,7 @@ Output:
 
 ## get_engine_info tool
 
-Returns the Logix Engine's version, platform and package status. A host calls it when it starts, to check that the engine is new enough and to show what is installed. It is fast and local: it never uses the network and doesn't verify checksums.
+Returns the Logix Engine's version, platform and package status. A host calls it when it starts, to check that the engine is new enough and to show what is downloaded. It is fast and local: it never uses the network and doesn't verify checksums.
 
 **Table 16.** get_engine_info tool inputs
 
@@ -1051,13 +1051,13 @@ Returns the Logix Engine's version, platform and package status. A host calls it
 | `protocol_versions` | list of text | The MCP protocol versions the engine accepts, such as 2026-07-28 and 2025-11-25 |
 | `platform` | text | The platform the engine runs on, such as `darwin-arm64` |
 | `engine_folder` | absolute path | The engine folder, set by the host with the `--engine-folder` command-line argument when it launches the engine |
-| `auto_install` | boolean | Whether automatic package install and repair is on. It is on by default, and the host turns it off with the `--no-auto-install` command-line argument when it launches the engine |
+| `auto_download` | boolean | Whether automatic package download and repair is on. It is on by default, and the host turns it off with the `--no-auto-download` command-line argument when it launches the engine |
 | `command_line` | list of text | The command-line arguments the engine was launched with, as given, for diagnostics |
 | `log_file` | absolute path | The log file this engine process writes, in the `logs` subfolder of the engine folder |
-| `packages` | list of packages | Every package in the engine's manifest. Each has a text `name`, a date tag `version`, a `status`: `installed`, `missing` or `broken`, and, when installed, `bin_folder`: the absolute path of the folder with its programs, for hosts that run one directly, such as Verible's language server `verible-verilog-ls` from the `verible` package |
+| `packages` | list of packages | Every package in the engine's manifest. Each has a text `name`, a date tag `version`, a `status`: `ready`, `missing` or `broken`, and, when ready, `bin_folder`: the absolute path of the folder with its programs, for hosts that run one directly, such as Verible's language server `verible-verilog-ls` from the `verible` package |
 | `boards_schema` | text | The address of the board schema this engine reads, Logix Catalog's JSON Schema of a board file, in the catalog and in custom boards folders, such as `https://www.openlogix.org/schemas/logix-board-v1.json` (see Board specification) |
 | `catalog` | object | The board catalog built into this engine: `version`, the date (yyyy-mm-dd) of its Logix Catalog commit, `commit`, that commit's short hash, and `local`, true only for a developer build from a local catalog clone |
-| `report` | multiline text | The facts above as lines for people, the engine's part of a frontend's system info (see Show system info under Recipes): the version, platform, engine folder, log file, automatic install, command line, each package with its version and status, the board catalog's version and the board schema. Show it as is; its wording can change in any version, so programs read the fields above |
+| `report` | multiline text | The facts above as lines for people, the engine's part of a frontend's system info (see Show system info under Recipes): the version, platform, engine folder, log file, automatic download, command line, each package with its version and status, the board catalog's version and the board schema. Show it as is; its wording can change in any version, so programs read the fields above |
 
 **Errors:** engine errors only.
 
@@ -1071,11 +1071,11 @@ Output:
   "protocol_versions": ["2026-07-28", "2025-11-25"],
   "platform": "darwin-arm64",
   "engine_folder": "/Users/user/.myhost/engine",
-  "auto_install": true,
+  "auto_download": true,
   "command_line": ["--engine-folder", "/Users/user/.myhost/engine"],
   "log_file": "/Users/user/.myhost/engine/logs/20261028-4123.log",
   "packages": [
-    { "name": "oss-cad-suite", "version": "2026-11-20", "status": "installed", "bin_folder": "/Users/user/.myhost/engine/packages/oss-cad-suite/2026-11-20/bin" },
+    { "name": "oss-cad-suite", "version": "2026-11-20", "status": "ready", "bin_folder": "/Users/user/.myhost/engine/packages/oss-cad-suite/2026-11-20/bin" },
     { "name": "examples", "version": "2026-10-15", "status": "missing" }
   ],
   "boards_schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
@@ -1084,25 +1084,25 @@ Output:
 }
 ```
 
-## install_packages tool
+## download_packages tool
 
-Installs or repairs the Logix Engine's packages. Packages that are already installed and intact are left alone, unless `force` is set. Other tools install the packages they need on their own, so a host calls this only to install ahead of time, such as before going offline, or to act on the `install_packages` action, such as when automatic install is off. It installs whether or not automatic install is on, since the host asked. It reports progress, one phase per package, and can be cancelled.
+Downloads or repairs the Logix Engine's packages. Packages that are already ready are left alone, unless `force` is set. Other tools download the packages they need on their own, so a host calls this only to download ahead of time, such as before going offline, or to act on the `download_packages` action, such as when automatic download is off. It downloads whether or not automatic download is on, since the host asked. It reports progress, one phase per package, and can be cancelled.
 
-**Table 18.** install_packages tool inputs
+**Table 18.** download_packages tool inputs
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `packages` | list of text | No | Names of the packages to install or repair, as `get_engine_info` lists them. Omitted means every package in the manifest |
-| `force` | boolean | No | Download and install the packages again even if they are installed, replacing the installed copies. It fixes files that were damaged or deleted after the install, which the status check doesn't see. The installed copy stays until the new one is complete. Defaults to false |
+| `packages` | list of text | No | Names of the packages to download or repair, as `get_engine_info` lists them. Omitted means every package in the manifest |
+| `force` | boolean | No | Download the packages again even if they are ready, replacing the current copies. It fixes files that were damaged or deleted after the download, which the status check doesn't see. The current copy stays until the new one is complete. Defaults to false |
 
-**Table 19.** install_packages tool outputs
+**Table 19.** download_packages tool outputs
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `installed` | list of text | Names of the packages this call installed, repaired or reinstalled. Empty when they were all installed already and `force` was off |
+| `downloaded` | list of text | Names of the packages this call downloaded, repaired or downloaded again. Empty when they were all downloaded already and `force` was off |
 | `packages` | list of packages | Every package in the manifest with its status afterwards, as in `get_engine_info` |
 
-**Errors:** request errors for unknown package names. Setup errors with `install_packages` when a download or install fails. Engine errors and cancellation.
+**Errors:** request errors for unknown package names. Setup errors with `download_packages` when a download fails. Engine errors and cancellation.
 
 **Example**
 
@@ -1116,9 +1116,9 @@ Output:
 
 ```json
 {
-  "installed": ["oss-cad-suite"],
+  "downloaded": ["oss-cad-suite"],
   "packages": [
-    { "name": "oss-cad-suite", "version": "2026-10-22", "status": "installed" }
+    { "name": "oss-cad-suite", "version": "2026-10-22", "status": "ready" }
   ]
 }
 ```
@@ -1209,7 +1209,7 @@ Logic that every frontend would need and that doesn't depend on a frontend's own
 
 1. Launch the Logix Engine with `--engine-folder`, do the MCP handshake, then call `get_engine_info`.
 2. Check that `engine_version` is one your frontend supports, by its own rule, such as a version range or a list of tested releases. If it isn't, call no other tools: tell the user which Logix Engine versions the frontend needs, then stop or fall back as the frontend decides.
-3. Show package status from `packages`. Nothing has to be installed first: tools install what they need on first use. To install ahead of time, such as before going offline, call `install_packages` and show its progress.
+3. Show package status from `packages`. Nothing has to be downloaded first: tools download what they need on first use. To download ahead of time, such as before going offline, call `download_packages` and show its progress.
 
 ### Show whether the board is connected
 
@@ -1238,7 +1238,7 @@ Logic that every frontend would need and that doesn't depend on a frontend's own
 - Every tool reports problems as diagnostics with `file` relative to the source folder, `line`, `column` and `severity`, so one routine can underline them for lint, test, build and format alike.
 - `lint` is fast and writes nothing, so it suits running on save. Build warnings come in `warnings`.
 - Summarize a build from `resources_summary`, such as "27 of 7680 logic cells (0.4%)" for its first, main entry, and its clocks from `clocks_summary`, such as "Maximum clock speed: 87.4 MHz (CLK)"; `resources_usage` and `timing` have the toolchain's own names for anyone who needs them.
-- Turn an error's `action` code into a button: `install_packages` calls the install_packages tool, and `connect_board`, `fix_device_permissions`, `install_drivers` and `disconnect_devices` show short instructions.
+- Turn an error's `action` code into a button: `download_packages` calls the download_packages tool, and `connect_board`, `fix_device_permissions`, `install_drivers` and `disconnect_devices` show short instructions.
 
 ### Run and debug testbenches
 

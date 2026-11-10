@@ -35,11 +35,11 @@ pub struct EngineState {
     /// The engine folder after resolving symbolic links. All disk changes
     /// use this path.
     pub engine_folder_resolved: PathBuf,
-    pub auto_install: bool,
+    pub auto_download: bool,
     /// The command-line arguments, as given, without the program name.
     pub command_line: Vec<String>,
     pub log_file: PathBuf,
-    /// Installs and finds the toolchain packages in the engine folder.
+    /// Downloads and finds the toolchain packages in the engine folder.
     pub packages: crate::packages::PackageManager,
 }
 

@@ -17,7 +17,7 @@ use serde_json::{Value, json};
 use tokio::sync::OnceCell;
 use tokio_util::sync::CancellationToken;
 
-/// An engine state with the toolchain installed.
+/// An engine state with the toolchain downloaded.
 async fn engine() -> EngineState {
     static READY: OnceCell<()> = OnceCell::const_new();
     let folder = Path::new(env!("CARGO_TARGET_TMPDIR")).join("test-engine");
@@ -31,18 +31,18 @@ async fn engine() -> EngineState {
     );
     READY
         .get_or_init(|| async {
-            let missing = packages.needing_install(&["oss-cad-suite"]).unwrap();
+            let missing = packages.needing_download(&["oss-cad-suite"]).unwrap();
             let phases = Phases::new(Arc::new(NoProgress), missing.len());
             packages
                 .ensure(&missing, true, &phases, &CancellationToken::new())
                 .await
-                .expect("install oss-cad-suite for the graph tests");
+                .expect("download oss-cad-suite for the graph tests");
         })
         .await;
     EngineState {
         engine_folder: folder.display().to_string(),
         engine_folder_resolved: folder.clone(),
-        auto_install: true,
+        auto_download: true,
         command_line: vec![],
         log_file: folder.join("logs/test.log"),
         packages,

@@ -1,4 +1,4 @@
-//! The install_packages tool (docs/tool-api.md, Tables 18 and 19).
+//! The download_packages tool (docs/tool-api.md, Tables 18 and 19).
 
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -9,56 +9,56 @@ use crate::errors::ToolError;
 use crate::progress::Phases;
 use crate::state::EngineState;
 
-pub struct InstallPackages;
+pub struct DownloadPackages;
 
-impl EngineTool for InstallPackages {
-    const NAME: &'static str = "install_packages";
-    const DESCRIPTION: &'static str = "Installs or repairs the engine's toolchain packages, \
-        downloading them from the internet. Packages that are already installed and intact are \
-        left alone, unless force is set to download and install them again. Other tools install the packages they need on their own, so call this only \
-        to install ahead of time, such as before going offline, or when a tool returns a setup \
-        error with the install_packages action (for example when the engine was launched with \
-        automatic install turned off). A download can take a few minutes; the tool reports \
+impl EngineTool for DownloadPackages {
+    const NAME: &'static str = "download_packages";
+    const DESCRIPTION: &'static str = "Downloads or repairs the engine's toolchain packages from \
+        the internet, into its engine folder. Packages that are already ready are left alone, \
+        unless force is set to download them again. Other tools download the packages they need on their own, so call this only \
+        to download ahead of time, such as before going offline, or when a tool returns a setup \
+        error with the download_packages action (for example when the engine was launched with \
+        automatic download turned off). A download can take a few minutes; the tool reports \
         progress and can be cancelled.";
     const READ_ONLY: bool = false;
     const OPEN_WORLD: bool = true;
-    type Input = InstallPackagesInput;
-    type Output = InstallPackagesOutput;
+    type Input = DownloadPackagesInput;
+    type Output = DownloadPackagesOutput;
 }
 
-/// Which packages to install or repair.
+/// Which packages to download or repair.
 #[derive(Debug, Default, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
-pub struct InstallPackagesInput {
-    /// Names of the packages to install or repair, as get_engine_info lists
+pub struct DownloadPackagesInput {
+    /// Names of the packages to download or repair, as get_engine_info lists
     /// them, such as oss-cad-suite. Omitted means every package in the
     /// engine's manifest.
     #[serde(default)]
     pub packages: Option<Vec<String>>,
-    /// Download and install the packages again even if they are installed,
-    /// replacing the installed copies. Use it when a package's tools fail in
+    /// Download the packages again even if they are ready, replacing the
+    /// current copies. Use it when a package's tools fail in
     /// ways that suggest damaged files. Defaults to false. Don't use it while
     /// other operations are running.
     #[serde(default)]
     pub force: bool,
 }
 
-/// What was installed, and every package's status afterwards.
+/// What was downloaded, and every package's status afterwards.
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
-pub struct InstallPackagesOutput {
-    /// Names of the packages this call installed, repaired or reinstalled.
-    /// Empty when they were all installed already and force was off.
-    pub installed: Vec<String>,
+pub struct DownloadPackagesOutput {
+    /// Names of the packages this call downloaded, repaired or downloaded again.
+    /// Empty when they were all downloaded already and force was off.
+    pub downloaded: Vec<String>,
     /// Every package in the engine's manifest, with its status.
     pub packages: Vec<PackageInfo>,
 }
 
 pub async fn run(
     state: &EngineState,
-    input: InstallPackagesInput,
+    input: DownloadPackagesInput,
     call: &Call,
-) -> Result<InstallPackagesOutput, ToolError> {
+) -> Result<DownloadPackagesOutput, ToolError> {
     let all: Vec<String> = state
         .packages
         .manifest()
@@ -90,16 +90,16 @@ pub async fn run(
             .filter_map(|n| state.packages.manifest().get(n).cloned())
             .collect()
     } else {
-        state.packages.needing_install(&names)?
+        state.packages.needing_download(&names)?
     };
     let phases = Phases::new(call.progress.clone(), needed.len());
-    // The host asked, so this installs even when automatic install is off.
+    // The host asked, so this downloads even when automatic download is off.
     if input.force {
         for spec in &needed {
-            phases.start(format!("Reinstalling {}", spec.name));
+            phases.start(format!("Downloading again {}", spec.name));
             state
                 .packages
-                .reinstall(spec, &phases, &call.cancel)
+                .redownload(spec, &phases, &call.cancel)
                 .await?;
         }
     } else {
@@ -108,8 +108,8 @@ pub async fn run(
             .ensure(&needed, true, &phases, &call.cancel)
             .await?;
     }
-    Ok(InstallPackagesOutput {
-        installed: needed.into_iter().map(|s| s.name).collect(),
+    Ok(DownloadPackagesOutput {
+        downloaded: needed.into_iter().map(|s| s.name).collect(),
         packages: package_list(state),
     })
 }

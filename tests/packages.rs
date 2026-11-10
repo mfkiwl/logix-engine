@@ -1,6 +1,6 @@
-//! Package install and repair, against a local HTTP server serving small
+//! Package download and repair, against a local HTTP server serving small
 //! test packages. The real oss-cad-suite download is in the ignored test
-//! `real_oss_cad_suite_install` (run: cargo test --test packages -- --ignored).
+//! `real_oss_cad_suite_download` (run: cargo test --test packages -- --ignored).
 
 use std::collections::HashMap;
 use std::io::{BufRead, BufReader, Write};
@@ -16,7 +16,7 @@ use logix_engine::packages::{PackageManager, RECORD_FILE};
 use logix_engine::progress::{NoProgress, Phases, ProgressSink};
 use logix_engine::state::EngineState;
 use logix_engine::tools::get_engine_info::{PackageStatus, package_info};
-use logix_engine::tools::{Call, install_packages};
+use logix_engine::tools::{Call, download_packages};
 use sha2::{Digest, Sha256};
 use tokio_util::sync::CancellationToken;
 
@@ -180,7 +180,7 @@ fn setup(data: Vec<u8>, sha: Option<&str>, stall_after: Option<usize>) -> Setup 
 
 fn phases() -> Phases {
     let p = Phases::new(Arc::new(NoProgress), 1);
-    p.start("Installing pkg");
+    p.start("Downloading pkg");
     p
 }
 
@@ -199,25 +199,25 @@ fn entries(dir: &Path) -> Vec<String> {
 // ----- Tests.
 
 #[tokio::test]
-async fn installs_a_missing_package() {
+async fn downloads_a_missing_package() {
     let s = setup(good_package(), None, None);
     let spec = s.pm.manifest().get("pkg").unwrap().clone();
     assert_eq!(s.pm.status(&spec), PackageStatus::Missing);
     assert_eq!(package_info(&s.pm, &spec).bin_folder, None);
-    assert_eq!(s.pm.needing_install(&["pkg"]).unwrap().len(), 1);
+    assert_eq!(s.pm.needing_download(&["pkg"]).unwrap().len(), 1);
 
-    s.pm.install(&spec, &phases(), &CancellationToken::new())
+    s.pm.download(&spec, &phases(), &CancellationToken::new())
         .await
         .unwrap();
 
-    assert_eq!(s.pm.status(&spec), PackageStatus::Installed);
+    assert_eq!(s.pm.status(&spec), PackageStatus::Ready);
     // get_engine_info reports where its programs are.
     let info = package_info(&s.pm, &spec);
     assert_eq!(
         info.bin_folder.as_deref(),
         Some(s.pm.package_dir(&spec).join("bin").to_str().unwrap())
     );
-    assert!(s.pm.needing_install(&["pkg"]).unwrap().is_empty());
+    assert!(s.pm.needing_download(&["pkg"]).unwrap().is_empty());
     let dir = s.pm.package_dir(&spec);
     assert_eq!(dir, s.engine.join("packages/pkg/2026-01-02"));
     assert_eq!(
@@ -254,7 +254,7 @@ async fn reports_increasing_progress() {
     let s = setup(good_package(), None, None);
     let rec = Arc::new(Rec::default());
     let phases = Phases::new(rec.clone(), 1);
-    let spec = s.pm.needing_install(&["pkg"]).unwrap();
+    let spec = s.pm.needing_download(&["pkg"]).unwrap();
     s.pm.ensure(&spec, true, &phases, &CancellationToken::new())
         .await
         .unwrap();
@@ -265,16 +265,16 @@ async fn reports_increasing_progress() {
 }
 
 #[tokio::test]
-async fn a_checksum_mismatch_is_a_setup_error_and_installs_nothing() {
+async fn a_checksum_mismatch_is_a_setup_error_and_downloads_nothing() {
     let wrong = "0".repeat(64);
     let s = setup(good_package(), Some(&wrong), None);
     let spec = s.pm.manifest().get("pkg").unwrap().clone();
     let err =
-        s.pm.install(&spec, &phases(), &CancellationToken::new())
+        s.pm.download(&spec, &phases(), &CancellationToken::new())
             .await
             .unwrap_err();
     assert_eq!(err.category, Category::Setup);
-    assert_eq!(err.action.unwrap().code, ActionCode::InstallPackages);
+    assert_eq!(err.action.unwrap().code, ActionCode::DownloadPackages);
     assert!(err.message.contains("checksum"), "{}", err.message);
     assert_eq!(s.pm.status(&spec), PackageStatus::Missing);
     assert!(entries(&s.engine.join("downloads")).is_empty());
@@ -290,10 +290,10 @@ async fn a_broken_package_is_repaired() {
     std::fs::write(dir.join("bin/leftover"), "x").unwrap();
     assert_eq!(s.pm.status(&spec), PackageStatus::Broken);
 
-    s.pm.install(&spec, &phases(), &CancellationToken::new())
+    s.pm.download(&spec, &phases(), &CancellationToken::new())
         .await
         .unwrap();
-    assert_eq!(s.pm.status(&spec), PackageStatus::Installed);
+    assert_eq!(s.pm.status(&spec), PackageStatus::Ready);
     assert!(!dir.join("bin/leftover").exists());
     assert!(dir.join("bin/tool").exists());
 }
@@ -302,7 +302,7 @@ async fn a_broken_package_is_repaired() {
 async fn a_record_from_another_release_is_broken() {
     let s = setup(good_package(), None, None);
     let spec = s.pm.manifest().get("pkg").unwrap().clone();
-    s.pm.install(&spec, &phases(), &CancellationToken::new())
+    s.pm.download(&spec, &phases(), &CancellationToken::new())
         .await
         .unwrap();
     let record = s.pm.package_dir(&spec).join(RECORD_FILE);
@@ -315,9 +315,9 @@ async fn a_record_from_another_release_is_broken() {
 }
 
 #[tokio::test]
-async fn auto_install_off_is_a_setup_error_listing_the_packages() {
+async fn auto_download_off_is_a_setup_error_listing_the_packages() {
     let s = setup(good_package(), None, None);
-    let missing = s.pm.needing_install(&["pkg"]).unwrap();
+    let missing = s.pm.needing_download(&["pkg"]).unwrap();
     let err =
         s.pm.ensure(
             &missing,
@@ -328,7 +328,7 @@ async fn auto_install_off_is_a_setup_error_listing_the_packages() {
         .await
         .unwrap_err();
     assert_eq!(err.category, Category::Setup);
-    assert_eq!(err.action.unwrap().code, ActionCode::InstallPackages);
+    assert_eq!(err.action.unwrap().code, ActionCode::DownloadPackages);
     assert!(
         err.message.contains("pkg 2026-01-02 (missing)"),
         "{}",
@@ -355,7 +355,7 @@ async fn a_failed_download_is_a_setup_error() {
     let pm = PackageManager::new(&s.engine, Arc::new(manifest), PLATFORM, &s.server.base);
     let spec = pm.manifest().get("pkg").unwrap().clone();
     let err = pm
-        .install(&spec, &phases(), &CancellationToken::new())
+        .download(&spec, &phases(), &CancellationToken::new())
         .await
         .unwrap_err();
     assert_eq!(err.category, Category::Setup);
@@ -369,15 +369,15 @@ async fn a_failed_download_is_a_setup_error() {
         "http://127.0.0.1:9",
     );
     let err = pm
-        .install(&spec, &phases(), &CancellationToken::new())
+        .download(&spec, &phases(), &CancellationToken::new())
         .await
         .unwrap_err();
     assert_eq!(err.category, Category::Setup);
-    assert_eq!(err.action.unwrap().code, ActionCode::InstallPackages);
+    assert_eq!(err.action.unwrap().code, ActionCode::DownloadPackages);
 }
 
 #[tokio::test]
-async fn cancelling_a_download_installs_nothing() {
+async fn cancelling_a_download_downloads_nothing() {
     let data = good_package();
     let half = data.len() / 2;
     let s = setup(data, None, Some(half));
@@ -388,25 +388,25 @@ async fn cancelling_a_download_installs_nothing() {
         tokio::time::sleep(Duration::from_millis(300)).await;
         c.cancel();
     });
-    let err = s.pm.install(&spec, &phases(), &cancel).await.unwrap_err();
+    let err = s.pm.download(&spec, &phases(), &cancel).await.unwrap_err();
     assert_eq!(err.category, Category::Cancelled);
     assert_eq!(s.pm.status(&spec), PackageStatus::Missing);
     assert!(entries(&s.engine.join("downloads")).is_empty());
 }
 
 #[tokio::test]
-async fn concurrent_installs_download_once() {
+async fn concurrent_downloads_download_once() {
     let s = setup(good_package(), None, None);
     let spec = s.pm.manifest().get("pkg").unwrap().clone();
     let (a, b) = (s.pm.clone(), s.pm.clone());
     let (sa, sb) = (spec.clone(), spec.clone());
     let ta =
-        tokio::spawn(async move { a.install(&sa, &phases(), &CancellationToken::new()).await });
+        tokio::spawn(async move { a.download(&sa, &phases(), &CancellationToken::new()).await });
     let tb =
-        tokio::spawn(async move { b.install(&sb, &phases(), &CancellationToken::new()).await });
+        tokio::spawn(async move { b.download(&sb, &phases(), &CancellationToken::new()).await });
     ta.await.unwrap().unwrap();
     tb.await.unwrap().unwrap();
-    assert_eq!(s.pm.status(&spec), PackageStatus::Installed);
+    assert_eq!(s.pm.status(&spec), PackageStatus::Ready);
     assert_eq!(s.server.requests.load(Ordering::SeqCst), 1);
 }
 
@@ -433,7 +433,7 @@ async fn entries_outside_the_package_folder_are_refused() {
         let s = setup(data, None, None);
         let spec = s.pm.manifest().get("pkg").unwrap().clone();
         let err =
-            s.pm.install(&spec, &phases(), &CancellationToken::new())
+            s.pm.download(&spec, &phases(), &CancellationToken::new())
                 .await
                 .unwrap_err();
         assert_eq!(err.category, Category::Setup, "{what}");
@@ -445,13 +445,13 @@ async fn entries_outside_the_package_folder_are_refused() {
     }
 }
 
-// ----- The install_packages tool.
+// ----- The download_packages tool.
 
-fn state_for(s: &Setup, auto_install: bool) -> EngineState {
+fn state_for(s: &Setup, auto_download: bool) -> EngineState {
     EngineState {
         engine_folder: s.engine.display().to_string(),
         engine_folder_resolved: s.engine.clone(),
-        auto_install,
+        auto_download,
         command_line: vec![],
         log_file: s.engine.join("logs/test.log"),
         packages: s.pm.clone(),
@@ -467,78 +467,78 @@ impl ProgressSink for Messages {
 }
 
 #[tokio::test]
-async fn install_packages_tool_installs_once_even_with_auto_install_off() {
+async fn download_packages_tool_downloads_once_even_with_auto_download_off() {
     let s = setup(good_package(), None, None);
     let state = state_for(&s, false);
     let rec = Arc::new(Messages::default());
     let call = Call::new(rec.clone(), CancellationToken::new());
 
-    let out = install_packages::run(&state, Default::default(), &call)
+    let out = download_packages::run(&state, Default::default(), &call)
         .await
         .unwrap();
-    assert_eq!(out.installed, vec!["pkg"]);
+    assert_eq!(out.downloaded, vec!["pkg"]);
     assert_eq!(out.packages.len(), 1);
-    assert_eq!(out.packages[0].status, PackageStatus::Installed);
+    assert_eq!(out.packages[0].status, PackageStatus::Ready);
     let reports = rec.0.lock().unwrap().clone();
-    assert_eq!(reports[0], (0.0, 100.0, Some("Installing pkg".into())));
+    assert_eq!(reports[0], (0.0, 100.0, Some("Downloading pkg".into())));
 
     // Again: nothing to do, no download, no progress.
     let rec2 = Arc::new(Messages::default());
     let call = Call::new(rec2.clone(), CancellationToken::new());
-    let input: install_packages::InstallPackagesInput =
+    let input: download_packages::DownloadPackagesInput =
         serde_json::from_value(serde_json::json!({"packages": ["pkg", "pkg"]})).unwrap();
-    let out = install_packages::run(&state, input, &call).await.unwrap();
-    assert!(out.installed.is_empty());
+    let out = download_packages::run(&state, input, &call).await.unwrap();
+    assert!(out.downloaded.is_empty());
     assert!(rec2.0.lock().unwrap().is_empty());
     assert_eq!(s.server.requests.load(Ordering::SeqCst), 1);
 }
 
 #[tokio::test]
-async fn force_reinstalls_and_restores_damaged_files() {
+async fn force_downloads_again_and_restores_damaged_files() {
     let s = setup(good_package(), None, None);
     let state = state_for(&s, true);
     let call = Call::new(Arc::new(NoProgress), CancellationToken::new());
-    install_packages::run(&state, Default::default(), &call)
+    download_packages::run(&state, Default::default(), &call)
         .await
         .unwrap();
 
-    // A tool deleted after the install: the record still says installed,
-    // so a normal install does nothing.
+    // A tool deleted after the download: the record still says downloaded,
+    // so a normal download does nothing.
     let spec = s.pm.manifest().get("pkg").unwrap().clone();
     let tool = s.pm.package_dir(&spec).join("bin/tool");
     std::fs::remove_file(&tool).unwrap();
-    assert_eq!(s.pm.status(&spec), PackageStatus::Installed);
-    let out = install_packages::run(&state, Default::default(), &call)
+    assert_eq!(s.pm.status(&spec), PackageStatus::Ready);
+    let out = download_packages::run(&state, Default::default(), &call)
         .await
         .unwrap();
-    assert!(out.installed.is_empty());
+    assert!(out.downloaded.is_empty());
     assert!(!tool.exists());
 
-    // Force downloads and installs it again.
+    // Force downloads it again.
     let rec = Arc::new(Messages::default());
     let call = Call::new(rec.clone(), CancellationToken::new());
-    let input: install_packages::InstallPackagesInput =
+    let input: download_packages::DownloadPackagesInput =
         serde_json::from_value(serde_json::json!({"force": true})).unwrap();
-    let out = install_packages::run(&state, input, &call).await.unwrap();
-    assert_eq!(out.installed, vec!["pkg"]);
+    let out = download_packages::run(&state, input, &call).await.unwrap();
+    assert_eq!(out.downloaded, vec!["pkg"]);
     assert!(tool.exists());
-    assert_eq!(s.pm.status(&spec), PackageStatus::Installed);
+    assert_eq!(s.pm.status(&spec), PackageStatus::Ready);
     assert_eq!(s.server.requests.load(Ordering::SeqCst), 2);
     assert_eq!(
         rec.0.lock().unwrap()[0].2.as_deref(),
-        Some("Reinstalling pkg")
+        Some("Downloading again pkg")
     );
     assert_eq!(entries(&s.engine.join("packages/pkg")), vec!["2026-01-02"]);
 }
 
 #[tokio::test]
-async fn a_failed_reinstall_keeps_the_installed_copy() {
+async fn a_failed_redownload_keeps_the_current_copy() {
     let s = setup(good_package(), None, None);
     let spec = s.pm.manifest().get("pkg").unwrap().clone();
-    s.pm.install(&spec, &phases(), &CancellationToken::new())
+    s.pm.download(&spec, &phases(), &CancellationToken::new())
         .await
         .unwrap();
-    // The server now has no file: the reinstall fails.
+    // The server now has no file: the second download fails.
     let pm = PackageManager::new(
         &s.engine,
         Arc::new(s.pm.manifest().clone()),
@@ -546,22 +546,22 @@ async fn a_failed_reinstall_keeps_the_installed_copy() {
         "http://127.0.0.1:9",
     );
     let err = pm
-        .reinstall(&spec, &phases(), &CancellationToken::new())
+        .redownload(&spec, &phases(), &CancellationToken::new())
         .await
         .unwrap_err();
     assert_eq!(err.category, Category::Setup);
-    assert_eq!(pm.status(&spec), PackageStatus::Installed);
+    assert_eq!(pm.status(&spec), PackageStatus::Ready);
     assert!(pm.package_dir(&spec).join("bin/tool").exists());
 }
 
 #[tokio::test]
-async fn install_packages_tool_refuses_unknown_packages() {
+async fn download_packages_tool_refuses_unknown_packages() {
     let s = setup(good_package(), None, None);
     let state = state_for(&s, true);
     let call = Call::new(Arc::new(NoProgress), CancellationToken::new());
-    let input: install_packages::InstallPackagesInput =
+    let input: download_packages::DownloadPackagesInput =
         serde_json::from_value(serde_json::json!({"packages": ["nope"]})).unwrap();
-    let err = install_packages::run(&state, input, &call)
+    let err = download_packages::run(&state, input, &call)
         .await
         .unwrap_err();
     assert_eq!(err.category, Category::Request);
@@ -573,11 +573,11 @@ async fn install_packages_tool_refuses_unknown_packages() {
     assert_eq!(s.server.requests.load(Ordering::SeqCst), 0);
 }
 
-/// Downloads and installs the real oss-cad-suite (about 526 MB) into a
+/// Downloads the real oss-cad-suite (about 526 MB) into a
 /// temporary engine folder. Run: cargo test --test packages -- --ignored
 #[tokio::test]
 #[ignore]
-async fn real_oss_cad_suite_install() {
+async fn real_oss_cad_suite_download() {
     let tmp = tempfile::tempdir().unwrap();
     let engine = tmp.path().canonicalize().unwrap().join("engine");
     std::fs::create_dir(&engine).unwrap();
@@ -587,13 +587,13 @@ async fn real_oss_cad_suite_install() {
         "darwin-arm64",
         manifest::GITHUB,
     );
-    let missing = pm.needing_install(&["oss-cad-suite"]).unwrap();
+    let missing = pm.needing_download(&["oss-cad-suite"]).unwrap();
     let phases = Phases::new(Arc::new(NoProgress), missing.len());
     pm.ensure(&missing, true, &phases, &CancellationToken::new())
         .await
         .unwrap();
     let spec = manifest::builtin().get("oss-cad-suite").unwrap();
-    assert_eq!(pm.status(spec), PackageStatus::Installed);
+    assert_eq!(pm.status(spec), PackageStatus::Ready);
     let bin = pm.package_dir(spec).join("bin");
     for tool in ["yosys", "nextpnr-ice40", "icepack", "openFPGALoader"] {
         assert!(bin.join(tool).exists(), "{tool}");
