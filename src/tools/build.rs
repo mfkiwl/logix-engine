@@ -129,10 +129,10 @@ pub struct BuildOutput {
     pub clocks_summary: Vec<crate::build::summary::ClockSummary>,
     /// The report for people, a line each: the main resource always, the
     /// others when used, then each clock, such as "The design uses 27 of
-    /// 7680 logic cells (0.4%)." and "Maximum clock speed: 194.4 MHz
+    /// 7680 logic cells (1%)." and "Maximum clock speed: 194.4 MHz
     /// (sys_clk).". Show it as is; its wording can change in any version.
     pub report: String,
-    /// The report in one line, for a status bar, such as "Uses 0.4% of
+    /// The report in one line, for a status bar, such as "Uses 1% of
     /// logic cells, max clock 194.4 MHz." Empty when there's nothing to
     /// report.
     pub report_summary: String,

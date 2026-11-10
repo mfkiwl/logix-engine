@@ -729,11 +729,11 @@ Xilinx builds use two packages, `oss-cad-suite` and `openxc7`. Two Xilinx builds
 | `bitstream` | relative path | Path of the bitstream, relative to the build folder |
 | `board_variant` | selector | The variant the build is for, in full: the one `board_variant` picked. `program_board` programs it by default |
 | `up_to_date` | boolean | True if nothing had to be rebuilt |
-| `resources` | list of objects | Every resource the toolchain reports, sorted by name ignoring case, each with `name` (the toolchain's own, as nextpnr reports it, such as `ICESTORM_LC` or `SLICE_LUTX`: what people search for and quote), `description` (what it is in a few plain words, such as "Logic cell: a 4-input LUT, a flip-flop and carry logic"; left out for a name the engine doesn't describe yet), `used` and `available` (integers, as nextpnr reports them) and `percent` (the share used, rounded to 0.1; `null` when it can't be computed or isn't valid: nothing available, or more used than available). Many are unused, on Xilinx FPGAs most: show the used ones first |
-| `resources_summary` | list of objects | The main resources in plain words, so frontends don't need each family's resource names: the family's main capacity measure first (`logic_cells` for iCE40, `luts` elsewhere), then `flip_flops`, `ram_blocks`, `multipliers`, `plls` and `io_pins` where the FPGA has them, each with `kind`, `label` (plain words, plural, such as "logic cells"), `used`, `available` and `percent` (as in `resources`; `null` also when any of its resources' numbers isn't valid). Xilinx `ram_blocks` counts 36 Kbit blocks, two 18 Kbit RAMs or FIFOs as one. More kinds may be added |
+| `resources` | list of objects | Every resource the toolchain reports, sorted by name ignoring case, each with `name` (the toolchain's own, as nextpnr reports it, such as `ICESTORM_LC` or `SLICE_LUTX`: what people search for and quote), `description` (what it is in a few plain words, such as "Logic cell: a 4-input LUT, a flip-flop and carry logic"; left out for a name the engine doesn't describe yet), `used` and `available` (integers, as nextpnr reports them) `percent` (the share used, rounded to 0.1; `null` when it can't be computed or isn't valid: nothing available, or more used than available) and `display_percent` (the share for showing to people, in whole percent: "0%" when none is used, otherwise rounded up, so something used is never "0%", and "100%" only when all are used, "99%" at most before that; `null` when `percent` is). Many are unused, on Xilinx FPGAs most: show the used ones first |
+| `resources_summary` | list of objects | The main resources in plain words, so frontends don't need each family's resource names: the family's main capacity measure first (`logic_cells` for iCE40, `luts` elsewhere), then `flip_flops`, `ram_blocks`, `multipliers`, `plls` and `io_pins` where the FPGA has them, each with `kind`, `label` (plain words, plural, such as "logic cells"), `used`, `available`, `percent` and `display_percent` (as in `resources`; `null` also when any of its resources' numbers isn't valid). Xilinx `ram_blocks` counts 36 Kbit blocks, two 18 Kbit RAMs or FIFOs as one. More kinds may be added |
 | `clocks_summary` | list of objects | The design's clocks, by clock net: each with `name` (for showing to people: usually the design's clock signal, such as `CLK` for `CLK$SB_IO_IN_$glb_clk`; for Xilinx the name synthesis gave the clock net, such as `o100`, since nextpnr-xilinx doesn't report the signal's name), `net` (the clock net nextpnr reports) and `max_mhz` (the maximum frequency, rounded to 0.01 MHz). A clock that misses its target isn't an error: compare these with the design's needs |
-| `report` | multiline text | The build's report for people, a line each: the main resource always, the others in `resources_summary` when used, then each clock, such as "The design uses 27 of 7680 logic cells (0.4%)." and "Maximum clock speed: 194.4 MHz (sys_clk)." A share that isn't valid is left out. Show it as is (a console, a CLI's output); its wording can change in any version, so programs read the fields above |
-| `report_summary` | text | The report in one line, for a status bar: the main resource's share and the slowest clock, such as "Uses 0.4% of logic cells, max clock 194.4 MHz." Empty when there's nothing to report |
+| `report` | multiline text | The build's report for people, a line each: the main resource always, the others in `resources_summary` when used, then each clock, such as "The design uses 27 of 7680 logic cells (1%)." and "Maximum clock speed: 194.4 MHz (sys_clk).", with each `display_percent`. A share that isn't valid is left out. Show it as is (a console, a CLI's output); its wording can change in any version, so programs read the fields above |
+| `report_summary` | text | The report in one line, for a status bar: the main resource's share and the slowest clock, such as "Uses 1% of logic cells, max clock 194.4 MHz." Empty when there's nothing to report |
 | `warnings` | list of diagnostics | Warnings from the tools. See diagnostic fields in Table 4 |
 | `commands` | list of commands | The programs this call ran, in order, so they can be run again without the Logix Engine. See Commands |
 
@@ -776,20 +776,20 @@ Output (`resources` shortened to the used ones):
   "board_variant": { "connection": "usb", "memory": "flash" },
   "up_to_date": false,
   "resources": [
-    { "name": "ICESTORM_LC", "description": "Logic cell: a 4-input LUT, a flip-flop and carry logic", "used": 50, "available": 5280, "percent": 0.9 },
-    { "name": "SB_GB", "description": "Global buffer, for clocks and other high-fanout signals", "used": 1, "available": 8, "percent": 12.5 },
-    { "name": "SB_IO", "description": "I/O pin", "used": 3, "available": 39, "percent": 7.7 }
+    { "name": "ICESTORM_LC", "description": "Logic cell: a 4-input LUT, a flip-flop and carry logic", "used": 50, "available": 5280, "percent": 0.9, "display_percent": "1%" },
+    { "name": "SB_GB", "description": "Global buffer, for clocks and other high-fanout signals", "used": 1, "available": 8, "percent": 12.5, "display_percent": "13%" },
+    { "name": "SB_IO", "description": "I/O pin", "used": 3, "available": 39, "percent": 7.7, "display_percent": "8%" }
   ],
   "resources_summary": [
-    { "kind": "logic_cells", "label": "logic cells", "used": 50, "available": 5280, "percent": 0.9 },
-    { "kind": "ram_blocks", "label": "RAM blocks", "used": 0, "available": 30, "percent": 0.0 },
-    { "kind": "multipliers", "label": "multipliers", "used": 0, "available": 8, "percent": 0.0 },
-    { "kind": "plls", "label": "PLLs", "used": 0, "available": 1, "percent": 0.0 },
-    { "kind": "io_pins", "label": "I/O pins", "used": 3, "available": 39, "percent": 7.7 }
+    { "kind": "logic_cells", "label": "logic cells", "used": 50, "available": 5280, "percent": 0.9, "display_percent": "1%" },
+    { "kind": "ram_blocks", "label": "RAM blocks", "used": 0, "available": 30, "percent": 0.0, "display_percent": "0%" },
+    { "kind": "multipliers", "label": "multipliers", "used": 0, "available": 8, "percent": 0.0, "display_percent": "0%" },
+    { "kind": "plls", "label": "PLLs", "used": 0, "available": 1, "percent": 0.0, "display_percent": "0%" },
+    { "kind": "io_pins", "label": "I/O pins", "used": 3, "available": 39, "percent": 7.7, "display_percent": "8%" }
   ],
   "clocks_summary": [{ "name": "sys_clk", "net": "sys_clk$SB_IO_IN_$glb_clk", "max_mhz": 89.77 }],
-  "report": "The design uses 50 of 5280 logic cells (0.9%).\nThe design uses 3 of 39 I/O pins (8%).\nMaximum clock speed: 89.8 MHz (sys_clk).",
-  "report_summary": "Uses 0.9% of logic cells, max clock 89.8 MHz.",
+  "report": "The design uses 50 of 5280 logic cells (1%).\nThe design uses 3 of 39 I/O pins (8%).\nMaximum clock speed: 89.8 MHz (sys_clk).",
+  "report_summary": "Uses 1% of logic cells, max clock 89.8 MHz.",
   "warnings": [
     { "file": "uart.v", "line": 13, "severity": "warning", "text": "Identifier `\\rx_done' is implicitly declared.", "tool": "yosys" }
   ]
@@ -1254,7 +1254,7 @@ Logic that every frontend would need and that doesn't depend on a frontend's own
 
 - Every tool reports problems as diagnostics with `file` relative to the source folder, `line`, `column` and `severity`, so one routine can underline them for lint, test, build and format alike.
 - `lint` is fast and writes nothing, so it suits running on save. Build warnings come in `warnings`.
-- Show a build's result with the engine's text: `report_summary` in a status bar ("Uses 0.4% of logic cells, max clock 194.4 MHz.") and `report` in a console, so every frontend words it the same way. For a full report, show `resources` as a table: the toolchain's name, its description, used, available and `percent` ("n/a" when it's `null`), the used ones by default, with a way to show the rest (on Xilinx FPGAs most are unused), and `clocks_summary` with each clock's name, maximum speed and net. Logix IDE's Board Utilization window does this (`ui/src/lib/BuildReport.svelte`).
+- Show a build's result with the engine's text: `report_summary` in a status bar ("Uses 1% of logic cells, max clock 194.4 MHz.") and `report` in a console, so every frontend words it the same way. For a full report, show `resources` as a table: the toolchain's name, its description, used, available and `display_percent` ("n/a" when it's `null`), the used ones by default, with a way to show the rest (on Xilinx FPGAs most are unused), and `clocks_summary` with each clock's name, maximum speed and net. Logix IDE's Board Utilization window does this (`ui/src/lib/BuildReport.svelte`).
 - Turn an error's `action` code into a button: `download_packages` calls the download_packages tool, and `connect_board`, `fix_device_permissions`, `install_drivers` and `disconnect_devices` show short instructions.
 
 ### Run and debug testbenches

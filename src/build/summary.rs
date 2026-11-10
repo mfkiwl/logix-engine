@@ -34,6 +34,11 @@ pub struct Resource {
     /// computed or isn't valid: available is 0, or used is more than
     /// available (nextpnr data the engine doesn't trust, as Apio's report).
     pub percent: Option<f64>,
+    /// The share for showing to people, in whole percent: "0%" when none is
+    /// used, otherwise rounded up (something used is never "0%"), and
+    /// "100%" only when all are used ("99%" at most before that), such as
+    /// "1%" for 27 of 7680. None when percent is.
+    pub display_percent: Option<String>,
 }
 
 /// One kind of FPGA resource, in plain words, with how much the design uses.
@@ -53,6 +58,8 @@ pub struct ResourceSummary {
     /// The share used, in percent, rounded to 0.1. None when it can't be
     /// computed or isn't valid, as for resources.
     pub percent: Option<f64>,
+    /// The share for showing to people, as for resources.
+    pub display_percent: Option<String>,
 }
 
 /// The share used, in percent, unrounded, or None when it isn't valid:
@@ -76,6 +83,7 @@ pub fn resources(arch: Toolchain, usage: &BTreeMap<String, ResourceUsage>) -> Ve
             used: u.used,
             available: u.available,
             percent: share(u.used, u.available).map(round1),
+            display_percent: display_percent(u.used, u.available),
         })
         .collect();
     list.sort_by(|a, b| {
@@ -183,29 +191,26 @@ pub fn summarize(arch: Toolchain, usage: &BTreeMap<String, ResourceUsage>) -> Ve
                 used,
                 available,
                 percent: share(used, available).filter(|_| valid).map(round1),
+                display_percent: display_percent(used, available).filter(|_| valid),
             });
         }
     }
     out
 }
 
-/// A share for people: "under 0.1%" when something is used but less than
-/// that, one decimal under 1% (so a small design isn't "0%"), whole
-/// numbers otherwise, such as "0.4%" and "13%".
-fn percent_text(used: u64, available: u64) -> Option<String> {
-    let p = share(used, available)?;
-    Some(if used > 0 && p < 0.05 {
-        "under 0.1%".to_string()
-    } else if p > 0.0 && p < 0.95 {
-        format!("{p:.1}%")
-    } else {
-        format!("{}%", p.round())
-    })
+/// A share for people, in whole percent: "0%" when none is used, otherwise
+/// rounded up, so something used is never "0%", and "100%" only when all
+/// are used (at most "99%" before that). None when it isn't valid.
+fn display_percent(used: u64, available: u64) -> Option<String> {
+    share(used, available)?;
+    let up = (100 * used).div_ceil(available);
+    let p = if used < available { up.min(99) } else { 100 };
+    Some(format!("{p}%"))
 }
 
 /// The build's report for people, a line each: the main resource always,
 /// the others when used, then each clock's maximum speed, such as "The
-/// design uses 27 of 7680 logic cells (0.4%)." and "Maximum clock speed:
+/// design uses 27 of 7680 logic cells (1%)." and "Maximum clock speed:
 /// 194.4 MHz (sys_clk)." A share that isn't valid is left out.
 pub fn report(summary: &[ResourceSummary], clocks: &[ClockSummary]) -> String {
     let mut lines: Vec<String> = Vec::new();
@@ -214,8 +219,8 @@ pub fn report(summary: &[ResourceSummary], clocks: &[ClockSummary]) -> String {
             continue;
         }
         let pct = s
-            .percent
-            .and(percent_text(s.used, s.available))
+            .display_percent
+            .as_ref()
             .map(|p| format!(" ({p})"))
             .unwrap_or_default();
         lines.push(format!(
@@ -233,17 +238,15 @@ pub fn report(summary: &[ResourceSummary], clocks: &[ClockSummary]) -> String {
 }
 
 /// The build's report in one line, for a status bar: the main resource's
-/// share and the slowest clock, such as "Uses 0.4% of logic cells, max
+/// share and the slowest clock, such as "Uses 1% of logic cells, max
 /// clock 194.4 MHz." Empty when there's nothing to report.
 pub fn report_summary(summary: &[ResourceSummary], clocks: &[ClockSummary]) -> String {
     let mut parts: Vec<String> = Vec::new();
     if let Some(main) = summary.first() {
-        parts.push(
-            match main.percent.and(percent_text(main.used, main.available)) {
-                Some(p) => format!("uses {p} of {}", main.label),
-                None => format!("uses {} {}", main.used, main.label),
-            },
-        );
+        parts.push(match &main.display_percent {
+            Some(p) => format!("uses {p} of {}", main.label),
+            None => format!("uses {} {}", main.used, main.label),
+        });
     }
     if let Some(slowest) = clocks.iter().map(|c| c.max_mhz).reduce(f64::min) {
         parts.push(format!("max clock {slowest:.1} MHz"));
@@ -467,14 +470,14 @@ mod tests {
         ];
         assert_eq!(
             report(&summary, &clocks),
-            "The design uses 27 of 7680 logic cells (0.4%).\n\
+            "The design uses 27 of 7680 logic cells (1%).\n\
              The design uses 2 of 107 I/O pins (2%).\n\
              Maximum clock speed: 194.4 MHz (sys_clk).\n\
              Maximum clock speed: 88.0 MHz (fast)."
         );
         assert_eq!(
             report_summary(&summary, &clocks),
-            "Uses 0.4% of logic cells, max clock 88.0 MHz."
+            "Uses 1% of logic cells, max clock 88.0 MHz."
         );
         // Invalid numbers: no share; nothing at all: empty.
         let bad = summarize(Toolchain::Ice40, &usage(&[("ICESTORM_LC", 9000, 7680)]));
@@ -485,11 +488,16 @@ mod tests {
         assert_eq!(report_summary(&bad, &[]), "Uses 9000 logic cells.");
         assert_eq!(report_summary(&[], &clocks[..1]), "Max clock 194.4 MHz.");
         assert_eq!(report_summary(&[], &[]), "");
-        // Small shares: never "0.0%" for something used, nor "1.0%".
-        assert_eq!(percent_text(27, 65200).as_deref(), Some("under 0.1%"));
-        assert_eq!(percent_text(0, 65200).as_deref(), Some("0%"));
-        assert_eq!(percent_text(5, 512).as_deref(), Some("1%"));
-        assert_eq!(percent_text(1, 39).as_deref(), Some("3%"));
-        assert_eq!(percent_text(9, 8640).as_deref(), Some("0.1%"));
+        // Whole percent, rounded up: something used is never "0%", and
+        // "100%" only when all are used.
+        let d = |u, a| display_percent(u, a);
+        assert_eq!(d(0, 65200).as_deref(), Some("0%"));
+        assert_eq!(d(1, 65200).as_deref(), Some("1%"));
+        assert_eq!(d(100, 1000).as_deref(), Some("10%"));
+        assert_eq!(d(101, 1000).as_deref(), Some("11%"));
+        assert_eq!(d(999, 1000).as_deref(), Some("99%"));
+        assert_eq!(d(1000, 1000).as_deref(), Some("100%"));
+        assert_eq!(d(5, 0), None);
+        assert_eq!(d(9, 8), None);
     }
 }

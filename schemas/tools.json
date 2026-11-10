@@ -3709,11 +3709,11 @@
           }
         },
         "report": {
-          "description": "The report for people, a line each: the main resource always, the\nothers when used, then each clock, such as \"The design uses 27 of\n7680 logic cells (0.4%).\" and \"Maximum clock speed: 194.4 MHz\n(sys_clk).\". Show it as is; its wording can change in any version.",
+          "description": "The report for people, a line each: the main resource always, the\nothers when used, then each clock, such as \"The design uses 27 of\n7680 logic cells (1%).\" and \"Maximum clock speed: 194.4 MHz\n(sys_clk).\". Show it as is; its wording can change in any version.",
           "type": "string"
         },
         "report_summary": {
-          "description": "The report in one line, for a status bar, such as \"Uses 0.4% of\nlogic cells, max clock 194.4 MHz.\" Empty when there's nothing to\nreport.",
+          "description": "The report in one line, for a status bar, such as \"Uses 1% of\nlogic cells, max clock 194.4 MHz.\" Empty when there's nothing to\nreport.",
           "type": "string"
         },
         "warnings": {
@@ -3795,6 +3795,13 @@
                 "number",
                 "null"
               ]
+            },
+            "display_percent": {
+              "description": "The share for showing to people, in whole percent: \"0%\" when none is\nused, otherwise rounded up (something used is never \"0%\"), and\n\"100%\" only when all are used (\"99%\" at most before that), such as\n\"1%\" for 27 of 7680. None when percent is.",
+              "type": [
+                "string",
+                "null"
+              ]
             }
           },
           "additionalProperties": false,
@@ -3830,6 +3837,13 @@
               "description": "The share used, in percent, rounded to 0.1. None when it can't be\ncomputed or isn't valid, as for resources.",
               "type": [
                 "number",
+                "null"
+              ]
+            },
+            "display_percent": {
+              "description": "The share for showing to people, as for resources.",
+              "type": [
+                "string",
                 "null"
               ]
             }
