@@ -130,8 +130,7 @@ async def build():
                 return 1
 
             print("Bitstream:", data["bitstream"])
-            for name, r in data["resources_usage"].items():
-                print(f"{name}: {r['used']}/{r['available']}")
+            print(data["report"])                    # the engine's text for people
             return 0
 
 asyncio.run(build())
@@ -201,7 +200,7 @@ async function build(design, workDir) {
       ui.showError(`${data.category}: ${data.message}`);
       return;
     }
-    ui.showResources(data.resources_usage);             // e.g. LUTs used and available
+    ui.showResources(data.resources);                   // name, description, used, available, percent
     ui.showSuccess("Build done");
   } finally {
     await client.close();
@@ -279,10 +278,7 @@ async function build(projectDir) {
           return;
         }
 
-        const usage = Object.entries(data.resources_usage)
-          .map(([name, r]) => `${name} ${r.used}/${r.available}`)
-          .join(", ");
-        vscode.window.showInformationMessage(`Build done. ${usage}`);
+        vscode.window.showInformationMessage(`Build done. ${data.report_summary}`);
       },
     );
   } finally {

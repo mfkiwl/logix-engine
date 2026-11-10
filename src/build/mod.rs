@@ -16,6 +16,7 @@
 //! API, so hosts can rely on them.
 
 pub mod clean;
+pub mod descriptions;
 pub mod parse;
 pub mod summary;
 

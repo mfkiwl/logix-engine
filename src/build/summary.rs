@@ -1,7 +1,9 @@
-//! A plain-language summary of a build's resource use (docs/tool-api.md,
-//! build tool), so hosts don't need to know each FPGA family's resource
-//! names: "logic cells" instead of ICESTORM_LC, and "CLK" instead of the
-//! clock net name nextpnr reports, such as CLK$SB_IO_IN_$glb_clk.
+//! A build's resource use and clocks for people (docs/tool-api.md, build
+//! tool), so hosts don't need to know each FPGA family's names: every
+//! resource with a description and a share that's checked (`resources`),
+//! the main kinds in plain words ("logic cells" for ICESTORM_LC), clocks by
+//! plain names ("CLK" for the net CLK$SB_IO_IN_$glb_clk), and the report's
+//! text, so every frontend words it the same way.
 
 use std::collections::BTreeMap;
 
@@ -10,6 +12,29 @@ use serde::{Deserialize, Serialize};
 
 use super::parse::ResourceUsage;
 use crate::catalog::Toolchain;
+
+/// One resource the toolchain reports, by its own name, with a short
+/// description and how much the design uses.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct Resource {
+    /// The toolchain's name, as nextpnr reports it, such as ICESTORM_LC or
+    /// SLICE_LUTX: what people search for and quote.
+    pub name: String,
+    /// What it is, in a few plain words, such as "Logic cell: a 4-input
+    /// LUT, a flip-flop and carry logic". None for a name the engine
+    /// doesn't describe yet.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
+    /// How many the design uses, as nextpnr reports it.
+    pub used: u64,
+    /// How many the FPGA has, as nextpnr reports it.
+    pub available: u64,
+    /// The share used, in percent, rounded to 0.1. None when it can't be
+    /// computed or isn't valid: available is 0, or used is more than
+    /// available (nextpnr data the engine doesn't trust, as Apio's report).
+    pub percent: Option<f64>,
+}
 
 /// One kind of FPGA resource, in plain words, with how much the design uses.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
@@ -25,6 +50,41 @@ pub struct ResourceSummary {
     pub used: u64,
     /// How many the FPGA has.
     pub available: u64,
+    /// The share used, in percent, rounded to 0.1. None when it can't be
+    /// computed or isn't valid, as for resources.
+    pub percent: Option<f64>,
+}
+
+/// The share used, in percent, unrounded, or None when it isn't valid:
+/// nothing available, or more used than available.
+fn share(used: u64, available: u64) -> Option<f64> {
+    (available > 0 && used <= available).then(|| 100.0 * used as f64 / available as f64)
+}
+
+fn round1(p: f64) -> f64 {
+    (p * 10.0).round() / 10.0
+}
+
+/// Every resource the toolchain reports, by name (ignoring case), each with
+/// its description and share.
+pub fn resources(arch: Toolchain, usage: &BTreeMap<String, ResourceUsage>) -> Vec<Resource> {
+    let mut list: Vec<Resource> = usage
+        .iter()
+        .map(|(name, u)| Resource {
+            name: name.clone(),
+            description: super::descriptions::describe(arch, name).map(String::from),
+            used: u.used,
+            available: u.available,
+            percent: share(u.used, u.available).map(round1),
+        })
+        .collect();
+    list.sort_by(|a, b| {
+        a.name
+            .to_lowercase()
+            .cmp(&b.name.to_lowercase())
+            .then(a.name.cmp(&b.name))
+    });
+    list
 }
 
 /// Per family, the kinds of resources, the family's main capacity measure
@@ -57,7 +117,14 @@ fn kinds(arch: Toolchain) -> &'static [(&'static str, &'static str, &'static [&'
         Toolchain::Openxc7 => &[
             ("luts", "LUTs", &["SLICE_LUTX"]),
             ("flip_flops", "flip-flops", &["SLICE_FFX"]),
-            ("ram_blocks", "RAM blocks", &["RAMB36E1", "RAMB18E1"]),
+            // 36 Kbit blocks: an 18 Kbit RAM or FIFO is half of one (the
+            // same sites, so their availability isn't added; see
+            // xilinx_ram_blocks).
+            (
+                "ram_blocks",
+                "RAM blocks",
+                &["RAMB36E1", "RAMBFIFO36E1", "RAMB18E1", "FIFO18E1"],
+            ),
             ("multipliers", "multipliers", &["DSP48E1"]),
             ("plls", "PLLs", &["PLLE2_ADV", "MMCME2_ADV"]),
             ("io_pins", "I/O pins", &["PAD"]),
@@ -65,18 +132,49 @@ fn kinds(arch: Toolchain) -> &'static [(&'static str, &'static str, &'static [&'
     }
 }
 
+/// Xilinx RAM blocks in 36 Kbit blocks: 36 Kbit RAMs and FIFOs count one,
+/// two 18 Kbit ones (rounded up) count one, and the 36 Kbit sites are what
+/// the FPGA has (its 18 Kbit sites are halves of the same blocks). None
+/// when a count is invalid.
+fn xilinx_ram_blocks(usage: &BTreeMap<String, ResourceUsage>) -> Option<(u64, u64, bool)> {
+    let get = |n: &str| usage.get(n);
+    let r36 = get("RAMB36E1")?;
+    let valid = ["RAMB36E1", "RAMBFIFO36E1", "RAMB18E1", "FIFO18E1"]
+        .iter()
+        .filter_map(|n| get(n))
+        .all(|u| u.used <= u.available);
+    let used = |n: &str| get(n).map_or(0, |u| u.used);
+    let halves = used("RAMB18E1") + used("FIFO18E1");
+    Some((
+        r36.used + used("RAMBFIFO36E1") + halves.div_ceil(2),
+        r36.available,
+        valid,
+    ))
+}
+
 /// The summary of a build's resource use: the family's main capacity
 /// measure first, then the other kinds, each when the FPGA has any. Kinds
-/// whose resources the report doesn't list are left out.
+/// whose resources the report doesn't list are left out. A kind's share is
+/// None when any of its counts is invalid (more used than available).
 pub fn summarize(arch: Toolchain, usage: &BTreeMap<String, ResourceUsage>) -> Vec<ResourceSummary> {
     let mut out = Vec::new();
     for (i, (kind, label, names)) in kinds(arch).iter().enumerate() {
-        let found: Vec<&ResourceUsage> = names.iter().filter_map(|n| usage.get(*n)).collect();
-        if found.is_empty() {
-            continue;
-        }
-        let used = found.iter().map(|u| u.used).sum();
-        let available = found.iter().map(|u| u.available).sum();
+        let (used, available, valid) = if arch == Toolchain::Openxc7 && *kind == "ram_blocks" {
+            match xilinx_ram_blocks(usage) {
+                Some(t) => t,
+                None => continue,
+            }
+        } else {
+            let found: Vec<&ResourceUsage> = names.iter().filter_map(|n| usage.get(*n)).collect();
+            if found.is_empty() {
+                continue;
+            }
+            (
+                found.iter().map(|u| u.used).sum(),
+                found.iter().map(|u| u.available).sum(),
+                found.iter().all(|u| u.used <= u.available),
+            )
+        };
         // The main measure always; others only when the FPGA has them.
         if i == 0 || available > 0 {
             out.push(ResourceSummary {
@@ -84,10 +182,82 @@ pub fn summarize(arch: Toolchain, usage: &BTreeMap<String, ResourceUsage>) -> Ve
                 label: label.to_string(),
                 used,
                 available,
+                percent: share(used, available).filter(|_| valid).map(round1),
             });
         }
     }
     out
+}
+
+/// A share for people: "under 0.1%" when something is used but less than
+/// that, one decimal under 1% (so a small design isn't "0%"), whole
+/// numbers otherwise, such as "0.4%" and "13%".
+fn percent_text(used: u64, available: u64) -> Option<String> {
+    let p = share(used, available)?;
+    Some(if used > 0 && p < 0.05 {
+        "under 0.1%".to_string()
+    } else if p > 0.0 && p < 0.95 {
+        format!("{p:.1}%")
+    } else {
+        format!("{}%", p.round())
+    })
+}
+
+/// The build's report for people, a line each: the main resource always,
+/// the others when used, then each clock's maximum speed, such as "The
+/// design uses 27 of 7680 logic cells (0.4%)." and "Maximum clock speed:
+/// 194.4 MHz (sys_clk)." A share that isn't valid is left out.
+pub fn report(summary: &[ResourceSummary], clocks: &[ClockSummary]) -> String {
+    let mut lines: Vec<String> = Vec::new();
+    for (i, s) in summary.iter().enumerate() {
+        if i > 0 && s.used == 0 {
+            continue;
+        }
+        let pct = s
+            .percent
+            .and(percent_text(s.used, s.available))
+            .map(|p| format!(" ({p})"))
+            .unwrap_or_default();
+        lines.push(format!(
+            "The design uses {} of {} {}{pct}.",
+            s.used, s.available, s.label
+        ));
+    }
+    for c in clocks {
+        lines.push(format!(
+            "Maximum clock speed: {:.1} MHz ({}).",
+            c.max_mhz, c.name
+        ));
+    }
+    lines.join("\n")
+}
+
+/// The build's report in one line, for a status bar: the main resource's
+/// share and the slowest clock, such as "Uses 0.4% of logic cells, max
+/// clock 194.4 MHz." Empty when there's nothing to report.
+pub fn report_summary(summary: &[ResourceSummary], clocks: &[ClockSummary]) -> String {
+    let mut parts: Vec<String> = Vec::new();
+    if let Some(main) = summary.first() {
+        parts.push(
+            match main.percent.and(percent_text(main.used, main.available)) {
+                Some(p) => format!("uses {p} of {}", main.label),
+                None => format!("uses {} {}", main.used, main.label),
+            },
+        );
+    }
+    if let Some(slowest) = clocks.iter().map(|c| c.max_mhz).reduce(f64::min) {
+        parts.push(format!("max clock {slowest:.1} MHz"));
+    }
+    if parts.is_empty() {
+        return String::new();
+    }
+    let text = parts.join(", ");
+    let mut chars = text.chars();
+    let first = chars
+        .next()
+        .map(|c| c.to_uppercase().collect::<String>())
+        .unwrap_or_default();
+    format!("{first}{}.", chars.as_str())
 }
 
 /// One clock of the design, with a plain name and its maximum frequency.
@@ -215,8 +385,8 @@ mod tests {
         );
         assert_eq!(s[0].label, "logic cells");
 
-        // Two toolchain names for one kind are added up; a kind the FPGA
-        // lacks (available 0) is left out.
+        // Xilinx RAM blocks count 36 Kbit blocks (two 18 Kbit ones are one);
+        // a kind the FPGA lacks (available 0) is left out.
         let xilinx = usage(&[
             ("SLICE_LUTX", 56, 20800),
             ("RAMB36E1", 1, 50),
@@ -228,6 +398,98 @@ mod tests {
             .iter()
             .map(|r| (r.kind.as_str(), r.used, r.available))
             .collect();
-        assert_eq!(kinds, [("luts", 56, 20800), ("ram_blocks", 3, 150)]);
+        assert_eq!(kinds, [("luts", 56, 20800), ("ram_blocks", 2, 50)]);
+        // Two toolchain names for one kind are added up.
+        let gowin = usage(&[("LUT4", 9, 8640), ("rPLL", 1, 2), ("PLLVR", 0, 0)]);
+        let s = summarize(Toolchain::Gowin, &gowin);
+        assert_eq!(
+            (s[1].kind.as_str(), s[1].used, s[1].available),
+            ("plls", 1, 2)
+        );
+    }
+
+    #[test]
+    fn shares_are_checked_like_apios() {
+        let r = resources(
+            Toolchain::Ice40,
+            &usage(&[
+                ("SB_IO", 3, 39),
+                ("ICESTORM_LC", 27, 5280),
+                ("odd", 5, 0),
+                ("over", 9, 4),
+                ("ICESTORM_PLL", 0, 1),
+            ]),
+        );
+        let rows: Vec<_> = r.iter().map(|x| (x.name.as_str(), x.percent)).collect();
+        // By name, ignoring case; no share when nothing is available or
+        // more is used than available.
+        assert_eq!(
+            rows,
+            [
+                ("ICESTORM_LC", Some(0.5)),
+                ("ICESTORM_PLL", Some(0.0)),
+                ("odd", None),
+                ("over", None),
+                ("SB_IO", Some(7.7))
+            ]
+        );
+        assert_eq!(
+            r[0].description.as_deref(),
+            Some("Logic cell: a 4-input LUT, a flip-flop and carry logic")
+        );
+        assert_eq!(r[2].description, None);
+        // A kind with an invalid count has no share.
+        let s = summarize(Toolchain::Ice40, &usage(&[("ICESTORM_LC", 9000, 7680)]));
+        assert_eq!((s[0].used, s[0].percent), (9000, None));
+    }
+
+    #[test]
+    fn the_report_for_people() {
+        let summary = summarize(
+            Toolchain::Ice40,
+            &usage(&[
+                ("ICESTORM_LC", 27, 7680),
+                ("ICESTORM_RAM", 0, 32),
+                ("SB_IO", 2, 107),
+            ]),
+        );
+        let clocks = [
+            ClockSummary {
+                name: "sys_clk".into(),
+                net: "n1".into(),
+                max_mhz: 194.36,
+            },
+            ClockSummary {
+                name: "fast".into(),
+                net: "n2".into(),
+                max_mhz: 88.0,
+            },
+        ];
+        assert_eq!(
+            report(&summary, &clocks),
+            "The design uses 27 of 7680 logic cells (0.4%).\n\
+             The design uses 2 of 107 I/O pins (2%).\n\
+             Maximum clock speed: 194.4 MHz (sys_clk).\n\
+             Maximum clock speed: 88.0 MHz (fast)."
+        );
+        assert_eq!(
+            report_summary(&summary, &clocks),
+            "Uses 0.4% of logic cells, max clock 88.0 MHz."
+        );
+        // Invalid numbers: no share; nothing at all: empty.
+        let bad = summarize(Toolchain::Ice40, &usage(&[("ICESTORM_LC", 9000, 7680)]));
+        assert_eq!(
+            report(&bad, &[]),
+            "The design uses 9000 of 7680 logic cells."
+        );
+        assert_eq!(report_summary(&bad, &[]), "Uses 9000 logic cells.");
+        assert_eq!(report_summary(&[], &clocks[..1]), "Max clock 194.4 MHz.");
+        assert_eq!(report_summary(&[], &[]), "");
+        // Small shares: never "0.0%" for something used, nor "1.0%".
+        assert_eq!(percent_text(27, 65200).as_deref(), Some("under 0.1%"));
+        assert_eq!(percent_text(0, 65200).as_deref(), Some("0%"));
+        assert_eq!(percent_text(5, 512).as_deref(), Some("1%"));
+        assert_eq!(percent_text(1, 39).as_deref(), Some("3%"));
+        assert_eq!(percent_text(9, 8640).as_deref(), Some("0.1%"));
     }
 }

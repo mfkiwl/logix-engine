@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 
 use super::{Call, EngineTool};
 use crate::board;
-use crate::build::{self, BuildRequest, parse::ResourceUsage};
+use crate::build::{self, BuildRequest};
 use crate::errors::{Diagnostic, ToolError};
 use crate::paths;
 use crate::state::EngineState;
@@ -109,24 +109,33 @@ pub struct BuildOutput {
     /// True if nothing had changed since the last build, so nothing was
     /// rebuilt.
     pub up_to_date: bool,
-    /// Resource use, by the toolchain's resource name, such as ICESTORM_LC
-    /// (logic cells: a LUT and a flip-flop), ICESTORM_RAM (block RAMs) and
-    /// SB_IO (I/O pins).
-    pub resources_usage: BTreeMap<String, ResourceUsage>,
+    /// Every resource the toolchain reports, sorted by name (ignoring
+    /// case): its own name, such as ICESTORM_LC or SLICE_LUTX, a short
+    /// description, how many are used and available, and the share used
+    /// (None when nextpnr's numbers aren't valid). Many are unused, on
+    /// Xilinx FPGAs most: a host shows the used ones first.
+    pub resources: Vec<crate::build::summary::Resource>,
     /// The main resources in plain words, for showing to people without
     /// knowing each FPGA family's names: the family's main capacity measure
-    /// first (logic cells or LUTs), then RAM blocks, multipliers, PLLs, I/O
-    /// pins and others the FPGA has, such as "27 of 7680 logic cells".
+    /// first (logic cells or LUTs), then flip-flops, RAM blocks,
+    /// multipliers, PLLs and I/O pins, each the FPGA has, such as "27 of
+    /// 7680 logic cells", with its share.
     pub resources_summary: Vec<crate::build::summary::ResourceSummary>,
-    /// The maximum frequency each clock can run at, in MHz, by clock net
-    /// name. A clock that misses its target isn't an error: compare these
-    /// with the design's needs.
-    pub timing: BTreeMap<String, f64>,
-    /// The clocks in timing with plain names, for showing to people without
-    /// knowing how each FPGA family's tools name clock nets: usually the
-    /// design's clock signal, such as "CLK" for the net
-    /// CLK$SB_IO_IN_$glb_clk.
+    /// The design's clocks, each with a plain name, usually the design's
+    /// clock signal, such as "CLK" for the net CLK$SB_IO_IN_$glb_clk, the
+    /// net nextpnr reports, and the maximum frequency it can run at in MHz,
+    /// rounded to 0.01. A clock that misses its target isn't an error:
+    /// compare these with the design's needs.
     pub clocks_summary: Vec<crate::build::summary::ClockSummary>,
+    /// The report for people, a line each: the main resource always, the
+    /// others when used, then each clock, such as "The design uses 27 of
+    /// 7680 logic cells (0.4%)." and "Maximum clock speed: 194.4 MHz
+    /// (sys_clk).". Show it as is; its wording can change in any version.
+    pub report: String,
+    /// The report in one line, for a status bar, such as "Uses 0.4% of
+    /// logic cells, max clock 194.4 MHz." Empty when there's nothing to
+    /// report.
+    pub report_summary: String,
     /// Warnings from the tools.
     pub warnings: Vec<Diagnostic>,
     /// The programs this call ran, in order, each with the exact command and
@@ -267,15 +276,18 @@ pub async fn run(
     let arch = request.board.fpga.toolchain();
     let board_variant = request.board.variant.selector.clone();
     let r = build::build(state, request, call).await?;
+    let summary = crate::build::summary::summarize(arch, &r.resources_usage);
+    let clocks = crate::build::summary::summarize_clocks(arch, &r.timing);
     Ok(BuildOutput {
+        resources: crate::build::summary::resources(arch, &r.resources_usage),
+        report: crate::build::summary::report(&summary, &clocks),
+        report_summary: crate::build::summary::report_summary(&summary, &clocks),
+        resources_summary: summary,
+        clocks_summary: clocks,
         commands: call.commands.take(),
         bitstream: r.bitstream,
         board_variant,
         up_to_date: r.up_to_date,
-        resources_summary: crate::build::summary::summarize(arch, &r.resources_usage),
-        resources_usage: r.resources_usage,
-        clocks_summary: crate::build::summary::summarize_clocks(arch, &r.timing),
-        timing: r.timing,
         warnings: r.warnings,
     })
 }

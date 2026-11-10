@@ -56,12 +56,20 @@ async fn engine() -> EngineState {
     }
 }
 
-/// The plain names of a build's clocks, each with its net in timing.
+/// The plain names of a build's clocks, each with its net and a speed.
 fn clock_names(out: &build::BuildOutput) -> Vec<String> {
     for c in &out.clocks_summary {
-        assert_eq!(out.timing.get(&c.net), Some(&c.max_mhz), "{c:?}");
+        assert!(!c.net.is_empty() && c.max_mhz > 0.0, "{c:?}");
     }
     out.clocks_summary.iter().map(|c| c.name.clone()).collect()
+}
+
+/// A build's resource by its toolchain name.
+fn res<'a>(out: &'a build::BuildOutput, name: &str) -> &'a logix_engine::build::summary::Resource {
+    out.resources
+        .iter()
+        .find(|r| r.name == name)
+        .unwrap_or_else(|| panic!("no {name}: {:?}", out.resources))
 }
 
 fn call() -> Call {
@@ -162,19 +170,36 @@ async fn builds_then_is_up_to_date_until_an_input_changes() {
         (main.kind.as_str(), main.label.as_str()),
         ("logic_cells", "logic cells")
     );
-    assert_eq!(main.used, out.resources_usage["ICESTORM_LC"].used);
+    assert_eq!(main.used, res(&out, "ICESTORM_LC").used);
     assert!(out.resources_summary.iter().any(|r| r.kind == "io_pins"));
+    // Each resource described, with its share; the report's text for people.
+    assert_eq!(
+        res(&out, "ICESTORM_LC").percent,
+        out.resources_summary[0].percent
+    );
+    assert!(res(&out, "SB_IO").description.is_some());
+    assert!(out.report.starts_with("The design uses "), "{}", out.report);
+    assert!(
+        out.report.contains("Maximum clock speed: "),
+        "{}",
+        out.report
+    );
+    assert!(
+        out.report_summary.starts_with("Uses "),
+        "{}",
+        out.report_summary
+    );
     let bin = std::fs::read(out_dir.join("hardware.bin")).unwrap();
     assert!(bin.len() > 100_000, "an hx8k bitstream is about 135 KB");
-    let lc = &out.resources_usage["ICESTORM_LC"];
+    let lc = &res(&out, "ICESTORM_LC");
     assert!(lc.used > 0 && lc.available == 7680, "{lc:?}");
-    assert_eq!(out.resources_usage["SB_IO"].used, 3);
-    assert_eq!(out.timing.len(), 1);
-    assert_eq!(clock_names(&out), ["CLK"], "{:?}", out.timing);
+    assert_eq!(res(&out, "SB_IO").used, 3);
+    assert_eq!(out.clocks_summary.len(), 1);
+    assert_eq!(clock_names(&out), ["CLK"], "{:?}", out.clocks_summary);
     assert!(
-        out.timing.values().all(|mhz| *mhz > 50.0),
+        out.clocks_summary.iter().all(|c| c.max_mhz > 50.0),
         "{:?}",
-        out.timing
+        out.clocks_summary
     );
     for f in [
         ".logix-build",
@@ -193,7 +218,7 @@ async fn builds_then_is_up_to_date_until_an_input_changes() {
         again.commands.is_empty(),
         "an up-to-date build runs nothing"
     );
-    assert_eq!(again.resources_usage, out.resources_usage);
+    assert_eq!(again.resources, out.resources);
 
     // An included file changes: rebuilds.
     std::fs::write(src.join("defs.vh"), "`define LED1_VALUE 1'b0\n").unwrap();
@@ -249,13 +274,9 @@ async fn builds_an_ecp5_design() {
     assert_eq!(out.bitstream, "hardware.bit");
     let bit = std::fs::read(src.join("_build/hardware.bit")).unwrap();
     assert!(bit.len() > 10_000, "{}", bit.len());
-    assert!(
-        out.resources_usage["TRELLIS_COMB"].used > 0,
-        "{:?}",
-        out.resources_usage
-    );
-    assert_eq!(out.timing.len(), 1, "{:?}", out.timing);
-    assert_eq!(clock_names(&out), ["CLK"], "{:?}", out.timing);
+    assert!(res(&out, "TRELLIS_COMB").used > 0, "{:?}", out.resources);
+    assert_eq!(out.clocks_summary.len(), 1, "{:?}", out.clocks_summary);
+    assert_eq!(clock_names(&out), ["CLK"], "{:?}", out.clocks_summary);
 
     // Another variant changes only how the board is programmed, not the
     // bitstream: up to date, and the build record keeps the new variant for
@@ -385,12 +406,12 @@ async fn builds_a_gowin_design() {
     let fs = std::fs::read(src.join("_build/hardware.fs")).unwrap();
     assert!(fs.len() > 10_000, "{}", fs.len());
     assert!(
-        out.resources_usage["LUT4"].used > 0 && out.resources_usage["DFF"].used > 0,
+        res(&out, "LUT4").used > 0 && res(&out, "DFF").used > 0,
         "{:?}",
-        out.resources_usage
+        out.resources
     );
-    assert_eq!(out.timing.len(), 1, "{:?}", out.timing);
-    assert_eq!(clock_names(&out), ["CLK"], "{:?}", out.timing);
+    assert_eq!(out.clocks_summary.len(), 1, "{:?}", out.clocks_summary);
+    assert_eq!(clock_names(&out), ["CLK"], "{:?}", out.clocks_summary);
 
     // A pin that doesn't exist is a design error.
     std::fs::write(
@@ -464,8 +485,8 @@ async fn builds_a_xilinx_design() {
     assert_eq!(out.bitstream, "hardware.bit");
     let bit = std::fs::read(src.join("_build/hardware.bit")).unwrap();
     assert!(bit.len() > 100_000, "{}", bit.len());
-    assert!(!out.resources_usage.is_empty(), "{:?}", out.resources_usage);
-    assert_eq!(out.timing.len(), 1, "{:?}", out.timing);
+    assert!(!out.resources.is_empty(), "{:?}", out.resources);
+    assert_eq!(out.clocks_summary.len(), 1, "{:?}", out.clocks_summary);
     // nextpnr-xilinx reports a net name synthesis made up, such as
     // $abc$21083$aiger$o100; the summary keeps its last part.
     let names = clock_names(&out);
@@ -1106,7 +1127,7 @@ async fn verbose_prints_more_but_gives_the_same_result() {
         results[0].warnings, results[1].warnings,
         "same warnings, no duplicates"
     );
-    assert_eq!(results[0].resources_usage, results[1].resources_usage);
+    assert_eq!(results[0].resources, results[1].resources);
 }
 
 /// A programmer's progress redrawn with carriage returns, as iceprog prints

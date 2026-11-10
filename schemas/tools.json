@@ -3687,33 +3687,34 @@
           "description": "True if nothing had changed since the last build, so nothing was\nrebuilt.",
           "type": "boolean"
         },
-        "resources_usage": {
-          "description": "Resource use, by the toolchain's resource name, such as ICESTORM_LC\n(logic cells: a LUT and a flip-flop), ICESTORM_RAM (block RAMs) and\nSB_IO (I/O pins).",
-          "type": "object",
-          "additionalProperties": {
-            "$ref": "#/$defs/ResourceUsage"
+        "resources": {
+          "description": "Every resource the toolchain reports, sorted by name (ignoring\ncase): its own name, such as ICESTORM_LC or SLICE_LUTX, a short\ndescription, how many are used and available, and the share used\n(None when nextpnr's numbers aren't valid). Many are unused, on\nXilinx FPGAs most: a host shows the used ones first.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Resource"
           }
         },
         "resources_summary": {
-          "description": "The main resources in plain words, for showing to people without\nknowing each FPGA family's names: the family's main capacity measure\nfirst (logic cells or LUTs), then RAM blocks, multipliers, PLLs, I/O\npins and others the FPGA has, such as \"27 of 7680 logic cells\".",
+          "description": "The main resources in plain words, for showing to people without\nknowing each FPGA family's names: the family's main capacity measure\nfirst (logic cells or LUTs), then flip-flops, RAM blocks,\nmultipliers, PLLs and I/O pins, each the FPGA has, such as \"27 of\n7680 logic cells\", with its share.",
           "type": "array",
           "items": {
             "$ref": "#/$defs/ResourceSummary"
           }
         },
-        "timing": {
-          "description": "The maximum frequency each clock can run at, in MHz, by clock net\nname. A clock that misses its target isn't an error: compare these\nwith the design's needs.",
-          "type": "object",
-          "additionalProperties": {
-            "type": "number"
-          }
-        },
         "clocks_summary": {
-          "description": "The clocks in timing with plain names, for showing to people without\nknowing how each FPGA family's tools name clock nets: usually the\ndesign's clock signal, such as \"CLK\" for the net\nCLK$SB_IO_IN_$glb_clk.",
+          "description": "The design's clocks, each with a plain name, usually the design's\nclock signal, such as \"CLK\" for the net CLK$SB_IO_IN_$glb_clk, the\nnet nextpnr reports, and the maximum frequency it can run at in MHz,\nrounded to 0.01. A clock that misses its target isn't an error:\ncompare these with the design's needs.",
           "type": "array",
           "items": {
             "$ref": "#/$defs/ClockSummary"
           }
+        },
+        "report": {
+          "description": "The report for people, a line each: the main resource always, the\nothers when used, then each clock, such as \"The design uses 27 of\n7680 logic cells (0.4%).\" and \"Maximum clock speed: 194.4 MHz\n(sys_clk).\". Show it as is; its wording can change in any version.",
+          "type": "string"
+        },
+        "report_summary": {
+          "description": "The report in one line, for a status bar, such as \"Uses 0.4% of\nlogic cells, max clock 194.4 MHz.\" Empty when there's nothing to\nreport.",
+          "type": "string"
         },
         "warnings": {
           "description": "Warnings from the tools.",
@@ -3735,10 +3736,11 @@
         "bitstream",
         "board_variant",
         "up_to_date",
-        "resources_usage",
+        "resources",
         "resources_summary",
-        "timing",
         "clocks_summary",
+        "report",
+        "report_summary",
         "warnings",
         "commands"
       ],
@@ -3762,21 +3764,42 @@
             "memory"
           ]
         },
-        "ResourceUsage": {
-          "description": "How much of one FPGA resource the design uses.",
+        "Resource": {
+          "description": "One resource the toolchain reports, by its own name, with a short\ndescription and how much the design uses.",
           "type": "object",
           "properties": {
+            "name": {
+              "description": "The toolchain's name, as nextpnr reports it, such as ICESTORM_LC or\nSLICE_LUTX: what people search for and quote.",
+              "type": "string"
+            },
+            "description": {
+              "description": "What it is, in a few plain words, such as \"Logic cell: a 4-input\nLUT, a flip-flop and carry logic\". None for a name the engine\ndoesn't describe yet.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "used": {
+              "description": "How many the design uses, as nextpnr reports it.",
               "type": "integer",
               "minimum": 0
             },
             "available": {
+              "description": "How many the FPGA has, as nextpnr reports it.",
               "type": "integer",
               "minimum": 0
+            },
+            "percent": {
+              "description": "The share used, in percent, rounded to 0.1. None when it can't be\ncomputed or isn't valid: available is 0, or used is more than\navailable (nextpnr data the engine doesn't trust, as Apio's report).",
+              "type": [
+                "number",
+                "null"
+              ]
             }
           },
           "additionalProperties": false,
           "required": [
+            "name",
             "used",
             "available"
           ]
@@ -3802,6 +3825,13 @@
               "description": "How many the FPGA has.",
               "type": "integer",
               "minimum": 0
+            },
+            "percent": {
+              "description": "The share used, in percent, rounded to 0.1. None when it can't be\ncomputed or isn't valid, as for resources.",
+              "type": [
+                "number",
+                "null"
+              ]
             }
           },
           "additionalProperties": false,
