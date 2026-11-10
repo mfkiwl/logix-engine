@@ -92,7 +92,7 @@ The engine must run on the following platforms. Other platforms may be added in 
 | --- | --- |
 | macOS | arm64 (Apple Silicon) |
 | Linux | x86-64 |
-| Windows | x86-64, arm64 |
+| Windows | x86-64 |
 
 ## Engine functionality
 
@@ -491,6 +491,6 @@ The project relies heavily on AI-generated tests to catch regressions, since hum
 - What the scope and lifetime of a device ID should be. Today an ID is made from the USB port path, the USB IDs and the serial number, and the API promises only that it is opaque and short-lived. In practice it stays valid when the device is plugged in again in the same port and across engine restarts, but not when it moves to another port, and maybe not after the computer restarts, since bus numbers can change then. Questions: should the API promise any of these, or stay at "list the devices again before choosing"? Should there also be a stable identity a host may store, such as to remember "my second Alhambra", based on a unique serial number where there is one? This ties in with choosing one of several identical boards (above), which goes beyond choosing a board and its board variant.
 - What the ButterStick r1.0 bootloader reports as its product name. Its filter, `^butterstick (dfu v1.1)`, treats the parentheses as a regular expression group, so it matches "butterstick dfu v1.1" but not "butterstick (dfu v1.1)"; a real board's name decides the fix.
 - What the catalog should say about drivers for each board variant, so a host can tell which driver a variant needs on each platform and whether it is missing. The planned driver data per connection value (see Drivers under Boards and board variants) covers the common cases, such as WinUSB for FTDI chips on Windows and a udev rule on Linux; open is how a variant states an exception, how the engine detects a missing or wrong driver (such as FTDI's own driver claiming a device that needs WinUSB), and how that reaches the host as an action it can show or fix.
-- Whether to support Linux arm64 and single-board computers attached to the target board, such as a Raspberry Pi.
+- Whether to support Linux arm64 and single-board computers attached to the target board, such as a Raspberry Pi. (Windows arm64 isn't planned for the near future, decided 2026-11-10.)
 - Which hardware test interface to use for the engine's own hardware tests, and whether the same interface can serve the on-board verification feature for user designs.
 - Whether the network adapter is part of the first release.
