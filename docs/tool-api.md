@@ -7,7 +7,7 @@ The Logix Engine is an MCP server that offers FPGA tools: lint, test, simulate, 
 
 In this document, the *host* is the program that talks to the Logix Engine: your application, or your AI agent's MCP client.
 
-This is the engine's tool API: every tool it offers, with its inputs, outputs and errors. The API can still change before the first release. After that, changes only add tools and fields, so existing clients keep working. Each tool is an MCP tool. Its inputs are the tool's arguments, and its outputs are the tool's structured content. The exact JSON schemas and tool descriptions come from the MCP tools/list method, with a published copy in [schemas/tools.json](../schemas/tools.json).
+This is the engine's tool API: every tool it offers, with its inputs, outputs and errors. The API can still change before the first release. After that, changes only add tools and fields, so existing clients keep working. Each tool is an MCP tool. Its inputs are the tool's arguments, and its outputs are the tool's structured content. The exact JSON schemas and tool descriptions come from the MCP tools/list method, with a published copy in [schemas/tools.json](https://github.com/openlogix/logix-engine/blob/main/schemas/tools.json).
 
 ## How an MCP server works
 
@@ -53,7 +53,7 @@ Most languages have an MCP client library that handles the handshake, IDs and me
 - **Rules beyond the schema.** Some rules can't be written in JSON Schema, such as the path keyword rules, symbolic link checks, whether a file exists, or whether a board ID is in the catalog. The engine checks these right after the schema, and they are also request errors.
 - **Tight schemas.** Where JSON Schema can express a rule, the schema states it, such as a pattern for catalog IDs, USB IDs and define names, and the allowed values of each enum field. This catches more mistakes early and shows the rules to AI agents.
 - **Output.** Each tool's structured content always matches its output schema.
-- **Published copy.** To read the schemas without running the engine, see [schemas/tools.json](../schemas/tools.json) in the logix-engine GitHub repository. It holds the same JSON that `tools/list` returns. It is useful for generating client code or browsing the API. A running engine's `tools/list` is the authoritative answer for that version.
+- **Published copy.** To read the schemas without running the engine, see [schemas/tools.json](https://github.com/openlogix/logix-engine/blob/main/schemas/tools.json) in the logix-engine GitHub repository. It holds the same JSON that `tools/list` returns. It is useful for generating client code or browsing the API. A running engine's `tools/list` is the authoritative answer for that version.
 
 ## Common types
 

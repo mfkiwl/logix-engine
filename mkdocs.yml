@@ -1,0 +1,72 @@
+# The Logix Engine documentation, published to GitHub Pages by
+# .github/workflows/publish-docs.yaml at www.openlogix.org/logix-engine/.
+# Pages are in docs/.
+site_name: Logix Engine
+site_description: 'One open engine to build and test FPGA designs and program boards, for any IDE or AI agent.'
+site_url: https://openlogix.github.io/logix-engine/
+repo_url: https://github.com/openlogix/logix-engine
+repo_name: openlogix/logix-engine
+edit_uri: edit/main/docs/
+
+# The generated site (not committed).
+site_dir: _site
+
+# Build tool requirements, not a page.
+exclude_docs: |
+  requirements.txt
+
+theme:
+  name: material
+  # The Logix Engine icon from the Open Logix brand (openlogix.github.io docs/brand/engine.svg).
+  logo: assets/logix-engine.svg
+  favicon: assets/logix-engine.svg
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: deep purple
+      accent: deep purple
+      toggle:
+        icon: material/weather-night
+        name: Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: deep purple
+      accent: deep purple
+      toggle:
+        icon: material/weather-sunny
+        name: Light mode
+  features:
+    - navigation.footer
+    - content.code.copy
+
+# The header logo links to the product page; the footer links back to it and the org.
+extra:
+  homepage: https://www.openlogix.org/engine/
+  social:
+    - icon: material/web
+      link: https://www.openlogix.org/engine/
+      name: Logix Engine website
+    - icon: fontawesome/brands/github
+      link: https://github.com/openlogix/logix-engine
+      name: Logix Engine on GitHub
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - tables
+  - github-callouts
+  - pymdownx.details
+  - pymdownx.superfences
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - "Tutorial: Claude Code": tutorial-claude-code.md
+  - Tool API: tool-api.md
+  - Command line: command-line.md
+  - Requirements: requirements.md
+  - Architecture: architecture.md

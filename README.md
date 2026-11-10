@@ -16,6 +16,8 @@ Daily development builds are on the [Releases](https://github.com/openlogix/logi
 
 ## Documentation
 
+The docs are also published as a website: [www.openlogix.org/logix-engine](https://www.openlogix.org/logix-engine/).
+
 | Document | What it covers |
 | --- | --- |
 | [Tutorial: FPGA design with Logix Engine and Claude Code](docs/tutorial-claude-code.md) | Step by step, from installing the engine to designing, testing and programming a board by prompts |
