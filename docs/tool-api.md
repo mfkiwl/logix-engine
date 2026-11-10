@@ -40,7 +40,7 @@ A call and its response look like this (wrapped for reading; on the wire each is
             "arguments": {"folder": "/home/user/proj/builds"}}}
 
 {"jsonrpc": "2.0", "id": 7,
- "result": {"structuredContent": {"deleted": ["/home/user/proj/builds/alhambra-ii", "/home/user/proj/builds"]},
+ "result": {"structuredContent": {"deleted": ["/home/user/proj/builds/icesugar-1-5", "/home/user/proj/builds"]},
             "isError": false}}
 ```
 
@@ -339,7 +339,7 @@ Input:
 
 ```json
 {
-  "board": "alhambra-ii",
+  "board": "icesugar-1-5",
   "top_module": "main",
   "source_folder": "/home/user/proj",
   "source_files": ["main.v", "uart.v"],
@@ -418,7 +418,7 @@ Input:
 
 ```json
 {
-  "board": "alhambra-ii",
+  "board": "icesugar-1-5",
   "source_folder": "/home/user/proj",
   "source_files": ["main.v"],
   "testbench_files": ["main_tb.v"],
@@ -504,7 +504,7 @@ Input:
 
 ```json
 {
-  "board": "alhambra-ii",
+  "board": "icesugar-1-5",
   "source_folder": "/home/user/proj",
   "source_files": ["main.v"],
   "testbench_file": "main_tb.v",
@@ -758,7 +758,7 @@ Input:
 
 ```json
 {
-  "board": "alhambra-ii",
+  "board": "icesugar-1-5",
   "top_module": "main",
   "source_folder": "/home/user/proj",
   "source_files": ["main.v", "uart.v"],
@@ -767,24 +767,32 @@ Input:
 }
 ```
 
-Output:
+Output (`resources_usage` shortened):
 
 ```json
 {
   "bitstream": "hardware.bin",
+  "board_variant": { "connection": "usb", "memory": "flash" },
   "up_to_date": false,
   "resources_usage": {
-    "ICESTORM_LC": { "used": 412, "available": 7680 },
-    "ICESTORM_PLL": { "used": 0, "available": 2 },
-    "ICESTORM_RAM": { "used": 2, "available": 32 },
+    "ICESTORM_LC": { "used": 50, "available": 5280 },
+    "ICESTORM_PLL": { "used": 0, "available": 1 },
+    "ICESTORM_RAM": { "used": 0, "available": 30 },
     "SB_GB": { "used": 1, "available": 8 },
-    "SB_IO": { "used": 5, "available": 107 },
+    "SB_IO": { "used": 3, "available": 39 },
     "SB_WARMBOOT": { "used": 0, "available": 1 }
   },
-  "timing": { "CLK$SB_IO_IN_$glb_clk": 87.4 },
-  "clocks_summary": [{ "name": "CLK", "net": "CLK$SB_IO_IN_$glb_clk", "max_mhz": 87.4 }],
+  "resources_summary": [
+    { "kind": "logic_cells", "label": "logic cells", "used": 50, "available": 5280 },
+    { "kind": "ram_blocks", "label": "RAM blocks", "used": 0, "available": 30 },
+    { "kind": "multipliers", "label": "multipliers", "used": 0, "available": 8 },
+    { "kind": "plls", "label": "PLLs", "used": 0, "available": 1 },
+    { "kind": "io_pins", "label": "I/O pins", "used": 3, "available": 39 }
+  ],
+  "timing": { "sys_clk$SB_IO_IN_$glb_clk": 89.77 },
+  "clocks_summary": [{ "name": "sys_clk", "net": "sys_clk$SB_IO_IN_$glb_clk", "max_mhz": 89.77 }],
   "warnings": [
-    { "file": "uart.v", "line": 12, "severity": "warning", "text": "Identifier `\\rx_done' is implicitly declared.", "tool": "yosys" }
+    { "file": "uart.v", "line": 13, "severity": "warning", "text": "Identifier `\\rx_done' is implicitly declared.", "tool": "yosys" }
   ]
 }
 ```
@@ -928,18 +936,18 @@ Input:
 
 ```json
 {
-  "boards": { "fetch": true, "ids": ["alhambra-ii"] }
+  "boards": { "fetch": true, "ids": ["icesugar-1-5"] }
 }
 ```
 
-Output:
+Output (`resources` shortened):
 
 ```json
 {
   "boards": {
-    "alhambra-ii": {
-      "name": "Alhambra II",
-      "fpga_id": "ice40hx4k-tq144-8k",
+    "icesugar-1-5": {
+      "name": "iCESugar v1.5",
+      "fpga_id": "ice40up5k-sg48",
       "dimensions": [
         { "id": "connection", "label": "Connection",
           "values": [ { "id": "usb", "label": "USB", "help": "The board's own USB port, through the programmer chip on the board." } ] },
@@ -949,11 +957,21 @@ Output:
       "variants": [
         {
           "selector": { "connection": "usb", "memory": "flash" },
-          "programmer": "openfpgaloader",
-          "args": "--force-terminal-mode --verify -b ice40_generic --vid ${VID} --pid ${PID} --busdev-num ${BUS}:${DEV} ${BITSTREAM}",
-          "tested": true
+          "label": "USB · Flash",
+          "programmer": "icesprog",
+          "args": "${BITSTREAM}",
+          "tested": true,
+          "user_notes": "Connect only this iCESugar when programming: its programmer can't tell iCESugar boards apart, so the engine refuses when another board with the same USB IDs, such as an iCESugar-Pro, is connected."
         }
-      ]
+      ],
+      "resources": {
+        "sys_clk": { "type": "clock", "pin": "35", "mhz": 12,
+          "source": { "kind": "schematic", "ref": "github.com/wuxx/icesugar schematic/iCESugar-v1.5.pdf" },
+          "user_notes": "From the on-board iCELink's 12 MHz clock output." },
+        "switches": { "type": "switches", "pins": ["18", "19", "20", "21"], "active": "low",
+          "source": { "kind": "schematic", "ref": "github.com/wuxx/icesugar schematic/iCESugar-v1.5.pdf" },
+          "user_notes": "A 4-way DIP switch with pull-ups, on the same pins as PMOD4." }
+      }
     }
   },
   "fpgas": {}
@@ -978,7 +996,7 @@ A board with a choice, such as the iCESugar-Pro, which can be programmed to flas
 }
 ```
 
-**Catalog contents.** The catalog is [Logix Catalog](https://github.com/openlogix/logix-catalog), a board file per board (see Board specification) and the FPGAs, one file per family, built into each engine release from a pinned commit; `catalog` in `get_engine_info` gives its version. It has every iCE40, ECP5, Gowin (GW1N, GW2A, GW5A) and Xilinx 7-series (Artix-7, Spartan-7, Zynq-7000) FPGA the toolchain packages support, and 81 boards: 27 iCE40, 22 ECP5, 9 Gowin and 23 Xilinx, with 128 variants in all, programmed with `openfpgaloader`, `iceprog`, `dfu-util` or `icesprog`. 32 boards have a choice: memory (iCESugar-Pro, ColorLight i5, and most Xilinx and ECP5 boards, which have a RAM and a flash variant; flash is the default wherever a board has it), connection and memory (ColorLight 5A-75E V7.1 and i9 v7.2, FleaFPGA Ohm), or both with fewer combinations (ButterStick r1.0: its USB bootloader writes flash, its adapters RAM). The others have one value of each, which still tells where an upload goes: 50 variants write RAM, and the Zynq boards, the QMTECH XC7A100T and the ULX3S upload only to RAM. Every variant has a USB filter, whatever its family. Boards programmed through a cable named with openFPGALoader's `-c` option, such as `-c ft2232`, use that cable's default USB IDs. Every board has `resources`: 79 a clock with its frequency, 80 their LEDs (with `active` for 79 of them; RGB LEDs as `rgb_led`). They come from the boards' example pin files, most of them tried on hardware, and from the boards' schematics and makers; 23 boards name the source in `source`. Clocks that need a jumper have a `setup` requirement (the UPduino v3.0 and v3.1, the ECP5 Evaluation Board), and 5 boards list pins every design must drive: the ULX3S's ESP32 GPIO0, held high, and Fomu's USB pins, held low. Boards without an oscillator of their own (the pico-ice, whose clock comes from its RP2040) or whose clock isn't documented yet list no clock; the Tang Primer 20K is two boards, one per carrier board (Dock, with six LEDs, and Lite, without LEDs but with four PMODs); the ButterStick's seven RGB LEDs are a `led_matrix`; the Soan Papdi Mini's clock and RGB LED come from its maker.
+**Catalog contents.** The catalog is [Logix Catalog](https://github.com/openlogix/logix-catalog), a board file per board (see Board specification) and the FPGAs, one file per family, built into each engine release from a pinned commit; `catalog` in `get_engine_info` gives its version. It has every iCE40, ECP5, Gowin (GW1N, GW2A, GW5A) and Xilinx 7-series (Artix-7, Spartan-7, Zynq-7000) FPGA the toolchain packages support, and 81 boards: 27 iCE40, 22 ECP5, 9 Gowin and 23 Xilinx, with 128 variants in all, programmed with `openfpgaloader`, `iceprog`, `dfu-util` or `icesprog`. 32 boards have a choice: memory (iCESugar-Pro, ColorLight i5, and most Xilinx and ECP5 boards, which have a RAM and a flash variant; flash is the default wherever a board has it), connection and memory (ColorLight 5A-75E V7.1 and i9 v7.2, FleaFPGA Ohm), or both with fewer combinations (ButterStick r1.0: its USB bootloader writes flash, its adapters RAM). The others have one value of each, which still tells where an upload goes: 50 variants write RAM, and the Zynq boards, the QMTECH XC7A100T and the ULX3S upload only to RAM. Every variant has a USB filter, whatever its family. Boards programmed through a cable named with openFPGALoader's `-c` option, such as `-c ft2232`, use that cable's default USB IDs. Every board has `resources`: 79 a clock with its frequency, 80 their LEDs (with `active` for 79 of them; RGB LEDs as `rgb_led`). They come from the boards' example pin files, most of them tried on hardware, and from the boards' schematics and makers; 25 boards name the source in `source`. 2 boards list PMODs, and one, the iCESugar v1.5, lists every pin it wires: its switches, its UART, its PMODs and an `unclassified` resource for the rest. Clocks that need a jumper have a `setup` requirement (the UPduino v3.0 and v3.1, the ECP5 Evaluation Board), and 5 boards list pins every design must drive: the ULX3S's ESP32 GPIO0, held high, and Fomu's USB pins, held low. Boards without an oscillator of their own (the pico-ice, whose clock comes from its RP2040) or whose clock isn't documented yet list no clock; the Tang Primer 20K is two boards, one per carrier board (Dock, with six LEDs, and Lite, without LEDs but with four PMODs); the ButterStick's seven RGB LEDs are a `led_matrix`; the Soan Papdi Mini's clock and RGB LED come from its maker.
 
 **Trust and notes.** Each catalog variant has `tested`: true when its programming is known to work, because it was tried on the board or is used unchanged by a tool that people rely on; false when it hasn't been tried on hardware, such as a board moved to a different programmer. A change rated low risk after checking the programmer's source keeps `tested` true: every openFPGALoader command through an FTDI chip names the chosen device with `--busdev-num ${BUS}:${DEV}` (openFPGALoader's FTDI drivers then open that device), a change made without hardware tests. Optional `user_notes` give warnings and missing information for its users, such as a USB filter that also matches other boards, or a step needed before programming. The catalog file also keeps `maintainer_notes`, where each variant's settings come from and why they changed, which `get_catalog` doesn't return. A USB filter can't always tell one board model from another: boards that use the same USB chip and report the same names look alike to the engine. Hosts can show both fields where users pick a board.
 
@@ -1012,7 +1030,7 @@ Every aspect is always listed, in a fixed order, each the same (`yes`), differen
 Input:
 
 ```json
-{ "from_board": "alhambra-ii", "to_board": "icebreaker" }
+{ "from_board": "icesugar-1-5", "to_board": "alhambra-ii" }
 ```
 
 Output:
@@ -1021,14 +1039,14 @@ Output:
 {
   "same_build": false,
   "aspects": [
-    {"aspect": "board", "same": "no", "from": "Alhambra II", "to": "iCEBreaker", "text": "Board: Alhambra II → iCEBreaker."},
+    {"aspect": "board", "same": "no", "from": "iCESugar v1.5", "to": "Alhambra II", "text": "Board: iCESugar v1.5 → Alhambra II."},
     {"aspect": "family", "same": "yes", "from": "Lattice iCE40", "to": "Lattice iCE40", "text": "Same FPGA family: Lattice iCE40."},
-    {"aspect": "fpga", "same": "no", "from": "ICE40HX4K-TQ144", "to": "ICE40UP5K-SG48", "text": "FPGA: ICE40HX4K-TQ144 → ICE40UP5K-SG48."},
-    {"aspect": "size", "same": "no", "from": "8k", "to": "5k", "text": "Size: 8k → 5k."},
+    {"aspect": "fpga", "same": "no", "from": "ICE40UP5K-SG48", "to": "ICE40HX4K-TQ144", "text": "FPGA: ICE40UP5K-SG48 → ICE40HX4K-TQ144."},
+    {"aspect": "size", "same": "no", "from": "5k", "to": "8k", "text": "Size: 5k → 8k."},
     {"aspect": "constraint_format", "same": "yes", "from": ".pcf", "to": ".pcf", "text": "Same pin file format: .pcf."},
     {"aspect": "pins", "same": "unknown", "text": "Pins: not known whether they match (the catalog doesn't describe all of a board's pins)."},
     {"aspect": "clock", "same": "yes", "from": [12], "to": [12], "text": "Same clock: 12 MHz."},
-    {"aspect": "leds", "same": "no", "from": 8, "to": 6, "text": "LEDs: 8 → 6."}
+    {"aspect": "leds", "same": "no", "from": 1, "to": 8, "text": "LEDs: 1 → 8."}
   ]
 }
 ```
@@ -1159,7 +1177,7 @@ Output:
 ```json
 {
   "deleted": [
-    "/home/user/proj/builds/alhambra-ii",
+    "/home/user/proj/builds/icesugar-1-5",
     "/home/user/proj/builds/icezum",
     "/home/user/proj/builds"
   ]
@@ -1176,7 +1194,7 @@ This model is only a suggestion for AI sessions that have no other requirements,
 - **`logix.json`** holds the request values that would otherwise have to be remembered between sessions, under their request field names:
 
   ```json
-  { "board": "alhambra-ii", "board_variant": { "connection": "usb", "memory": "flash" }, "top_module": "main" }
+  { "board": "icesugar-1-5", "board_variant": { "connection": "usb", "memory": "flash" }, "top_module": "main" }
   ```
 
   `board` is a board ID. For a board that isn't in the catalog, write its definition as a board file in a custom boards folder, such as `boards/my-board.json` in the project folder (see Board specification), and send the folder as `custom_boards_folder` with every request. `board_variant` is optional: without it, requests use the board's first variant. Copy the values into each request. The engine never reads this file: it is only the AI session's notes.

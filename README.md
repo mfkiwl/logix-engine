@@ -38,7 +38,7 @@ Check the setup with `cargo --version`.
 | `scripts/build.sh` | Builds the release binary, `target/release/logix-engine` |
 | `scripts/run-in-claude.sh` | Builds if needed and starts Claude Code with the engine connected, so you can prompt it. Claude works in `~/.logix-dev/playground`, and the engine uses `~/.logix-dev/engine` |
 | `scripts/run-in-grok.sh` | The same with Grok as the host. It writes the engine into the playground's `.grok/config.toml` |
-| `scripts/engine-cmd.sh` | Sends one prompt to Claude Code with the engine connected and prints the answer as plain text, such as `scripts/engine-cmd.sh --add-dir ~/proj "Build ~/proj for the Alhambra II"`. `-c` continues the previous conversation. See `--help` |
+| `scripts/engine-cmd.sh` | Sends one prompt to Claude Code with the engine connected and prints the answer as plain text, such as `scripts/engine-cmd.sh --add-dir ~/proj "Build ~/proj for the iCESugar v1.5"`. `-c` continues the previous conversation. See `--help` |
 | `scripts/serve.sh` | Builds if needed and runs the engine as an MCP server on stdin/stdout, for other MCP clients |
 | `scripts/clean.sh` | Deletes the build output |
 | `scripts/update-schemas.sh` | Regenerates [schemas/tools.json](schemas/tools.json), the published copy of the tool schemas, after a deliberate change |

@@ -55,7 +55,7 @@ pub const TEMPLATE_VARIABLES: &[&str] = &[
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct BoardDefinition {
-    /// The board's name for people, such as "Alhambra II".
+    /// The board's name for people, such as "iCESugar v1.5".
     pub name: String,
     /// The board's FPGA, as a catalog ID of the fpgas section, such as
     /// ice40hx4k-tq144-8k. Every variant uses it.

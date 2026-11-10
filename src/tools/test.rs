@@ -40,7 +40,7 @@ impl EngineTool for Test {
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct TestInput {
-    /// The target board's ID: a catalog ID such as alhambra-ii (get_catalog
+    /// The target board's ID: a catalog ID such as icesugar-1-5 (get_catalog
     /// lists them), or the ID of a board in custom_boards_folder. It selects the FPGA's
     /// primitive models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for
     /// Gowin or PLLE2_BASE for Xilinx.

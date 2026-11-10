@@ -68,6 +68,8 @@ Same conventions as logix-ide, using the shared actions from `openlogix/.github`
 
 The Logix IDE is the reference frontend: the rule is in the website repo's `CLAUDE.md` (shared Open Logix rules). For the engine this means: logic every frontend would need, that doesn't depend on a frontend's own model, belongs here, such as FPGA family names (`get_catalog` families) plain resource names (`build` `resources_summary`) and clock names (`build` `clocks_summary`). When the IDE has to repeat engine knowledge, that is an engine gap: fill it here and have the IDE use it. The tool API stands on its own for frontends outside Open Logix, and its "Recipes for frontend developers" point to the IDE files that implement each recipe.
 
+**Canonical board** (the website repo's `CLAUDE.md` owns the rule, 2026-11-10): the engine's docs, tool descriptions and examples use the iCESugar v1.5 (`icesugar-1-5`) as their example board; the engine itself never favors it (catalog order, matching, defaults), except to break a tie. Examples that show captured hardware output, such as `list_devices` on an Alhambra II, stay as captured until they're captured again on an iCESugar. The tutorial (`docs/tutorial-claude-code.md`) stays on the Alhambra II for now. Tests may use any board.
+
 ## How work is done here
 
 The human directs the work and tests the results. Claude writes and maintains the code, the tests and the docs. Humans don't review every line, so:

@@ -42,7 +42,7 @@ for arg in "$@"; do
   if [[ "$arg" == --add-dir || "$arg" == --add-dir=* ]]; then
     echo "Error: Grok doesn't support --add-dir (a session works only in its" >&2
     echo "working directory). Name the folder in the prompt instead, such as" >&2
-    echo "\"Build ~/work for the Alhambra II\": the engine takes any folder." >&2
+    echo "\"Build ~/work for the iCESugar v1.5\": the engine takes any folder." >&2
     exit 2
   fi
 done

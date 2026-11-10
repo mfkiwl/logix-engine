@@ -283,7 +283,7 @@
   },
   {
     "name": "get_catalog",
-    "description": "Returns board and FPGA definitions from the engine's read-only catalog. Use it to find a board's catalog ID, such as alhambra-ii, to pass as the board of other tools, or to see a board's FPGA and how it is programmed. Each section is returned only when asked for: {\"boards\": {\"fetch\": true}} returns all boards, and {\"boards\": {\"fetch\": true, \"ids\": [\"alhambra-ii\"]}} only the listed ones. Boards include those of the request's custom_boards_folder, marked custom, a custom board replacing the catalog board with its ID. The families section gives each FPGA family's name for people, the extension of its pin constraint files and the toolchain that builds it. Board descriptions are the boards' names for people.",
+    "description": "Returns board and FPGA definitions from the engine's read-only catalog. Use it to find a board's catalog ID, such as icesugar-1-5, to pass as the board of other tools, or to see a board's FPGA and how it is programmed. Each section is returned only when asked for: {\"boards\": {\"fetch\": true}} returns all boards, and {\"boards\": {\"fetch\": true, \"ids\": [\"icesugar-1-5\"]}} only the listed ones. Boards include those of the request's custom_boards_folder, marked custom, a custom board replacing the catalog board with its ID. The families section gives each FPGA family's name for people, the extension of its pin constraint files and the toolchain that builds it. Board descriptions are the boards' names for people.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "title": "GetCatalogInput",
@@ -452,7 +452,7 @@
           "type": "object",
           "properties": {
             "name": {
-              "description": "The board's name for people, such as \"Alhambra II\".",
+              "description": "The board's name for people, such as \"iCESugar v1.5\".",
               "type": "string"
             },
             "fpga_id": {
@@ -1867,7 +1867,7 @@
       "type": "object",
       "properties": {
         "board": {
-          "description": "The target board's ID: a catalog ID such as alhambra-ii (get_catalog\nlists them), or the ID of a board in custom_boards_folder. It selects the FPGA's\nprimitive models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for\nGowin or PLLE2_BASE for Xilinx.",
+          "description": "The target board's ID: a catalog ID such as icesugar-1-5 (get_catalog\nlists them), or the ID of a board in custom_boards_folder. It selects the FPGA's\nprimitive models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for\nGowin or PLLE2_BASE for Xilinx.",
           "type": "string",
           "pattern": "^[a-z0-9-]+$"
         },
@@ -2173,7 +2173,7 @@
       "type": "object",
       "properties": {
         "board": {
-          "description": "The target board's ID: a catalog ID such as alhambra-ii (get_catalog\nlists them), or the ID of a board in custom_boards_folder. It selects the FPGA's\nprimitive models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for\nGowin or PLLE2_BASE for Xilinx.",
+          "description": "The target board's ID: a catalog ID such as icesugar-1-5 (get_catalog\nlists them), or the ID of a board in custom_boards_folder. It selects the FPGA's\nprimitive models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for\nGowin or PLLE2_BASE for Xilinx.",
           "type": "string",
           "pattern": "^[a-z0-9-]+$"
         },
@@ -2572,7 +2572,7 @@
       "type": "object",
       "properties": {
         "board": {
-          "description": "The target board's ID: a catalog ID such as alhambra-ii (get_catalog\nlists them), or the ID of a board in custom_boards_folder. It selects the FPGA's\nprimitive models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for\nGowin or PLLE2_BASE for Xilinx.",
+          "description": "The target board's ID: a catalog ID such as icesugar-1-5 (get_catalog\nlists them), or the ID of a board in custom_boards_folder. It selects the FPGA's\nprimitive models, such as SB_IO for iCE40, EHXPLLL for ECP5, rPLL for\nGowin or PLLE2_BASE for Xilinx.",
           "type": "string",
           "pattern": "^[a-z0-9-]+$"
         },
@@ -3521,7 +3521,7 @@
       "type": "object",
       "properties": {
         "board": {
-          "description": "The target board's ID: a catalog ID such as alhambra-ii (get_catalog\nlists them), or the ID of a board in custom_boards_folder.",
+          "description": "The target board's ID: a catalog ID such as icesugar-1-5 (get_catalog\nlists them), or the ID of a board in custom_boards_folder.",
           "type": "string",
           "pattern": "^[a-z0-9-]+$"
         },

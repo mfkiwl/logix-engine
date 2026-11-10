@@ -16,10 +16,10 @@ pub struct GetCatalog;
 impl EngineTool for GetCatalog {
     const NAME: &'static str = "get_catalog";
     const DESCRIPTION: &'static str = "Returns board and FPGA definitions from the engine's \
-        read-only catalog. Use it to find a board's catalog ID, such as alhambra-ii, to pass as \
+        read-only catalog. Use it to find a board's catalog ID, such as icesugar-1-5, to pass as \
         the board of other tools, or to see a board's FPGA and how it is programmed. Each \
         section is returned only when asked for: {\"boards\": {\"fetch\": true}} returns all \
-        boards, and {\"boards\": {\"fetch\": true, \"ids\": [\"alhambra-ii\"]}} only the listed \
+        boards, and {\"boards\": {\"fetch\": true, \"ids\": [\"icesugar-1-5\"]}} only the listed \
         ones. Boards include those of the request's custom_boards_folder, marked custom, a custom board \
         replacing the catalog board with its ID. The families section gives each FPGA family's name for people, the \
         extension of its pin constraint files and the toolchain that builds it. Board descriptions are the boards' names for \
@@ -101,7 +101,7 @@ pub struct CatalogQuery {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct CatalogBoard {
-    /// The board's name for people, such as "Alhambra II".
+    /// The board's name for people, such as "iCESugar v1.5".
     pub name: String,
     /// The board's FPGA, as a catalog ID of the fpgas section, such as
     /// ice40hx4k-tq144-8k. Every variant uses it. Boards with the same

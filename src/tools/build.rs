@@ -38,7 +38,7 @@ impl EngineTool for Build {
 #[derive(Debug, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct BuildInput {
-    /// The target board's ID: a catalog ID such as alhambra-ii (get_catalog
+    /// The target board's ID: a catalog ID such as icesugar-1-5 (get_catalog
     /// lists them), or the ID of a board in custom_boards_folder.
     #[schemars(pattern(r"^[a-z0-9-]+$"))]
     pub board: String,

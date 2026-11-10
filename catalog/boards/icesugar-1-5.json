@@ -14,14 +14,68 @@
     }
   ],
   "resources": {
-    "sys_clk": {"type": "clock", "pin": "35", "mhz": 12},
-    "led": {
-      "type": "leds",
-      "pins": ["40"],
+    "sys_clk": {
+      "type": "clock",
+      "pin": "35",
+      "mhz": 12,
+      "source": {"kind": "schematic", "ref": "github.com/wuxx/icesugar schematic/iCESugar-v1.5.pdf"},
+      "user_notes": "From the on-board iCELink's 12 MHz clock output."
+    },
+    "rgb_led": {
+      "type": "rgb_led",
+      "red": "40",
+      "green": "41",
+      "blue": "39",
       "active": "low",
+      "source": {"kind": "schematic", "ref": "github.com/wuxx/icesugar schematic/iCESugar-v1.5.pdf"},
       "ai_hints": [
-        "Wired to the FPGA's RGB LED driver pad RGB1.",
+        "Wired to the FPGA's RGB LED driver pads: red RGB1, green RGB2, blue RGB0.",
         "Drive it through SB_RGBA_DRV, the iCE40 UltraPlus's RGB LED driver cell (sink only)."
+      ]
+    },
+    "switches": {
+      "type": "switches",
+      "pins": ["18", "19", "20", "21"],
+      "active": "low",
+      "source": {"kind": "schematic", "ref": "github.com/wuxx/icesugar schematic/iCESugar-v1.5.pdf"},
+      "user_notes": "A 4-way DIP switch with pull-ups, on the same pins as PMOD4."
+    },
+    "uart": {
+      "type": "uart",
+      "tx": "6",
+      "rx": "4",
+      "source": {"kind": "schematic", "ref": "github.com/wuxx/icesugar schematic/iCESugar-v1.5.pdf"},
+      "user_notes": "The on-board iCELink's USB serial port, over the USB-C cable. Also on PMOD1."
+    },
+    "pmod1": {
+      "type": "pmod",
+      "pins": ["10", "6", "3", "48", "9", "4", "2", "47"],
+      "source": {"kind": "schematic", "ref": "github.com/wuxx/icesugar schematic/iCESugar-v1.5.pdf"},
+      "user_notes": "Shared: pins 2 and 8 with the UART, pins 1 and 7 with the micro-USB port."
+    },
+    "pmod2": {
+      "type": "pmod",
+      "pins": ["46", "44", "42", "37", "45", "43", "38", "36"],
+      "source": {"kind": "schematic", "ref": "github.com/wuxx/icesugar schematic/iCESugar-v1.5.pdf"}
+    },
+    "pmod3": {
+      "type": "pmod",
+      "pins": ["34", "31", "27", "25", "32", "28", "26", "23"],
+      "source": {"kind": "schematic", "ref": "github.com/wuxx/icesugar schematic/iCESugar-v1.5.pdf"}
+    },
+    "pmod4": {
+      "type": "header",
+      "pins": ["21", "20", "19", "18", null, null],
+      "source": {"kind": "maker", "ref": "github.com/wuxx/icesugar src/common/io.pcf"},
+      "user_notes": "A 6-pin PMOD: 4 signals, then GND and 3.3 V. Shared with the DIP switches: turn them off to use it."
+    },
+    "unclassified": {
+      "type": "unclassified",
+      "pins": ["9", "10", "11", "12", "13", "14", "15", "16", "17"],
+      "source": {"kind": "schematic", "ref": "github.com/wuxx/icesugar schematic/iCESugar-v1.5.pdf"},
+      "ai_hints": [
+        "SPI flash, a W25Q64 (8 MB): CS 16, SCK 15, FPGA out 14, FPGA in 17, WP 12, HOLD 13.",
+        "Micro-USB port data: D+ on 10, D- on 9; 11 drives the 1.5k pull-up on D+."
       ]
     }
   }
