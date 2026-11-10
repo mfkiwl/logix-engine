@@ -236,7 +236,7 @@ async function build(projectDir) {
 
   try {
     await vscode.window.withProgress(
-      { location: vscode.ProgressLocation.Notification, title: "Logix build", cancellable: true },
+      { location: vscode.ProgressLocation.Notification, title: "Logix VSCode build", cancellable: true },
       async (progress, token) => {
         // Cancelling in VS Code cancels the engine operation.
         const abort = new AbortController();

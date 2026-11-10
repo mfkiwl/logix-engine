@@ -25,7 +25,7 @@ The Logix Engine is a program, `logix-engine`, that a host runs and talks to. It
 
 **Versions.** Two versions matter, and the tool API has no separate version of its own:
 
-- **MCP protocol version**, agreed in the `initialize` handshake. It covers the message format, not the Logix tools, and MCP client libraries handle it.
+- **MCP protocol version**, agreed in the `initialize` handshake. It covers the message format, not the Logix Engine tools, and MCP client libraries handle it.
 - **Logix Engine version**, `engine_version` from the `get_engine_info` tool, a date tag (`yyyy-mm-dd`). It also versions the tool API. After the first release, changes only add tools and fields.
 
 To check, a hardcoded client calls `get_engine_info` right after the handshake and checks `engine_version` against the versions it supports, by its own rule, such as a range or a list of tested releases (date tags compare correctly as plain strings). If the version isn't supported, the client calls no other tools and tells the user what it needs (see Start up under Recipes). An AI agent needs no check, since it reads the current tools from `tools/list`.

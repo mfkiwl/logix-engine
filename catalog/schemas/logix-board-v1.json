@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://www.openlogix.org/schemas/logix-board-v1.json",
-  "title": "Logix board",
+  "title": "Logix Catalog board",
   "description": "One board of Logix Catalog (www.openlogix.org/catalog/): its file, boards/<id>.json.",
   "$ref": "#/$defs/BoardFields",
   "properties": {

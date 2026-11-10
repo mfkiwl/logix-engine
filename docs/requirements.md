@@ -8,7 +8,7 @@ Draft requirements for the engine. [Architecture](architecture.md), [Tool API](t
 
 | Term | Definition |
 | --- | --- |
-| Engine | Short for Logix FPGA Engine. The single component this document specifies. It performs FPGA operations on behalf of its hosts |
+| Engine | Short for Logix Engine. The single component this document specifies. It performs FPGA operations on behalf of its hosts |
 | Host | The program that launches the engine as a child process on the same computer, shares folders with it and talks to it over MCP. A host is either a local frontend or the network adapter |
 | Frontend | A program or workflow that people use to do FPGA work. Examples include IDEs, CLI tools, AI agents, browser apps, and test or automation scripts and workflows. Most frontends are also hosts, but remote frontends, such as browser apps, are not: they reach the engine through the network adapter, which is the host |
 | Network adapter | An optional host that relays requests from remote frontends, such as browser apps, to the engine. It typically handles auth and file transfer |
@@ -115,20 +115,20 @@ The engine provides the core FPGA operations that frontends build on. The table 
 
 ## Reference hosts
 
-Logix's own frontends, starting with Logix IDE, and other open source FPGA tools, such as Apio and IceStudio, must each be implementable as a host of the engine, using the engine's operations instead of their own toolchain handling. These reference hosts validate the engine's interface. The Required capabilities section lists what the engine offers them all; Table 6 lists what graphical and IDE hosts need beyond that.
+Open Logix's own frontends, starting with Logix IDE, and other open source FPGA tools, such as Apio and IceStudio, must each be implementable as a host of the engine, using the engine's operations instead of their own toolchain handling. These reference hosts validate the engine's interface. The Required capabilities section lists what the engine offers them all; Table 6 lists what graphical and IDE hosts need beyond that.
 
 **Table 6.** Requirements from graphical and IDE hosts
 
 | Area | The engine must support | Needed by |
 | --- | --- | --- |
-| Structured diagnostics | Errors and warnings as data, with file, line, column and severity, so a host can highlight them in its editor or on its graphical blocks | IceStudio, Logix |
-| Progress and cancellation | Reporting progress during long operations, and stopping an operation when the host cancels it | IceStudio, Logix |
-| Results as data | Resource utilization, timing and test results as structured data, not only as text reports | IceStudio, Logix |
+| Structured diagnostics | Errors and warnings as data, with file, line, column and severity, so a host can highlight them in its editor or on its graphical blocks | IceStudio, Logix IDE |
+| Progress and cancellation | Reporting progress during long operations, and stopping an operation when the host cancels it | IceStudio, Logix IDE |
+| Results as data | Resource utilization, timing and test results as structured data, not only as text reports | IceStudio, Logix IDE |
 | Board pinouts | Each board's pins and their names in the catalog, so a graphical host can let users pick pins | IceStudio |
-| Setup from a GUI | Downloading and updating toolchain packages, and installing drivers, with progress reporting, without a terminal | IceStudio, Logix |
-| Bundled engine | A host shipping a specific engine version, with its own engine folder | IceStudio, Logix |
-| Packaged tools for hosts | Letting local hosts run packaged tools themselves, such as the Verible language server for live checks in an editor. An engine request returns the tool's command and environment, so hosts never depend on the engine folder's layout | Logix |
-| Parallel work | Running a check while a build is in progress, met by the host running a second engine instance | Logix (to confirm) |
+| Setup from a GUI | Downloading and updating toolchain packages, and installing drivers, with progress reporting, without a terminal | IceStudio, Logix IDE |
+| Bundled engine | A host shipping a specific engine version, with its own engine folder | IceStudio, Logix IDE |
+| Packaged tools for hosts | Letting local hosts run packaged tools themselves, such as the Verible language server for live checks in an editor. An engine request returns the tool's command and environment, so hosts never depend on the engine folder's layout | Logix IDE |
+| Parallel work | Running a check while a build is in progress, met by the host running a second engine instance | Logix IDE (to confirm) |
 
 **AI agents as hosts.** A generic MCP client, such as an AI coding agent, must be able to act as the host itself, with no frontend. It launches the engine with an engine folder and needs nothing else. It learns the tools from their names, descriptions and input schemas alone, and acts on the structured errors and suggested actions. This means every tool and field needs a clear, self-contained description.
 
@@ -196,7 +196,7 @@ Hosts interact with the engine in the following ways.
 | Progress and logs | During long operations, the engine reports progress, output and errors as they happen. In particular, the output of the tools it runs reaches the host line by line while the tools run, so a host can show a live log, such as in Logix IDE's console, instead of a dump at the end of each operation |
 | Shared files | The host owns the source files and the engine reads them. The engine writes generated artifacts, such as bitstreams, reports and waveforms, to the build folder the host specifies |
 | Deployment | The host's deployment includes the engine, so users install only the host |
-| Local engine (a recommendation for hosts) | By default a host runs only the GitHub package of the engine release it pins. For Logix developers, users they guide, and manual and automated testing of Logix components, Open Logix's frontends follow one convention to run another engine binary, such as one built from a local clone: the environment variable `LOGIX_DEV_ENGINE_BINARY`, the path to a `logix-engine` executable, honored in every build, with its own engine folder, shown for the whole session, and an error for a value that isn't an executable file. The engine doesn't read it; the full rule is in the website repo's `CLAUDE.md` (shared Open Logix rules) |
+| Local engine (a recommendation for hosts) | By default a host runs only the GitHub package of the engine release it pins. For Open Logix developers, users they guide, and manual and automated testing of Open Logix components, Open Logix's frontends follow one convention to run another engine binary, such as one built from a local clone: the environment variable `LOGIX_DEV_ENGINE_BINARY`, the path to a `logix-engine` executable, honored in every build, with its own engine folder, shown for the whole session, and an error for a value that isn't an executable file. The engine doesn't read it; the full rule is in the website repo's `CLAUDE.md` (shared Open Logix rules) |
 
 ## Interaction with the file system
 
@@ -409,7 +409,7 @@ The 109 boards of the original board list split by FPGA family roughly as iCE40 
 | Milestone 3. Windows | Logix Engine and Logix IDE on Windows x64: engine releases with the toolchain packages for Windows, the drivers boards need there (Drivers, under Boards and board variants), and a Logix IDE installer that needs nothing else (the WebView2 runtime included). CI builds and tests both on Windows | Logix IDE's Windows release runs on the engine alone and keeps every feature in Table 15, with the same boards as on macOS. The test suites pass on Windows, and every programmer programs a board on Windows, tested on hardware where a board is available |
 | Milestone 4. Linux | Logix Engine and Logix IDE on Linux x64, the same way: engine releases for Linux, the udev rules that give users access to their boards (Linux permissions, under Device selection), and a Logix IDE package that works out of the box (AppImage, and `.deb` with dependencies the package manager resolves). CI builds and tests both on Linux | As for Milestone 3, on Linux |
 | 5. More boards | The remaining boards and programmers as decided in the open questions, and the acceptance criteria above | The acceptance criteria are met |
-| 6. More hosts | More Logix frontends, such as Logix CLI and Logix Studio, and other tools as hosts, with the requirements in Table 6 | Each runs its core flows on the engine |
+| 6. More hosts | More Open Logix frontends, such as Logix CLI and Logix Studio, and other tools as hosts, with the requirements in Table 6 | Each runs its core flows on the engine |
 | Later | Network adapter, on-board verification, possibly VHDL | Decided when they come up |
 
 Milestone 1 tested the interface with an AI coding agent as the host, before any frontend used the engine. Milestone 2 makes Logix IDE the first frontend on the engine, on macOS. Milestones 3 and 4 bring both to Windows and then Linux (decided 2026-11-10). Other hosts follow.
@@ -474,7 +474,7 @@ The project relies heavily on AI-generated tests to catch regressions, since hum
 - **Testing.** GitHub Actions workflows run the engine's test suite on every supported platform for every change.
 - **Releases.** Workflows build the per-platform engine binaries and publish them as GitHub releases with date tags, like the package repos' daily releases.
 - **Hardware tests.** GitHub-hosted runners cannot reach FPGA boards, so the hardware-in-the-loop tests run separately on a lab computer with boards attached. Whether that computer runs as a self-hosted GitHub runner is still open.
-- **License.** The engine's own code is licensed under MIT or Apache-2.0, at the user's option, like every Logix repo: MIT lets GPL-2.0 projects use it, and Apache-2.0 includes an explicit patent grant. The packaged tools keep their own licenses.
+- **License.** The engine's own code is licensed under MIT or Apache-2.0, at the user's option, like every Open Logix repo: MIT lets GPL-2.0 projects use it, and Apache-2.0 includes an explicit patent grant. The packaged tools keep their own licenses.
 
 ## Open questions
 

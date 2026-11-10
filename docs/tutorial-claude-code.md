@@ -121,7 +121,7 @@ Ask what the engine can do:
 **Claude Code:**
 
 ```text
-What can the Logix engine do? Keep it short.
+What can Logix Engine do? Keep it short.
 ```
 
 Claude lists the engine's tools: lint, build, test, simulate, program the

@@ -3,7 +3,7 @@
 # the engine connected as an MCP server, so you can prompt it:
 #
 #   scripts/run-in-grok.sh              # then type prompts
-#   scripts/run-in-grok.sh "What version is the Logix engine?"
+#   scripts/run-in-grok.sh "What version is Logix Engine?"
 #
 # The same as scripts/run-in-claude.sh, with Grok as the host. Arguments are
 # passed to grok. Grok runs in a playground folder, ~/.logix-dev/playground
