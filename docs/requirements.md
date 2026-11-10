@@ -398,7 +398,7 @@ The criteria and phases below are initial targets, not fixed commitments. They m
 - **All platforms:** the test suite passes on every supported platform.
 - **Performance:** the targets in the [Performance](#performance) section are met.
 
-The 109 boards of the original board list split by architecture roughly as iCE40 about 42, ECP5 about 36, Xilinx 7 Series about 23 and Gowin about 9. This suggests the following phases.
+The 109 boards of the original board list split by FPGA family roughly as iCE40 about 42, ECP5 about 36, Xilinx 7 Series about 23 and Gowin about 9. This suggests the following phases.
 
 **Table 14.** Proposed phases
 
@@ -406,11 +406,13 @@ The 109 boards of the original board list split by architecture roughly as iCE40
 | --- | --- | --- |
 | Milestone 1. Proof of concept (done 2026-10-29) | A proof of concept of the engine, built on the real design so it evolves into the full engine rather than being thrown away: MCP interface, automatic package download and versioning, read-only catalog, error model, iCE40 only, and seven tools: `get_engine_info`, `download_packages`, `get_catalog`, `build`, `clean_build`, `list_devices` and `program_board`. macOS only, with no Linux or Windows yet. GitHub workflows that build and test the engine. Developer scripts to run, build, clean and test it locally. The underlying tools come from existing open source toolchain packages | An AI coding agent, such as Claude Code, is the host, connected to the engine over MCP, with no frontend. From prompts alone, it changes or creates an iCE40 design, builds it and programs it on an Alhambra II board. Met on 2026-10-29 |
 | Milestone 2. Logix IDE on the engine | Everything Logix IDE offered before it moved to the engine, as listed in Table 15: lint, test and simulate with a waveform viewer, format, graph, live tool output, and every board Logix IDE offers today, across iCE40, ECP5, Gowin and Xilinx 7 Series, with the programmers they need. A board is dropped only for a very good reason, recorded in this document with the reason. macOS only, like Logix IDE's releases | Logix IDE's macOS release runs on the engine alone and keeps every feature in Table 15. Its board selector offers the same boards as before, apart from boards dropped for a recorded reason. Every toolchain builds and programs a board, tested on hardware where a board is available |
-| 3. More platforms and boards | Linux and Windows, the remaining boards and programmers as decided in the open questions, and the acceptance criteria above | The acceptance criteria are met |
-| 4. More hosts | More Logix frontends, such as Logix CLI and Logix Studio, and other tools as hosts, with the requirements in Table 6 | Each runs its core flows on the engine |
+| Milestone 3. Windows | Logix Engine and Logix IDE on Windows x64: engine releases with the toolchain packages for Windows, the drivers boards need there (Drivers, under Boards and board variants), and a Logix IDE installer that needs nothing else (the WebView2 runtime included). CI builds and tests both on Windows | Logix IDE's Windows release runs on the engine alone and keeps every feature in Table 15, with the same boards as on macOS. The test suites pass on Windows, and every programmer programs a board on Windows, tested on hardware where a board is available |
+| Milestone 4. Linux | Logix Engine and Logix IDE on Linux x64, the same way: engine releases for Linux, the udev rules that give users access to their boards (Linux permissions, under Device selection), and a Logix IDE package that works out of the box (AppImage, and `.deb` with dependencies the package manager resolves). CI builds and tests both on Linux | As for Milestone 3, on Linux |
+| 5. More boards | The remaining boards and programmers as decided in the open questions, and the acceptance criteria above | The acceptance criteria are met |
+| 6. More hosts | More Logix frontends, such as Logix CLI and Logix Studio, and other tools as hosts, with the requirements in Table 6 | Each runs its core flows on the engine |
 | Later | Network adapter, on-board verification, possibly VHDL | Decided when they come up |
 
-Milestone 1 tested the interface with an AI coding agent as the host, before any frontend used the engine. Milestone 2 makes Logix IDE the first frontend on the engine. Other hosts follow.
+Milestone 1 tested the interface with an AI coding agent as the host, before any frontend used the engine. Milestone 2 makes Logix IDE the first frontend on the engine, on macOS. Milestones 3 and 4 bring both to Windows and then Linux (decided 2026-11-10). Other hosts follow.
 
 **Table 15.** Logix IDE features that Milestone 2 must keep
 

@@ -1,4 +1,4 @@
-# Command line (Milestone 1)
+# Command line
 
 A host launches the engine as a child process on the same computer and talks MCP with it over stdin and stdout. This document defines the engine's command line. Like the [tool API](tool-api.md), it is part of the engine's interface: arguments are only ever added, never removed or changed in meaning.
 

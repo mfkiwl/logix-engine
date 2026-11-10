@@ -10,6 +10,7 @@ In development, macOS on Apple Silicon only.
 
 - **Milestone 1, done:** a proof of concept for iCE40 boards with seven tools: `get_engine_info`, `download_packages`, `get_catalog` (22 iCE40 boards), `build`, `clean_build`, `list_devices` and `program_board`. An AI agent, Claude Code, changed a design, built it and programmed an Alhambra II board through the engine alone.
 - **Milestone 2, next:** Logix IDE running on the engine, keeping every feature it has today: lint, test, simulate, format, graph, live tool output, and the same boards across the iCE40, ECP5, Gowin and Xilinx 7-series FPGA families. See [Acceptance and phasing](docs/requirements.md#acceptance-and-phasing).
+- **Then:** Milestone 3 brings the engine and Logix IDE to Windows, and Milestone 4 to Linux.
 
 Daily development builds are on the [Releases](https://github.com/openlogix/logix-engine/releases) page.
 
@@ -20,8 +21,8 @@ Daily development builds are on the [Releases](https://github.com/openlogix/logi
 | [Tutorial: FPGA design with Logix Engine and Claude Code](docs/tutorial-claude-code.md) | Step by step, from installing the engine to designing, testing and programming a board by prompts |
 | [Requirements](docs/requirements.md) | Goals and non-goals, supported platforms, required capabilities, file safety, versioning, error model, phasing and open questions |
 | [Architecture](docs/architecture.md) | The proposed design: components, technology choices, testing, distribution and host code examples |
-| [Tool API (Milestone 1)](docs/tool-api.md) | The MCP tools, their inputs, outputs and errors |
-| [Command line (Milestone 1)](docs/command-line.md) | Launch arguments and logging |
+| [Tool API](docs/tool-api.md) | The MCP tools, their inputs, outputs and errors |
+| [Command line](docs/command-line.md) | Launch arguments and logging |
 
 ## Development
 
