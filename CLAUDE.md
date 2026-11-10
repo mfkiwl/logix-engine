@@ -13,7 +13,7 @@ logix-engine is an open source FPGA engine: one Rust binary per platform that ex
 | [docs/tool-api.md](docs/tool-api.md) | Adding or changing a tool, field, error or progress report |
 | [docs/command-line.md](docs/command-line.md) | Changing launch arguments or logging |
 
-[docs/tutorial-claude-code.md](docs/tutorial-claude-code.md) is a step-by-step tutorial for people trying the engine with Claude Code (install, connect, then design, test, simulate and program the board by prompts). Keep its commands and prompts working when installation, the release package or the tools change; its style follows Logix IDE's user docs (numbered steps, short plain sentences, no emoji).
+[docs/tutorial-claude-code.md](docs/tutorial-claude-code.md) is a step-by-step tutorial for people trying the engine with Claude Code (install, connect, then design, test, simulate and program the board by prompts). Keep its commands and prompts working when installation, the release package or the tools change; its style follows Logix IDE's user docs (numbered steps, short plain sentences, no emoji), with each code block labeled **Terminal:** or **Claude Code:** and GitHub's colored callouts (`> [!TIP]`, `> [!NOTE]`, `> [!IMPORTANT]`) for side notes. It was reviewed as a Claude Doc on 2026-11-09; this file is now the only copy.
 
 ## Current scope: Milestone 2
 

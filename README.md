@@ -17,7 +17,7 @@ Daily development builds are on the [Releases](https://github.com/openlogix/logi
 
 | Document | What it covers |
 | --- | --- |
-| [Tutorial: design by prompts with Claude Code](docs/tutorial-claude-code.md) | Step by step, from installing the engine to designing, testing and programming a board by prompts |
+| [Tutorial: FPGA design with Logix Engine and Claude Code](docs/tutorial-claude-code.md) | Step by step, from installing the engine to designing, testing and programming a board by prompts |
 | [Requirements](docs/requirements.md) | Goals and non-goals, supported platforms, required capabilities, file safety, versioning, error model, phasing and open questions |
 | [Architecture](docs/architecture.md) | The proposed design: components, technology choices, testing, distribution and host code examples |
 | [Tool API (Milestone 1)](docs/tool-api.md) | The MCP tools, their inputs, outputs and errors |
