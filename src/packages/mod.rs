@@ -3,7 +3,7 @@
 //! Engine folder layout:
 //!
 //! - `packages/<name>/<version>/`: a downloaded package, with its download
-//!   record `logix-install.json`. Several versions can sit side by side.
+//!   record `logix-download.json`. Several versions can sit side by side.
 //! - `packages/<name>/.tmp-<version>-<pid>/`: a package being unpacked. It is
 //!   renamed to `<version>` only when complete, so a crash never leaves a
 //!   package that looks downloaded.
@@ -30,7 +30,7 @@ use crate::tools::get_engine_info::PackageStatus;
 use manifest::{Manifest, PackageFile, PackageSpec};
 
 /// The download record, written into a package folder when it is complete.
-pub const RECORD_FILE: &str = "logix-install.json";
+pub const RECORD_FILE: &str = "logix-download.json";
 
 /// Share of a package's progress taken by the download. Unpacking takes
 /// the rest.

@@ -290,7 +290,7 @@ Download progress is one phase per package, such as "Downloading oss-cad-suite".
 
 | Path in the engine folder | Contents |
 | --- | --- |
-| `packages/<name>/<version>/` | A downloaded package, such as `packages/oss-cad-suite/2026-10-22/`. Several versions can sit side by side. Its download record, `logix-install.json`, is written last |
+| `packages/<name>/<version>/` | A downloaded package, such as `packages/oss-cad-suite/2026-10-22/`. Several versions can sit side by side. Its download record, `logix-download.json`, is written last |
 | `downloads/` | Partial downloads, deleted when a download ends |
 | `locks/` | One lock file per package, held while downloading it |
 | `logs/` | Log files, described in [Command line](command-line.md) |
