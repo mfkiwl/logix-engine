@@ -1,7 +1,8 @@
 # The Logix Engine documentation, published to GitHub Pages by
 # .github/workflows/publish-docs.yaml at www.openlogix.org/logix-engine/.
 # Pages are in docs/.
-site_name: Logix Engine
+# "Docs" in the name: this is the docs, not the product's main page.
+site_name: Logix Engine Docs
 site_description: 'One open engine to build and test FPGA designs and program boards, for any IDE or AI agent.'
 site_url: https://openlogix.github.io/logix-engine/
 repo_url: https://github.com/openlogix/logix-engine

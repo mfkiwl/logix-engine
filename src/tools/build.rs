@@ -127,7 +127,8 @@ pub struct BuildOutput {
     /// rounded to 0.01. A clock that misses its target isn't an error:
     /// compare these with the design's needs.
     pub clocks_summary: Vec<crate::build::summary::ClockSummary>,
-    /// The report for people, a line each: the main resource always, the
+    /// The report for people, the preferred way to show a build's resource
+    /// use to people, a line each: the main resource always, the
     /// others when used, then each clock, such as "The design uses 27 of
     /// 7680 logic cells (1%)." and "Maximum clock speed: 194.4 MHz
     /// (sys_clk).". Show it as is; its wording can change in any version.

@@ -1,4 +1,6 @@
-# logix-engine
+# Logix Engine
+
+**[Main page](https://www.openlogix.org/engine/)** · [Docs](https://www.openlogix.org/logix-engine/) · GitHub (here)
 
 One open engine to build and test FPGA designs and program boards, for any IDE or AI agent.
 
@@ -16,7 +18,7 @@ Daily development builds are on the [Releases](https://github.com/openlogix/logi
 
 ## Documentation
 
-The docs are also published as a website: [www.openlogix.org/logix-engine](https://www.openlogix.org/logix-engine/).
+The same docs are published at [www.openlogix.org/logix-engine](https://www.openlogix.org/logix-engine/).
 
 | Document | What it covers |
 | --- | --- |

@@ -34,10 +34,11 @@ pub struct Resource {
     /// computed or isn't valid: available is 0, or used is more than
     /// available (nextpnr data the engine doesn't trust, as Apio's report).
     pub percent: Option<f64>,
-    /// The share for showing to people, in whole percent: "0%" when none is
-    /// used, otherwise rounded up (something used is never "0%"), and
-    /// "100%" only when all are used ("99%" at most before that), such as
-    /// "1%" for 27 of 7680. None when percent is.
+    /// The share for showing to people, in whole percent: the preferred
+    /// way to show the share to people. "0%" is guaranteed only when none
+    /// is used and "100%" only when all are used; anything else is rounded
+    /// up ("1%" for 27 of 7680, "99%" at most before all are used). None
+    /// when percent is.
     pub display_percent: Option<String>,
 }
 

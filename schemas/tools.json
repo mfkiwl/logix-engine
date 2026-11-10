@@ -3709,7 +3709,7 @@
           }
         },
         "report": {
-          "description": "The report for people, a line each: the main resource always, the\nothers when used, then each clock, such as \"The design uses 27 of\n7680 logic cells (1%).\" and \"Maximum clock speed: 194.4 MHz\n(sys_clk).\". Show it as is; its wording can change in any version.",
+          "description": "The report for people, the preferred way to show a build's resource\nuse to people, a line each: the main resource always, the\nothers when used, then each clock, such as \"The design uses 27 of\n7680 logic cells (1%).\" and \"Maximum clock speed: 194.4 MHz\n(sys_clk).\". Show it as is; its wording can change in any version.",
           "type": "string"
         },
         "report_summary": {
@@ -3797,7 +3797,7 @@
               ]
             },
             "display_percent": {
-              "description": "The share for showing to people, in whole percent: \"0%\" when none is\nused, otherwise rounded up (something used is never \"0%\"), and\n\"100%\" only when all are used (\"99%\" at most before that), such as\n\"1%\" for 27 of 7680. None when percent is.",
+              "description": "The share for showing to people, in whole percent: the preferred\nway to show the share to people. \"0%\" is guaranteed only when none\nis used and \"100%\" only when all are used; anything else is rounded\nup (\"1%\" for 27 of 7680, \"99%\" at most before all are used). None\nwhen percent is.",
               "type": [
                 "string",
                 "null"
