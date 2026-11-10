@@ -430,7 +430,9 @@ Milestone 1 tested the interface with an AI coding agent as the host, before any
 | First start | `download_packages`, with progress |
 | Stop | Cancellation of every tool |
 
-**Still to do for Milestone 2 (added 2026-11-10).** Besides Table 15 and the hardware tests in its "Done when":
+**Hardware tests (done 2026-11-10).** All four toolchains (iCE40, ECP5, Gowin and Xilinx 7 Series) built a design and programmed a board through Logix IDE on the engine, tested by the user on real boards. Table 15's features are all in Logix IDE.
+
+**Still to do for Milestone 2 (added 2026-11-10).** Besides Table 15 and the hardware tests above:
 
 - **Newer toolchain packages.** Repin the packages (`src/packages/manifest.json`) to the newest Apio packages, those of Apio 1.7.x, once they're released. They should fix the Xilinx clock names in the build report: today `clocks_summary` names a Xilinx clock after the net synthesis made up, such as `o100`, not the design's signal, such as `sys_clk` (see Open questions). Check the build report on a Xilinx board after the repin.
 - **A better design diagram.** Explore better ways to show the design graph: the `graph` tool's diagram, drawn by yosys `show` with Graphviz's dot, is crude. Compare the options (such as netlistsvg's schematic-style drawing, ELK layouts, or an interactive view in the frontend), decide with the user, then change the engine's `graph` tool, the IDE's Diagram window, or both.
