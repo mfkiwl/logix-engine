@@ -24,14 +24,16 @@ project.
 ## What you need
 
 - An Apple Mac computer with Apple Silicon (M1 or later).
-- Claude Code, signed in to a Claude account (step 1).
+- Claude Code, installed and signed in to your Claude account, so that
+  `claude` starts it in a terminal. If it isn't installed yet, follow the
+  official [Claude Code installation instructions](https://code.claude.com/docs/en/setup).
 - An FPGA board from the engine's catalog, and its USB cable. The examples
   use the **Alhambra II**, which has 8 LEDs. Any board in the catalog works:
   replace "Alhambra II" with your board in the prompts, and Claude adapts
   the designs to it.
 
 > [!NOTE]
-> Without a board, you can still do every step but 10.
+> Without a board, you can still do every step but 9.
 
 Each text block is labeled with where it goes:
 
@@ -49,34 +51,7 @@ A prompt.
 
 Type the prompts as they are, or in your own words or language.
 
-## 1. Install Claude Code
-
-Check whether Claude Code is installed:
-
-**Terminal:**
-
-```sh
-claude
-```
-
-- **It starts:** Claude Code is installed. Type `/exit` and go to step 2.
-- **"command not found", and you have Homebrew:** install it with Homebrew.
-- **"command not found", and no Homebrew:** follow the
-  [Claude Code install instructions](https://code.claude.com/docs/en/setup),
-  then come back.
-
-To install with Homebrew:
-
-**Terminal:**
-
-```sh
-brew install --cask claude-code
-```
-
-Then run `claude`, sign in to your Claude account when it asks, and type
-`/exit`.
-
-## 2. Install the engine
+## 1. Install the engine
 
 Open the engine's [Releases](https://github.com/openlogix/logix-engine/releases)
 page and download the newest `logix-engine-darwin-arm64-<date>.tgz` to your
@@ -106,7 +81,7 @@ Check that it runs:
 
 It prints the engine's version, a date such as `2026-11-09`.
 
-## 3. Connect Claude Code to the engine
+## 2. Connect Claude Code to the engine
 
 Register the engine with Claude Code once, for every folder:
 
@@ -122,7 +97,7 @@ claude mcp list
 The list shows `logix-engine` as connected. The engine keeps the FPGA tools
 it downloads, and its logs, in its engine folder, `~/.logix-dev/engine`.
 
-## 4. Create the project
+## 3. Create the project
 
 Make a folder for the tutorial's project. You do this only once:
 
@@ -132,7 +107,7 @@ Make a folder for the tutorial's project. You do this only once:
 mkdir -p ~/logix-tutorial
 ```
 
-## 5. Start Claude Code
+## 4. Start Claude Code
 
 **Terminal:**
 
@@ -167,11 +142,11 @@ Download the FPGA tools the engine needs, and show me the progress.
 ```
 
 > [!NOTE]
-> The tools are downloaded into the engine folder you set in step 3,
+> The tools are downloaded into the engine folder you set in step 2,
 > `~/.logix-dev/engine`, and don't change your computer's setup. This takes
 > a minute or two, only the first time.
 
-## 6. Choose your board
+## 5. Choose your board
 
 **Claude Code:**
 
@@ -198,7 +173,7 @@ To see how two boards differ:
 Compare the Alhambra II with the iCEstick.
 ```
 
-## 7. Blink an LED
+## 6. Blink an LED
 
 **Claude Code:**
 
@@ -216,7 +191,7 @@ The build ends with a bitstream in the `_build/` folder in the project, and
 a short report: how much of the FPGA the design uses, and the fastest clock
 it could run at.
 
-## 8. Test it
+## 7. Test it
 
 On an FPGA, you test before you program the board. Ask for a testbench, a
 simulation that checks what the design does:
@@ -238,7 +213,7 @@ Change the testbench to expect the LED to turn on one clock cycle too early. Run
 The engine reports the failed check at its line and simulation time, and
 Claude explains what went wrong.
 
-## 9. See the signals
+## 8. See the signals
 
 **Claude Code:**
 
@@ -249,7 +224,7 @@ Simulate the testbench and open the waveforms in GTKWave.
 GTKWave opens with the clock, the counter and the LED. Zoom in to watch the
 counter count and the LED switch.
 
-## 10. Program the board
+## 9. Program the board
 
 Connect the board with its USB cable.
 
@@ -271,7 +246,7 @@ Program the board with the design.
 LED 0 blinks, about once a second: a design that went from a sentence to
 real hardware.
 
-## 11. Change it with prompts
+## 10. Change it with prompts
 
 From here on, say what you want, and Claude changes the design in your
 project folder, tests it and programs the board. Try these one at a time,
@@ -313,7 +288,7 @@ Put the sweep in its own module with a speed parameter, give it its own testbenc
 > If the board does something you didn't expect, say what you see, such as
 > "the LEDs are lit when they should be off", and let Claude find out why.
 
-## 12. Ask questions
+## 11. Ask questions
 
 Claude knows your design and the engine's reports, so ask about either:
 
@@ -347,7 +322,7 @@ Make a diagram of the design and open it.
 Why did you choose that counter width? What would happen with a 20-bit counter?
 ```
 
-## 13. When things go wrong
+## 12. When things go wrong
 
 The engine reports problems as data, with their file and line, so Claude can
 fix them:
@@ -381,7 +356,7 @@ Program the board with the design.
 Claude reports that the board isn't connected, and what to check. Connect it
 again and ask again.
 
-## 14. Keep going
+## 13. Keep going
 
 Some ideas, each one prompt:
 
