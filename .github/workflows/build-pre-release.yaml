@@ -232,7 +232,7 @@ jobs:
           3. Check it runs: \`~/Downloads/logix-engine/logix-engine --version\`.
           4. To try it with an MCP client such as Claude Code:
              \`\`\`
-             claude mcp add logix-engine -- ~/Downloads/logix-engine/logix-engine --engine-folder ~/.logix-dev/engine
+             claude mcp add logix-engine -- ~/Downloads/logix-engine/logix-engine --engine-folder ~/.logix/claude-code/engine
              \`\`\`
 
           The engine keeps the FPGA tools it downloads and its logs in the

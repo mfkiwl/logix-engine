@@ -26,7 +26,7 @@ logix-engine --engine-folder /Users/user/.myhost/engine --log-level debug
 
 ## Logs
 
-- **Location.** The engine always writes a log file in the `logs` subfolder of the engine folder, such as `~/.logix/engine/logs`. No argument is needed, and since the engine folder is engine-owned, no new file rule is needed either.
+- **Location.** The engine always writes a log file in the `logs` subfolder of the engine folder, such as `~/.logix/ide/engine/logs`. No argument is needed, and since the engine folder is engine-owned, no new file rule is needed either.
 - **One file per process.** Each instance writes its own file, named with the date and process ID, such as `20261028-4123.log`, so instances sharing an engine folder don't mix their lines.
 - **Cleanup.** The engine deletes old log files automatically, keeping the last 20 files and at most 50 MB.
 - **stderr.** Warnings and errors also go to stderr. Hosts such as Claude Code show an MCP server's stderr in their own logs, which helps when the engine fails at startup.

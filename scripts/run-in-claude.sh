@@ -6,12 +6,12 @@
 #   scripts/run-in-claude.sh "What version is Logix Engine?"
 #
 # Arguments are passed to claude. Claude runs in a playground folder,
-# ~/.logix-dev/playground (or LOGIX_ENGINE_DEV_PLAYGROUND), where it can create
+# ~/.logix/engine-dev/playground (or LOGIX_ENGINE_DEV_PLAYGROUND), where it can create
 # designs, not in this repo. The engine uses the engine folder
-# ~/.logix-dev/engine (or LOGIX_ENGINE_DEV_FOLDER), and logs at LOGIX_ENGINE_DEV_LOG_LEVEL
+# ~/.logix/engine-dev/engine (or LOGIX_ENGINE_DEV_FOLDER), and logs at LOGIX_ENGINE_DEV_LOG_LEVEL
 # (info by default; debug also logs every program's output). Only the
 # engine's MCP server is loaded, and its tools are allowed without asking.
-# Each run starts the freshly built engine, copied to ~/.logix-dev/bin so
+# Each run starts the freshly built engine, copied to ~/.logix/engine-dev/bin so
 # the session doesn't see this repo's path.
 #
 # For a reproducible starting point, the session loads none of your user
@@ -43,7 +43,7 @@
 #
 #     --strict-mcp-config --mcp-config '{"mcpServers": {"logix-engine":
 #       {"command": "<repo>/target/release/logix-engine",
-#        "args": ["--engine-folder", "<home>/.logix-dev/engine"]}}}'
+#        "args": ["--engine-folder", "<home>/.logix/engine-dev/engine"]}}}'
 #     --allowedTools mcp__logix-engine
 #
 #   To have the engine in every claude session instead, register it once.
@@ -62,11 +62,11 @@ source scripts/_rust-env.sh
 source scripts/_test-session.sh
 
 repo="$(pwd)"
-engine_folder="${LOGIX_ENGINE_DEV_FOLDER:-$HOME/.logix-dev/engine}"
+engine_folder="${LOGIX_ENGINE_DEV_FOLDER:-$HOME/.logix/engine-dev/engine}"
 # The engine log level: error, warn, info (default) or debug, which also logs
 # every program's output, such as a programmer's.
 log_level="${LOGIX_ENGINE_DEV_LOG_LEVEL:-info}"
-playground="${LOGIX_ENGINE_DEV_PLAYGROUND:-$HOME/.logix-dev/playground}"
+playground="${LOGIX_ENGINE_DEV_PLAYGROUND:-$HOME/.logix/engine-dev/playground}"
 
 # Find claude.
 claude_bin="$(command -v claude || true)"

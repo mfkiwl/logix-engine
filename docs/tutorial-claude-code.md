@@ -89,13 +89,13 @@ Register the engine with Claude Code once, for every folder:
 
 ```sh
 ENGINE=~/Downloads/logix-engine/logix-engine
-ENGINE_HOME=~/.logix-dev/engine
+ENGINE_HOME=~/.logix/claude-code/engine
 claude mcp add -s user logix-engine -- $ENGINE --engine-folder $ENGINE_HOME
 claude mcp list
 ```
 
 The list shows `logix-engine` as connected. The engine keeps the FPGA tools
-it downloads, and its logs, in its engine folder, `~/.logix-dev/engine`.
+it downloads, and its logs, in its engine folder, `~/.logix/claude-code/engine`.
 
 ## 3. Create the project
 
@@ -143,7 +143,7 @@ Download the FPGA tools the engine needs, and show me the progress.
 
 > [!NOTE]
 > The tools are downloaded into the engine folder you set in step 2,
-> `~/.logix-dev/engine`, and don't change your computer's setup. This takes
+> `~/.logix/claude-code/engine`, and don't change your computer's setup. This takes
 > a minute or two, only the first time.
 
 ## 5. Choose your board
@@ -373,7 +373,7 @@ Start each new design in its own folder, and run `claude` there.
 - To disconnect the engine from Claude Code:
   `claude mcp remove --scope user logix-engine`
 - To remove the engine, delete `~/Downloads/logix-engine` and its engine
-  folder, `~/.logix-dev/engine`.
+  folder, `~/.logix/claude-code/engine`.
 
 ## Learn more
 

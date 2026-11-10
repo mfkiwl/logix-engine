@@ -232,10 +232,13 @@ mod tests {
             engine_version: "2026-11-08".into(),
             protocol_versions: vec!["2025-11-25".into()],
             platform: "darwin-arm64".into(),
-            engine_folder: "/Users/you/.logix/engine".into(),
+            engine_folder: "/Users/you/.logix/ide/engine".into(),
             auto_download: true,
-            command_line: vec!["--engine-folder".into(), "/Users/you/.logix/engine".into()],
-            log_file: "/Users/you/.logix/engine/logs/20261108-1.log".into(),
+            command_line: vec![
+                "--engine-folder".into(),
+                "/Users/you/.logix/ide/engine".into(),
+            ],
+            log_file: "/Users/you/.logix/ide/engine/logs/20261108-1.log".into(),
             packages: vec![
                 PackageInfo {
                     name: "oss-cad-suite".into(),
@@ -263,10 +266,10 @@ mod tests {
             info.report,
             "Logix Engine 2026-11-08
 Platform: darwin-arm64
-Engine folder: /Users/you/.logix/engine
-Log file: /Users/you/.logix/engine/logs/20261108-1.log
+Engine folder: /Users/you/.logix/ide/engine
+Log file: /Users/you/.logix/ide/engine/logs/20261108-1.log
 Automatic package download: on
-Command line: --engine-folder /Users/you/.logix/engine
+Command line: --engine-folder /Users/you/.logix/ide/engine
 Packages:
   oss-cad-suite  2026-11-20  ready
   verible        2026-10-22  missing
