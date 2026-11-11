@@ -148,7 +148,9 @@ fn yosys_quote(path: &Path) -> String {
 
 /// Yosys's arguments: the FPGA's primitives read as black boxes (so their
 /// ports have directions), then the design, as written, without synthesis;
-/// only the design's own modules are written.
+/// only the design's own modules are written. Run in the source folder, with
+/// the files as the request names them, so the names yosys gives cells
+/// (`$main.v:13$add$5`) and source places hold no folder.
 pub fn yosys_args(req: &DiagramRequest, libraries: &[PathBuf]) -> Vec<OsString> {
     let libs: String = libraries
         .iter()
@@ -157,15 +159,17 @@ pub fn yosys_args(req: &DiagramRequest, libraries: &[PathBuf]) -> Vec<OsString> 
     let files: Vec<String> = req
         .source_files
         .iter()
-        .map(|f| yosys_quote(&req.source_folder.join(f)))
+        .map(|f| yosys_quote(Path::new(f)))
         .collect();
+    let netlist = req.build_folder.join(FOLDER).join(NETLIST);
     let mut args: Vec<OsString> = vec![
         "-p".into(),
         format!(
             "{libs}read_verilog -sv {}; hierarchy -top {}; proc; opt -full; clean -purge; \
-             select =A:blackbox =A:whitebox %u %n; write_json -compat-int -selected {FOLDER}/{NETLIST}",
+             select =A:blackbox =A:whitebox %u %n; write_json -compat-int -selected {}",
             files.join(" "),
-            req.top_module
+            req.top_module,
+            yosys_quote(&netlist)
         )
         .into(),
         "-DSYNTHESIZE".into(),
@@ -440,7 +444,7 @@ pub async fn diagram_with(
         "yosys",
         bin,
         &yosys_args(req, &libraries),
-        &req.build_folder,
+        &req.source_folder,
         call,
     )
     .await?;
@@ -614,10 +618,10 @@ mod tests {
             [
                 "-p",
                 "read_verilog -lib \"/pkg/share/yosys/ice40/cells_sim.v\"; \
-                 read_verilog -sv \"/p/my proj/main.v\" \"/p/my proj/rtl/uart.sv\"; \
+                 read_verilog -sv \"main.v\" \"rtl/uart.sv\"; \
                  hierarchy -top main; proc; opt -full; clean -purge; \
                  select =A:blackbox =A:whitebox %u %n; \
-                 write_json -compat-int -selected diagram/netlist.json",
+                 write_json -compat-int -selected \"/p/my proj/_build/diagram/netlist.json\"",
                 "-DSYNTHESIZE",
                 "-DFAST=",
                 "-DWIDTH=8",

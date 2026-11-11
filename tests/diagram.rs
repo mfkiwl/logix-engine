@@ -127,6 +127,11 @@ async fn diagram_draws_the_design() {
         "{svg}"
     );
 
+    // No folder in what yosys names: cells are named after their file as
+    // the request gave it.
+    assert!(!svg.contains(&src.display().to_string()), "{svg}");
+    assert!(svg.contains(r#"data-block="$main.v:"#), "{svg}");
+
     // The model: every block with its source line.
     let model = model(&src);
     assert_eq!(model["top"], "main");
@@ -150,8 +155,9 @@ async fn diagram_draws_the_design() {
     assert_eq!(tools, ["yosys"]);
     let script = &out.commands[0].args[2];
     assert!(script.starts_with("read_verilog -lib \""), "{script}");
+    assert!(script.contains("read_verilog -sv \"main.v\";"), "{script}");
     assert!(
-        script.ends_with("write_json -compat-int -selected diagram/netlist.json"),
+        script.ends_with("/_build/diagram/netlist.json\""),
         "{script}"
     );
     std::fs::remove_file(src.join("_build/diagram/netlist.json")).unwrap();
