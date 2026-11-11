@@ -19,9 +19,17 @@ use tokio::process::Command;
 
 const ENGINE: &str = env!("CARGO_BIN_EXE_logix-engine");
 
+/// Starts the engine on the repo's catalog/ copy (LOGIX_ENGINE_DEV_CATALOG_FOLDER),
+/// so tools that read boards need no download.
 async fn start(engine_folder: &Path, extra: &[&str]) -> RunningService<RoleClient, ()> {
     let mut cmd = Command::new(ENGINE);
-    cmd.arg("--engine-folder").arg(engine_folder).args(extra);
+    cmd.arg("--engine-folder")
+        .arg(engine_folder)
+        .args(extra)
+        .env(
+            logix_engine::catalog::DEV_CATALOG_VAR,
+            logix_engine::catalog::test_copy_folder(),
+        );
     let transport = TokioChildProcess::new(cmd).expect("launch the engine");
     ().serve(transport).await.expect("start an MCP session")
 }
@@ -78,7 +86,8 @@ async fn get_engine_info_reports_the_launch_settings() {
         out["boards_schema"],
         "https://www.openlogix.org/schemas/logix-board-v1.json"
     );
-    assert_eq!(out["catalog"]["commit"].as_str().unwrap().len(), 7);
+    // The catalog folder from LOGIX_ENGINE_DEV_CATALOG_FOLDER.
+    assert_eq!(out["catalog"], json!({"version": "local", "local": true}));
     assert!(
         out["report"]
             .as_str()
@@ -109,9 +118,8 @@ async fn get_engine_info_reports_the_launch_settings() {
     assert_eq!(
         out["packages"],
         json!([
-            {"name": "oss-cad-suite", "version": "2026-10-22", "status": "missing"},
-            {"name": "openxc7", "version": "2026-10-22", "status": "missing"},
-            {"name": "verible", "version": "2026-10-22", "status": "missing"}
+            {"name": "logix-catalog", "version": "2026-11-10", "status": "missing"},
+            {"name": "logix-core", "version": "2026-11-10", "status": "missing"}
         ])
     );
 
@@ -230,10 +238,7 @@ async fn real_download_packages_with_progress() {
     let result = client.call_tool(params).await.unwrap();
     assert_ne!(result.is_error, Some(true), "{result:?}");
     let out = result.structured_content.unwrap();
-    assert_eq!(
-        out["downloaded"],
-        json!(["oss-cad-suite", "openxc7", "verible"])
-    );
+    assert_eq!(out["downloaded"], json!(["logix-catalog", "logix-core"]));
     for p in out["packages"].as_array().unwrap() {
         assert_eq!(p["status"], "ready", "{p}");
     }
@@ -242,20 +247,43 @@ async fn real_download_packages_with_progress() {
     assert!(progress.len() > 10, "{}", progress.len());
     assert_eq!(
         progress[0].message.as_deref(),
-        Some("Downloading oss-cad-suite")
+        Some("Downloading logix-catalog")
     );
-    for name in ["openxc7", "verible"] {
-        let message = format!("Downloading {name}");
-        assert!(
-            progress
-                .iter()
-                .any(|p| p.message.as_deref() == Some(message.as_str())),
-            "{name}"
-        );
-    }
+    assert!(
+        progress
+            .iter()
+            .any(|p| p.message.as_deref() == Some("Downloading logix-core"))
+    );
     // One phase per package, 100 each.
-    assert!(progress.iter().all(|p| p.total == Some(300.0)));
+    assert!(progress.iter().all(|p| p.total == Some(200.0)));
     assert!(progress.windows(2).all(|w| w[1].progress > w[0].progress));
+    client.cancel().await.unwrap();
+}
+
+#[tokio::test]
+async fn without_its_catalog_package_a_board_tool_is_a_setup_error() {
+    // The catalog comes only from the logix-catalog package: with automatic
+    // download off and nothing downloaded, tools that read boards say so.
+    let tmp = tempfile::tempdir().unwrap();
+    let mut cmd = Command::new(ENGINE);
+    cmd.arg("--engine-folder")
+        .arg(tmp.path().join("engine"))
+        .arg("--no-auto-download")
+        .env_remove(logix_engine::catalog::DEV_CATALOG_VAR);
+    let client = ().serve(TokioChildProcess::new(cmd).unwrap()).await.unwrap();
+    let r = call(&client, "get_catalog", json!({"boards": ["*"]})).await;
+    assert_eq!(r.is_error, Some(true));
+    let err = r.structured_content.unwrap();
+    assert_eq!(err["category"], "setup", "{err}");
+    assert!(
+        err["message"].as_str().unwrap().contains("logix-catalog"),
+        "{err}"
+    );
+    let info = call(&client, "get_engine_info", json!({}))
+        .await
+        .structured_content
+        .unwrap();
+    assert_eq!(info["catalog"], json!({"version": "2026-11-10"}));
     client.cancel().await.unwrap();
 }
 

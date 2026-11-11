@@ -14,7 +14,7 @@ use crate::paths;
 use crate::progress::Phases;
 use crate::runner::command_line;
 use crate::sim::testbench::{self, Ending, RunOptions, build_stem};
-use crate::sim::{SimLibrary, TOOLCHAIN, gtkwave, toolchain};
+use crate::sim::{SimLibrary, gtkwave, toolchain};
 use crate::state::EngineState;
 
 pub struct Simulate;
@@ -227,7 +227,7 @@ pub async fn run(
     testbench::check_no_dumpfile(&src, &tb)?;
     let includes = sources.include_args()?;
 
-    let needed = state.packages.needing_download(&[TOOLCHAIN])?;
+    let needed = state.packages.needing_download(&[crate::packages::CORE])?;
     let phases = Phases::new(call.progress.clone(), needed.len() + 2);
     let (bin, package) = toolchain(state, &needed, &phases, call).await?;
     let lib = SimLibrary::for_board(&sources.board, &package);

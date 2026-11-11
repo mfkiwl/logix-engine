@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 
 use sha2::{Digest, Sha256};
 
-use super::{SimLibrary, Sources, TOOLCHAIN, dedup, parse, toolchain};
+use super::{SimLibrary, Sources, dedup, parse, toolchain};
 use crate::build::{run_logged, tool_failed};
 use crate::errors::{Diagnostic, Severity, ToolError};
 use crate::progress::Phases;
@@ -116,7 +116,7 @@ pub async fn lint(
     call: &Call,
 ) -> Result<LintResult, ToolError> {
     let includes = req.sources.include_args()?;
-    let needed = state.packages.needing_download(&[TOOLCHAIN])?;
+    let needed = state.packages.needing_download(&[crate::packages::CORE])?;
     let phases = Phases::new(call.progress.clone(), needed.len() + 1);
     let (bin, package) = toolchain(state, &needed, &phases, call).await?;
     let lib = SimLibrary::for_board(&req.sources.board, &package);

@@ -36,14 +36,15 @@ async fn engine() -> EngineState {
     );
     READY
         .get_or_init(|| async {
-            let missing = packages.needing_download(&["oss-cad-suite"]).unwrap();
+            let missing = packages.needing_download(&["logix-core"]).unwrap();
             let phases = Phases::new(Arc::new(NoProgress), missing.len());
             packages
                 .ensure(&missing, true, &phases, &CancellationToken::new())
                 .await
-                .expect("download oss-cad-suite for the simulation tests");
+                .expect("download logix-core for the simulation tests");
         })
         .await;
+    logix_engine::catalog::use_test_copy();
     EngineState {
         engine_folder: folder.display().to_string(),
         engine_folder_resolved: folder.clone(),
@@ -836,12 +837,7 @@ async fn results_list_commands_that_run_again_without_the_engine() {
     assert_eq!(out.commands.len(), 1);
     let cmd = &out.commands[0];
     assert_eq!(cmd.tool, "verilator_bin");
-    assert!(
-        cmd.package
-            .as_deref()
-            .unwrap()
-            .starts_with("oss-cad-suite ")
-    );
+    assert!(cmd.package.as_deref().unwrap().ends_with("(oss-cad-suite)"));
     // The shell line reproduces the result: clean, then a warning.
     let rerun = |shell: &str| {
         std::process::Command::new("/bin/sh")

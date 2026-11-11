@@ -1,10 +1,11 @@
 #!/bin/bash
 # Updates catalog/, the copy of Logix Catalog (github.com/openlogix/logix-catalog)
-# that release builds embed, to a commit of that repo: a branch, tag or commit
-# (default: main). Never edit catalog/ by hand: change boards in logix-catalog,
-# then run this. catalog/SOURCE.json records the commit and its date (the
-# catalog's version). For trying a local catalog clone without updating
-# catalog/, build with LOGIX_ENGINE_DEV_CATALOG=<clone> instead.
+# that the tests read (releases download the logix-catalog package instead), to
+# a commit of that repo: a branch, tag or commit (default: main). Never edit
+# catalog/ by hand: change boards in logix-catalog,
+# then run this. catalog/SOURCE.json records the commit and its date. For
+# trying a local catalog clone in a running engine, set
+# LOGIX_ENGINE_DEV_CATALOG_FOLDER=<clone> instead.
 #
 #   scripts/update-catalog.sh [<ref>]
 

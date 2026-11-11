@@ -15,9 +15,9 @@ use serde::{Deserialize, Serialize};
 pub struct CommandRecord {
     /// The program's name, such as yosys.
     pub tool: String,
-    /// The package the program came from, with its version, such as
-    /// "oss-cad-suite 2026-10-22". Omitted for a program from elsewhere, such
-    /// as a custom programmer command.
+    /// The package the program came from, with its version and the core's
+    /// tool, such as "logix-core 2026-11-10 (oss-cad-suite)". Omitted for a
+    /// program from elsewhere, such as a custom programmer command.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub package: Option<String>,
     /// The folder it ran in, as an absolute path.
@@ -52,21 +52,24 @@ pub fn shell_quote(word: &str) -> String {
 }
 
 /// The package a program in `bin_dir` came from, from the engine folder
-/// layout packages/<name>/<version>/bin.
+/// layout packages/<name>/<version>/..., with the core component it's in,
+/// such as "logix-core 2026-11-10 (oss-cad-suite)".
 fn package_of(program: &Path, bin_dir: &Path) -> Option<String> {
     if program.parent() != Some(bin_dir) {
         return None;
     }
-    let version_dir = bin_dir.parent()?;
-    let name_dir = version_dir.parent()?;
-    if name_dir.parent()?.file_name()? != "packages" {
-        return None;
+    let version_dir = bin_dir.ancestors().find(|a| {
+        a.parent().and_then(Path::parent).and_then(Path::file_name) == Some("packages".as_ref())
+    })?;
+    let name = version_dir.parent()?.file_name()?.to_string_lossy();
+    let version = version_dir.file_name()?.to_string_lossy();
+    match bin_dir.strip_prefix(version_dir).ok()?.components().next() {
+        Some(c) => Some(format!(
+            "{name} {version} ({})",
+            c.as_os_str().to_string_lossy()
+        )),
+        None => Some(format!("{name} {version}")),
     }
-    Some(format!(
-        "{} {}",
-        name_dir.file_name()?.to_string_lossy(),
-        version_dir.file_name()?.to_string_lossy()
-    ))
 }
 
 /// Records a run of `program` with `args` in `cwd`, with the environment the
@@ -118,7 +121,7 @@ mod tests {
 
     #[test]
     fn records_runnable_commands_with_their_package() {
-        let bin = Path::new("/eng/packages/oss-cad-suite/2026-10-22/bin");
+        let bin = Path::new("/eng/packages/logix-core/2026-11-10/oss-cad-suite/bin");
         let args: Vec<OsString> =
             vec!["-p".into(), "synth_ice40 -top main".into(), "it's.v".into()];
         let r = record(
@@ -128,12 +131,15 @@ mod tests {
             bin,
         );
         assert_eq!(r.tool, "yosys");
-        assert_eq!(r.package.as_deref(), Some("oss-cad-suite 2026-10-22"));
+        assert_eq!(
+            r.package.as_deref(),
+            Some("logix-core 2026-11-10 (oss-cad-suite)")
+        );
         assert_eq!(r.cwd, "/home/user/my proj");
         assert_eq!(
             r.args,
             [
-                "/eng/packages/oss-cad-suite/2026-10-22/bin/yosys",
+                "/eng/packages/logix-core/2026-11-10/oss-cad-suite/bin/yosys",
                 "-p",
                 "synth_ice40 -top main",
                 "it's.v"
@@ -142,9 +148,9 @@ mod tests {
         assert_eq!(
             r.shell,
             "cd '/home/user/my proj' && env -i \
-             PATH=/eng/packages/oss-cad-suite/2026-10-22/bin:/usr/bin:/bin \
+             PATH=/eng/packages/logix-core/2026-11-10/oss-cad-suite/bin:/usr/bin:/bin \
              HOME=\"$HOME\" TMPDIR=\"$TMPDIR\" \
-             /eng/packages/oss-cad-suite/2026-10-22/bin/yosys -p 'synth_ice40 -top main' 'it'\\''s.v'"
+             /eng/packages/logix-core/2026-11-10/oss-cad-suite/bin/yosys -p 'synth_ice40 -top main' 'it'\\''s.v'"
         );
 
         // A program from elsewhere, such as a custom programmer command.

@@ -203,7 +203,7 @@ async fn downloads_a_missing_package() {
     let s = setup(good_package(), None, None);
     let spec = s.pm.manifest().get("pkg").unwrap().clone();
     assert_eq!(s.pm.status(&spec), PackageStatus::Missing);
-    assert_eq!(package_info(&s.pm, &spec).bin_folder, None);
+    assert!(package_info(&s.pm, &spec).components.is_empty());
     assert_eq!(s.pm.needing_download(&["pkg"]).unwrap().len(), 1);
 
     s.pm.download(&spec, &phases(), &CancellationToken::new())
@@ -211,12 +211,6 @@ async fn downloads_a_missing_package() {
         .unwrap();
 
     assert_eq!(s.pm.status(&spec), PackageStatus::Ready);
-    // get_engine_info reports where its programs are.
-    let info = package_info(&s.pm, &spec);
-    assert_eq!(
-        info.bin_folder.as_deref(),
-        Some(s.pm.package_dir(&spec).join("bin").to_str().unwrap())
-    );
     assert!(s.pm.needing_download(&["pkg"]).unwrap().is_empty());
     let dir = s.pm.package_dir(&spec);
     assert_eq!(dir, s.engine.join("packages/pkg/2026-01-02"));
@@ -573,11 +567,11 @@ async fn download_packages_tool_refuses_unknown_packages() {
     assert_eq!(s.server.requests.load(Ordering::SeqCst), 0);
 }
 
-/// Downloads the real oss-cad-suite (about 526 MB) into a
-/// temporary engine folder. Run: cargo test --test packages -- --ignored
+/// Downloads the real logix-core (about 640 MB) into a temporary engine
+/// folder. Run: cargo test --test packages -- --ignored
 #[tokio::test]
 #[ignore]
-async fn real_oss_cad_suite_download() {
+async fn real_core_download() {
     let tmp = tempfile::tempdir().unwrap();
     let engine = tmp.path().canonicalize().unwrap().join("engine");
     std::fs::create_dir(&engine).unwrap();
@@ -587,14 +581,25 @@ async fn real_oss_cad_suite_download() {
         "darwin-arm64",
         manifest::GITHUB,
     );
-    let missing = pm.needing_download(&["oss-cad-suite"]).unwrap();
+    let missing = pm.needing_download(&["logix-core"]).unwrap();
     let phases = Phases::new(Arc::new(NoProgress), missing.len());
     pm.ensure(&missing, true, &phases, &CancellationToken::new())
         .await
         .unwrap();
-    let spec = manifest::builtin().get("oss-cad-suite").unwrap();
+    let spec = manifest::builtin().get("logix-core").unwrap();
     assert_eq!(pm.status(spec), PackageStatus::Ready);
-    let bin = pm.package_dir(spec).join("bin");
+    // get_engine_info reports where each component's programs are.
+    let info = package_info(&pm, spec);
+    let names: Vec<&str> = info.components.iter().map(|c| c.name.as_str()).collect();
+    assert_eq!(names, ["openxc7", "oss-cad-suite", "verible"]);
+    let bin = pm.bin_dir("oss-cad-suite").unwrap();
+    assert_eq!(bin, pm.package_dir(spec).join("oss-cad-suite/bin"));
+    assert!(
+        pm.bin_dir("verible")
+            .unwrap()
+            .join("verible-verilog-ls")
+            .exists()
+    );
     for tool in ["yosys", "nextpnr-ice40", "icepack", "openFPGALoader"] {
         assert!(bin.join(tool).exists(), "{tool}");
     }

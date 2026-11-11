@@ -62,7 +62,7 @@
           "type": "string"
         },
         "catalog": {
-          "description": "The board catalog built into this engine: its Logix Catalog version.",
+          "description": "The board catalog the engine reads: its Logix Catalog version.",
           "$ref": "#/$defs/CatalogInfo"
         },
         "report": {
@@ -86,11 +86,11 @@
       ],
       "$defs": {
         "PackageInfo": {
-          "description": "A toolchain package and whether it's downloaded.",
+          "description": "A package (logix-catalog or logix-core) and whether it's downloaded.",
           "type": "object",
           "properties": {
             "name": {
-              "description": "The package name, such as oss-cad-suite.",
+              "description": "The package name: logix-catalog or logix-core.",
               "type": "string"
             },
             "version": {
@@ -101,12 +101,12 @@
             "status": {
               "$ref": "#/$defs/PackageStatus"
             },
-            "bin_folder": {
-              "description": "The folder with the package's programs, as an absolute path, when\nthe package is downloaded. For hosts that run one of its programs\ndirectly, such as Verible's language server verible-verilog-ls from\nthe verible package. Omitted when the package isn't downloaded.",
-              "type": [
-                "string",
-                "null"
-              ]
+            "components": {
+              "description": "The tools in logix-core, each its upstream release in a folder of\nits own, when the core is downloaded; empty otherwise, and for\nlogix-catalog.",
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ComponentInfo"
+              }
             }
           },
           "additionalProperties": false,
@@ -136,27 +136,45 @@
             }
           ]
         },
+        "ComponentInfo": {
+          "description": "One tool in logix-core, such as verible.",
+          "type": "object",
+          "properties": {
+            "name": {
+              "description": "The component name: oss-cad-suite, openxc7, verible, or graphviz\n(Windows).",
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "bin_folder": {
+              "description": "The folder with the component's programs, as an absolute path. For\nhosts that run one of its programs directly, such as Verible's\nlanguage server verible-verilog-ls from the verible component.",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "description",
+            "bin_folder"
+          ]
+        },
         "CatalogInfo": {
-          "description": "The board catalog built into the engine (Logix Catalog,\ngithub.com/openlogix/logix-catalog).",
+          "description": "The board catalog (Logix Catalog, github.com/openlogix/logix-catalog),\ndownloaded as the logix-catalog package.",
           "type": "object",
           "properties": {
             "version": {
-              "description": "The catalog's version: the date (yyyy-mm-dd) of its Logix Catalog\ncommit.",
-              "type": "string"
-            },
-            "commit": {
-              "description": "The Logix Catalog commit, a short hash such as 3cdae93.",
+              "description": "The catalog's version: the logix-catalog release (yyyy-mm-dd) this\nengine release pins, or \"local\" for a catalog folder from\nLOGIX_ENGINE_DEV_CATALOG_FOLDER.",
               "type": "string"
             },
             "local": {
-              "description": "True when this engine was built from a local catalog clone (a\ndeveloper build), which may differ from the commit; omitted\notherwise.",
+              "description": "True when the engine reads a catalog folder from\nLOGIX_ENGINE_DEV_CATALOG_FOLDER (a diagnostic setting) instead of\nits package; omitted otherwise.",
               "type": "boolean"
             }
           },
           "additionalProperties": false,
           "required": [
-            "version",
-            "commit"
+            "version"
           ]
         }
       }
@@ -177,7 +195,7 @@
       "type": "object",
       "properties": {
         "packages": {
-          "description": "Names of the packages to download or repair, as get_engine_info lists\nthem, such as oss-cad-suite. Omitted means every package in the\nengine's manifest.",
+          "description": "Names of the packages to download or repair, as get_engine_info lists\nthem: logix-catalog or logix-core. Omitted means every package in the\nengine's manifest.",
           "type": [
             "array",
             "null"
@@ -223,11 +241,11 @@
       ],
       "$defs": {
         "PackageInfo": {
-          "description": "A toolchain package and whether it's downloaded.",
+          "description": "A package (logix-catalog or logix-core) and whether it's downloaded.",
           "type": "object",
           "properties": {
             "name": {
-              "description": "The package name, such as oss-cad-suite.",
+              "description": "The package name: logix-catalog or logix-core.",
               "type": "string"
             },
             "version": {
@@ -238,12 +256,12 @@
             "status": {
               "$ref": "#/$defs/PackageStatus"
             },
-            "bin_folder": {
-              "description": "The folder with the package's programs, as an absolute path, when\nthe package is downloaded. For hosts that run one of its programs\ndirectly, such as Verible's language server verible-verilog-ls from\nthe verible package. Omitted when the package isn't downloaded.",
-              "type": [
-                "string",
-                "null"
-              ]
+            "components": {
+              "description": "The tools in logix-core, each its upstream release in a folder of\nits own, when the core is downloaded; empty otherwise, and for\nlogix-catalog.",
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ComponentInfo"
+              }
             }
           },
           "additionalProperties": false,
@@ -271,6 +289,29 @@
               "type": "string",
               "const": "broken"
             }
+          ]
+        },
+        "ComponentInfo": {
+          "description": "One tool in logix-core, such as verible.",
+          "type": "object",
+          "properties": {
+            "name": {
+              "description": "The component name: oss-cad-suite, openxc7, verible, or graphviz\n(Windows).",
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "bin_folder": {
+              "description": "The folder with the component's programs, as an absolute path. For\nhosts that run one of its programs directly, such as Verible's\nlanguage server verible-verilog-ls from the verible component.",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "description",
+            "bin_folder"
           ]
         }
       }
@@ -2125,7 +2166,7 @@
               "type": "string"
             },
             "package": {
-              "description": "The package the program came from, with its version, such as\n\"oss-cad-suite 2026-10-22\". Omitted for a program from elsewhere, such\nas a custom programmer command.",
+              "description": "The package the program came from, with its version and the core's\ntool, such as \"logix-core 2026-11-10 (oss-cad-suite)\". Omitted for a\nprogram from elsewhere, such as a custom programmer command.",
               "type": [
                 "string",
                 "null"
@@ -2524,7 +2565,7 @@
               "type": "string"
             },
             "package": {
-              "description": "The package the program came from, with its version, such as\n\"oss-cad-suite 2026-10-22\". Omitted for a program from elsewhere, such\nas a custom programmer command.",
+              "description": "The package the program came from, with its version and the core's\ntool, such as \"logix-core 2026-11-10 (oss-cad-suite)\". Omitted for a\nprogram from elsewhere, such as a custom programmer command.",
               "type": [
                 "string",
                 "null"
@@ -2916,7 +2957,7 @@
               "type": "string"
             },
             "package": {
-              "description": "The package the program came from, with its version, such as\n\"oss-cad-suite 2026-10-22\". Omitted for a program from elsewhere, such\nas a custom programmer command.",
+              "description": "The package the program came from, with its version and the core's\ntool, such as \"logix-core 2026-11-10 (oss-cad-suite)\". Omitted for a\nprogram from elsewhere, such as a custom programmer command.",
               "type": [
                 "string",
                 "null"
@@ -3200,7 +3241,7 @@
               "type": "string"
             },
             "package": {
-              "description": "The package the program came from, with its version, such as\n\"oss-cad-suite 2026-10-22\". Omitted for a program from elsewhere, such\nas a custom programmer command.",
+              "description": "The package the program came from, with its version and the core's\ntool, such as \"logix-core 2026-11-10 (oss-cad-suite)\". Omitted for a\nprogram from elsewhere, such as a custom programmer command.",
               "type": [
                 "string",
                 "null"
@@ -3473,7 +3514,7 @@
               "type": "string"
             },
             "package": {
-              "description": "The package the program came from, with its version, such as\n\"oss-cad-suite 2026-10-22\". Omitted for a program from elsewhere, such\nas a custom programmer command.",
+              "description": "The package the program came from, with its version and the core's\ntool, such as \"logix-core 2026-11-10 (oss-cad-suite)\". Omitted for a\nprogram from elsewhere, such as a custom programmer command.",
               "type": [
                 "string",
                 "null"
@@ -3952,7 +3993,7 @@
               "type": "string"
             },
             "package": {
-              "description": "The package the program came from, with its version, such as\n\"oss-cad-suite 2026-10-22\". Omitted for a program from elsewhere, such\nas a custom programmer command.",
+              "description": "The package the program came from, with its version and the core's\ntool, such as \"logix-core 2026-11-10 (oss-cad-suite)\". Omitted for a\nprogram from elsewhere, such as a custom programmer command.",
               "type": [
                 "string",
                 "null"
@@ -4777,7 +4818,7 @@
               "type": "string"
             },
             "package": {
-              "description": "The package the program came from, with its version, such as\n\"oss-cad-suite 2026-10-22\". Omitted for a program from elsewhere, such\nas a custom programmer command.",
+              "description": "The package the program came from, with its version and the core's\ntool, such as \"logix-core 2026-11-10 (oss-cad-suite)\". Omitted for a\nprogram from elsewhere, such as a custom programmer command.",
               "type": [
                 "string",
                 "null"

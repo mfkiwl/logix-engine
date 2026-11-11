@@ -159,17 +159,11 @@ async fn verible(
     phases: &Phases,
     call: &Call,
 ) -> Result<PathBuf, ToolError> {
-    let spec = state
-        .packages
-        .manifest()
-        .get(VERIBLE)
-        .cloned()
-        .ok_or_else(|| ToolError::engine(format!("{VERIBLE} isn't in the manifest.")))?;
     state
         .packages
         .ensure(needed, state.auto_download, phases, &call.cancel)
         .await?;
-    Ok(state.packages.package_dir(&spec).join("bin"))
+    state.packages.bin_dir(VERIBLE)
 }
 
 /// Formats each file in turn. A file that fails doesn't
@@ -179,7 +173,7 @@ pub async fn format(
     req: FormatRequest,
     call: &Call,
 ) -> Result<FormatResult, ToolError> {
-    let needed = state.packages.needing_download(&[VERIBLE])?;
+    let needed = state.packages.needing_download(&[crate::packages::CORE])?;
     let phases = Phases::new(call.progress.clone(), needed.len() + 1);
     let bin = verible(state, &needed, &phases, call).await?;
     phases.start("Formatting");

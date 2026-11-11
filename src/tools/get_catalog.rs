@@ -250,7 +250,7 @@ fn answer(input: GetCatalogInput) -> Result<GetCatalogOutput, ToolError> {
         .collect();
     Ok(GetCatalogOutput {
         boards: select("boards", &known, input.boards)?,
-        fpgas: select("fpgas", &catalog::builtin().fpgas, input.fpgas)?,
+        fpgas: select("fpgas", &catalog::get().fpgas, input.fpgas)?,
         families: select("families", &families(), input.families)?,
     })
 }

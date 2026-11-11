@@ -505,7 +505,7 @@ mod tests {
 
     #[test]
     fn catalog_commands() {
-        let c = catalog::builtin();
+        let c = catalog::get();
         let d = device("0403", "6010", Some("Alhambra II"), None, 9);
         let bin = Path::new("/pkg/bin");
         let v = &c.boards["alhambra-ii"].variants[0];
@@ -526,7 +526,7 @@ mod tests {
 
     #[test]
     fn says_how_the_board_is_programmed() {
-        let c = catalog::builtin();
+        let c = catalog::get();
         let alhambra = &c.boards["alhambra-ii"].variants[0];
         assert_eq!(
             plan("Alhambra II", alhambra).unwrap(),
@@ -564,7 +564,7 @@ mod tests {
         let tmp = tempfile::tempdir().unwrap();
         std::fs::write(tmp.path().join("iceprog"), "").unwrap();
         let d = device("0403", "6010", None, None, 2);
-        let v = &catalog::builtin().boards["alhambra-ii"].variants[0];
+        let v = &catalog::get().boards["alhambra-ii"].variants[0];
         let b = Path::new("/b/hardware.bin");
         let (p, a) = command(v, Some("iceprog -S ${BITSTREAM}"), &d, b, tmp.path(), false).unwrap();
         assert_eq!(p, tmp.path().join("iceprog"));
@@ -668,7 +668,7 @@ mod tests {
 
     #[test]
     fn the_fpga_check_runs_detect_with_the_connection_options_only() {
-        let c = catalog::builtin();
+        let c = catalog::get();
         let d = device("0403", "6010", Some("Digilent USB Device"), None, 9);
         let words = |board: &str, i: usize| -> Vec<String> {
             let v = &c.boards[board].variants[i];
@@ -721,7 +721,7 @@ mod tests {
 
     #[test]
     fn the_fpga_check_refuses_another_fpga() {
-        let c = catalog::builtin();
+        let c = catalog::get();
         let fpga = &c.fpgas[&c.boards["arty-a7-35t"].fpga_id];
         let none = |_| vec![];
         assert!(check_fpga(&parse_detect(DETECT_ARTY), fpga, "Arty A7-35T", none).is_ok());

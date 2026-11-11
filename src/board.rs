@@ -92,7 +92,7 @@ fn custom_fpga(b: &CustomBoard) -> Result<(Option<String>, FpgaDefinition), Tool
 /// rest. The custom boards come from `custom_boards::load`, which checks
 /// them.
 pub fn known_boards(custom: &CustomBoards) -> BTreeMap<&str, KnownBoard<'_>> {
-    let c = catalog::builtin();
+    let c = catalog::get();
     let mut all: BTreeMap<&str, KnownBoard<'_>> = c
         .boards
         .iter()
@@ -179,7 +179,7 @@ impl ResolvedBoard {
 }
 
 fn fpga_by_id(id: &str) -> Result<FpgaDefinition, ToolError> {
-    catalog::builtin().fpgas.get(id).cloned().ok_or_else(|| {
+    catalog::get().fpgas.get(id).cloned().ok_or_else(|| {
         ToolError::request(format!(
             "{id:?} isn't an FPGA in the catalog. Use get_catalog to list them."
         ))
@@ -244,7 +244,7 @@ pub fn resolve(
             resources: b.resources.clone(),
         });
     }
-    let b = catalog::builtin().boards.get(id).ok_or_else(|| {
+    let b = catalog::get().boards.get(id).ok_or_else(|| {
         ToolError::request(format!(
             "{id:?} isn't a board in the catalog or in the custom boards folder. Use get_catalog to list the boards, or add the board's file to the folder custom_boards_folder names."
         ))
@@ -436,7 +436,7 @@ mod tests {
     #[test]
     fn a_board_copied_from_the_catalog_can_be_sent_back() {
         // The catalog file's entry, as is, under any ID.
-        let copied = serde_json::to_value(&catalog::builtin().boards["icesugar-pro"]).unwrap();
+        let copied = serde_json::to_value(&catalog::get().boards["icesugar-pro"]).unwrap();
         assert!(copied.get("dimensions").is_some());
         let b: CustomBoard = serde_json::from_value(copied).unwrap();
         let r = resolve("my-sugar", &pick("usb", "ram"), &boards([("my-sugar", b)])).unwrap();
@@ -447,7 +447,7 @@ mod tests {
     fn a_custom_board_identical_to_the_catalog_board_is_the_same_board() {
         // As a host would send it: the catalog's board with its ID and
         // FPGA ID, the variants written out in full.
-        let c = catalog::builtin();
+        let c = catalog::get();
         let b = &c.boards["icesugar-pro"];
         let same = CustomBoard {
             schema: None,
@@ -493,6 +493,6 @@ mod tests {
         assert!(all["mine"].custom);
         assert!(all["alhambra-ii"].custom, "replaced");
         assert!(!all["icestick"].custom);
-        assert_eq!(all.len(), catalog::builtin().boards.len() + 1);
+        assert_eq!(all.len(), catalog::get().boards.len() + 1);
     }
 }

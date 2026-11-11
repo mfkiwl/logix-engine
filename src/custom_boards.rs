@@ -388,7 +388,7 @@ fn board_problems(
     let mut add = |at: At, text: String| out.push(Problem { at, text });
     if let Some(b) = board {
         let f = &b.fpga_id;
-        let fpga = catalog::builtin().fpgas.get(f);
+        let fpga = catalog::get().fpgas.get(f);
         if fpga.is_none() {
             add(
                 At::Value("/fpga_id".into()),

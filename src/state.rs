@@ -39,8 +39,40 @@ pub struct EngineState {
     /// The command-line arguments, as given, without the program name.
     pub command_line: Vec<String>,
     pub log_file: PathBuf,
-    /// Downloads and finds the toolchain packages in the engine folder.
+    /// Downloads and finds the packages in the engine folder.
     pub packages: crate::packages::PackageManager,
+}
+
+impl EngineState {
+    /// Makes sure the board catalog is loaded: the logix-catalog package of
+    /// the manifest, downloaded first when needed and auto-download is on.
+    /// A catalog folder from LOGIX_ENGINE_DEV_CATALOG_FOLDER, loaded at
+    /// startup, stays.
+    pub async fn ensure_catalog(
+        &self,
+        call: &crate::tools::Call,
+    ) -> Result<(), crate::errors::ToolError> {
+        use crate::packages::CATALOG;
+        if crate::catalog::source().is_some_and(|s| s.local) {
+            return Ok(());
+        }
+        let spec = self.packages.spec(CATALOG)?.clone();
+        let needed = self.packages.needing_download(&[CATALOG])?;
+        if !needed.is_empty() {
+            let phases = crate::progress::Phases::new(call.progress.clone(), 1);
+            self.packages
+                .ensure(&needed, self.auto_download, &phases, &call.cancel)
+                .await?;
+        }
+        let folder = self.packages.package_dir(&spec);
+        crate::catalog::load(&folder, &spec.version, false).map_err(|e| {
+            crate::errors::ToolError::setup(format!("Can't read the board catalog: {e}"))
+                .with_action(
+                    crate::errors::ActionCode::DownloadPackages,
+                    format!("Download the {CATALOG} package again, which may be damaged."),
+                )
+        })
+    }
 }
 
 #[cfg(test)]

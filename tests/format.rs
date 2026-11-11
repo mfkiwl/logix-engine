@@ -27,6 +27,7 @@ fn engine() -> EngineState {
         &state::platform(),
         manifest::GITHUB,
     );
+    logix_engine::catalog::use_test_copy();
     EngineState {
         engine_folder: folder.display().to_string(),
         engine_folder_resolved: folder.clone(),

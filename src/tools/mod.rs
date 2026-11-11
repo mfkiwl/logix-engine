@@ -225,6 +225,20 @@ pub async fn call(
     };
     let call = &named;
     let display = &*display;
+    // The tools that read boards load the catalog first.
+    if [
+        GetCatalog::NAME,
+        CompareBoards::NAME,
+        Build::NAME,
+        Lint::NAME,
+        ListDevices::NAME,
+        ProgramBoard::NAME,
+    ]
+    .contains(&name)
+        && let Err(e) = state.ensure_catalog(call).await
+    {
+        return Some(to_call_result::<()>(display, with_commands(Err(e), call)));
+    }
     let result = match name {
         GetEngineInfo::NAME => to_call_result(
             display,

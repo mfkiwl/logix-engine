@@ -31,7 +31,7 @@ impl EngineTool for DownloadPackages {
 #[serde(deny_unknown_fields)]
 pub struct DownloadPackagesInput {
     /// Names of the packages to download or repair, as get_engine_info lists
-    /// them, such as oss-cad-suite. Omitted means every package in the
+    /// them: logix-catalog or logix-core. Omitted means every package in the
     /// engine's manifest.
     #[serde(default)]
     pub packages: Option<Vec<String>>,

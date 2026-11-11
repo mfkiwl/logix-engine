@@ -31,14 +31,15 @@ async fn engine() -> EngineState {
     );
     READY
         .get_or_init(|| async {
-            let missing = packages.needing_download(&["oss-cad-suite"]).unwrap();
+            let missing = packages.needing_download(&["logix-core"]).unwrap();
             let phases = Phases::new(Arc::new(NoProgress), missing.len());
             packages
                 .ensure(&missing, true, &phases, &CancellationToken::new())
                 .await
-                .expect("download oss-cad-suite for the graph tests");
+                .expect("download logix-core for the graph tests");
         })
         .await;
+    logix_engine::catalog::use_test_copy();
     EngineState {
         engine_folder: folder.display().to_string(),
         engine_folder_resolved: folder.clone(),

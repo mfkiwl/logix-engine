@@ -20,12 +20,13 @@ pub struct Manifest {
 #[derive(Debug, Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PackageSpec {
-    /// The package name, a catalog-style ID such as oss-cad-suite.
+    /// The package name, logix-core or logix-catalog.
     pub name: String,
     /// The package release, a date tag.
     pub version: String,
     pub description: String,
-    /// The package file for each platform, such as darwin-arm64.
+    /// The package file for each platform, such as darwin-arm64, or for
+    /// "any" platform.
     pub files: BTreeMap<String, PackageFile>,
 }
 
@@ -158,14 +159,25 @@ mod tests {
     use super::*;
 
     #[test]
-    fn builtin_manifest_is_valid_and_covers_darwin_arm64() {
+    fn builtin_manifest_is_valid_and_covers_every_platform() {
         let m = builtin();
-        let oss = m.get("oss-cad-suite").expect("oss-cad-suite is listed");
-        let f = &oss.files["darwin-arm64"];
-        assert_eq!(
-            f.url(GITHUB),
-            "https://github.com/fpgawars/tools-oss-cad-suite/releases/download/2026-10-22/apio-oss-cad-suite-darwin-arm64-20261022.tgz"
-        );
+        let names: Vec<&str> = m.packages.iter().map(|p| p.name.as_str()).collect();
+        // The catalog first: it's small, so boards can be listed while the
+        // tools download.
+        assert_eq!(names, ["logix-catalog", "logix-core"]);
+        let core = m.get("logix-core").unwrap();
+        for platform in ["darwin-arm64", "linux-x86-64", "windows-x86-64"] {
+            let f = &core.files[platform];
+            assert_eq!(
+                f.url(GITHUB),
+                format!(
+                    "https://github.com/openlogix/logix-core/releases/download/{}/logix-core-{platform}-{}.tgz",
+                    core.version,
+                    core.version.replace('-', "")
+                )
+            );
+        }
+        assert!(m.get("logix-catalog").unwrap().files.contains_key("any"));
         // The file name carries the same date as the package version.
         for p in &m.packages {
             let compact = p.version[..10].replace('-', "");
@@ -189,17 +201,14 @@ mod tests {
     fn unsafe_values_are_refused() {
         let ok = include_str!("manifest.json");
         for (from, to) in [
-            ("\"oss-cad-suite\"", "\"../x\""),
+            ("\"logix-core\"", "\"../x\""),
             (
-                "\"2026-10-22\",\n      \"description\"",
+                "\"2026-11-10\",\n      \"description\"",
                 "\"latest\",\n      \"description\"",
             ),
-            (
-                "apio-oss-cad-suite-darwin-arm64-20261022.tgz",
-                "../evil.tgz",
-            ),
-            ("\"fpgawars\"", "\"a/b\""),
-            ("5fdbffd3", "5FDBFFD3"),
+            ("logix-core-darwin-arm64-20261110.tgz", "../evil.tgz"),
+            ("\"openlogix\"", "\"a/b\""),
+            ("ffbf16f3", "FFBF16F3"),
         ] {
             assert!(ok.contains(from), "{from}");
             let bad = ok.replacen(from, to, 1);

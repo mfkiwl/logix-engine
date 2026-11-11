@@ -59,7 +59,7 @@ pub struct GetEngineInfoOutput {
     /// boards folders, which may name it in a "$schema" key so editors can
     /// check them. A file that names another schema is refused.
     pub boards_schema: String,
-    /// The board catalog built into this engine: its Logix Catalog version.
+    /// The board catalog the engine reads: its Logix Catalog version.
     pub catalog: CatalogInfo,
     /// The facts above as plain text lines for people, the engine's part of
     /// a frontend's system info (for bug reports), so every frontend shows
@@ -70,39 +70,51 @@ pub struct GetEngineInfoOutput {
     pub report: String,
 }
 
-/// The board catalog built into the engine (Logix Catalog,
-/// github.com/openlogix/logix-catalog).
+/// The board catalog (Logix Catalog, github.com/openlogix/logix-catalog),
+/// downloaded as the logix-catalog package.
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct CatalogInfo {
-    /// The catalog's version: the date (yyyy-mm-dd) of its Logix Catalog
-    /// commit.
+    /// The catalog's version: the logix-catalog release (yyyy-mm-dd) this
+    /// engine release pins, or "local" for a catalog folder from
+    /// LOGIX_ENGINE_DEV_CATALOG_FOLDER.
     pub version: String,
-    /// The Logix Catalog commit, a short hash such as 3cdae93.
-    pub commit: String,
-    /// True when this engine was built from a local catalog clone (a
-    /// developer build), which may differ from the commit; omitted
-    /// otherwise.
+    /// True when the engine reads a catalog folder from
+    /// LOGIX_ENGINE_DEV_CATALOG_FOLDER (a diagnostic setting) instead of
+    /// its package; omitted otherwise.
     #[serde(default, skip_serializing_if = "std::ops::Not::not")]
     pub local: bool,
 }
 
-/// A toolchain package and whether it's downloaded.
+/// A package (logix-catalog or logix-core) and whether it's downloaded.
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct PackageInfo {
-    /// The package name, such as oss-cad-suite.
+    /// The package name: logix-catalog or logix-core.
     pub name: String,
     /// The package release, as a date tag (yyyy-mm-dd).
     #[schemars(pattern(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}(-[1-9][0-9]*)?$"))]
     pub version: String,
     pub status: PackageStatus,
-    /// The folder with the package's programs, as an absolute path, when
-    /// the package is downloaded. For hosts that run one of its programs
-    /// directly, such as Verible's language server verible-verilog-ls from
-    /// the verible package. Omitted when the package isn't downloaded.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub bin_folder: Option<String>,
+    /// The tools in logix-core, each its upstream release in a folder of
+    /// its own, when the core is downloaded; empty otherwise, and for
+    /// logix-catalog.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub components: Vec<ComponentInfo>,
+}
+
+/// One tool in logix-core, such as verible.
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct ComponentInfo {
+    /// The component name: oss-cad-suite, openxc7, verible, or graphviz
+    /// (Windows).
+    pub name: String,
+    pub description: String,
+    /// The folder with the component's programs, as an absolute path. For
+    /// hosts that run one of its programs directly, such as Verible's
+    /// language server verible-verilog-ls from the verible component.
+    pub bin_folder: String,
 }
 
 /// Whether a package is ready to use.
@@ -135,13 +147,20 @@ pub fn run(
         log_file: state.log_file.display().to_string(),
         packages: package_list(state),
         boards_schema: crate::catalog::BOARDS_SCHEMA.to_string(),
-        catalog: {
-            let (commit, date, local) = crate::catalog::source();
-            CatalogInfo {
-                version: date.to_string(),
-                commit: commit.to_string(),
-                local,
-            }
+        catalog: match crate::catalog::source() {
+            Some(s) if s.local => CatalogInfo {
+                version: s.version,
+                local: true,
+            },
+            _ => CatalogInfo {
+                version: state
+                    .packages
+                    .manifest()
+                    .get(crate::packages::CATALOG)
+                    .map(|s| s.version.clone())
+                    .unwrap_or_default(),
+                local: false,
+            },
         },
         report: String::new(),
     };
@@ -189,10 +208,13 @@ fn report(info: &GetEngineInfoOutput) -> String {
     }
     let c = &info.catalog;
     lines.push(format!(
-        "Board catalog: Logix Catalog {} ({}{})",
+        "Board catalog: Logix Catalog {}{}",
         c.version,
-        c.commit,
-        if c.local { ", local build" } else { "" }
+        if c.local {
+            " (a local folder, LOGIX_ENGINE_DEV_CATALOG_FOLDER)"
+        } else {
+            ""
+        }
     ));
     lines.push(format!("Boards schema: {}", info.boards_schema));
     lines.join("\n")
@@ -209,16 +231,31 @@ pub fn package_list(state: &EngineState) -> Vec<PackageInfo> {
         .collect()
 }
 
-/// One package's name, version, status and, when downloaded, its programs'
-/// folder.
+/// One package's name, version, status and, for a downloaded core, its
+/// components.
 pub fn package_info(packages: &PackageManager, spec: &PackageSpec) -> PackageInfo {
     let status = packages.status(spec);
     PackageInfo {
         name: spec.name.clone(),
         version: spec.version.clone(),
         status,
-        bin_folder: (status == PackageStatus::Ready)
-            .then(|| packages.package_dir(spec).join("bin").display().to_string()),
+        components: match (status, spec.name.as_str()) {
+            (PackageStatus::Ready, crate::packages::CORE) => packages
+                .core_components()
+                .unwrap_or_default()
+                .into_iter()
+                .map(|(name, c)| ComponentInfo {
+                    bin_folder: packages
+                        .package_dir(spec)
+                        .join(c.run.path.first().unwrap_or(&c.folder))
+                        .display()
+                        .to_string(),
+                    name,
+                    description: c.description,
+                })
+                .collect(),
+            _ => Vec::new(),
+        },
     }
 }
 
@@ -241,22 +278,21 @@ mod tests {
             log_file: "/Users/you/.logix/ide/engine/logs/20261108-1.log".into(),
             packages: vec![
                 PackageInfo {
-                    name: "oss-cad-suite".into(),
-                    version: "2026-11-20".into(),
+                    name: "logix-catalog".into(),
+                    version: "2026-11-08".into(),
                     status: PackageStatus::Ready,
-                    bin_folder: Some("/x/bin".into()),
+                    components: Vec::new(),
                 },
                 PackageInfo {
-                    name: "verible".into(),
-                    version: "2026-10-22".into(),
+                    name: "logix-core".into(),
+                    version: "2026-11-10".into(),
                     status: PackageStatus::Missing,
-                    bin_folder: None,
+                    components: Vec::new(),
                 },
             ],
             boards_schema: crate::catalog::BOARDS_SCHEMA.into(),
             catalog: CatalogInfo {
                 version: "2026-11-08".into(),
-                commit: "3cdae93".into(),
                 local: false,
             },
             report: String::new(),
@@ -271,9 +307,9 @@ Log file: /Users/you/.logix/ide/engine/logs/20261108-1.log
 Automatic package download: on
 Command line: --engine-folder /Users/you/.logix/ide/engine
 Packages:
-  oss-cad-suite  2026-11-20  ready
-  verible        2026-10-22  missing
-Board catalog: Logix Catalog 2026-11-08 (3cdae93)
+  logix-catalog  2026-11-08  ready
+  logix-core     2026-11-10  missing
+Board catalog: Logix Catalog 2026-11-08
 Boards schema: https://www.openlogix.org/schemas/logix-board-v1.json"
         );
     }

@@ -13,7 +13,7 @@ use crate::build::parse::parse_yosys;
 use crate::build::{run_logged, tool_failed};
 use crate::errors::{Category, Diagnostic, Severity, ToolError};
 use crate::progress::Phases;
-use crate::sim::{TOOLCHAIN, toolchain};
+use crate::sim::toolchain;
 use crate::state::EngineState;
 use crate::tools::Call;
 
@@ -157,7 +157,7 @@ pub async fn graph(
     req: GraphRequest,
     call: &Call,
 ) -> Result<GraphResult, ToolError> {
-    let needed = state.packages.needing_download(&[TOOLCHAIN])?;
+    let needed = state.packages.needing_download(&[crate::packages::CORE])?;
     let phases = Phases::new(call.progress.clone(), needed.len() + 2);
     let (bin, _) = toolchain(state, &needed, &phases, call).await?;
     graph_with(&bin, &req, call, &phases).await

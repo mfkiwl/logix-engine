@@ -28,14 +28,15 @@ fn published_schemas_match_the_code() {
 #[test]
 fn the_catalog_follows_logix_catalogs_schema() {
     use logix_engine::catalog;
-    let schema: serde_json::Value = serde_json::from_str(catalog::board_schema_text()).unwrap();
+    let folder = catalog::test_copy_folder();
+    let schema_text = std::fs::read_to_string(folder.join("schemas/logix-board-v1.json")).unwrap();
+    let schema: serde_json::Value = serde_json::from_str(&schema_text).unwrap();
+    let board_files = catalog::json_files(&folder.join("boards")).unwrap();
+    catalog::use_test_copy();
     assert_eq!(schema["$id"], catalog::BOARDS_SCHEMA);
     let validator = jsonschema::validator_for(&schema).expect("a valid schema");
-    assert_eq!(
-        catalog::board_files().len(),
-        catalog::builtin().boards.len()
-    );
-    for (id, text) in catalog::board_files() {
+    assert_eq!(board_files.len(), catalog::get().boards.len());
+    for (id, text) in &board_files {
         let file: serde_json::Value = serde_json::from_str(text).unwrap();
         let errors: Vec<String> = validator
             .iter_errors(&file)
@@ -46,7 +47,7 @@ fn the_catalog_follows_logix_catalogs_schema() {
             .unwrap_or_else(|e| panic!("{id}: {e}"));
     }
     // The schema catches a typo the engine also refuses.
-    let mut bad: serde_json::Value = serde_json::from_str(catalog::board_files()[0].1).unwrap();
+    let mut bad: serde_json::Value = serde_json::from_str(&board_files[0].1).unwrap();
     bad["nmae"] = "typo".into();
     assert!(validator.iter_errors(&bad).next().is_some());
     assert!(serde_json::from_value::<logix_engine::board::CustomBoard>(bad).is_err());

@@ -1,5 +1,11 @@
 //! Package download and repair (docs/tool-api.md, "Packages").
 //!
+//! Two packages: `logix-catalog`, the board catalog (one file for every
+//! platform), and `logix-core`, the FPGA tools (one file per platform),
+//! built by github.com/openlogix/logix-core. The core holds each tool as
+//! its upstream release in a folder of its own (a component, such as
+//! `oss-cad-suite`), and its `logix-core.json` says how to run each one.
+//!
 //! Engine folder layout:
 //!
 //! - `packages/<name>/<version>/`: a downloaded package, with its download
@@ -28,6 +34,37 @@ use crate::errors::{ActionCode, ToolError};
 use crate::progress::Phases;
 use crate::tools::get_engine_info::PackageStatus;
 use manifest::{Manifest, PackageFile, PackageSpec};
+
+/// The package with the board catalog.
+pub const CATALOG: &str = "logix-catalog";
+/// The package with the FPGA tools.
+pub const CORE: &str = "logix-core";
+/// The core's own description of its components, at its top.
+pub const CORE_METADATA: &str = "logix-core.json";
+/// The platform key of a package file that serves every platform.
+pub const ANY_PLATFORM: &str = "any";
+
+/// One component of the core, from `logix-core.json`.
+#[derive(Debug, Clone, Deserialize)]
+pub struct CoreComponent {
+    pub description: String,
+    /// Its folder, relative to the core.
+    pub folder: String,
+    pub run: CoreRun,
+}
+
+/// How the engine runs a component's programs.
+#[derive(Debug, Clone, Deserialize)]
+pub struct CoreRun {
+    /// The folders for PATH, relative to the core; the first holds the
+    /// programs.
+    pub path: Vec<String>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+struct CoreMetadata {
+    components: std::collections::BTreeMap<String, CoreComponent>,
+}
 
 /// The download record, written into a package folder when it is complete.
 pub const RECORD_FILE: &str = "logix-download.json";
@@ -95,7 +132,59 @@ impl PackageManager {
     }
 
     fn file_for<'a>(&self, spec: &'a PackageSpec) -> Option<&'a PackageFile> {
-        spec.files.get(&self.platform)
+        spec.files
+            .get(&self.platform)
+            .or_else(|| spec.files.get(ANY_PLATFORM))
+    }
+
+    /// The manifest's entry for a package.
+    pub fn spec(&self, name: &str) -> Result<&PackageSpec, ToolError> {
+        self.manifest
+            .get(name)
+            .ok_or_else(|| ToolError::engine(format!("Package {name} isn't in the manifest.")))
+    }
+
+    /// The core's components, from its `logix-core.json`, when the core is
+    /// downloaded and the file is readable.
+    pub fn core_components(&self) -> Option<std::collections::BTreeMap<String, CoreComponent>> {
+        let spec = self.manifest.get(CORE)?;
+        let text = fs::read_to_string(self.package_dir(spec).join(CORE_METADATA)).ok()?;
+        let meta: CoreMetadata = serde_json::from_str(&text).ok()?;
+        Some(meta.components)
+    }
+
+    /// The folder of a core component, such as `oss-cad-suite`.
+    pub fn component_dir(&self, component: &str) -> Result<PathBuf, ToolError> {
+        let core = self.package_dir(self.spec(CORE)?);
+        Ok(
+            match self
+                .core_components()
+                .and_then(|c| c.get(component).cloned())
+            {
+                Some(c) => core.join(c.folder),
+                None => core.join(component),
+            },
+        )
+    }
+
+    /// The folder with a core component's programs: the first of its PATH
+    /// folders in `logix-core.json`.
+    pub fn bin_dir(&self, component: &str) -> Result<PathBuf, ToolError> {
+        let core = self.package_dir(self.spec(CORE)?);
+        let components = self.core_components().ok_or_else(|| {
+            ToolError::setup(format!(
+                "The {CORE} package has no readable {CORE_METADATA}."
+            ))
+            .with_action(
+                ActionCode::DownloadPackages,
+                format!("Download the {CORE} package again, which may be damaged."),
+            )
+        })?;
+        let c = components.get(component).ok_or_else(|| {
+            ToolError::engine(format!("The {CORE} package has no {component} component."))
+        })?;
+        let first = c.run.path.first().map(String::as_str).unwrap_or(&c.folder);
+        Ok(core.join(first))
     }
 
     /// A package's status, from its folder and download record. Fast: it

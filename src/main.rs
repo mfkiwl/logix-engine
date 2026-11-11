@@ -1,7 +1,7 @@
 //! Logix Engine: FPGA operations as MCP tools over stdin/stdout.
 //! The command line is described in docs/command-line.md.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 use std::sync::Arc;
 
@@ -10,7 +10,7 @@ use rmcp::ServiceExt;
 
 use logix_engine::packages::{PackageManager, manifest};
 use logix_engine::state::{self, EngineState};
-use logix_engine::{logging, paths, server};
+use logix_engine::{catalog, logging, paths, server};
 
 /// Logix Engine: builds and tests FPGA designs and programs boards. A host launches it as a
 /// child process and talks MCP with it over stdin and stdout.
@@ -85,6 +85,18 @@ fn main() -> ExitCode {
         &state::platform(),
         manifest::GITHUB,
     );
+    // A catalog folder to read instead of the downloaded package: a
+    // diagnostic setting. A bad value is an error, never ignored.
+    if let Some(folder) = std::env::var_os(catalog::DEV_CATALOG_VAR).filter(|v| !v.is_empty()) {
+        if let Err(e) = catalog::load(Path::new(&folder), "local", true) {
+            return fail(&format!("{}: {e}", catalog::DEV_CATALOG_VAR));
+        }
+        log::warn!(
+            "Using the board catalog in {} ({})",
+            Path::new(&folder).display(),
+            catalog::DEV_CATALOG_VAR
+        );
+    }
     let state = EngineState {
         engine_folder: args.engine_folder.clone(),
         engine_folder_resolved: resolved,

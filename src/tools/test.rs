@@ -11,7 +11,7 @@ use super::{Call, EngineTool};
 use crate::errors::{Diagnostic, ToolError};
 use crate::progress::Phases;
 use crate::sim::testbench::{self, Ending, RunOptions, TestbenchRun};
-use crate::sim::{SimLibrary, Sources, TOOLCHAIN, toolchain};
+use crate::sim::{SimLibrary, Sources, toolchain};
 use crate::state::EngineState;
 
 pub struct Test;
@@ -217,7 +217,7 @@ pub async fn run(
     }
     let includes = sources.include_args()?;
 
-    let needed = state.packages.needing_download(&[TOOLCHAIN])?;
+    let needed = state.packages.needing_download(&[crate::packages::CORE])?;
     let phases = Phases::new(
         call.progress.clone(),
         needed.len() + 2 * sources.testbench_files.len(),

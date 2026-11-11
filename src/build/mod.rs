@@ -31,7 +31,6 @@ use sha2::{Digest, Sha256};
 use crate::board::ResolvedBoard;
 use crate::catalog::{FpgaDefinition, Toolchain};
 use crate::errors::{Category, Diagnostic, ToolError};
-use crate::packages::manifest::PackageSpec;
 use crate::progress::Phases;
 use crate::runner::{RunError, command_line, run_tool_with};
 use crate::state::EngineState;
@@ -173,7 +172,7 @@ pub fn pnr_command(
 
 /// The programs that pack the bitstream, with their arguments, the standard ones.
 /// Run in order in the build folder. `package_dir` is the folder of the
-/// package with the place-and-route tools (see `pnr_package`).
+/// core component with the place-and-route tools (see `pnr_package`).
 pub fn pack_commands(
     fpga: &FpgaDefinition,
     package_dir: &Path,
@@ -238,13 +237,13 @@ pub fn pack_commands(
     }
 }
 
-/// The package with the build tools: yosys, and every toolchain's
+/// The core component with the build tools: yosys, and every toolchain's
 /// place-and-route and packing tools except Xilinx's.
 pub const TOOLCHAIN: &str = "oss-cad-suite";
-/// The package with Xilinx's place-and-route and packing tools.
+/// The core component with Xilinx's place-and-route and packing tools.
 pub const XILINX_TOOLCHAIN: &str = "openxc7";
 
-/// The package with the toolchain's place-and-route and packing tools.
+/// The core component with the toolchain's place-and-route and packing tools.
 pub fn pnr_package(arch: Toolchain) -> &'static str {
     match arch {
         Toolchain::Openxc7 => XILINX_TOOLCHAIN,
@@ -357,8 +356,7 @@ fn file_checksum(path: &Path) -> Result<String, ToolError> {
 pub fn inputs_checksum(
     req: &BuildRequest,
     includes: &BTreeSet<String>,
-    toolchain_version: &str,
-    pnr_toolchain: Option<&PackageSpec>,
+    core_version: &str,
 ) -> Result<String, ToolError> {
     let mut contents = BTreeMap::new();
     for rel in req
@@ -369,9 +367,9 @@ pub fn inputs_checksum(
     {
         contents.insert(rel.clone(), file_checksum(&req.source_folder.join(rel))?);
     }
-    let mut key = serde_json::json!({
+    let key = serde_json::json!({
         "engine_version": crate::state::ENGINE_VERSION,
-        "toolchain": [TOOLCHAIN, toolchain_version],
+        "core": [crate::packages::CORE, core_version],
         "board": req.board.build_key(),
         "top_module": req.top_module,
         "source_files": req.source_files,
@@ -379,10 +377,6 @@ pub fn inputs_checksum(
         "defines": req.defines,
         "contents": contents,
     });
-    // A second package, for Xilinx.
-    if let Some(p) = pnr_toolchain {
-        key["pnr_toolchain"] = serde_json::json!([p.name, p.version]);
-    }
     Ok(hex::encode(Sha256::digest(key.to_string().as_bytes())))
 }
 
@@ -463,22 +457,12 @@ pub async fn run_watched(
                     crate::errors::ActionCode::DownloadPackages,
                     format!(
                         "Download the {} package again, which may be damaged.",
-                        package_of(bin_dir)
+                        crate::packages::CORE
                     ),
                 ),
             )
         }
     }
-}
-
-/// The package a bin folder belongs to: packages/<name>/<version>/bin.
-fn package_of(bin_dir: &Path) -> String {
-    bin_dir
-        .parent()
-        .and_then(Path::parent)
-        .and_then(Path::file_name)
-        .map(|n| n.to_string_lossy().into_owned())
-        .unwrap_or_else(|| TOOLCHAIN.to_string())
 }
 
 /// A tool that exited with an error status, as a tool error with its output.
@@ -534,25 +518,9 @@ pub async fn build(
     call: &Call,
 ) -> Result<BuildResult, ToolError> {
     let includes = find_includes(&req.source_folder, &req.source_files)?;
-    let spec = state
-        .packages
-        .manifest()
-        .get(TOOLCHAIN)
-        .cloned()
-        .ok_or_else(|| ToolError::engine(format!("{TOOLCHAIN} isn't in the manifest.")))?;
+    let core = state.packages.spec(crate::packages::CORE)?.clone();
     let fpga = &req.board.fpga;
-    let pnr_spec = match pnr_package(fpga.toolchain()) {
-        TOOLCHAIN => None,
-        name => Some(
-            state
-                .packages
-                .manifest()
-                .get(name)
-                .cloned()
-                .ok_or_else(|| ToolError::engine(format!("{name} isn't in the manifest.")))?,
-        ),
-    };
-    let checksum = inputs_checksum(&req, &includes, &spec.version, pnr_spec.as_ref())?;
+    let checksum = inputs_checksum(&req, &includes, &core.version)?;
 
     if let Some(record) = read_record(&req.build_folder)
         && record.inputs_checksum == checksum
@@ -577,24 +545,17 @@ pub async fn build(
         return Ok(result);
     }
 
-    let mut names = vec![TOOLCHAIN];
-    if let Some(p) = &pnr_spec {
-        names.push(&p.name);
-    }
-    let needed = state.packages.needing_download(&names)?;
+    let needed = state.packages.needing_download(&[crate::packages::CORE])?;
     let phases = Phases::new(call.progress.clone(), needed.len() + 3);
     state
         .packages
         .ensure(&needed, state.auto_download, &phases, &call.cancel)
         .await?;
-    let package_dir = state.packages.package_dir(&spec);
-    let bin = package_dir.join("bin");
-    // The place-and-route and packing tools' package.
-    let pnr_dir = match &pnr_spec {
-        Some(p) => state.packages.package_dir(p),
-        None => package_dir.clone(),
-    };
-    let pnr_bin = pnr_dir.join("bin");
+    let bin = state.packages.bin_dir(TOOLCHAIN)?;
+    // The place-and-route and packing tools' component.
+    let pnr = pnr_package(fpga.toolchain());
+    let pnr_dir = state.packages.component_dir(pnr)?;
+    let pnr_bin = state.packages.bin_dir(pnr)?;
 
     let out = &req.build_folder;
     fs::create_dir_all(out).map_err(|e| io_error("create the build folder", e))?;
@@ -709,12 +670,6 @@ fn write_record(build_folder: &Path, record: &BuildRecord) -> Result<(), ToolErr
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn a_program_that_cant_start_names_its_package() {
-        let bin = Path::new("/e/packages/verible/2026-10-22/bin");
-        assert_eq!(package_of(bin), "verible");
-    }
 
     #[test]
     fn includes_are_found_recursively_and_must_stay_inside() {

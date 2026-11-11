@@ -1,47 +1,48 @@
 {
   "packages": [
     {
-      "name": "oss-cad-suite",
-      "version": "2026-10-22",
-      "description": "Yosys, nextpnr, icepack, openFPGALoader and other open source FPGA tools",
+      "name": "logix-catalog",
+      "version": "2026-11-10",
+      "description": "Logix Catalog: the boards and FPGAs",
       "files": {
-        "darwin-arm64": {
-          "owner": "fpgawars",
-          "repo": "tools-oss-cad-suite",
-          "tag": "2026-10-22",
-          "file": "apio-oss-cad-suite-darwin-arm64-20261022.tgz",
-          "size": 525983321,
-          "sha256": "5fdbffd3c0c64de04f6181ab5d27d8a340374d1c581a8c6e49beb45214be9f1b"
+        "any": {
+          "owner": "openlogix",
+          "repo": "logix-catalog",
+          "tag": "2026-11-10",
+          "file": "logix-catalog-20261110.tgz",
+          "size": 30614,
+          "sha256": "2de115344152793f351743c1321994e2552b27a66220399ae6ac58b0905a5131"
         }
       }
     },
     {
-      "name": "openxc7",
-      "version": "2026-10-22",
-      "description": "nextpnr-xilinx, Project X-Ray's database and bitstream tools for Xilinx 7 Series FPGAs",
+      "name": "logix-core",
+      "version": "2026-11-10",
+      "description": "The FPGA tools: the YosysHQ OSS CAD Suite, openXC7 and Verible (and Graphviz on Windows), each its upstream release",
       "files": {
         "darwin-arm64": {
-          "owner": "fpgawars",
-          "repo": "tools-openxc7",
-          "tag": "2026-10-22",
-          "file": "apio-openxc7-darwin-arm64-20261022.tgz",
-          "size": 123525394,
-          "sha256": "c5b478bcce623dad299c382e5cc322f67fc4826834754b23ffe04846e34522ee"
-        }
-      }
-    },
-    {
-      "name": "verible",
-      "version": "2026-10-22",
-      "description": "Verible's Verilog formatter and other Verilog tools",
-      "files": {
-        "darwin-arm64": {
-          "owner": "fpgawars",
-          "repo": "tools-verible",
-          "tag": "2026-10-22",
-          "file": "apio-verible-darwin-arm64-20261022.tgz",
-          "size": 7939686,
-          "sha256": "5759bc301e5eb208af774df0844e19cb181cdb60aa4abb4b92c646c6b8798d71"
+          "owner": "openlogix",
+          "repo": "logix-core",
+          "tag": "2026-11-10",
+          "file": "logix-core-darwin-arm64-20261110.tgz",
+          "size": 635947763,
+          "sha256": "ffbf16f3da2b3bc2be1ff18b84d80e47a2a7ae11aec68d0e4c4afc6dbcca54c4"
+        },
+        "linux-x86-64": {
+          "owner": "openlogix",
+          "repo": "logix-core",
+          "tag": "2026-11-10",
+          "file": "logix-core-linux-x86-64-20261110.tgz",
+          "size": 878604463,
+          "sha256": "a9c16b65b92f74d254114f1e4a3a4d325b1a2b508ddcf174cb3807aaf6157e94"
+        },
+        "windows-x86-64": {
+          "owner": "openlogix",
+          "repo": "logix-core",
+          "tag": "2026-11-10",
+          "file": "logix-core-windows-x86-64-20261110.tgz",
+          "size": 724453763,
+          "sha256": "94d7e660d9db9671fbc066ea1f0d49d3a0faa8ada84dcb10ccdb866fe392deca"
         }
       }
     }

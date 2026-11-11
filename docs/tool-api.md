@@ -248,7 +248,7 @@ Results of the tools that run programs (`lint`, `test`, `simulate`, `format`, `b
 | Field | Type | Description |
 | --- | --- | --- |
 | `tool` | text | The program's name, such as `yosys` |
-| `package` | text | The package it came from and its version, such as `oss-cad-suite 2026-10-22`. Omitted for a program from elsewhere, such as a custom programmer command |
+| `package` | text | The package it came from, its version and the core's tool, such as `logix-core 2026-11-10 (oss-cad-suite)`. Omitted for a program from elsewhere, such as a custom programmer command |
 | `cwd` | absolute path | The folder it ran in |
 | `args` | list of text | The program as an absolute path, then its arguments, exactly as passed |
 | `shell` | text | One POSIX shell command line that runs it again the same way: in the same folder, with the same minimal environment, `PATH` (the package's `bin` folder, then `/usr/bin:/bin`), `HOME` and `TMPDIR` |
@@ -258,10 +258,10 @@ Example:
 ```json
 {
   "tool": "verilator_bin",
-  "package": "oss-cad-suite 2026-10-22",
+  "package": "logix-core 2026-11-10 (oss-cad-suite)",
   "cwd": "/home/user/proj",
-  "args": ["/home/user/.logix/packages/oss-cad-suite/2026-10-22/bin/verilator_bin", "--lint-only", "--quiet", "main.v"],
-  "shell": "cd /home/user/proj && env -i PATH=/home/user/.logix/packages/oss-cad-suite/2026-10-22/bin:/usr/bin:/bin HOME=\"$HOME\" TMPDIR=\"$TMPDIR\" /home/user/.logix/packages/oss-cad-suite/2026-10-22/bin/verilator_bin --lint-only --quiet main.v"
+  "args": ["/home/user/.logix/ide/engine/packages/logix-core/2026-11-10/oss-cad-suite/bin/verilator_bin", "--lint-only", "--quiet", "main.v"],
+  "shell": "cd /home/user/proj && env -i PATH=/home/user/.logix/ide/engine/packages/logix-core/2026-11-10/oss-cad-suite/bin:/usr/bin:/bin HOME=\"$HOME\" TMPDIR=\"$TMPDIR\" /home/user/.logix/ide/engine/packages/logix-core/2026-11-10/oss-cad-suite/bin/verilator_bin --lint-only --quiet main.v"
 }
 ```
 
@@ -273,7 +273,7 @@ A host that wants progress adds an MCP progress token to its request. The engine
 
 Every operation that can take more than a second or two reports progress by phase:
 
-- **Phase messages.** Each phase sends a message when it starts, such as "Downloading oss-cad-suite", "Synthesizing", "Placing and routing", "Packing bitstream", "Finding device", "Checking FPGA", "Writing flash" or "Verifying".
+- **Phase messages.** Each phase sends a message when it starts, such as "Downloading logix-core", "Synthesizing", "Placing and routing", "Packing bitstream", "Finding device", "Checking FPGA", "Writing flash" or "Verifying".
 - **Percentages.** Within a phase, the engine also reports a percentage wherever the underlying tool or download prints one, such as package downloads and openFPGALoader writing and verifying flash. Phases without one send only their start message, and the host shows a spinner.
 - **One increasing scale.** MCP requires the progress value to only increase within one operation. So when the operation starts, the engine decides its phases, including any package downloads it needs. It sets total to 100 times the number of phases and reports progress as 100 times the phase index plus the phase's percentage. A host can show an overall bar from progress and total, and the current phase's percentage as progress modulo 100.
 - **Unparsed output.** When the engine can't read a tool's output, such as with a custom `programmer_command`, that phase sends only its start message.
@@ -284,13 +284,13 @@ Before running, each tool checks that the packages it needs from the manifest ar
 
 The `--no-auto-download` command-line argument, described in [Command line](command-line.md), turns this off for offline or managed setups. A missing or broken package is then a setup error with `download_packages`, and so is a download that fails, such as when there's no network. To download, the host calls the download_packages tool, which works whether automatic download is on or off.
 
-Download progress is one phase per package, such as "Downloading oss-cad-suite". Its percentage covers the download (the first 80%) and then unpacking.
+Download progress is one phase per package, such as "Downloading logix-core". Its percentage covers the download (the first 80%) and then unpacking.
 
 **Engine folder layout.** Hosts don't need to know it, but it helps when troubleshooting:
 
 | Path in the engine folder | Contents |
 | --- | --- |
-| `packages/<name>/<version>/` | A downloaded package, such as `packages/oss-cad-suite/2026-10-22/`. Several versions can sit side by side. Its download record, `logix-download.json`, is written last |
+| `packages/<name>/<version>/` | A downloaded package, such as `packages/logix-core/2026-11-10/`, with one folder per tool in the core (`oss-cad-suite/`, `openxc7/`, `verible/`). Several versions can sit side by side. Its download record, `logix-download.json`, is written last |
 | `downloads/` | Partial downloads, deleted when a download ends |
 | `locks/` | One lock file per package, held while downloading it |
 | `logs/` | Log files, described in [Command line](command-line.md) |
@@ -707,7 +707,7 @@ Each FPGA family is built by its toolchain's open source flow: yosys for synthes
 
 The constraint file must be in the family's format and have its extension (any case): `.pcf` for iCE40, `.lpf` for ECP5, `.cst` for Gowin, `.xdc` for Xilinx 7-series (`get_catalog` `families` gives each family's). Any other extension is a request error, since a misnamed file would otherwise build wrongly or fail with a puzzling parse error.
 
-Xilinx builds use two packages, `oss-cad-suite` and `openxc7`. Two Xilinx builds of the same design differ only in the bitstream header, which holds the build date.
+Xilinx builds use two of the core's tools, `oss-cad-suite` and `openxc7`. Two Xilinx builds of the same design differ only in the bitstream header, which holds the build date.
 
 **Table 6.** build tool inputs
 
@@ -995,7 +995,7 @@ A board with a choice, such as the iCESugar-Pro, which can be programmed to flas
 }
 ```
 
-**Catalog contents.** The catalog is [Logix Catalog](https://github.com/openlogix/logix-catalog), a board file per board (see Board specification) and the FPGAs, one file per family, built into each engine release from a pinned commit; `catalog` in `get_engine_info` gives its version. It has every iCE40, ECP5, Gowin (GW1N, GW2A, GW5A) and Xilinx 7-series (Artix-7, Spartan-7, Zynq-7000) FPGA the toolchain packages support, and 81 boards: 27 iCE40, 22 ECP5, 9 Gowin and 23 Xilinx, with 128 variants in all, programmed with `openfpgaloader`, `iceprog`, `dfu-util` or `icesprog`. 32 boards have a choice: memory (iCESugar-Pro, ColorLight i5, and most Xilinx and ECP5 boards, which have a RAM and a flash variant; flash is the default wherever a board has it), connection and memory (ColorLight 5A-75E V7.1 and i9 v7.2, FleaFPGA Ohm), or both with fewer combinations (ButterStick r1.0: its USB bootloader writes flash, its adapters RAM). The others have one value of each, which still tells where an upload goes: 50 variants write RAM, and the Zynq boards, the QMTECH XC7A100T and the ULX3S upload only to RAM. Every variant has a USB filter, whatever its family. Boards programmed through a cable named with openFPGALoader's `-c` option, such as `-c ft2232`, use that cable's default USB IDs. Every board has `resources`: 79 a clock with its frequency, 80 their LEDs (with `active` for 79 of them; RGB LEDs as `rgb_led`). They come from the boards' example pin files, most of them tried on hardware, and from the boards' schematics and makers; 25 boards name the source in `source`. 2 boards list PMODs, and one, the iCESugar v1.5, lists every pin it wires: its switches, its UART, its PMODs and an `unclassified` resource for the rest. Clocks that need a jumper have a `setup` requirement (the UPduino v3.0 and v3.1, the ECP5 Evaluation Board), and 5 boards list pins every design must drive: the ULX3S's ESP32 GPIO0, held high, and Fomu's USB pins, held low. Boards without an oscillator of their own (the pico-ice, whose clock comes from its RP2040) or whose clock isn't documented yet list no clock; the Tang Primer 20K is two boards, one per carrier board (Dock, with six LEDs, and Lite, without LEDs but with four PMODs); the ButterStick's seven RGB LEDs are a `led_matrix`; the Soan Papdi Mini's clock and RGB LED come from its maker.
+**Catalog contents.** The catalog is [Logix Catalog](https://github.com/openlogix/logix-catalog), a board file per board (see Board specification) and the FPGAs, one file per family, downloaded as the `logix-catalog` package, a release each engine release pins (a tool that reads boards downloads it first, about 30 KB); `catalog` in `get_engine_info` gives its version. It has every iCE40, ECP5, Gowin (GW1N, GW2A, GW5A) and Xilinx 7-series (Artix-7, Spartan-7, Zynq-7000) FPGA the toolchain packages support, and 81 boards: 27 iCE40, 22 ECP5, 9 Gowin and 23 Xilinx, with 128 variants in all, programmed with `openfpgaloader`, `iceprog`, `dfu-util` or `icesprog`. 32 boards have a choice: memory (iCESugar-Pro, ColorLight i5, and most Xilinx and ECP5 boards, which have a RAM and a flash variant; flash is the default wherever a board has it), connection and memory (ColorLight 5A-75E V7.1 and i9 v7.2, FleaFPGA Ohm), or both with fewer combinations (ButterStick r1.0: its USB bootloader writes flash, its adapters RAM). The others have one value of each, which still tells where an upload goes: 50 variants write RAM, and the Zynq boards, the QMTECH XC7A100T and the ULX3S upload only to RAM. Every variant has a USB filter, whatever its family. Boards programmed through a cable named with openFPGALoader's `-c` option, such as `-c ft2232`, use that cable's default USB IDs. Every board has `resources`: 79 a clock with its frequency, 80 their LEDs (with `active` for 79 of them; RGB LEDs as `rgb_led`). They come from the boards' example pin files, most of them tried on hardware, and from the boards' schematics and makers; 25 boards name the source in `source`. 2 boards list PMODs, and one, the iCESugar v1.5, lists every pin it wires: its switches, its UART, its PMODs and an `unclassified` resource for the rest. Clocks that need a jumper have a `setup` requirement (the UPduino v3.0 and v3.1, the ECP5 Evaluation Board), and 5 boards list pins every design must drive: the ULX3S's ESP32 GPIO0, held high, and Fomu's USB pins, held low. Boards without an oscillator of their own (the pico-ice, whose clock comes from its RP2040) or whose clock isn't documented yet list no clock; the Tang Primer 20K is two boards, one per carrier board (Dock, with six LEDs, and Lite, without LEDs but with four PMODs); the ButterStick's seven RGB LEDs are a `led_matrix`; the Soan Papdi Mini's clock and RGB LED come from its maker.
 
 **Trust and notes.** Each catalog variant has `tested`: true when its programming is known to work, because it was tried on the board or is used unchanged by a tool that people rely on; false when it hasn't been tried on hardware, such as a board moved to a different programmer. A change rated low risk after checking the programmer's source keeps `tested` true: every openFPGALoader command through an FTDI chip names the chosen device with `--busdev-num ${BUS}:${DEV}` (openFPGALoader's FTDI drivers then open that device), a change made without hardware tests. Optional `user_notes` give warnings and missing information for its users, such as a USB filter that also matches other boards, or a step needed before programming. The catalog file also keeps `maintainer_notes`, where each variant's settings come from and why they changed, which `get_catalog` doesn't return. A USB filter can't always tell one board model from another: boards that use the same USB chip and report the same names look alike to the engine. Hosts can show both fields where users pick a board.
 
@@ -1071,9 +1071,9 @@ Returns the Logix Engine's version, platform and package status. A host calls it
 | `auto_download` | boolean | Whether automatic package download and repair is on. It is on by default, and the host turns it off with the `--no-auto-download` command-line argument when it launches the engine |
 | `command_line` | list of text | The command-line arguments the engine was launched with, as given, for diagnostics |
 | `log_file` | absolute path | The log file this engine process writes, in the `logs` subfolder of the engine folder |
-| `packages` | list of packages | Every package in the engine's manifest. Each has a text `name`, a date tag `version`, a `status`: `ready`, `missing` or `broken`, and, when ready, `bin_folder`: the absolute path of the folder with its programs, for hosts that run one directly, such as Verible's language server `verible-verilog-ls` from the `verible` package |
+| `packages` | list of packages | Every package in the engine's manifest: `logix-catalog` (the board catalog) and `logix-core` (the FPGA tools). Each has a text `name`, a date tag `version`, a `status`: `ready`, `missing` or `broken`, and, for a ready `logix-core`, `components`: its tools, each with a `name` (`oss-cad-suite`, `openxc7`, `verible`, and `graphviz` on Windows), a `description` and `bin_folder`, the absolute path of the folder with its programs, for hosts that run one directly, such as Verible's language server `verible-verilog-ls` from the `verible` component |
 | `boards_schema` | text | The address of the board schema this engine reads, Logix Catalog's JSON Schema of a board file, in the catalog and in custom boards folders, such as `https://www.openlogix.org/schemas/logix-board-v1.json` (see Board specification) |
-| `catalog` | object | The board catalog built into this engine: `version`, the date (yyyy-mm-dd) of its Logix Catalog commit, `commit`, that commit's short hash, and `local`, true only for a developer build from a local catalog clone |
+| `catalog` | object | The board catalog: `version`, the `logix-catalog` release (yyyy-mm-dd) this engine pins, and `local`, true only when the engine reads a local catalog folder (`LOGIX_ENGINE_DEV_CATALOG_FOLDER`, a diagnostic setting), whose `version` is then `local` |
 | `report` | multiline text | The facts above as lines for people, the engine's part of a frontend's system info (see Show system info under Recipes): the version, platform, engine folder, log file, automatic download, command line, each package with its version and status, the board catalog's version and the board schema. Show it as is; its wording can change in any version, so programs read the fields above |
 
 **Errors:** engine errors only.
@@ -1092,11 +1092,13 @@ Output:
   "command_line": ["--engine-folder", "/Users/user/.myhost/engine"],
   "log_file": "/Users/user/.myhost/engine/logs/20261028-4123.log",
   "packages": [
-    { "name": "oss-cad-suite", "version": "2026-11-20", "status": "ready", "bin_folder": "/Users/user/.myhost/engine/packages/oss-cad-suite/2026-11-20/bin" },
-    { "name": "examples", "version": "2026-10-15", "status": "missing" }
+    { "name": "logix-catalog", "version": "2026-11-10", "status": "ready" },
+    { "name": "logix-core", "version": "2026-11-10", "status": "ready", "components": [
+      { "name": "verible", "description": "CHIPS Alliance Verible: the Verilog formatter and language server", "bin_folder": "/Users/user/.myhost/engine/packages/logix-core/2026-11-10/verible/bin" }
+    ] }
   ],
   "boards_schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
-  "catalog": { "version": "2026-11-08", "commit": "3cdae93" },
+  "catalog": { "version": "2026-11-10" },
   "report": "Logix Engine 2026-12-01\nPlatform: darwin-arm64\nEngine folder: /Users/user/.myhost/engine\n..."
 }
 ```
@@ -1133,9 +1135,10 @@ Output:
 
 ```json
 {
-  "downloaded": ["oss-cad-suite"],
+  "downloaded": ["logix-core"],
   "packages": [
-    { "name": "oss-cad-suite", "version": "2026-10-22", "status": "ready" }
+    { "name": "logix-catalog", "version": "2026-11-10", "status": "ready" },
+    { "name": "logix-core", "version": "2026-11-10", "status": "ready", "components": [ ... ] }
   ]
 }
 ```

@@ -730,7 +730,7 @@ pub mod tests {
 
     #[test]
     fn matching_boards_with_levels() {
-        let catalog = crate::catalog::builtin();
+        let catalog = crate::catalog::get();
         let boards: Vec<Candidate> = catalog
             .boards
             .iter()

@@ -141,7 +141,7 @@ pub async fn run_with_programmers(
     let variant = &board.variant;
     let custom = input.programmer_command.as_deref();
 
-    let needed = state.packages.needing_download(&[TOOLCHAIN])?;
+    let needed = state.packages.needing_download(&[crate::packages::CORE])?;
     let checks_fpga = custom.is_none() && program::checks_fpga(variant, &board.fpga);
     let steps = if custom.is_some() { 2 } else { 3 } + usize::from(checks_fpga);
     let phases = Phases::new(call.progress.clone(), needed.len() + steps);
@@ -149,15 +149,9 @@ pub async fn run_with_programmers(
         .packages
         .ensure(&needed, state.auto_download, &phases, &call.cancel)
         .await?;
-    let spec = state
-        .packages
-        .manifest()
-        .get(TOOLCHAIN)
-        .cloned()
-        .ok_or_else(|| ToolError::engine(format!("{TOOLCHAIN} isn't in the manifest.")))?;
     let bin = match programmers {
         Some(dir) => dir.to_path_buf(),
-        None => state.packages.package_dir(&spec).join("bin"),
+        None => state.packages.bin_dir(TOOLCHAIN)?,
     };
 
     // Say how the board will be programmed (not for a custom command, which
@@ -258,7 +252,10 @@ pub async fn run_with_programmers(
         )
         .with_action(
             ActionCode::DownloadPackages,
-            format!("Download the {TOOLCHAIN} package again, which may be damaged."),
+            format!(
+                "Download the {} package again, which may be damaged.",
+                crate::packages::CORE
+            ),
         )),
     }
 }
@@ -319,7 +316,10 @@ async fn check_fpga(
             )
             .with_action(
                 ActionCode::DownloadPackages,
-                format!("Download the {TOOLCHAIN} package again, which may be damaged."),
+                format!(
+                    "Download the {} package again, which may be damaged.",
+                    crate::packages::CORE
+                ),
             ));
         }
     };
@@ -348,7 +348,7 @@ async fn check_fpga(
 /// likely is: of those it matches, the ones at its strongest match level,
 /// as list_devices rates them.
 pub fn boards_with_fpga(code: u32, device: &Device) -> Vec<String> {
-    let catalog = crate::catalog::builtin();
+    let catalog = crate::catalog::get();
     let candidates: Vec<devices::Candidate> = catalog
         .boards
         .iter()

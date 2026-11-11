@@ -36,16 +36,15 @@ async fn engine() -> EngineState {
     );
     READY
         .get_or_init(|| async {
-            let missing = packages
-                .needing_download(&["oss-cad-suite", "openxc7"])
-                .unwrap();
+            let missing = packages.needing_download(&["logix-core"]).unwrap();
             let phases = Phases::new(Arc::new(NoProgress), missing.len());
             packages
                 .ensure(&missing, true, &phases, &CancellationToken::new())
                 .await
-                .expect("download oss-cad-suite and openxc7 for the build tests");
+                .expect("download logix-core for the build tests");
         })
         .await;
+    logix_engine::catalog::use_test_copy();
     EngineState {
         engine_folder: folder.display().to_string(),
         engine_folder_resolved: folder.clone(),
@@ -160,7 +159,7 @@ async fn builds_then_is_up_to_date_until_an_input_changes() {
             .package
             .as_deref()
             .unwrap()
-            .starts_with("oss-cad-suite ")
+            .ends_with("(oss-cad-suite)")
     );
     assert_eq!(out.commands[0].cwd, src.to_string_lossy());
     assert_eq!(out.bitstream, "hardware.bin");
@@ -451,9 +450,9 @@ async fn builds_a_xilinx_design() {
         .iter()
         .map(|c| c.package.clone().unwrap_or_default())
         .collect();
-    assert!(packages[0].starts_with("oss-cad-suite "), "{packages:?}");
+    assert!(packages[0].ends_with("(oss-cad-suite)"), "{packages:?}");
     assert!(
-        packages[1..].iter().all(|p| p.starts_with("openxc7 ")),
+        packages[1..].iter().all(|p| p.ends_with("(openxc7)")),
         "{packages:?}"
     );
     assert!(
@@ -1278,7 +1277,7 @@ async fn program_board_refuses_a_board_with_another_fpga() {
     // never another definition with its ID.
     // The catalog's entry, as is: a custom board under any ID.
     let my_arty =
-        serde_json::to_value(&logix_engine::catalog::builtin().boards["arty-a7-35t"]).unwrap();
+        serde_json::to_value(&logix_engine::catalog::get().boards["arty-a7-35t"]).unwrap();
     let boards_dir = tmp.path().join("boards");
     std::fs::create_dir(&boards_dir).unwrap();
     let uploads = std::sync::atomic::AtomicUsize::new(0);

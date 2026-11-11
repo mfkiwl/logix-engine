@@ -180,26 +180,23 @@ impl Sources {
     }
 }
 
-/// Makes sure the toolchain is downloaded and returns its bin folder and
-/// package folder. `phases` already counts one phase per package to download.
+/// Makes sure the core is downloaded and returns the suite's bin folder and
+/// its component folder. `phases` already counts one phase per package to
+/// download.
 pub async fn toolchain(
     state: &EngineState,
     needed: &[crate::packages::manifest::PackageSpec],
     phases: &Phases,
     call: &Call,
 ) -> Result<(PathBuf, PathBuf), ToolError> {
-    let spec = state
-        .packages
-        .manifest()
-        .get(TOOLCHAIN)
-        .cloned()
-        .ok_or_else(|| ToolError::engine(format!("{TOOLCHAIN} isn't in the manifest.")))?;
     state
         .packages
         .ensure(needed, state.auto_download, phases, &call.cancel)
         .await?;
-    let dir = state.packages.package_dir(&spec);
-    Ok((dir.join("bin"), dir))
+    Ok((
+        state.packages.bin_dir(TOOLCHAIN)?,
+        state.packages.component_dir(TOOLCHAIN)?,
+    ))
 }
 
 /// Keeps the first of each diagnostic with the same file, line, text and
