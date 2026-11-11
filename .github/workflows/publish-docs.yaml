@@ -2,7 +2,8 @@
 # GitHub Pages: https://www.openlogix.org/logix-engine/
 #
 # Runs on every push to main, daily (to catch breakage from GitHub or
-# MkDocs changes even when nothing changes here), and manually.
+# MkDocs changes even when nothing changes here), and manually. The work is
+# the shared Open Logix workflow in openlogix/.github.
 
 name: publish-docs
 
@@ -30,32 +31,4 @@ concurrency:
 
 jobs:
   publish:
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
-
-    steps:
-      - name: Check out the code
-        uses: actions/checkout@v7
-
-      - name: Set up Python
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.14"
-
-      - name: Install the docs tools
-        run: pip install -r docs/requirements.txt
-
-      # --strict fails on broken links and other warnings.
-      - name: Build the site
-        run: mkdocs build --strict
-
-      - name: Upload the site
-        uses: actions/upload-pages-artifact@v5
-        with:
-          path: _site
-
-      - name: Deploy to GitHub Pages
-        id: deploy
-        uses: actions/deploy-pages@v5
+    uses: openlogix/.github/.github/workflows/publish-docs.yaml@main

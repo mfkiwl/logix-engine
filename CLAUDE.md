@@ -45,13 +45,13 @@ Milestone 1 (iCE40, seven tools, tested on an Alhambra II) is done. Milestone 2 
 
 ## CI and releases
 
-Same conventions as logix-ide, using the shared actions from `openlogix/.github` (`openlogix/.github/actions/<name>@v1`; that repo documents and tests them).
+Same conventions as logix-ide, using the shared actions from `openlogix/.github` (`openlogix/.github/actions/<name>@main`; that repo documents and tests them).
 
 - **`test.yaml`**: on every push and pull request, manually, and daily at 00:00 UTC; a newer run for the same ref cancels the older one; matrix macos-15, macos-26, macos-latest, `fail-fast: false`, 30 min. Installs the pinned Rust, then runs `scripts/test.sh`.
 - **`build-pre-release.yaml`** (on every push to `main`, daily at 00:00 UTC, and manually; a newer run cancels a running one), three jobs:
-  - `prepare` (Ubuntu): release tag `yyyy-mm-dd` and package tag `yyyymmdd`, an early check that no stable release has that tag, repo info, and `BUILD-INFO.json` (with `engine-version` = the release tag) as the `build-info` artifact.
-  - `build-darwin-arm64` (reusable `build-darwin-arm64.yaml`, macos-latest): checks out exactly `repo-commit` into `_repo/`, runs `scripts/test.sh`, builds with `LOGIX_ENGINE_BUILD_VERSION` = the release tag, packs `logix-engine-darwin-arm64-<package tag>.tgz` (one `logix-engine/` folder with the binary, `LICENSE-MIT` and `LICENSE-APACHE`), and checks that the packed binary reports the release tag and has an ad-hoc signature.
-  - `pre-release` (Ubuntu): virus scan, release notes (what the engine is, that these are development builds, macOS steps with `xattr -c`, trying it with `claude mcp add`, the packages table, build info, about these releases), keeps the 5 newest pre-releases, replaces a same-tag pre-release, publishes the `.tgz` and `BUILD-INFO.json`.
+  - `prepare` (Ubuntu): the shared `start-pre-release` action (today's tags, the stable-release check, `BUILD-INFO.json` as the `build-info` artifact). The release tag is the engine version.
+  - `build-darwin-arm64` (reusable `build-darwin-arm64.yaml`, macos-latest): `read-build-info` with the platform, checks out exactly `repo-commit` into `_repo/`, runs `scripts/test.sh`, builds with `LOGIX_ENGINE_BUILD_VERSION` = the release tag, packs `logix-engine-darwin-arm64-<package tag>.tgz` (one `logix-engine/` folder with the binary, `LICENSE-MIT` and `LICENSE-APACHE`), and checks that the packed binary reports the release tag and has an ad-hoc signature.
+  - `pre-release` (Ubuntu): `read-build-info`, downloads the packages, virus scan, writes the release's own content (development builds, the macOS steps with `xattr -c`, trying it with `claude mcp add`, the packages table), then the shared `publish-pre-release` action writes the standard release text around it, makes the day's pre-release again from scratch with the `.tgz`, `BUILD-INFO.json` and `SHA256SUMS`, and deletes old pre-releases by the shared policy.
 - Add Linux and Windows as `build-<platform>.yaml` and test matrix entries when those platforms are implemented.
 
 ## Rules that are easy to break

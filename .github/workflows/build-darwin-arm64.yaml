@@ -7,13 +7,6 @@ name: build-darwin-arm64
 on:
   workflow_call:
 
-env:
-  # These are set later from BUILD-INFO.json.
-  REPO: ""
-  REPO_COMMIT: ""
-  RELEASE_TAG: ""
-  PACKAGE_TAG: ""
-
 jobs:
   build:
     runs-on: macos-latest
@@ -25,43 +18,15 @@ jobs:
 
     steps:
       - name: Check required platform
-        uses: openlogix/.github/actions/check-platform@v1
+        uses: openlogix/.github/actions/check-platform@main
         with:
           os: darwin
           arch: arm64
 
-      - name: Download BUILD-INFO.json artifact from main job
-        uses: actions/download-artifact@v8
+      - name: Read the build info
+        uses: openlogix/.github/actions/read-build-info@main
         with:
-          name: build-info
-          path: _artifacts
-
-      - name: Move build info
-        run: |
-          find _artifacts
-          mv _artifacts/BUILD-INFO.json .
-
-      - name: Add platform info to build info json file
-        uses: openlogix/.github/actions/write-to-json-file@v1
-        with:
-          json-file: BUILD-INFO.json
-          key: target-platform
-          value: darwin-arm64
-
-      - name: Format build info json file
-        uses: openlogix/.github/actions/format-json-file@v1
-        with:
-          json-file: BUILD-INFO.json
-
-      - name: Set env vars from JSON
-        uses: openlogix/.github/actions/set-env-from-json@v1
-        with:
-          json-file: BUILD-INFO.json
-          mappings: >-
-            REPO         repo
-            REPO_COMMIT  repo-commit
-            RELEASE_TAG  release-tag
-            PACKAGE_TAG  package-tag
+          platform: darwin-arm64
 
       # Into a subdirectory, not to step on BUILD-INFO.json.
       - name: Checkout the commit to build
