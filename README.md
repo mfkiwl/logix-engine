@@ -2,6 +2,11 @@
 
 **[Main page](https://www.openlogix.org/engine/)** · [Docs](https://www.openlogix.org/logix-engine/) · GitHub (here)
 
+[![test](https://img.shields.io/github/actions/workflow/status/openlogix/logix-engine/test.yaml?branch=main&label=test)](https://github.com/openlogix/logix-engine/actions/workflows/test.yaml)
+[![build](https://img.shields.io/github/actions/workflow/status/openlogix/logix-engine/build-pre-release.yaml?branch=main&label=build)](https://github.com/openlogix/logix-engine/actions/workflows/build-pre-release.yaml)
+[![docs](https://img.shields.io/github/actions/workflow/status/openlogix/logix-engine/publish-docs.yaml?branch=main&label=docs)](https://github.com/openlogix/logix-engine/actions/workflows/publish-docs.yaml)
+![macOS Apple Silicon](https://img.shields.io/badge/macOS-Apple%20Silicon-000000?logo=apple&logoColor=white)
+
 One open engine to build and test FPGA designs and program boards, for any IDE or AI agent.
 
 The engine is a single native executable, written in Rust, that offers FPGA operations as [MCP](https://modelcontextprotocol.io) tools over stdin/stdout. Frontends such as Logix IDE, Logix CLI, IceStudio, IDE extensions, CI scripts and AI coding agents launch it as a child process and call its tools. The engine downloads and drives proven open source tools, such as Yosys, nextpnr and openFPGALoader, so each frontend can focus on its own user experience instead of reimplementing the toolchain.
