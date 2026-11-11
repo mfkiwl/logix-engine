@@ -654,12 +654,12 @@ Output:
 
 Draws the design as schematic diagrams, one per module: registers, adders, comparators, multiplexers, memories, the FPGA's own blocks and other modules as symbols, with the wires between them. Yosys reads the design as written, without synthesis, with `SYNTHESIZE` defined, and the engine draws every module itself: it lays them out with ELK (the Eclipse Layout Kernel, logix-core's `elkjs`, run in a JavaScript engine built into Logix Engine) and writes the SVGs. Nothing else is needed: no browser plugin, runtime or other program.
 
-Every module the top module uses is drawn, each once per set of parameters. The drawing follows a few rules, so it reads like a hand-drawn schematic:
+The diagram starts at `top_module`: the design's top module, or any module of the design files, drawn with its parameters' default values. The modules it uses are drawn too, each once per set of parameters, down to `levels` levels below it (3 by default); deeper ones are in the model with a `note`, and a diagram that starts at one of them shows it. The drawing follows a few rules, so it reads like a hand-drawn schematic:
 
 - **Labels instead of long wires.** A clock or a reset that goes to two or more places is drawn as labels with its name at each place, not as wires across the drawing. A fixed input, such as an adder's `1`, is a short wire from a label with its value (decimal, or hex from 10 up).
 - **Plain names.** Blocks are named in plain words (Register, Adder, PLL, I/O pin), FPGA blocks by their family's names, and registers after the signal they hold. The yosys type stays in the model.
 - **What isn't logic isn't drawn.** A memory's initialization isn't a block: the memory says where its initial contents are loaded.
-- **Large modules.** A module with more than 1,500 blocks isn't drawn: its diagram would be unreadable. Its `note` says so, and the rest of the design is drawn.
+- **Large modules.** A module with more than 1,500 blocks isn't drawn: its diagram would be unreadable. Modules over 150 blocks get a faster, simpler layout. A layout that fails or takes more than 60 seconds leaves only its module undrawn, with a `note`; the engine runs each layout in a process of its own, so a failure never stops the engine. The progress phase is "Preparing the diagram", or "Preparing the diagram (large)" when the modules drawn have more than 300 blocks in all.
 
 Each call writes the build folder's `diagram/` folder again, deleting the old one first, so a failed call never leaves an old diagram looking current:
 
@@ -675,7 +675,8 @@ Each call writes the build folder's `diagram/` folder again, deleting the old on
 | `board` | board ID | Yes | The target board. Its FPGA family names the FPGA's own blocks and gives their ports' directions |
 | `board_variant` | board variant | No | The board's variant. It doesn't change the diagram |
 | `custom_boards_folder` | custom boards folder | No | The host's own boards (see Board specification). Omitted means none |
-| `top_module` | text | Yes | The design's top module, such as `main` |
+| `top_module` | text | Yes | The module the diagram starts at: the design's top module, such as `main`, or any module of the design files, such as `uart` |
+| `levels` | number | No | How many levels of modules below `top_module` are drawn, such as 1 for it and the modules it uses. Defaults to 3 |
 | `source_folder`, `source_files`, `build_folder` | See folder fields in Table 2 | Yes | The design files, without testbenches or included files. Paths with a double quote (`"`) are refused, since yosys reads them from a script |
 | `defines` | map of text | No | Macro definitions, as in the build tool. `SYNTHESIZE` is always defined |
 | `open` | boolean | No | Open the page in the user's default web browser when it's written. Defaults to false |

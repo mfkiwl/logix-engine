@@ -145,7 +145,7 @@ pub struct Context<'a> {
     /// The FPGA family's plain block names.
     pub fpga_name: fn(&str) -> Option<&'static str>,
     /// A yosys `src` attribute as a source place.
-    pub source: &'a dyn Fn(&str) -> Option<Source>,
+    pub source: &'a (dyn Fn(&str) -> Option<Source> + Sync),
 }
 
 /// The wire classes the drawing needs: clocks, and signals and fixed values

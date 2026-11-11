@@ -3313,7 +3313,7 @@
           "default": null
         },
         "top_module": {
-          "description": "The design's top module, such as main. Every module it uses is drawn\ntoo.",
+          "description": "The module the diagram starts at: the design's top module, such as\nmain, or any module of the design files, such as uart, drawn with its\nparameters' default values. The modules it uses are drawn too, down\nto levels.",
           "type": "string"
         },
         "source_folder": {
@@ -3344,6 +3344,15 @@
           "description": "Open the page in the user's default web browser when it's written,\nso they see the diagram at once. Defaults to false. opened says\nwhether it was.",
           "type": "boolean",
           "default": false
+        },
+        "levels": {
+          "description": "How many levels of modules below top_module are drawn, such as 1\nfor top_module and the modules it uses. Deeper modules are in the\nmodel with a note, not drawn; a diagram with top_module set to one of\nthem shows it. Defaults to 3.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "default": null,
+          "minimum": 0
         },
         "verbose": {
           "description": "Let yosys print more detail, shown in the live output and the logs.\nIt doesn't change the result. Defaults to false.",

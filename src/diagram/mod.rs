@@ -29,7 +29,7 @@ use crate::sim::{SimLibrary, toolchain};
 use crate::state::EngineState;
 use crate::tools::Call;
 
-use layout::{Elk, Stop};
+use layout::Stop;
 use rules::{ModuleModel, Source};
 
 /// The folder in the build folder the diagram is written to, replaced by
@@ -51,6 +51,8 @@ const ELK_BUNDLE: &str = "lib/elk.bundled.js";
 /// Modules with more blocks than this aren't drawn: their diagram would be
 /// unreadable, and laying it out would take minutes.
 pub const MAX_BLOCKS: usize = 1500;
+/// How many levels of modules below the top module are drawn by default.
+pub const DEFAULT_LEVELS: usize = 3;
 /// Above this, ELK spends less effort on fewer wire crossings, so large
 /// modules are drawn in seconds.
 const THOROUGH_BLOCKS: usize = 150;
@@ -79,6 +81,8 @@ pub struct DiagramRequest {
     pub verbose: bool,
     /// Open the page in the system's web browser when it's written.
     pub open: bool,
+    /// How many levels of modules below the top module are drawn.
+    pub levels: usize,
 }
 
 /// One module of the diagram.
@@ -227,15 +231,16 @@ fn yosys_error(run: &crate::runner::ToolRun, req: &DiagramRequest) -> ToolError 
 
 /// ELK's options: balanced layers and placement, straight wires where they
 /// can be, and even spacing (the prototype's, 2026-11-11). Large modules
-/// get less effort on crossings.
+/// get a faster placement (Brandes and Köpf's, about ten times faster than
+/// network simplex on a 500-block module) and less effort on crossings.
 fn layout_options(blocks: usize) -> Value {
-    let thoroughness = if blocks > THOROUGH_BLOCKS { 7 } else { 40 };
+    let large = blocks > THOROUGH_BLOCKS;
     json!({
         "org.eclipse.elk.algorithm": "layered",
         "org.eclipse.elk.layered.layering.strategy": "NETWORK_SIMPLEX",
-        "org.eclipse.elk.layered.nodePlacement.strategy": "NETWORK_SIMPLEX",
+        "org.eclipse.elk.layered.nodePlacement.strategy": if large { "BRANDES_KOEPF" } else { "NETWORK_SIMPLEX" },
         "org.eclipse.elk.layered.nodePlacement.favorStraightEdges": "true",
-        "org.eclipse.elk.layered.thoroughness": thoroughness.to_string(),
+        "org.eclipse.elk.layered.thoroughness": if large { "7" } else { "40" },
         "org.eclipse.elk.layered.spacing.nodeNodeBetweenLayers": "45",
         "org.eclipse.elk.spacing.nodeNode": "30",
         "org.eclipse.elk.layered.spacing.edgeNodeBetweenLayers": "20",
@@ -458,26 +463,25 @@ pub async fn diagram_with(
     let net: netlist::Netlist = serde_json::from_str(&text)
         .map_err(|e| ToolError::engine(format!("Can't read yosys's netlist: {e}.")))?;
 
-    phases.start("Drawing the diagram");
-    let toolchain = req.board.fpga.toolchain();
-    let source_folder = req.source_folder.clone();
-    let display = call.display.clone();
-    let folder = out.clone();
-    let drawn = layout::with_elk(elk.to_path_buf(), call.cancel.clone(), move |elk| {
-        draw_all(net, elk, toolchain, &source_folder, &display, &folder)
-    })
+    let mut layouts = layout::Layouts::new(elk, call.cancel.clone());
+    let (models, top) = match draw_all(
+        net,
+        req.levels,
+        req.board.fpga.toolchain(),
+        &req.source_folder,
+        &call.display,
+        &out,
+        &mut layouts,
+        phases,
+    )
     .await
-    .map_err(|e| ToolError::engine(format!("Can't draw the diagram: {e}.")))?;
-    let (models, top) = match drawn {
+    {
         Ok(d) => d,
         Err(Stop::Cancelled) => return Err(ToolError::cancelled("The diagram was cancelled.")),
-        Err(Stop::TooLong) => {
-            return Err(ToolError::engine("Laying out the diagram took too long."));
-        }
+        // A module's failed layout is noted on it; these are the rest.
+        Err(Stop::TooLong) => return Err(ToolError::engine("Drawing the diagram took too long.")),
         Err(Stop::Failed(e)) => {
-            return Err(ToolError::engine(format!(
-                "Can't lay out the diagram: {e}."
-            )));
+            return Err(ToolError::engine(format!("Can't draw the diagram: {e}.")));
         }
     };
 
@@ -531,39 +535,90 @@ pub async fn diagram_with(
 /// the top module's key; each drawn module's SVG is written to `folder`.
 type Drawn = (Vec<(String, ModuleModel, usize)>, String);
 
-fn draw_all(
+/// How deep each module is below the top module (0 for the top), along its
+/// instances; modules the top doesn't use aren't listed.
+fn depths(net: &netlist::Netlist, top: &str) -> HashMap<String, usize> {
+    let mut depth = HashMap::from([(top.to_string(), 0)]);
+    let mut queue = std::collections::VecDeque::from([top.to_string()]);
+    while let Some(m) = queue.pop_front() {
+        let d = depth[&m];
+        for c in net
+            .modules
+            .get(&m)
+            .into_iter()
+            .flat_map(|m| m.cells.values())
+        {
+            if net.modules.contains_key(&c.ty) && !depth.contains_key(&c.ty) {
+                depth.insert(c.ty.clone(), d + 1);
+                queue.push_back(c.ty.clone());
+            }
+        }
+    }
+    depth
+}
+
+/// A diagram with more blocks than this is large: its status says so.
+pub const LARGE_BLOCKS: usize = 300;
+
+#[allow(clippy::too_many_arguments)]
+async fn draw_all(
     net: netlist::Netlist,
-    elk: Result<Elk, Stop>,
+    levels: usize,
     toolchain: Toolchain,
     source_folder: &Path,
     display: &crate::display_paths::Display,
     folder: &Path,
+    layouts: &mut layout::Layouts,
+    phases: &Phases,
 ) -> Result<Drawn, Stop> {
-    let elk = elk?;
     let mut names: Vec<String> = net.modules.keys().cloned().collect();
     // The top module first, then the others as yosys lists them.
     names.sort_by_key(|n| !net.modules[n].is_top());
     let keys = module_keys(&names);
+    let top_name = names.first().cloned().unwrap_or_default();
+    let depth = depths(&net, &top_name);
     let source = |s: &str| source_place(s, source_folder, display);
     let cx = rules::Context {
         module_keys: &keys,
         fpga_name: fpga_name(toolchain),
         source: &source,
     };
-    let mut out = vec![];
+    // Every module's schematic first, so the phase can say when the
+    // diagram is large.
+    let mut built = vec![];
     for name in &names {
-        let key = keys[name].clone();
-        let (mut schematic, mut model, classes) = rules::build(name, &net.modules[name], &cx);
+        let (mut schematic, model, classes) = rules::build(name, &net.modules[name], &cx);
         schematic.add_constants();
         schematic.add_splits_joins();
+        let deep = depth.get(name).is_none_or(|d| *d > levels);
+        built.push((name, schematic, model, classes, deep));
+    }
+    let drawn_blocks: usize = built
+        .iter()
+        .filter(|(_, s, _, _, deep)| !deep && s.nodes.len() <= MAX_BLOCKS)
+        .map(|(_, s, _, _, _)| s.nodes.len())
+        .sum();
+    phases.start(if drawn_blocks > LARGE_BLOCKS {
+        "Preparing the diagram (large)"
+    } else {
+        "Preparing the diagram"
+    });
+    let top_plain = netlist::plain_name(&top_name);
+    let mut out = vec![];
+    for (name, schematic, mut model, classes, deep) in built {
+        let key = keys[name].clone();
         let blocks = schematic.nodes.len();
-        if blocks > MAX_BLOCKS {
+        if deep {
+            model.note = Some(format!(
+                "Not drawn: it's more than {levels} levels below {top_plain}. A diagram that starts at it, or one with more levels, shows it."
+            ));
+        } else if blocks > MAX_BLOCKS {
             model.note = Some(format!(
                 "Not drawn: it has {blocks} blocks, more than the {MAX_BLOCKS} a diagram can show readably. Split it into smaller modules to see them."
             ));
         } else {
             let graph = schematic.layout_graph(&layout_options(blocks));
-            match elk.layout(&graph.graph.to_string(), LAYOUT_LIMIT) {
+            match layouts.layout(&graph.graph.to_string(), LAYOUT_LIMIT).await {
                 Ok(laid) => {
                     let laid: Value = serde_json::from_str(&laid)
                         .map_err(|e| Stop::Failed(format!("ELK's result: {e}")))?;
@@ -573,13 +628,17 @@ fn draw_all(
                         .map_err(|e| Stop::Failed(format!("can't write {file}: {e}")))?;
                     model.svg_file = Some(file);
                 }
+                Err(Stop::Cancelled) => return Err(Stop::Cancelled),
                 Err(Stop::TooLong) => {
                     model.note = Some(format!(
                         "Not drawn: laying out its {blocks} blocks took more than {} seconds. Split it into smaller modules to see them.",
                         LAYOUT_LIMIT.as_secs()
                     ));
                 }
-                Err(e) => return Err(e),
+                Err(Stop::Failed(e)) => {
+                    log::warn!("Diagram: the layout of {key} failed: {e}");
+                    model.note = Some(format!("Not drawn: its layout failed ({e})."));
+                }
             }
         }
         out.push((key, model, blocks));
@@ -607,6 +666,7 @@ mod tests {
             board: crate::board::resolve("icesugar-1-5", &None, &Default::default()).unwrap(),
             verbose: false,
             open: false,
+            levels: DEFAULT_LEVELS,
         }
     }
 

@@ -57,6 +57,13 @@ fn fail(message: &str) -> ExitCode {
 
 fn main() -> ExitCode {
     let command_line: Vec<String> = std::env::args().skip(1).collect();
+    // The diagram's layout worker: the engine runs itself this way to lay
+    // out diagrams in a process of its own (internal, not for hosts).
+    if let [option, bundle] = command_line.as_slice()
+        && option == logix_engine::diagram::layout::WORKER_OPTION
+    {
+        return logix_engine::diagram::layout::worker_main(Path::new(bundle));
+    }
     let args = Args::parse();
 
     let resolved =

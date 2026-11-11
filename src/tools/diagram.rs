@@ -56,8 +56,10 @@ pub struct DiagramInput {
     /// none.
     #[serde(default)]
     pub custom_boards_folder: Option<String>,
-    /// The design's top module, such as main. Every module it uses is drawn
-    /// too.
+    /// The module the diagram starts at: the design's top module, such as
+    /// main, or any module of the design files, such as uart, drawn with its
+    /// parameters' default values. The modules it uses are drawn too, down
+    /// to levels.
     pub top_module: String,
     /// The folder with the design files, as an absolute path.
     pub source_folder: String,
@@ -80,6 +82,13 @@ pub struct DiagramInput {
     /// whether it was.
     #[serde(default)]
     pub open: bool,
+    /// How many levels of modules below top_module are drawn, such as 1
+    /// for top_module and the modules it uses. Deeper modules are in the
+    /// model with a note, not drawn; a diagram with top_module set to one of
+    /// them shows it. Defaults to 3.
+    #[serde(default)]
+    #[schemars(range(min = 0))]
+    pub levels: Option<usize>,
     /// Let yosys print more detail, shown in the live output and the logs.
     /// It doesn't change the result. Defaults to false.
     #[serde(default)]
@@ -186,6 +195,7 @@ pub fn check(input: DiagramInput) -> Result<DiagramRequest, ToolError> {
         board,
         verbose: input.verbose,
         open: input.open,
+        levels: input.levels.unwrap_or(diagram::DEFAULT_LEVELS),
     })
 }
 

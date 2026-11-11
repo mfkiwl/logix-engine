@@ -23,6 +23,7 @@ logix-engine --engine-folder /Users/user/.myhost/engine --log-level debug
 - **stdout is only for MCP.** Logs, tool output and messages never go to stdout, since they would corrupt the protocol stream.
 - **Bad arguments.** An unknown argument, a missing `--engine-folder` or an engine folder that fails the path checks makes the engine exit before starting MCP, with a non-zero exit code and a message on stderr.
 - **Launch settings are fixed.** The arguments apply for the life of the process. A host that wants different settings launches a new instance.
+- **Internal: the layout worker.** The engine starts itself as `logix-engine --diagram-layout-worker <ELK bundle>` to lay out diagrams in a process of its own (one JSON graph per line in, one result per line out), so a layout that fails can't stop the engine. It isn't for hosts and may change at any time.
 
 ## Logs
 

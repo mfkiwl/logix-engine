@@ -40,6 +40,8 @@ async fn engine() -> EngineState {
         })
         .await;
     logix_engine::catalog::use_test_copy();
+    // Layout workers are the engine's own binary, not this test's.
+    logix_engine::diagram::layout::set_worker_program(env!("CARGO_BIN_EXE_logix-engine").into());
     EngineState {
         engine_folder: folder.display().to_string(),
         engine_folder_resolved: folder.clone(),
@@ -323,6 +325,89 @@ async fn diagram_names_fpga_blocks_for_every_family() {
             .values()
             .any(|b| b["type"] == "$not")
     );
+}
+
+/// A layout that fails or runs too long stops only its worker: the next
+/// one starts a new worker, and the engine goes on.
+#[tokio::test]
+async fn layout_workers_fail_alone() {
+    let state = engine().await;
+    let bundle = state
+        .packages
+        .component_dir(logix_engine::diagram::ELKJS)
+        .unwrap()
+        .join("lib/elk.bundled.js");
+    use logix_engine::diagram::layout::{Layouts, Stop};
+    use std::time::Duration;
+    let graph = r#"{"id":"root","children":[{"id":"a","width":10,"height":10}],"edges":[]}"#;
+    // No ELK: the worker can't start its layout.
+    let mut broken = Layouts::new(
+        Path::new("/nonexistent/elk.bundled.js"),
+        CancellationToken::new(),
+    );
+    assert!(matches!(
+        broken.layout(graph, Duration::from_secs(30)).await,
+        Err(Stop::Failed(_))
+    ));
+    assert!(matches!(
+        broken.layout(graph, Duration::from_secs(30)).await,
+        Err(Stop::Failed(_))
+    ));
+    // Too long: stopped, then a new worker lays out the next graph.
+    let mut layouts = Layouts::new(&bundle, CancellationToken::new());
+    assert_eq!(
+        layouts.layout(graph, Duration::from_millis(1)).await,
+        Err(Stop::TooLong)
+    );
+    let laid = layouts
+        .layout(graph, Duration::from_secs(30))
+        .await
+        .unwrap();
+    assert!(laid.contains(r#""x""#), "{laid}");
+    // Cancelled.
+    let cancel = CancellationToken::new();
+    cancel.cancel();
+    let mut stopped = Layouts::new(&bundle, cancel);
+    assert_eq!(
+        stopped.layout(graph, Duration::from_secs(30)).await,
+        Err(Stop::Cancelled)
+    );
+}
+
+/// Modules deeper than `levels` are in the model, not drawn.
+#[tokio::test]
+async fn diagram_draws_only_levels_below_the_top() {
+    let state = engine().await;
+    let tmp = tempfile::tempdir().unwrap();
+    let src = tmp.path().canonicalize().unwrap();
+    std::fs::write(
+        src.join("main.v"),
+        "module leaf(input a, output y); assign y = ~a; endmodule\n\
+         module mid(input a, output y); leaf l(.a(a), .y(y)); endmodule\n\
+         module main(input A, output Y); mid m(.a(A), .y(Y)); endmodule\n",
+    )
+    .unwrap();
+    let out = diagram::run(&state, input(&src, json!({"levels": 1})), &call())
+        .await
+        .unwrap();
+    let by_key = |k: &str| out.modules.iter().find(|m| m.key == k).unwrap();
+    assert!(by_key("main").svg_file.is_some() && by_key("mid").svg_file.is_some());
+    let leaf = by_key("leaf");
+    assert!(leaf.svg_file.is_none());
+    assert!(
+        leaf.note
+            .as_deref()
+            .unwrap()
+            .contains("more than 1 levels below main"),
+        "{leaf:?}"
+    );
+    // A diagram that starts at a module: it's the top.
+    let out = diagram::run(&state, input(&src, json!({"top_module": "mid"})), &call())
+        .await
+        .unwrap();
+    assert_eq!(out.modules[0].key, "mid");
+    assert!(out.modules[0].top);
+    assert_eq!(out.modules.len(), 2);
 }
 
 /// A copy of a test design, in a folder of its own.
