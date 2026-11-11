@@ -7,7 +7,8 @@
 <!-- Written by Logix Engine's diagram tool. Self-contained: it needs no
      network and nothing installed. Hosts can embed it in an iframe:
      ?theme=light|dark sets the theme, #main/sub opens a module, and it posts
-     {type: "logix-diagram:open-source", file, line} when a block is clicked
+     {type: "logix-diagram:open-source", file, line} when a block is
+     double-clicked
      and {type: "logix-diagram:module", path} when the module changes; it
      accepts {type: "logix-diagram:theme", theme}. A host that loads it
      directly can define window.logixDiagramOpenSource(file, line). -->
@@ -375,20 +376,28 @@ button[hidden] { display: none; }
     const fixed = Object.entries(info.fixed || {});
     if (fixed.length) html += `<h2>Fixed inputs</h2><dl class="kv">${fixed.map(([p, v]) => `<dt>${esc(p)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`;
     if (info.kind === "module") html += `<p class="hint2">Click to open it.</p>`;
-    else if (hosted && info.source) html += `<p class="hint2">Click to go to its source.</p>`;
+    else if (hosted && info.source) html += `<p class="hint2">Double-click to go to its source.</p>`;
     return html;
   }
 
-  function click(cx, cy) {
+  /** The block at a point, with its model entry. */
+  function blockAt(cx, cy) {
     const el = document.elementFromPoint(cx, cy);
-    if (!el || !canvas.contains(el)) return;
+    if (!el || !canvas.contains(el)) return null;
     const blk = el.closest("[data-block]");
-    if (!blk) return;
-    const info = (mod().blocks || {})[blk.dataset.block];
-    if (!info) return;
-    if (info.kind === "module" && DATA.modules[info.module]) go([...path, info.module]);
-    else if (hosted) openSource(info.source);
+    return blk ? (mod().blocks || {})[blk.dataset.block] || null : null;
   }
+
+  // A click opens a module; going to a block's source takes a double-click,
+  // so a stray click while exploring doesn't leave the diagram.
+  function click(cx, cy) {
+    const info = blockAt(cx, cy);
+    if (info && info.kind === "module" && DATA.modules[info.module]) go([...path, info.module]);
+  }
+  canvas.addEventListener("dblclick", (e) => {
+    const info = blockAt(e.clientX, e.clientY);
+    if (info && info.kind !== "module" && hosted) openSource(info.source);
+  });
 
   // Open the module the address names, such as #main/notegen.
   const start = decodeURIComponent(location.hash.slice(1)).split("/").filter(Boolean);
