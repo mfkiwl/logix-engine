@@ -3902,7 +3902,7 @@
           "type": "object",
           "properties": {
             "name": {
-              "description": "The clock's name for showing to people, usually the design's clock\nsignal, such as \"CLK\". For Xilinx it is the name synthesis gave the\nclock net, such as \"o100\", since nextpnr-xilinx doesn't report the\nsignal's own name.",
+              "description": "The clock's name for showing to people, usually the design's clock\nsignal, such as \"CLK\".",
               "type": "string"
             },
             "net": {

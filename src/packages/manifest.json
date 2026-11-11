@@ -25,24 +25,24 @@
           "repo": "logix-core",
           "tag": "2026-11-11",
           "file": "logix-core-darwin-arm64-20261111.tgz",
-          "size": 635996834,
-          "sha256": "dafb73b3b13b74e53c4c6b284941ef9b8bb2bab8d6304e25a828d6c174962484"
+          "size": 635996697,
+          "sha256": "15b1f439430008a7b126bc90f1744d033b510ac331477e357ef4bc2b35c564a5"
         },
         "linux-x86-64": {
           "owner": "openlogix",
           "repo": "logix-core",
           "tag": "2026-11-11",
           "file": "logix-core-linux-x86-64-20261111.tgz",
-          "size": 878656957,
-          "sha256": "2c5263f341b5380670a730f385b72db08990970f17e4d195b148ba9cb5fa0d08"
+          "size": 878656824,
+          "sha256": "9689cbd45a9d8ad067e7e05b55964ca04c1416dffbd11f3b4802ede5149a4f5d"
         },
         "windows-x86-64": {
           "owner": "openlogix",
           "repo": "logix-core",
           "tag": "2026-11-11",
           "file": "logix-core-windows-x86-64-20261111.tgz",
-          "size": 724650141,
-          "sha256": "955cae3e36808cd615d537b5623470dfd745f5500be117e488f5cac826cbdbd8"
+          "size": 724649931,
+          "sha256": "8a18fb82bcc47573c848c304c0bd3df9c9d65301fdb470a5bd5d745ef2da34d3"
         }
       }
     }

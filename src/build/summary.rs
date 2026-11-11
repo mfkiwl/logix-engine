@@ -269,9 +269,7 @@ pub fn report_summary(summary: &[ResourceSummary], clocks: &[ClockSummary]) -> S
 #[serde(deny_unknown_fields)]
 pub struct ClockSummary {
     /// The clock's name for showing to people, usually the design's clock
-    /// signal, such as "CLK". For Xilinx it is the name synthesis gave the
-    /// clock net, such as "o100", since nextpnr-xilinx doesn't report the
-    /// signal's own name.
+    /// signal, such as "CLK".
     pub name: String,
     /// The clock net name nextpnr reports, the key in timing.
     pub net: String,
@@ -287,9 +285,9 @@ pub struct ClockSummary {
 /// - ECP5: the third `$`-separated part (`$glbnet$CLK$TRELLIS_IO_IN` is CLK).
 /// - Gowin: the part before the first `$`, without `_IBUF_I_O`
 ///   (`CLK_IBUF_I_O` is CLK).
-/// - Xilinx: the last non-empty part (`$abc$21083$aiger$o100` is o100).
-///   TODO(revisit): that is a name synthesis made up, not the design's clock
-///   signal; a fix may come from the openxc7 tools.
+/// - Xilinx: the last non-empty part. nextpnr-xilinx from openXC7
+///   2026-11-09 names the net after the signal (`CLK`); older ones reported
+///   a name synthesis made up (`$abc$21083$aiger$o100`, kept as o100).
 ///
 /// A net that doesn't follow the pattern keeps its full name.
 pub fn clock_name(arch: Toolchain, net: &str) -> String {

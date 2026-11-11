@@ -486,13 +486,9 @@ async fn builds_a_xilinx_design() {
     assert!(bit.len() > 100_000, "{}", bit.len());
     assert!(!out.resources.is_empty(), "{:?}", out.resources);
     assert_eq!(out.clocks_summary.len(), 1, "{:?}", out.clocks_summary);
-    // nextpnr-xilinx reports a net name synthesis made up, such as
-    // $abc$21083$aiger$o100; the summary keeps its last part.
-    let names = clock_names(&out);
-    assert!(
-        names.len() == 1 && !names[0].is_empty() && !names[0].contains('$'),
-        "{names:?}"
-    );
+    // The design's clock signal, as for the other families (openXC7
+    // 2026-11-09 and later name the clock net after it).
+    assert_eq!(clock_names(&out), ["CLK"], "{:?}", out.clocks_summary);
 
     // A pin that doesn't exist is a design error.
     std::fs::write(
