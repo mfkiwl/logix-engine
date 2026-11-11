@@ -200,18 +200,19 @@ mod tests {
     #[test]
     fn unsafe_values_are_refused() {
         let ok = include_str!("manifest.json");
+        let core = builtin().get("logix-core").unwrap();
+        let version = format!("\"{}\",\n      \"description\"", core.version);
+        let file = &core.files["darwin-arm64"];
+        let sha = &file.sha256;
         for (from, to) in [
-            ("\"logix-core\"", "\"../x\""),
-            (
-                "\"2026-11-10\",\n      \"description\"",
-                "\"latest\",\n      \"description\"",
-            ),
-            ("logix-core-darwin-arm64-20261110.tgz", "../evil.tgz"),
-            ("\"openlogix\"", "\"a/b\""),
-            ("ffbf16f3", "FFBF16F3"),
+            ("\"logix-core\"".to_string(), "\"../x\"".to_string()),
+            (version, "\"latest\",\n      \"description\"".to_string()),
+            (file.file.clone(), "../evil.tgz".to_string()),
+            ("\"openlogix\"".to_string(), "\"a/b\"".to_string()),
+            (sha.to_string(), sha.to_uppercase()),
         ] {
-            assert!(ok.contains(from), "{from}");
-            let bad = ok.replacen(from, to, 1);
+            assert!(ok.contains(&from), "{from}");
+            let bad = ok.replacen(&from, &to, 1);
             assert!(Manifest::parse(&bad).is_err(), "{to} should be refused");
         }
     }

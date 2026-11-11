@@ -34,6 +34,15 @@ async fn start(engine_folder: &Path, extra: &[&str]) -> RunningService<RoleClien
     ().serve(transport).await.expect("start an MCP session")
 }
 
+/// The version of a package the manifest pins.
+fn pinned(name: &str) -> String {
+    logix_engine::packages::manifest::builtin()
+        .get(name)
+        .unwrap()
+        .version
+        .clone()
+}
+
 async fn call(client: &RunningService<RoleClient, ()>, name: &str, args: Value) -> CallToolResult {
     let mut params = CallToolRequestParams::new(name.to_string());
     if let Value::Object(map) = args {
@@ -118,8 +127,8 @@ async fn get_engine_info_reports_the_launch_settings() {
     assert_eq!(
         out["packages"],
         json!([
-            {"name": "logix-catalog", "version": "2026-11-10", "status": "missing"},
-            {"name": "logix-core", "version": "2026-11-10", "status": "missing"}
+            {"name": "logix-catalog", "version": pinned("logix-catalog"), "status": "missing"},
+            {"name": "logix-core", "version": pinned("logix-core"), "status": "missing"}
         ])
     );
 
@@ -283,7 +292,7 @@ async fn without_its_catalog_package_a_board_tool_is_a_setup_error() {
         .await
         .structured_content
         .unwrap();
-    assert_eq!(info["catalog"], json!({"version": "2026-11-10"}));
+    assert_eq!(info["catalog"], json!({"version": pinned("logix-catalog")}));
     client.cancel().await.unwrap();
 }
 

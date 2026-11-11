@@ -61,9 +61,17 @@ pub struct CoreRun {
     pub path: Vec<String>,
 }
 
+/// The FPGAs a core's tools can build, by toolchain (ice40, ecp5, gowin,
+/// openxc7), each in the tools' own terms, such as {"device": "hx1k",
+/// "package": "cb132"} (logix-core's docs/design.md, The FPGA list).
+pub type CoreFpgas =
+    std::collections::BTreeMap<String, Vec<std::collections::BTreeMap<String, String>>>;
+
 #[derive(Debug, Clone, Deserialize)]
 struct CoreMetadata {
     components: std::collections::BTreeMap<String, CoreComponent>,
+    #[serde(default)]
+    fpgas: CoreFpgas,
 }
 
 /// The download record, written into a package folder when it is complete.
@@ -151,6 +159,15 @@ impl PackageManager {
         let text = fs::read_to_string(self.package_dir(spec).join(CORE_METADATA)).ok()?;
         let meta: CoreMetadata = serde_json::from_str(&text).ok()?;
         Some(meta.components)
+    }
+
+    /// The FPGAs the downloaded core's tools can build, from its
+    /// `logix-core.json`.
+    pub fn core_fpgas(&self) -> Option<CoreFpgas> {
+        let spec = self.manifest.get(CORE)?;
+        let text = fs::read_to_string(self.package_dir(spec).join(CORE_METADATA)).ok()?;
+        let meta: CoreMetadata = serde_json::from_str(&text).ok()?;
+        Some(meta.fpgas)
     }
 
     /// The folder of a core component, such as `oss-cad-suite`.

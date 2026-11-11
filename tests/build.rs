@@ -1396,3 +1396,36 @@ fn the_wrong_fpga_error_suggests_the_most_likely_boards() {
         "{boards:?}"
     );
 }
+
+/// The configuration this engine release pins: every FPGA in its
+/// logix-catalog is one its logix-core's tools can build, by the list the
+/// core generates from their databases (logix-core.json `fpgas`).
+#[tokio::test]
+async fn the_pinned_catalog_fits_the_pinned_core() {
+    use logix_engine::catalog;
+    use logix_engine::packages::CATALOG;
+    let state = engine().await;
+    let missing = state.packages.needing_download(&[CATALOG]).unwrap();
+    let phases = Phases::new(Arc::new(NoProgress), missing.len());
+    state
+        .packages
+        .ensure(&missing, true, &phases, &CancellationToken::new())
+        .await
+        .expect("download logix-catalog");
+    let spec = state.packages.spec(CATALOG).unwrap().clone();
+    let pinned = catalog::read_folder(&state.packages.package_dir(&spec)).unwrap();
+    let core = state
+        .packages
+        .core_fpgas()
+        .expect("the core's logix-core.json");
+    for toolchain in ["ice40", "ecp5", "gowin", "openxc7"] {
+        assert!(
+            core.get(toolchain).is_some_and(|l| !l.is_empty()),
+            "{toolchain}"
+        );
+    }
+    assert_eq!(catalog::not_in_core(&pinned, &core), Vec::<String>::new());
+    // The repo's catalog/ copy, the tests' data, too.
+    let copy = catalog::read_folder(&catalog::test_copy_folder()).unwrap();
+    assert_eq!(catalog::not_in_core(&copy, &core), Vec::<String>::new());
+}

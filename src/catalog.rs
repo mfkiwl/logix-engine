@@ -99,6 +99,42 @@ pub fn test_copy_folder() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("catalog")
 }
 
+/// The catalog's FPGAs that a core's tools can't build, by ID, each with
+/// what the core lacks: the check of an engine configuration, a catalog with
+/// a core (`crate::packages::CoreFpgas`, from the core's logix-core.json).
+pub fn not_in_core(catalog: &Catalog, core: &crate::packages::CoreFpgas) -> Vec<String> {
+    let mut out = Vec::new();
+    for (id, f) in &catalog.fpgas {
+        let toolchain = f.toolchain().id();
+        // The core's terms for this FPGA's build fields.
+        let mut want = BTreeMap::from([("device", f.nextpnr_device.clone())]);
+        match f.toolchain() {
+            Toolchain::Ice40 => {
+                want.insert("package", f.nextpnr_package.clone().unwrap_or_default());
+            }
+            Toolchain::Ecp5 => {
+                want.insert("package", f.nextpnr_package.clone().unwrap_or_default());
+                want.insert("speed", f.nextpnr_speed.clone().unwrap_or_default());
+            }
+            Toolchain::Gowin => {
+                want.insert("packer_device", f.packer_device.clone().unwrap_or_default());
+            }
+            Toolchain::Openxc7 => {}
+        }
+        let found = core.get(toolchain).is_some_and(|parts| {
+            parts.iter().any(|p| {
+                want.iter()
+                    .all(|(k, v)| p.get(*k).map(String::as_str) == Some(v.as_str()))
+            })
+        });
+        if !found {
+            let terms: Vec<String> = want.iter().map(|(k, v)| format!("{k} {v}")).collect();
+            out.push(format!("{id} ({toolchain}: {})", terms.join(", ")));
+        }
+    }
+    out
+}
+
 /// The `.json` files in `folder`, as (name without .json, text), by name.
 pub fn json_files(folder: &Path) -> Result<Vec<(String, String)>, String> {
     let entries =
@@ -1683,6 +1719,34 @@ mod tests {
                 }
             }
         }
+    }
+
+    #[test]
+    fn not_in_core_names_what_the_core_lacks() {
+        let c = get();
+        let entry = |pairs: &[(&str, &str)]| -> BTreeMap<String, String> {
+            pairs
+                .iter()
+                .map(|(k, v)| (k.to_string(), v.to_string()))
+                .collect()
+        };
+        // A core that builds only one FPGA.
+        let core = crate::packages::CoreFpgas::from([(
+            "ice40".to_string(),
+            vec![entry(&[("device", "up5k"), ("package", "sg48")])],
+        )]);
+        let missing = not_in_core(c, &core);
+        assert_eq!(missing.len(), c.fpgas.len() - 1);
+        assert!(!missing.iter().any(|m| m.starts_with("ice40up5k-sg48 ")));
+        assert!(
+            missing.contains(&"ice40hx1k-cb132 (ice40: device hx1k, package cb132)".to_string())
+        );
+        assert!(
+            missing.contains(
+                &"lfe5u-25f-6bg256c (ecp5: device 25k, package CABGA256, speed 6)".to_string()
+            ),
+            "{missing:?}"
+        );
     }
 
     #[test]
