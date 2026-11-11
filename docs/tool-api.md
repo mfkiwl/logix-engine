@@ -1,6 +1,6 @@
 # Tool API
 
-The Logix Engine is an MCP server that offers FPGA tools: lint, test, simulate, format, graph, build, program a board, list devices, compare boards and more. This document describes those tools for the people who use them:
+The Logix Engine is an MCP server that offers FPGA tools: lint, test, simulate, format, diagram, build, program a board, list devices, compare boards and more. This document describes those tools for the people who use them:
 
 - **AI agent users.** An AI agent connected to the Logix Engine reads the tool names, descriptions and schemas itself and decides which tools to call. You mostly need the concepts: boards and board variants, folders, testbenches, and what results and errors mean.
 - **Application developers.** A hardcoded client, such as the Logix IDE, launches the Logix Engine, calls its tools with JSON arguments over MCP and reads the JSON results. You need the full reference: every input and output field, the errors, and the progress and live output notifications.
@@ -107,7 +107,7 @@ Operations that work on a design take these fields. Paths are absolute unless no
 
 ### Display paths
 
-Every tool that reports files (`lint`, `test`, `simulate`, `format`, `graph`, `build`, `program_board`, `list_devices` and `get_catalog`) takes an optional `display_paths`, which says how to name paths in what people read. A host that gives the engine copies of the user's files, such as unsaved editor text in a scratch folder, uses it so messages name the files the user knows.
+Every tool that reports files (`lint`, `test`, `simulate`, `format`, `diagram`, `build`, `program_board`, `list_devices` and `get_catalog`) takes an optional `display_paths`, which says how to name paths in what people read. A host that gives the engine copies of the user's files, such as unsaved editor text in a scratch folder, uses it so messages name the files the user knows.
 
 ```json
 "display_paths": {
@@ -125,8 +125,8 @@ Every tool that reports files (`lint`, `test`, `simulate`, `format`, `graph`, `b
 
 - **Which entry.** File entries come first, then folder entries; within each list, the first that matches wins. A folder matches by whole path parts: `/a/b` matches `/a/b/x.v`, never `/a/bc/x.v`.
 - **Real locations.** Paths are compared by where they really are, not by how they're spelled: through symbolic links (such as `/tmp` and `/private/tmp` on macOS), and as the same file on disk, so a case-insensitive volume's spellings match. A file that doesn't exist is compared by its path's parts.
-- **Where.** Diagnostics (`file`, and paths in `text`), error `message` and `details`, testbench `output`, the live tool output (`text` and `original_text`) and the labels of `graph`'s diagram. In text, the engine finds paths it knows, as the request or a tool spelled them, and names them by the same rules.
-- **Never.** Command lines (`commands`, and `command` lines in the live output), which must stay rerunnable, and fields that are paths, such as `bitstream`, `graph_file`, `waveform_file` and `layout_file`.
+- **Where.** Diagnostics (`file`, and paths in `text`), error `message` and `details`, testbench `output`, the live tool output (`text` and `original_text`) and the source places in `diagram`'s model and page. In text, the engine finds paths it knows, as the request or a tool spelled them, and names them by the same rules.
+- **Never.** Command lines (`commands`, and `command` lines in the live output), which must stay rerunnable, and fields that are paths, such as `bitstream`, `page_file`, `waveform_file` and `layout_file`.
 - **No match.** A path that matches no entry, or any path when the request has no `display_paths`, is shown as the request gave it: source files relative to the source folder, custom board file as its absolute path. A path the request never gave, such as a toolchain file a tool mentions, is shown as the tool printed it.
 - **A path in an entry that isn't absolute** is a request error.
 
@@ -650,32 +650,52 @@ Output:
 }
 ```
 
-## graph tool
+## diagram tool
 
-Draws a diagram of one module of the design, its cells, ports and the wires between them. Yosys reads the design without synthesizing it and writes the module as a Graphviz `.dot` file, then Graphviz's `dot` draws it. Both come from the toolchain package. The host shows the file, such as an SVG in a web view.
+Draws the design as schematic diagrams, one per module: registers, adders, comparators, multiplexers, memories, the FPGA's own blocks and other modules as symbols, with the wires between them. Yosys reads the design as written, without synthesis, with `SYNTHESIZE` defined, and the engine draws every module itself: it lays them out with ELK (the Eclipse Layout Kernel, logix-core's `elkjs`, run in a JavaScript engine built into Logix Engine) and writes the SVGs. Nothing else is needed: no browser plugin, runtime or other program.
 
-The module is drawn as written, without synthesis, with `SYNTHESIZE` defined. FPGA primitives, such as `SB_LUT4`, are drawn as boxes. Each call replaces the graph in the build folder and deletes the old one first, so a failed call never leaves an old graph looking current. The exact yosys and dot commands are returned in `commands`.
+Every module the top module uses is drawn, each once per set of parameters. The drawing follows a few rules, so it reads like a hand-drawn schematic:
 
-**Table 33.** graph tool inputs
+- **Labels instead of long wires.** A clock or a reset that goes to two or more places is drawn as labels with its name at each place, not as wires across the drawing. A fixed input, such as an adder's `1`, is a short wire from a label with its value (decimal, or hex from 10 up).
+- **Plain names.** Blocks are named in plain words (Register, Adder, PLL, I/O pin), FPGA blocks by their family's names, and registers after the signal they hold. The yosys type stays in the model.
+- **What isn't logic isn't drawn.** A memory's initialization isn't a block: the memory says where its initial contents are loaded.
+- **Large modules.** A module with more than 1,500 blocks isn't drawn: its diagram would be unreadable. Its `note` says so, and the rest of the design is drawn.
+
+Each call writes the build folder's `diagram/` folder again, deleting the old one first, so a failed call never leaves an old diagram looking current:
+
+- **`diagram.html`**, the page: every module, self-contained in one file, which any web browser opens, with no network. Click a module to open it (the bar at the top goes back), drag to pan, scroll to zoom, and hover a block, port, wire, pin or label for its details. Hosts can embed it (see Showing the diagram).
+- **`<module key>.svg`**, each module's drawing: no script, with a default style scoped to it (`svg.logix-diagram`) whose colors are CSS variables, such as `--logix-diagram-register` and `--logix-diagram-wire`, so a host can theme it without changing the file. Its elements carry data attributes for hosts that add their own interaction: `data-block` (a cell, by its yosys name), `data-port`, `data-pin`, `data-label`, `data-bits` (a wire's net bits) and `data-sj` (a bus split or join).
+- **`diagram.json`**, the model: `top`, the top module's key, and `modules`, by key, each with `name`, `top`, `source` (its file and line), `svg_file`, `note`, `blocks` (each cell, by its yosys name, with `kind` (`logic`, `module` or `fpga`), `category`, `title`, `type`, `width`, `name`, `instance`, `module` (the key of the module it instantiates), `source`, `memory_init`, `fixed` inputs and `ports`, each with `direction`, `width`, `signal` and `by_label`), `labels`, `pins`, `signals` (by net bit, each with its `name` and `width`) and `clocks`. Source files are named as diagnostics name them.
+- **`netlist.json`**, yosys's netlist, which the diagram is drawn from.
+
+**Table 33.** diagram tool inputs
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `top_module` | text | Yes | The module to draw, such as the design's top module, or any module in the design files, such as `uart` |
+| `board` | board ID | Yes | The target board. Its FPGA family names the FPGA's own blocks and gives their ports' directions |
+| `board_variant` | board variant | No | The board's variant. It doesn't change the diagram |
+| `custom_boards_folder` | custom boards folder | No | The host's own boards (see Board specification). Omitted means none |
+| `top_module` | text | Yes | The design's top module, such as `main` |
 | `source_folder`, `source_files`, `build_folder` | See folder fields in Table 2 | Yes | The design files, without testbenches or included files. Paths with a double quote (`"`) are refused, since yosys reads them from a script |
 | `defines` | map of text | No | Macro definitions, as in the build tool. `SYNTHESIZE` is always defined |
-| `format` | enum | No | `svg`, `pdf` or `png`. Defaults to `svg` |
+| `open` | boolean | No | Open the page in the user's default web browser when it's written. Defaults to false |
 | `verbose` | boolean | No | Run yosys without `-q`. Defaults to false |
-| `display_paths` | display paths | No | How to name paths in what people read. Omitted means as the request gave them (see Display paths) |
+| `display_paths` | display paths | No | How to name paths in what people read, including the diagram's source places. Omitted means as the request gave them (see Display paths) |
 
-**Table 34.** graph tool outputs
+**Table 34.** diagram tool outputs
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `graph_file` | relative path | The graph, relative to the build folder, such as `graph.svg` |
+| `page_file` | relative path | The page, relative to the build folder: `diagram/diagram.html` |
+| `model_file` | relative path | The model, relative to the build folder: `diagram/diagram.json` |
+| `modules` | list of objects | Every module, the top module first, each with `key` (its key in the model and the page, usually its name; a module used with different parameters gets one per version, such as `genrom` and `genrom-2`), `name`, `top`, `svg_file` (relative to the build folder; omitted when it wasn't drawn), `blocks` (how many its diagram has) and `note` (why it wasn't drawn) |
+| `opened` | boolean | Whether the page was opened in the web browser |
 | `diagnostics` | list of diagnostics | Yosys warnings while reading the design, at file and line where known. Often empty |
-| `commands` | list of commands | The programs this call ran: yosys, then dot. See Commands |
+| `commands` | list of commands | The program this call ran: yosys. See Commands |
 
-**Errors:** design errors, with diagnostics, for errors in the design, such as a syntax error, or a `top_module` that isn't in the files. Setup errors with `download_packages`, for the toolchain package. Request errors, such as a missing file. Tool failures, when yosys or dot fails without reporting a problem. Engine errors and cancellation.
+**Errors:** design errors, with diagnostics, for errors in the design, such as a syntax error, or a `top_module` that isn't in the files. Setup errors with `download_packages`, for the toolchain package. Request errors, such as a missing file or an unknown board. Tool failures, when yosys fails without reporting a problem. Engine errors and cancellation.
+
+**Showing the diagram.** An AI agent shows the user the diagram with `open: true`, or gives them `page_file`'s path to open; nothing needs to be generated or installed. A frontend shows the page in a web view, or embeds it in an iframe and talks to it with messages: `?theme=light` or `?theme=dark` in its address sets the theme (otherwise it follows the system), `#main/uart` opens a module, it posts `{"type": "logix-diagram:open-source", "file", "line"}` when the user clicks a block (to show its source; `file` is named as in diagnostics, so check it's a project file before opening it) and `{"type": "logix-diagram:module", "path"}` when the module shown changes, and it takes `{"type": "logix-diagram:theme", "theme"}`. A host that loads the page directly can define `window.logixDiagramOpenSource(file, line)` instead. The page shows "Go to source" for the module and "Click to go to its source" on blocks only when it's hosted this way.
 
 **Example**
 
@@ -683,10 +703,12 @@ Input:
 
 ```json
 {
+  "board": "icesugar-1-5",
   "top_module": "main",
   "source_folder": "/home/user/proj",
   "source_files": ["main.v", "uart.v"],
-  "build_folder": "/home/user/proj/_build"
+  "build_folder": "/home/user/proj/_build",
+  "open": true
 }
 ```
 
@@ -694,7 +716,13 @@ Output:
 
 ```json
 {
-  "graph_file": "graph.svg",
+  "page_file": "diagram/diagram.html",
+  "model_file": "diagram/diagram.json",
+  "modules": [
+    { "key": "main", "name": "main", "top": true, "svg_file": "diagram/main.svg", "blocks": 14 },
+    { "key": "uart", "name": "uart", "top": false, "svg_file": "diagram/uart.svg", "blocks": 31 }
+  ],
+  "opened": true,
   "diagnostics": []
 }
 ```
@@ -1071,7 +1099,7 @@ Returns the Logix Engine's version, platform and package status. A host calls it
 | `auto_download` | boolean | Whether automatic package download and repair is on. It is on by default, and the host turns it off with the `--no-auto-download` command-line argument when it launches the engine |
 | `command_line` | list of text | The command-line arguments the engine was launched with, as given, for diagnostics |
 | `log_file` | absolute path | The log file this engine process writes, in the `logs` subfolder of the engine folder |
-| `packages` | list of packages | Every package in the engine's manifest: `logix-catalog` (the board catalog) and `logix-core` (the FPGA tools). Each has a text `name`, a date tag `version`, a `status`: `ready`, `missing` or `broken`, and, for a ready `logix-core`, `components`: its tools, each with a `name` (`oss-cad-suite`, `openxc7`, `verible`, and `graphviz` on Windows), a `description` and `bin_folder`, the absolute path of the folder with its programs, for hosts that run one directly, such as Verible's language server `verible-verilog-ls` from the `verible` component |
+| `packages` | list of packages | Every package in the engine's manifest: `logix-catalog` (the board catalog) and `logix-core` (the FPGA tools). Each has a text `name`, a date tag `version`, a `status`: `ready`, `missing` or `broken`, and, for a ready `logix-core`, `components`: its tools, each with a `name` (`oss-cad-suite`, `openxc7`, `verible` and `elkjs`), a `description` and `bin_folder`, the absolute path of the folder with its programs, for hosts that run one directly, such as Verible's language server `verible-verilog-ls` from the `verible` component |
 | `boards_schema` | text | The address of the board schema this engine reads, Logix Catalog's JSON Schema of a board file, in the catalog and in custom boards folders, such as `https://www.openlogix.org/schemas/logix-board-v1.json` (see Board specification) |
 | `catalog` | object | The board catalog: `version`, the `logix-catalog` release (yyyy-mm-dd) this engine pins, and `local`, true only when the engine reads a local catalog folder (`LOGIX_ENGINE_DEV_CATALOG_FOLDER`, a diagnostic setting), whose `version` is then `local` |
 | `report` | multiline text | The facts above as lines for people, the engine's part of a frontend's system info (see Show system info under Recipes): the version, platform, engine folder, log file, automatic download, command line, each package with its version and status, the board catalog's version and the board schema. Show it as is; its wording can change in any version, so programs read the fields above |

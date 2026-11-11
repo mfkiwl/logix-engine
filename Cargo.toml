@@ -17,6 +17,8 @@ libc = "0.2"
 log = { version = "0.4", features = ["std"] }
 regex = "1"
 reqwest = "0.13"
+# QuickJS, to run ELK (logix-core's elkjs), which lays out the diagrams.
+rquickjs = "0.9"
 rmcp = { version = "3.8", features = ["server", "transport-io"] }
 rusb = { version = "0.9", features = ["vendored"] }
 schemars = { version = "1", features = ["indexmap2"] }

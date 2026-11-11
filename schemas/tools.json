@@ -141,7 +141,7 @@
           "type": "object",
           "properties": {
             "name": {
-              "description": "The component name: oss-cad-suite, openxc7, verible, or graphviz\n(Windows).",
+              "description": "The component name: oss-cad-suite, openxc7, verible or elkjs\n(Windows).",
               "type": "string"
             },
             "description": {
@@ -296,7 +296,7 @@
           "type": "object",
           "properties": {
             "name": {
-              "description": "The component name: oss-cad-suite, openxc7, verible, or graphviz\n(Windows).",
+              "description": "The component name: oss-cad-suite, openxc7, verible or elkjs\n(Windows).",
               "type": "string"
             },
             "description": {
@@ -3280,16 +3280,40 @@
     }
   },
   {
-    "name": "graph",
-    "description": "Draws a diagram of a design module, its cells, ports and the wires between them: yosys reads the design without synthesizing it and Graphviz draws the module. Writes graph.svg (or .pdf or .png) and Graphviz's graph.dot in the build folder, replacing the last ones; graph_file gives its path relative to the build folder. List the design files; the engine doesn't search for them. Errors in the design, such as a syntax error or a top module that isn't in the files, are design errors with diagnostics at file and line. The first call may download the toolchain package first, which takes a few minutes.",
+    "name": "diagram",
+    "description": "Draws the design as schematic diagrams, one per module: registers, adders, comparators, multiplexers, memories, the FPGA's own blocks and other modules as symbols, with the wires between them. Yosys reads the design as written, without synthesizing it, and the engine lays out and draws every module itself. Writes, in the build folder's diagram/ folder (replaced by each call): diagram.html, one self-contained page with every module (click a module to open it, drag to pan, scroll to zoom, hover anything for its details; it needs no network or other software, so any web browser shows it), each module's SVG, and diagram.json, a model of every module's blocks, ports, signals and source lines. To show the user the diagram, set open to true, which opens the page in their web browser, or give them page_file's path. List the design files; the engine doesn't search for them. Errors in the design, such as a syntax error or a top module that isn't in the files, are design errors with diagnostics at file and line. The first call may download the toolchain package first, which takes a few minutes.",
     "inputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "title": "GraphInput",
+      "title": "DiagramInput",
       "description": "What to draw.",
       "type": "object",
       "properties": {
+        "board": {
+          "description": "The target board's ID: a catalog ID such as icesugar-1-5 (get_catalog\nlists them), or the ID of a board in custom_boards_folder. Its FPGA\nfamily names the FPGA's own blocks, such as a PLL or an I/O pin.",
+          "type": "string"
+        },
+        "board_variant": {
+          "description": "The board variant: some or all of the selector of one of the board's\nvariants, which get_catalog lists. It doesn't change the diagram.\nOmitted or {} means its first variant.",
+          "anyOf": [
+            {
+              "$ref": "#/$defs/VariantChoice"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "custom_boards_folder": {
+          "description": "The host's own boards: the absolute path of a folder of board files,\none board each in the catalog's format, named by board ID. board can\nname one of them. Send the same folder to every tool. Omitted means\nnone.",
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
         "top_module": {
-          "description": "The module to draw, such as main, the design's top module, or any\nmodule in the design files, such as uart.",
+          "description": "The design's top module, such as main. Every module it uses is drawn\ntoo.",
           "type": "string"
         },
         "source_folder": {
@@ -3305,7 +3329,7 @@
           "minItems": 1
         },
         "build_folder": {
-          "description": "The build folder, as an absolute path, where the graph is written.\nIt may or may not be inside the source folder, and is created if\nneeded.",
+          "description": "The build folder, as an absolute path. The diagram is written to its\ndiagram/ folder. It may or may not be inside the source folder, and\nis created if needed.",
           "type": "string"
         },
         "defines": {
@@ -3316,10 +3340,10 @@
           },
           "default": {}
         },
-        "format": {
-          "description": "The graph's file format: svg, pdf or png. Defaults to svg.",
-          "$ref": "#/$defs/GraphFormat",
-          "default": "svg"
+        "open": {
+          "description": "Open the page in the user's default web browser when it's written,\nso they see the diagram at once. Defaults to false. opened says\nwhether it was.",
+          "type": "boolean",
+          "default": false
         },
         "verbose": {
           "description": "Let yosys print more detail, shown in the live output and the logs.\nIt doesn't change the result. Defaults to false.",
@@ -3327,7 +3351,7 @@
           "default": false
         },
         "display_paths": {
-          "description": "How to name paths in what people read (diagnostics, messages,\ntestbench output, live tool output, diagram labels): files named as\na whole, then folders whose files keep their path below the folder\nunder the folder's new name (\"\" gives names relative to it); the\nfirst match in each list wins. Paths are compared by real location.\nNever applied to command lines or fields that are paths. Omitted\nmeans paths read as the request gave them.",
+          "description": "How to name paths in what people read (diagnostics, messages,\ntestbench output, live tool output, the diagram's source places):\nfiles named as a whole, then folders whose files keep their path\nbelow the folder under the folder's new name (\"\" gives names relative\nto it); the first match in each list wins. Paths are compared by real\nlocation. Never applied to command lines or fields that are paths.\nOmitted means paths read as the request gave them.",
           "anyOf": [
             {
               "$ref": "#/$defs/DisplayPaths"
@@ -3340,31 +3364,33 @@
       },
       "additionalProperties": false,
       "required": [
+        "board",
         "top_module",
         "source_folder",
         "source_files",
         "build_folder"
       ],
       "$defs": {
-        "GraphFormat": {
-          "description": "The file format of the graph.",
-          "oneOf": [
-            {
-              "description": "SVG, which browsers and web views show and scale.",
-              "type": "string",
-              "const": "svg"
+        "VariantChoice": {
+          "description": "A board variant in a request: some or all of a selector's values, such\nas {\"memory\": \"ram\"}. The board's first variant with these values is\nused, so {} means its first variant, its default.",
+          "type": "object",
+          "properties": {
+            "connection": {
+              "description": "The connection, such as usb or ft232h. Omitted means any.",
+              "type": [
+                "string",
+                "null"
+              ]
             },
-            {
-              "description": "PDF.",
-              "type": "string",
-              "const": "pdf"
-            },
-            {
-              "description": "PNG, a bitmap.",
-              "type": "string",
-              "const": "png"
+            "memory": {
+              "description": "The memory, flash or ram. Omitted means any.",
+              "type": [
+                "string",
+                "null"
+              ]
             }
-          ]
+          },
+          "additionalProperties": false
         },
         "DisplayPaths": {
           "description": "How to name paths in what people read: diagnostics, messages, testbench\noutput, live tool output and diagram labels. Never command lines or\nfields that are paths.",
@@ -3412,13 +3438,28 @@
     },
     "outputSchema": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
-      "title": "GraphOutput",
-      "description": "What graph made.",
+      "title": "DiagramOutput",
+      "description": "What diagram made.",
       "type": "object",
       "properties": {
-        "graph_file": {
-          "description": "The graph, relative to the build folder, such as graph.svg.",
+        "page_file": {
+          "description": "The page with every module, relative to the build folder:\ndiagram/diagram.html. Opening it in a web browser shows the diagram.",
           "type": "string"
+        },
+        "model_file": {
+          "description": "The model, relative to the build folder: diagram/diagram.json. For\neach module: its blocks (each with its kind, plain title, yosys type,\nsource file and line, ports and what they connect to), labels, pins\nand signals.",
+          "type": "string"
+        },
+        "modules": {
+          "description": "Every module, the top module first.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/DiagramModule"
+          }
+        },
+        "opened": {
+          "description": "Whether the page was opened in the web browser (open).",
+          "type": "boolean"
         },
         "diagnostics": {
           "description": "Yosys warnings while reading the design, at file and line where\nknown. Often empty.",
@@ -3437,11 +3478,58 @@
       },
       "additionalProperties": false,
       "required": [
-        "graph_file",
+        "page_file",
+        "model_file",
+        "modules",
+        "opened",
         "diagnostics",
         "commands"
       ],
       "$defs": {
+        "DiagramModule": {
+          "description": "One module of the diagram.",
+          "type": "object",
+          "properties": {
+            "key": {
+              "description": "The module's key in diagram.json and the page, such as main or\nuart. Usually its name; a module used with different parameters gets\none key per version, such as genrom and genrom-2.",
+              "type": "string"
+            },
+            "name": {
+              "description": "The module's name.",
+              "type": "string"
+            },
+            "top": {
+              "description": "Whether it's the top module.",
+              "type": "boolean"
+            },
+            "svg_file": {
+              "description": "Its SVG, relative to the build folder, such as diagram/main.svg.\nOmitted when it wasn't drawn.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "blocks": {
+              "description": "How many blocks its diagram has: cells, pins, labels, bus splits and\njoins.",
+              "type": "integer",
+              "minimum": 0
+            },
+            "note": {
+              "description": "Why it wasn't drawn, such as a module too large to draw readably.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "key",
+            "name",
+            "top",
+            "blocks"
+          ]
+        },
         "Diagnostic": {
           "description": "A problem reported by a tool, at a file and line when known.",
           "type": "object",

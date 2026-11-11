@@ -1,0 +1,401 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design diagram</title>
+<!-- Written by Logix Engine's diagram tool. Self-contained: it needs no
+     network and nothing installed. Hosts can embed it in an iframe:
+     ?theme=light|dark sets the theme, #main/sub opens a module, and it posts
+     {type: "logix-diagram:open-source", file, line} when a block is clicked
+     and {type: "logix-diagram:module", path} when the module changes; it
+     accepts {type: "logix-diagram:theme", theme}. A host that loads it
+     directly can define window.logixDiagramOpenSource(file, line). -->
+<style>
+:root {
+  --bg: #f4f6f8; --surface: #ffffff; --ink: #16202b; --muted: #5a6875; --line: #d6dde4;
+  --accent: #0f8a8f; --hover: #e0115f;
+  --logix-diagram-sheet: #ffffff; --logix-diagram-wire: #23303c;
+  --font-ui: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: light;
+}
+:root[data-theme="dark"], :root:not([data-theme="light"]).system-dark {
+  --bg: #0f1419; --surface: #172029; --ink: #e6edf3; --muted: #93a1ae; --line: #2a3642;
+  --accent: #3fc1c4; --hover: #ff5c93;
+  --logix-diagram-sheet: #121a21; --logix-diagram-wire: #c9d6e2;
+  --logix-diagram-register: #7fb0f5; --logix-diagram-register-fill: #172a45;
+  --logix-diagram-arithmetic: #e8b04f; --logix-diagram-arithmetic-fill: #3a2a10;
+  --logix-diagram-compare: #b49cf2; --logix-diagram-compare-fill: #2a2143;
+  --logix-diagram-mux: #f08bc4; --logix-diagram-mux-fill: #3d1a30;
+  --logix-diagram-gate: #aebccb; --logix-diagram-gate-fill: #222e3a;
+  --logix-diagram-memory: #6dd39b; --logix-diagram-memory-fill: #12331f;
+  --logix-diagram-module: #5fd0d3; --logix-diagram-module-fill: #11363a;
+  --logix-diagram-fpga: #f39a62; --logix-diagram-fpga-fill: #3d2010;
+  --logix-diagram-pin-fill: #1d2731; --logix-diagram-fixed: #8d9aa7;
+  --logix-diagram-clock: #7fb0f5;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--ink); font: 14px var(--font-ui); display: flex; flex-direction: column; }
+.bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--surface); border-bottom: 1px solid var(--line); }
+.crumbs { font: 500 13px var(--font-mono); display: flex; flex-wrap: wrap; gap: 4px; align-items: center; min-width: 0; }
+.crumbs a { color: var(--accent); text-decoration: none; cursor: pointer; }
+.crumbs a:hover { text-decoration: underline; }
+.crumbs .sep { color: var(--muted); }
+.tools { display: flex; gap: 6px; align-items: center; }
+button { font: 500 13px var(--font-ui); color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: 6px; padding: 4px 10px; cursor: pointer; }
+button:hover { border-color: var(--accent); }
+button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+button[hidden] { display: none; }
+.canvas { flex: 1; min-height: 0; background: var(--logix-diagram-sheet); position: relative; touch-action: none; overflow: hidden; }
+.canvas.dragging { cursor: grabbing; }
+.canvas > svg { width: 100%; height: 100%; display: block; }
+.canvas svg [data-block] { cursor: default; }
+.canvas svg .cat-module, .canvas svg .cat-module * { cursor: pointer; }
+.canvas svg .block * { pointer-events: all; }
+.canvas svg .portbox { pointer-events: all; }
+.canvas svg .hit { stroke: transparent; stroke-width: 10; pointer-events: stroke; }
+.canvas svg .hl > .body { stroke: var(--hover); stroke-width: 2.2; }
+.canvas svg .portbox.hl { fill: var(--hover); stroke: var(--hover); }
+.canvas svg .netHl { stroke: var(--hover); stroke-width: 2.5; }
+.canvas svg .junction.netHl { fill: var(--hover); }
+.hint { position: absolute; left: 10px; bottom: 8px; font-size: 12px; color: var(--muted); pointer-events: none; background: var(--logix-diagram-sheet); padding: 2px 6px; border-radius: 4px; }
+.note { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; color: var(--muted); text-align: center; line-height: 1.5; }
+.pop { position: fixed; z-index: 20; max-width: 320px; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 20px rgb(0 0 0 / .18); padding: 10px 12px; }
+.pop h2 { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 10px 0 4px; font-weight: 600; }
+.pop ol { margin: 0; padding-left: 20px; font-size: 13px; display: grid; gap: 2px; font-variant-numeric: tabular-nums; }
+.pop .hint2 { color: var(--muted); font-size: 12px; margin: 8px 0 0; }
+.kv { display: grid; grid-template-columns: auto 1fr; gap: 3px 10px; font-size: 13px; margin: 0; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.title { font-size: 15px; font-weight: 500; margin: 0 0 2px; overflow-wrap: anywhere; }
+.sub { font: 12px var(--font-mono); color: var(--muted); margin: 0 0 8px; overflow-wrap: anywhere; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <nav class="crumbs" id="crumbs" aria-label="Module"></nav>
+  <div class="tools">
+    <button id="source" hidden>Go to source</button>
+    <button id="zoomOut" aria-label="Zoom out">−</button>
+    <button id="zoomIn" aria-label="Zoom in">+</button>
+    <button id="fit">Fit</button>
+  </div>
+</div>
+<main class="canvas" id="canvas" aria-label="Diagram"></main>
+<div class="pop" id="pop" hidden></div>
+<script>
+(function () {
+  "use strict";
+  const DATA = /*__DATA__*/null;
+  const $ = (id) => document.getElementById(id);
+  const canvas = $("canvas"), pop = $("pop");
+  const hosted = window.parent !== window || typeof window.logixDiagramOpenSource === "function";
+  let path = [];
+  let vb = null, home = null;
+
+  // Theme: ?theme=, a host's message, else the system's.
+  const root = document.documentElement;
+  function setTheme(t) {
+    if (t === "light" || t === "dark") root.dataset.theme = t; else delete root.dataset.theme;
+  }
+  setTheme(new URLSearchParams(location.search).get("theme"));
+  const media = window.matchMedia("(prefers-color-scheme: dark)");
+  const syncSystem = () => root.classList.toggle("system-dark", media.matches);
+  syncSystem();
+  media.addEventListener("change", syncSystem);
+  window.addEventListener("message", (e) => {
+    if (e.data && e.data.type === "logix-diagram:theme") setTheme(e.data.theme);
+  });
+
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const bitsText = (n) => `${n} bit${n === 1 ? "" : "s"}`;
+  const place = (s) => s ? `${s.file}, line ${s.line}` : "";
+  const mod = () => DATA.modules[path[path.length - 1] || DATA.top];
+  const bitsOf = (el) => (el.dataset.bits || "").split(",").filter(Boolean);
+  const signal = (bit) => (mod().signals || {})[bit];
+
+  function post(msg) {
+    if (window.parent !== window) window.parent.postMessage(msg, "*");
+  }
+  function openSource(src) {
+    if (!src) return;
+    if (typeof window.logixDiagramOpenSource === "function") window.logixDiagramOpenSource(src.file, src.line);
+    post({ type: "logix-diagram:open-source", file: src.file, line: src.line });
+  }
+
+  function crumbs() {
+    const keys = [DATA.top, ...path];
+    const el = $("crumbs");
+    el.innerHTML = keys.map((k, i) => {
+      const name = esc((DATA.modules[k] || {}).name || k);
+      return i === keys.length - 1 ? `<b>${name}</b>` : `<a data-depth="${i}">${name}</a>`;
+    }).join('<span class="sep">›</span>');
+    el.querySelectorAll("a").forEach((a) => {
+      a.onclick = () => go(path.slice(0, Number(a.dataset.depth)));
+    });
+    const src = mod().source;
+    $("source").hidden = !(hosted && src);
+    $("source").onclick = () => openSource(src);
+    $("source").title = src ? place(src) : "";
+  }
+
+  function go(next) {
+    path = next.filter((k) => DATA.modules[k]);
+    try { history.replaceState(null, "", "#" + [DATA.top, ...path].join("/")); } catch (e) { /* a sandboxed frame */ }
+    post({ type: "logix-diagram:module", path: [DATA.top, ...path] });
+    render();
+  }
+
+  function render() {
+    hide();
+    const m = mod();
+    crumbs();
+    if (!m.svg) {
+      canvas.innerHTML = `<div class="note">${esc(m.note || "This module isn't drawn.")}</div>`;
+      return;
+    }
+    canvas.innerHTML = m.svg + `<div class="hint">Drag to pan · scroll to zoom</div>`;
+    const svg = canvas.querySelector("svg");
+    const b = svg.getAttribute("viewBox").split(/[\s,]+/).map(Number);
+    svg.removeAttribute("width"); svg.removeAttribute("height");
+    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
+    const pad = Math.max(b[2], b[3]) * 0.04;
+    home = { x: b[0] - pad, y: b[1] - pad, w: b[2] + 2 * pad, h: b[3] + 2 * pad };
+    vb = { ...home };
+    apply();
+    // Wider hover targets for the wires.
+    svg.querySelectorAll(".wire").forEach((el) => {
+      const hit = el.cloneNode(false);
+      hit.setAttribute("class", "hit");
+      el.parentNode.insertBefore(hit, el);
+    });
+  }
+
+  // Pan and zoom by changing the viewBox, so the drawing stays sharp.
+  function apply() {
+    const svg = canvas.querySelector("svg");
+    if (svg && vb) svg.setAttribute("viewBox", `${vb.x} ${vb.y} ${vb.w} ${vb.h}`);
+  }
+  function toSvg(cx, cy) {
+    const r = canvas.getBoundingClientRect();
+    const s = Math.max(vb.w / r.width, vb.h / r.height);
+    const ox = (r.width * s - vb.w) / 2, oy = (r.height * s - vb.h) / 2;
+    return { x: vb.x - ox + (cx - r.left) * s, y: vb.y - oy + (cy - r.top) * s, s };
+  }
+  function zoomAt(factor, cx, cy) {
+    if (!vb) return;
+    const p = toSvg(cx, cy);
+    const nw = Math.min(home.w * 4, Math.max(home.w / 60, vb.w * factor));
+    const f = nw / vb.w;
+    vb = { x: p.x - (p.x - vb.x) * f, y: p.y - (p.y - vb.y) * f, w: vb.w * f, h: vb.h * f };
+    apply();
+  }
+  canvas.addEventListener("wheel", (e) => {
+    e.preventDefault();
+    zoomAt(Math.exp(e.deltaY * 0.0015), e.clientX, e.clientY);
+  }, { passive: false });
+  let drag = null;
+  canvas.addEventListener("pointerdown", (e) => {
+    if (!vb) return;
+    drag = { x: e.clientX, y: e.clientY, vb: { ...vb }, moved: false };
+    canvas.setPointerCapture(e.pointerId);
+  });
+  canvas.addEventListener("pointermove", (e) => {
+    if (drag) {
+      const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+      if (Math.abs(dx) + Math.abs(dy) > 3) { drag.moved = true; canvas.classList.add("dragging"); hide(); }
+      if (drag.moved) {
+        const s = toSvg(0, 0).s;
+        vb = { ...drag.vb, x: drag.vb.x - dx * s, y: drag.vb.y - dy * s };
+        apply();
+        return;
+      }
+    }
+    hover(document.elementFromPoint(e.clientX, e.clientY), e.clientX, e.clientY);
+  });
+  canvas.addEventListener("pointerleave", hide);
+  canvas.addEventListener("pointerup", (e) => {
+    const wasDrag = drag && drag.moved;
+    drag = null; canvas.classList.remove("dragging");
+    if (!wasDrag) click(e.clientX, e.clientY);
+  });
+  const center = () => { const r = canvas.getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; };
+  $("zoomIn").onclick = () => zoomAt(0.7, ...center());
+  $("zoomOut").onclick = () => zoomAt(1 / 0.7, ...center());
+  $("fit").onclick = () => { if (home) { vb = { ...home }; apply(); } };
+
+  let lit = [];
+  function light(el, cls) { el.classList.add(cls); lit.push([el, cls]); }
+  function clearLit() { lit.forEach(([el, cls]) => el.classList.remove(cls)); lit = []; }
+  function hide() { clearLit(); pop.hidden = true; }
+  function show(html, cx, cy) {
+    pop.innerHTML = html;
+    pop.hidden = false;
+    const r = pop.getBoundingClientRect();
+    let x = cx + 16, y = cy + 16;
+    if (x + r.width > window.innerWidth - 8) x = cx - r.width - 16;
+    if (y + r.height > window.innerHeight - 8) y = cy - r.height - 16;
+    pop.style.left = Math.max(8, x) + "px";
+    pop.style.top = Math.max(8, y) + "px";
+  }
+  // Signals drawn as labels: hovering one piece lights up all of them.
+  function labeledNames() {
+    return new Set(Object.values(mod().labels || {}).filter((l) => l.kind === "signal").map((l) => l.text));
+  }
+  function lightWires(test) {
+    canvas.querySelectorAll(".wire, .junction").forEach((el) => { if (test(bitsOf(el))) light(el, "netHl"); });
+  }
+  function blockBox(block, port) {
+    return canvas.querySelector(`.portbox[data-block="${CSS.escape(block)}"][data-port="${CSS.escape(port)}"]`);
+  }
+  function partText(part) {
+    const m = /^\[(\d+)(?::(\d+))?\]$/.exec(part);
+    if (!m || m[2] == null) return `bit ${part}`;
+    return `bits ${part} (${Number(m[1]) - Number(m[2]) + 1} bits)`;
+  }
+  function busName(sj) {
+    const g = canvas.querySelector(`g[data-sj="${CSS.escape(sj)}"]`);
+    const bits = g ? bitsOf(g) : [];
+    const s = signal(bits[0]);
+    return { name: s && s.name ? s.name : "bus", n: bits.length, kind: g ? g.dataset.kind : "split", g };
+  }
+
+  function hover(t, cx, cy) {
+    clearLit();
+    if (!t || !canvas.contains(t) || !vb) { pop.hidden = true; return; }
+    const m = mod();
+    // A split's or join's port: what it extracts or contributes.
+    if (t.classList.contains("portbox") && t.dataset.sj) {
+      light(t, "hl");
+      const { name, n, kind } = busName(t.dataset.sj);
+      const combined = (kind === "split") === (t.dataset.side === "in");
+      if (combined) {
+        show(`<p class="title">${esc(name)}[${n - 1}:0]</p><p class="sub">the combined value, ${n} bits: ${kind === "split" ? "input" : "output"} of a bus ${kind}</p>`, cx, cy);
+      } else {
+        const verb = kind === "split" ? "Extracts" : "Contributes";
+        show(`<p class="title">${verb} ${esc(partText(t.dataset.part))}</p><p class="sub">${kind === "split" ? "an output" : "an input"} of a bus ${kind}, ${kind === "split" ? "from" : "to"} the combined value ${esc(name)}[${n - 1}:0]</p>`, cx, cy);
+      }
+      return;
+    }
+    // A block's port.
+    if (t.classList.contains("portbox") && t.dataset.block) {
+      light(t, "hl");
+      const info = (m.blocks || {})[t.dataset.block] || {};
+      const p = (info.ports || {})[t.dataset.port] || {};
+      const fixed = (info.fixed || {})[t.dataset.port];
+      let html = `<p class="title">${esc(t.dataset.port)}</p><p class="sub">${esc(p.direction || "port")}${p.width ? ", " + bitsText(p.width) : ""} of ${esc(info.name || info.title || "")}</p><dl class="kv">`;
+      if (fixed != null) html += `<dt>Fixed to</dt><dd>${esc(fixed)}</dd>`;
+      else html += `<dt>Signal</dt><dd>${esc(p.signal || "unnamed")}</dd>`;
+      show(html + "</dl>", cx, cy);
+      return;
+    }
+    const lbl = t.closest("[data-label]");
+    if (lbl) {
+      const l = (m.labels || {})[lbl.dataset.label] || {};
+      if (l.kind === "signal") { const names = labeledNames(); lightWires((bits) => { const s = signal(bits[0]); return s && s.name === l.text && names.has(l.text); }); }
+      let sub = l.kind === "fixed" ? "a fixed value" : "a signal, drawn as a label";
+      if (l.block && l.direction === "in") {
+        const box = blockBox(l.block, l.port);
+        if (box) light(box, "hl");
+        const info = (m.blocks || {})[l.block] || {};
+        sub += `, into ${esc(l.port)} of ${esc(info.name || info.title || "")}`;
+      }
+      show(`<p class="title">${esc(l.text)}</p><p class="sub">${sub}</p>`, cx, cy);
+      return;
+    }
+    const pin = t.closest("[data-pin]");
+    if (pin) {
+      const name = pin.dataset.pin;
+      const p = (m.pins || {})[name] || { direction: "", width: 0, bits: [] };
+      light(pin, "hl");
+      const bits = new Set((p.bits || []).map(String));
+      const named = labeledNames().has(name);
+      lightWires((b) => b.some((x) => bits.has(x)) || (named && signal(b[0]) && signal(b[0]).name === name));
+      const text = !m.top ? "A port of this module."
+        : p.width > 1 ? `${p.width} pins of the FPGA, one per bit: the pin file connects each to the board.`
+        : "A pin of the FPGA: the pin file connects it to the board.";
+      show(`<p class="title">${esc(name)}</p><p class="sub">${esc(p.direction)}${p.width ? ", " + bitsText(p.width) : ""}</p><p class="hint2">${text}</p>`, cx, cy);
+      return;
+    }
+    const sjg = t.closest("g[data-sj]");
+    if (sjg) {
+      light(sjg, "hl");
+      const { name, n, kind } = busName(sjg.dataset.sj);
+      const side = kind === "split" ? "out" : "in";
+      const verb = kind === "split" ? "extracts" : "contributes";
+      const parts = [...canvas.querySelectorAll(`.portbox[data-sj="${CSS.escape(sjg.dataset.sj)}"]`)]
+        .filter((x) => x.dataset.side === side)
+        .sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top);
+      show(`<p class="title">Bus ${kind}</p><dl class="kv"><dt>Combined value</dt><dd>${esc(name)}[${n - 1}:0], ${n} bits (the ${kind === "split" ? "input" : "output"})</dd></dl>` +
+        `<h2>${kind === "split" ? "Outputs" : "Inputs"}, top to bottom</h2><ol>${parts.map((x) => `<li>${verb} ${esc(partText(x.dataset.part))}</li>`).join("")}</ol>`, cx, cy);
+      return;
+    }
+    const k = t.closest("[data-const]");
+    if (k) {
+      light(k, "hl");
+      show(`<p class="title">${esc(k.dataset.const)}</p><p class="sub">a fixed value</p>`, cx, cy);
+      return;
+    }
+    const blk = t.closest("g[data-block]");
+    if (blk) {
+      light(blk, "hl");
+      const info = (m.blocks || {})[blk.dataset.block];
+      if (info) show(blockHtml(info), cx, cy); else pop.hidden = true;
+      return;
+    }
+    if (t.classList.contains("hit") || t.classList.contains("wire") || t.classList.contains("junction")) {
+      const bits = bitsOf(t);
+      const s = signal(bits[0]);
+      const names = labeledNames();
+      const own = t.dataset.bits;
+      const shared = s && s.name && names.has(s.name) ? s.name : null;
+      lightWires((b) => b.join(",") === own || (shared && signal(b[0]) && signal(b[0]).name === shared));
+      show(s && s.name
+        ? `<p class="title">${esc(s.name)}</p><p class="sub">signal, ${bitsText(bits.length)}</p>`
+        : `<p class="title">Unnamed signal</p><p class="sub">${bitsText(bits.length)}, made by synthesis</p>`, cx, cy);
+      return;
+    }
+    pop.hidden = true;
+  }
+
+  function blockHtml(info) {
+    const sub = info.kind === "module" ? `instance ${info.instance || ""}`
+      : info.kind === "fpga" ? info.type
+      : info.type + (info.width ? `, ${bitsText(info.width)}` : "");
+    let html = info.name
+      ? `<p class="title">${esc(info.name)}</p><p class="sub">${esc(info.title)}, ${esc(sub)}</p>`
+      : `<p class="title">${esc(info.title)}</p><p class="sub">${esc(sub)}</p>`;
+    html += `<dl class="kv"><dt>Kind</dt><dd>${{ logic: "Logic", module: "Module", fpga: "FPGA block" }[info.kind] || ""}</dd>`;
+    if (info.source) html += `<dt>Source</dt><dd>${esc(place(info.source))}</dd>`;
+    if (info.memory_init) html += `<dt>Contents</dt><dd>initial values loaded in ${esc(place(info.memory_init))}</dd>`;
+    html += "</dl>";
+    const fixed = Object.entries(info.fixed || {});
+    if (fixed.length) html += `<h2>Fixed inputs</h2><dl class="kv">${fixed.map(([p, v]) => `<dt>${esc(p)}</dt><dd>${esc(v)}</dd>`).join("")}</dl>`;
+    if (info.kind === "module") html += `<p class="hint2">Click to open it.</p>`;
+    else if (hosted && info.source) html += `<p class="hint2">Click to go to its source.</p>`;
+    return html;
+  }
+
+  function click(cx, cy) {
+    const el = document.elementFromPoint(cx, cy);
+    if (!el || !canvas.contains(el)) return;
+    const blk = el.closest("[data-block]");
+    if (!blk) return;
+    const info = (mod().blocks || {})[blk.dataset.block];
+    if (!info) return;
+    if (info.kind === "module" && DATA.modules[info.module]) go([...path, info.module]);
+    else if (hosted) openSource(info.source);
+  }
+
+  // Open the module the address names, such as #main/notegen.
+  const start = decodeURIComponent(location.hash.slice(1)).split("/").filter(Boolean);
+  if (start[0] === DATA.top) start.shift();
+  path = start.filter((k) => DATA.modules[k]);
+  render();
+})();
+</script>
+</body>
+</html>

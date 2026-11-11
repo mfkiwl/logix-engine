@@ -107,7 +107,7 @@ pub struct PackageInfo {
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct ComponentInfo {
-    /// The component name: oss-cad-suite, openxc7, verible, or graphviz
+    /// The component name: oss-cad-suite, openxc7, verible or elkjs
     /// (Windows).
     pub name: String,
     pub description: String,

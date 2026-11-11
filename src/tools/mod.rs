@@ -5,11 +5,11 @@
 pub mod build;
 pub mod clean_build;
 pub mod compare_boards;
+pub mod diagram;
 pub mod download_packages;
 pub mod format;
 pub mod get_catalog;
 pub mod get_engine_info;
-pub mod graph;
 pub mod lint;
 pub mod list_devices;
 pub mod program_board;
@@ -124,7 +124,7 @@ pub fn all_definitions() -> Vec<Tool> {
         definition::<test::Test>(),
         definition::<simulate::Simulate>(),
         definition::<format::Format>(),
-        definition::<graph::Graph>(),
+        definition::<diagram::Diagram>(),
         definition::<build::Build>(),
         definition::<clean_build::CleanBuild>(),
         definition::<list_devices::ListDevices>(),
@@ -197,11 +197,11 @@ pub async fn call(
     use build::Build;
     use clean_build::CleanBuild;
     use compare_boards::CompareBoards;
+    use diagram::Diagram;
     use download_packages::DownloadPackages;
     use format::Format;
     use get_catalog::GetCatalog;
     use get_engine_info::GetEngineInfo;
-    use graph::Graph;
     use lint::Lint;
     use list_devices::ListDevices;
     use program_board::ProgramBoard;
@@ -231,6 +231,7 @@ pub async fn call(
         CompareBoards::NAME,
         Build::NAME,
         Lint::NAME,
+        Diagram::NAME,
         ListDevices::NAME,
         ProgramBoard::NAME,
     ]
@@ -312,11 +313,11 @@ pub async fn call(
                 call,
             ),
         ),
-        Graph::NAME => to_call_result(
+        Diagram::NAME => to_call_result(
             display,
             with_commands(
-                match parse_input::<Graph>(arguments) {
-                    Ok(input) => graph::run(state, input, call).await,
+                match parse_input::<Diagram>(arguments) {
+                    Ok(input) => diagram::run(state, input, call).await,
                     Err(e) => Err(e),
                 },
                 call,

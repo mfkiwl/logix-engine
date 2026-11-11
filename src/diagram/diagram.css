@@ -1,0 +1,23 @@
+svg.logix-diagram{stroke:var(--logix-diagram-wire,#23303c);fill:none;stroke-linecap:round}
+svg.logix-diagram text{fill:var(--logix-diagram-text,var(--logix-diagram-wire,#23303c));stroke:none;font:400 10px var(--logix-diagram-font,ui-monospace,"SF Mono",Menlo,Consolas,monospace)}
+svg.logix-diagram .nodelabel{text-anchor:middle}
+svg.logix-diagram .bar,svg.logix-diagram .junction{fill:var(--logix-diagram-wire,#23303c);stroke:none}
+svg.logix-diagram .block>.body{stroke-width:1.6;fill:var(--logix-diagram-gate-fill,#e9eef3);stroke:var(--logix-diagram-gate,#4b5a69)}
+svg.logix-diagram .block>.mark{stroke:var(--logix-diagram-wire,#23303c)}
+svg.logix-diagram .cat-reg>.body{fill:var(--logix-diagram-register-fill,#e4eefb);stroke:var(--logix-diagram-register,#2463b5)}
+svg.logix-diagram .cat-arith>.body{fill:var(--logix-diagram-arithmetic-fill,#fdf0d8);stroke:var(--logix-diagram-arithmetic,#a8650a)}
+svg.logix-diagram .cat-cmp>.body{fill:var(--logix-diagram-compare-fill,#eee7fb);stroke:var(--logix-diagram-compare,#6a43c2)}
+svg.logix-diagram .cat-mux>.body{fill:var(--logix-diagram-mux-fill,#fae4f0);stroke:var(--logix-diagram-mux,#ad2f7a)}
+svg.logix-diagram .cat-mem>.body{fill:var(--logix-diagram-memory-fill,#dff3e8);stroke:var(--logix-diagram-memory,#237a4b)}
+svg.logix-diagram .cat-module>.body{fill:var(--logix-diagram-module-fill,#dcf1f1);stroke:var(--logix-diagram-module,#0f7f84)}
+svg.logix-diagram .cat-fpga>.body{fill:var(--logix-diagram-fpga-fill,#fbe7da);stroke:var(--logix-diagram-fpga,#b84d16)}
+svg.logix-diagram .cat-port>.body{fill:var(--logix-diagram-pin-fill,#eef1f4);stroke:var(--logix-diagram-wire,#23303c)}
+svg.logix-diagram .cat-const>.body{fill:var(--logix-diagram-pin-fill,#eef1f4);stroke:var(--logix-diagram-fixed,#7b8794)}
+svg.logix-diagram .cat-const text{fill:var(--logix-diagram-fixed,#7b8794)}
+svg.logix-diagram .wire.clock,svg.logix-diagram .wire.global{stroke:var(--logix-diagram-clock,#2463b5);stroke-width:2}
+svg.logix-diagram .junction.clock,svg.logix-diagram .junction.global{fill:var(--logix-diagram-clock,#2463b5)}
+svg.logix-diagram .wire.fixed{stroke:var(--logix-diagram-fixed,#7b8794)}
+svg.logix-diagram text.lbltext{font-size:9px}
+svg.logix-diagram text.signal{fill:var(--logix-diagram-clock,#2463b5)}
+svg.logix-diagram text.fixed{fill:var(--logix-diagram-fixed,#7b8794)}
+svg.logix-diagram .portbox{fill:var(--logix-diagram-sheet,#fff);stroke:var(--logix-diagram-wire,#23303c);stroke-width:1.2}

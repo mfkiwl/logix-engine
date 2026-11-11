@@ -18,31 +18,31 @@
     {
       "name": "logix-core",
       "version": "2026-11-11",
-      "description": "The FPGA tools: the YosysHQ OSS CAD Suite, openXC7 and Verible (and Graphviz on Windows), each its upstream release",
+      "description": "The FPGA tools: the YosysHQ OSS CAD Suite, openXC7, Verible and ELK (elkjs, which lays out diagrams), each its upstream release",
       "files": {
         "darwin-arm64": {
           "owner": "openlogix",
           "repo": "logix-core",
           "tag": "2026-11-11",
           "file": "logix-core-darwin-arm64-20261111.tgz",
-          "size": 635996697,
-          "sha256": "15b1f439430008a7b126bc90f1744d033b510ac331477e357ef4bc2b35c564a5"
+          "size": 637704793,
+          "sha256": "60a852ce0ea41a8dc0f2d38c3e20e2f8cdc71c25d7cb4755048b656a7b9c114f"
         },
         "linux-x86-64": {
           "owner": "openlogix",
           "repo": "logix-core",
           "tag": "2026-11-11",
           "file": "logix-core-linux-x86-64-20261111.tgz",
-          "size": 878656824,
-          "sha256": "9689cbd45a9d8ad067e7e05b55964ca04c1416dffbd11f3b4802ede5149a4f5d"
+          "size": 880376946,
+          "sha256": "1d420c229b0b434c1c863639ff399e82a6e192f777245bc3f6f0d63b92bfbbd7"
         },
         "windows-x86-64": {
           "owner": "openlogix",
           "repo": "logix-core",
           "tag": "2026-11-11",
           "file": "logix-core-windows-x86-64-20261111.tgz",
-          "size": 724649931,
-          "sha256": "8a18fb82bcc47573c848c304c0bd3df9c9d65301fdb470a5bd5d745ef2da34d3"
+          "size": 716922063,
+          "sha256": "f5582fc9d02ab5f252ad2c789b3fd9bef556b6138c533d945caf02ac2bbe10ea"
         }
       }
     }
