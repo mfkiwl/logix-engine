@@ -201,13 +201,17 @@ jobs:
           cat RUN-SUMMARY.txt >> $GITHUB_STEP_SUMMARY
 
       # Notes for the release page.
+      - name: Checksums
+        run: |
+          cd _artifacts && sha256sum logix-engine-*.tgz | tee ../SHA256SUMS
+
       - name: Prepare release text
         run: |
           cat > RELEASE-BODY.txt <<EOF
 
-          **Logix Engine: one open engine to build and test FPGA designs and program boards, for any IDE or AI agent.**
+          **Logix Engine: One open engine to build and test FPGA designs and program boards, for any IDE or AI agent.**
 
-          [Website](https://www.openlogix.org/engine/) · [Documentation](https://github.com/${REPO}/tree/${REPO_COMMIT}/docs)
+          [Main page](https://www.openlogix.org/engine/) · [Docs](https://www.openlogix.org/logix-engine/)
 
           These are development builds. Logix Engine is in development and not ready for general use yet.
 
@@ -243,6 +247,12 @@ jobs:
           - Releases are created daily with a \`pre-release\` status, and only the newest ones (about 5) are kept, unless set to be \`stable\`.
           - The release tag is also the engine version.
           - To make a pre-release stable, edit it manually and change its status from \`Pre-release\` to \`None\`.
+
+          ### Checksums
+
+          \`\`\`
+          $(cat SHA256SUMS)
+          \`\`\`
           EOF
 
           cat -n RELEASE-BODY.txt
@@ -266,3 +276,4 @@ jobs:
           files: |
             _artifacts/logix-engine-darwin-arm64-${{ env.PACKAGE_TAG }}.tgz
             BUILD-INFO.json
+            SHA256SUMS
