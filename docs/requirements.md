@@ -272,14 +272,14 @@ The engine, its packages and the catalog all use date versions, as every Open Lo
 | Only where a tool requires semver, such as Cargo | `yyyy.m.d`, without leading zeros | `2026.1.5` |
 
 - **Comparison.** Versions are always compared by their canonical date, never as strings in mixed forms.
-- **Pinned packages.** Each engine release includes a manifest that names the exact date and checksum of every package it was tested with. By default, the engine downloads exactly those, so a given engine version always produces the same toolchain.
+- **Pinned packages.** Each engine release includes a manifest that names the exact date and checksum of every package it was tested with. By default, the engine downloads exactly those, so a given engine version always produces the same toolchain. With remote updates (decided, not implemented yet), the engine's remote config can name newer releases of its packages without a new engine release; the manifest's pins are then what the engine uses before its first check, and offline.
 - **Immutable releases.** Once a published engine release pins a package release, that package release never changes, and a fix gets a new date. During development, daily package releases may still be replaced, and development builds of the engine refresh their manifest to match.
 - **Side-by-side packages.** The engine folder can hold several dates of the same package, so engine versions that share an engine folder do not overwrite each other. Unused dates can be removed.
 - **Override for testing.** A host can request a different package date, such as a newer daily build. The engine reports that it is running an untested combination.
 - **Catalog.** The catalog is a package like the others, with its own date, pinned in the manifest.
 - **Tool API never breaks.** Changes only add tools or optional fields. A breaking change gets a new tool name, and the old tool keeps working until it is retired in a documented, announced way.
 - **Version check.** A host asks the engine for its version and downloaded package dates when it starts. Each host declares the minimum engine version it needs and tells the user clearly when the engine is older.
-- **No silent upgrades.** The engine never updates itself or its packages on its own. Upgrades happen only when a host asks.
+- **No unreported upgrades.** The engine never updates itself. Its packages change only to what its remote config names (remote updates, decided, not implemented yet): before an operation, when its cached remote config is more than 24 hours old, or when a host asks. Every update is reported in the operation's progress and result. The launch option that turns off automatic download turns this off too.
 
 ## Packages
 
@@ -287,7 +287,7 @@ The engine, its packages and the catalog all use date versions, as every Open Lo
 - **A checked configuration.** Each engine release pins one `logix-catalog` and one `logix-core`, and its tests check that they fit: every FPGA in the catalog must be in the list of FPGAs the core's tools can build, which the core generates from their databases (`logix-core.json` `fpgas`). A core that drops or renames an FPGA, or a catalog that adds one the tools can't build, fails the tests before it's pinned (decided 2026-11-10).
 - **Source.** Packages are downloaded only from GitHub releases, identified by owner, repo and release tag. The engine's manifest lists the owner, repo, tag and checksum of each package file for each platform.
 - **Verification.** After downloading a file, the engine checks it against the checksum in the manifest. If it does not match, the engine refuses to use it and reports a setup error.
-- **Automatic download and repair.** An operation that needs a missing or broken package downloads or repairs it first, with progress, so hosts don't manage packages themselves. A launch option turns this off for offline or managed setups. The engine then reports a setup error instead. Since the manifest pins every package, packages change only when the engine version changes.
+- **Automatic download and repair.** An operation that needs a missing or broken package downloads or repairs it first, with progress, so hosts don't manage packages themselves. A launch option turns this off for offline or managed setups. The engine then reports a setup error instead. Today the manifest pins every package, so packages change only when the engine version changes; with remote updates, they also change when the engine's remote config does.
 - **Licenses.** The tools in each package carry their own respective licenses.
 
 ## Error model
@@ -384,7 +384,7 @@ The built-in catalog is fixed for each engine version. Hosts extend or override 
 CLI hosts start a new engine instance for every command, so the engine's own overhead must stay small next to the time the tools take. These are targets, to be confirmed by measurement.
 
 - **Startup.** An instance is ready to accept requests within 200 ms of launch, excluding first-time package downloads.
-- **No network at startup.** Starting an instance never contacts the network. Network access happens only to download or repair packages that an operation needs, or when a host asks for it.
+- **No network at startup.** Starting an instance never contacts the network. Network access happens only before an operation that needs packages (to download or repair them and, with remote updates, to refresh a remote config more than 24 hours old), or when a host asks for it.
 - **Verification on download.** Package checksums are verified when packages are downloaded, not every time an instance starts.
 - **Operation overhead.** The engine adds no more than 100 ms to an operation beyond the time its tools take.
 - **Up-to-date builds.** A build with no changes since the last build finishes within 1 second, using the incremental state in the build folder.
