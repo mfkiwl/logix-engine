@@ -324,7 +324,7 @@ async fn auto_download_off_is_a_setup_error_listing_the_packages() {
     assert_eq!(err.category, Category::Setup);
     assert_eq!(err.action.unwrap().code, ActionCode::DownloadPackages);
     assert!(
-        err.message.contains("pkg 2026-01-02 (missing)"),
+        err.message.contains("pkg 2026.01.02 (missing)"),
         "{}",
         err.message
     );

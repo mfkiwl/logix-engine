@@ -128,21 +128,23 @@ fn is_safe_name(s: &str) -> bool {
             .all(|c| c.is_ascii_alphanumeric() || matches!(c, b'-' | b'_' | b'.'))
 }
 
-/// `yyyy-mm-dd`, optionally with `-N` for a later release on the same day.
+/// A release tag, `yyyy-mm-dd` (at most one release a day).
 pub fn is_date_tag(s: &str) -> bool {
     let b = s.as_bytes();
-    if b.len() < 10 || b[4] != b'-' || b[7] != b'-' {
+    if b.len() != 10 || b[4] != b'-' || b[7] != b'-' {
         return false;
     }
     let digits = |r: std::ops::Range<usize>| b[r].iter().all(u8::is_ascii_digit);
-    if !(digits(0..4) && digits(5..7) && digits(8..10)) {
-        return false;
-    }
-    match &s[10..] {
-        "" => true,
-        rest => rest.strip_prefix('-').is_some_and(|n| {
-            !n.is_empty() && !n.starts_with('0') && n.bytes().all(|c| c.is_ascii_digit())
-        }),
+    digits(0..4) && digits(5..7) && digits(8..10)
+}
+
+/// The version people see for a release tag: `yyyy.mm.dd` for `yyyy-mm-dd`
+/// (the Open Logix versioning rule). Anything else is returned as is.
+pub fn shown_version(tag: &str) -> String {
+    if is_date_tag(tag) {
+        tag.replace('-', ".")
+    } else {
+        tag.to_string()
     }
 }
 
@@ -180,7 +182,7 @@ mod tests {
         assert!(m.get("logix-catalog").unwrap().files.contains_key("any"));
         // The file name carries the same date as the package version.
         for p in &m.packages {
-            let compact = p.version[..10].replace('-', "");
+            let compact = p.version.replace('-', "");
             for f in p.files.values() {
                 assert!(f.file.contains(&compact), "{} {}", p.name, f.file);
             }
@@ -190,8 +192,9 @@ mod tests {
     #[test]
     fn date_tags() {
         assert!(is_date_tag("2026-10-22"));
-        assert!(is_date_tag("2026-10-22-2"));
-        assert!(!is_date_tag("2026-10-22-0"));
+        assert!(!is_date_tag("2026-10-22-2"));
+        assert_eq!(shown_version("2026-10-22"), "2026.10.22");
+        assert_eq!(shown_version("local"), "local");
         assert!(!is_date_tag("2026.10.22"));
         assert!(!is_date_tag("20261022"));
         assert!(!is_date_tag("2026-10-2x"));

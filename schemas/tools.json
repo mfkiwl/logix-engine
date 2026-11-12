@@ -16,9 +16,9 @@
       "type": "object",
       "properties": {
         "engine_version": {
-          "description": "The engine release, as a date tag (yyyy-mm-dd, or yyyy-mm-dd-N for a\nlater release on the same day). Compare versions by date.",
+          "description": "The engine version: its release date, as yyyy.mm.dd (its release tag\nis the same date as yyyy-mm-dd). Compare versions by date.",
           "type": "string",
-          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}(-[1-9][0-9]*)?$"
+          "pattern": "^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}$"
         },
         "protocol_versions": {
           "description": "The MCP protocol versions the engine accepts, newest first.",
@@ -94,9 +94,9 @@
               "type": "string"
             },
             "version": {
-              "description": "The package release, as a date tag (yyyy-mm-dd).",
+              "description": "The package version: its release date, as yyyy.mm.dd.",
               "type": "string",
-              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}(-[1-9][0-9]*)?$"
+              "pattern": "^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}$"
             },
             "status": {
               "$ref": "#/$defs/PackageStatus"
@@ -164,7 +164,7 @@
           "type": "object",
           "properties": {
             "version": {
-              "description": "The catalog's version: the logix-catalog release (yyyy-mm-dd) this\nengine release pins, or \"local\" for a catalog folder from\nLOGIX_ENGINE_DEV_CATALOG_FOLDER.",
+              "description": "The catalog's version: the date of the logix-catalog release this\nengine release pins, as yyyy.mm.dd, or \"local\" for a catalog folder\nfrom LOGIX_ENGINE_DEV_CATALOG_FOLDER.",
               "type": "string"
             },
             "local": {
@@ -249,9 +249,9 @@
               "type": "string"
             },
             "version": {
-              "description": "The package release, as a date tag (yyyy-mm-dd).",
+              "description": "The package version: its release date, as yyyy.mm.dd.",
               "type": "string",
-              "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}(-[1-9][0-9]*)?$"
+              "pattern": "^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}$"
             },
             "status": {
               "$ref": "#/$defs/PackageStatus"
@@ -2166,7 +2166,7 @@
               "type": "string"
             },
             "package": {
-              "description": "The package the program came from, with its version and the core's\ntool, such as \"logix-core 2026-11-10 (oss-cad-suite)\". Omitted for a\nprogram from elsewhere, such as a custom programmer command.",
+              "description": "The package the program came from, with its version and the core's\ntool, such as \"logix-core 2026.11.10 (oss-cad-suite)\". Omitted for a\nprogram from elsewhere, such as a custom programmer command.",
               "type": [
                 "string",
                 "null"
@@ -2565,7 +2565,7 @@
               "type": "string"
             },
             "package": {
-              "description": "The package the program came from, with its version and the core's\ntool, such as \"logix-core 2026-11-10 (oss-cad-suite)\". Omitted for a\nprogram from elsewhere, such as a custom programmer command.",
+              "description": "The package the program came from, with its version and the core's\ntool, such as \"logix-core 2026.11.10 (oss-cad-suite)\". Omitted for a\nprogram from elsewhere, such as a custom programmer command.",
               "type": [
                 "string",
                 "null"
@@ -2957,7 +2957,7 @@
               "type": "string"
             },
             "package": {
-              "description": "The package the program came from, with its version and the core's\ntool, such as \"logix-core 2026-11-10 (oss-cad-suite)\". Omitted for a\nprogram from elsewhere, such as a custom programmer command.",
+              "description": "The package the program came from, with its version and the core's\ntool, such as \"logix-core 2026.11.10 (oss-cad-suite)\". Omitted for a\nprogram from elsewhere, such as a custom programmer command.",
               "type": [
                 "string",
                 "null"
@@ -3241,7 +3241,7 @@
               "type": "string"
             },
             "package": {
-              "description": "The package the program came from, with its version and the core's\ntool, such as \"logix-core 2026-11-10 (oss-cad-suite)\". Omitted for a\nprogram from elsewhere, such as a custom programmer command.",
+              "description": "The package the program came from, with its version and the core's\ntool, such as \"logix-core 2026.11.10 (oss-cad-suite)\". Omitted for a\nprogram from elsewhere, such as a custom programmer command.",
               "type": [
                 "string",
                 "null"
@@ -3611,7 +3611,7 @@
               "type": "string"
             },
             "package": {
-              "description": "The package the program came from, with its version and the core's\ntool, such as \"logix-core 2026-11-10 (oss-cad-suite)\". Omitted for a\nprogram from elsewhere, such as a custom programmer command.",
+              "description": "The package the program came from, with its version and the core's\ntool, such as \"logix-core 2026.11.10 (oss-cad-suite)\". Omitted for a\nprogram from elsewhere, such as a custom programmer command.",
               "type": [
                 "string",
                 "null"
@@ -4090,7 +4090,7 @@
               "type": "string"
             },
             "package": {
-              "description": "The package the program came from, with its version and the core's\ntool, such as \"logix-core 2026-11-10 (oss-cad-suite)\". Omitted for a\nprogram from elsewhere, such as a custom programmer command.",
+              "description": "The package the program came from, with its version and the core's\ntool, such as \"logix-core 2026.11.10 (oss-cad-suite)\". Omitted for a\nprogram from elsewhere, such as a custom programmer command.",
               "type": [
                 "string",
                 "null"
@@ -4915,7 +4915,7 @@
               "type": "string"
             },
             "package": {
-              "description": "The package the program came from, with its version and the core's\ntool, such as \"logix-core 2026-11-10 (oss-cad-suite)\". Omitted for a\nprogram from elsewhere, such as a custom programmer command.",
+              "description": "The package the program came from, with its version and the core's\ntool, such as \"logix-core 2026.11.10 (oss-cad-suite)\". Omitted for a\nprogram from elsewhere, such as a custom programmer command.",
               "type": [
                 "string",
                 "null"

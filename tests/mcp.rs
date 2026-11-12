@@ -35,12 +35,10 @@ async fn start(engine_folder: &Path, extra: &[&str]) -> RunningService<RoleClien
 }
 
 /// The version of a package the manifest pins.
+/// A pinned package's version as get_engine_info reports it (yyyy.mm.dd).
 fn pinned(name: &str) -> String {
-    logix_engine::packages::manifest::builtin()
-        .get(name)
-        .unwrap()
-        .version
-        .clone()
+    let m = logix_engine::packages::manifest::builtin();
+    logix_engine::packages::manifest::shown_version(&m.get(name).unwrap().version)
 }
 
 async fn call(client: &RunningService<RoleClient, ()>, name: &str, args: Value) -> CallToolResult {

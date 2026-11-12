@@ -247,7 +247,11 @@ impl PackageManager {
                     PackageStatus::Broken => "broken",
                     _ => "missing",
                 };
-                format!("{} {} ({status})", s.name, s.version)
+                format!(
+                    "{} {} ({status})",
+                    s.name,
+                    manifest::shown_version(&s.version)
+                )
             })
             .collect();
         ToolError::setup(format!(

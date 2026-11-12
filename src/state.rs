@@ -6,7 +6,8 @@ use std::path::PathBuf;
 
 use rmcp::model::ProtocolVersion;
 
-/// The engine release, a date tag. Set by build.rs.
+/// The engine version as people see it, yyyy.mm.dd: its release date. Set
+/// by build.rs.
 pub const ENGINE_VERSION: &str = env!("LOGIX_ENGINE_BUILD_VERSION");
 
 /// The MCP protocol versions the engine accepts, newest first. The engine is
@@ -80,11 +81,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn engine_version_is_a_date_tag() {
+    fn engine_version_is_a_dotted_date() {
         let v = ENGINE_VERSION;
-        assert!(v.len() >= 10, "{v}");
+        assert_eq!(v.len(), 10, "{v}");
         assert!(
-            v[..4].parse::<u32>().is_ok() && &v[4..5] == "-" && &v[7..8] == "-",
+            crate::packages::manifest::is_date_tag(&v.replace('.', "-")) && !v.contains('-'),
             "{v}"
         );
     }

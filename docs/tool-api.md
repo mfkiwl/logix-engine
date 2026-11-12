@@ -26,9 +26,9 @@ The Logix Engine is a program, `logix-engine`, that a host runs and talks to. It
 **Versions.** Two versions matter, and the tool API has no separate version of its own:
 
 - **MCP protocol version**, agreed in the `initialize` handshake. It covers the message format, not the Logix Engine tools, and MCP client libraries handle it.
-- **Logix Engine version**, `engine_version` from the `get_engine_info` tool, a date tag (`yyyy-mm-dd`). It also versions the tool API. After the first release, changes only add tools and fields.
+- **Logix Engine version**, `engine_version` from the `get_engine_info` tool, its release date as `yyyy.mm.dd`, such as `2026.12.01` (its release tag is the same date, `2026-12-01`). It also versions the tool API. After the first release, changes only add tools and fields.
 
-To check, a hardcoded client calls `get_engine_info` right after the handshake and checks `engine_version` against the versions it supports, by its own rule, such as a range or a list of tested releases (date tags compare correctly as plain strings). If the version isn't supported, the client calls no other tools and tells the user what it needs (see Start up under Recipes). An AI agent needs no check, since it reads the current tools from `tools/list`.
+To check, a hardcoded client calls `get_engine_info` right after the handshake and checks `engine_version` against the versions it supports, by its own rule, such as a range or a list of tested releases (versions compare correctly as plain strings). If the version isn't supported, the client calls no other tools and tells the user what it needs (see Start up under Recipes). An AI agent needs no check, since it reads the current tools from `tools/list`.
 
 The host may send several calls without waiting; each response carries the ID of its request. The rest of this document describes each tool.
 
@@ -248,7 +248,7 @@ Results of the tools that run programs (`lint`, `test`, `simulate`, `format`, `b
 | Field | Type | Description |
 | --- | --- | --- |
 | `tool` | text | The program's name, such as `yosys` |
-| `package` | text | The package it came from, its version and the core's tool, such as `logix-core 2026-11-10 (oss-cad-suite)`. Omitted for a program from elsewhere, such as a custom programmer command |
+| `package` | text | The package it came from, its version and the core's tool, such as `logix-core 2026.11.10 (oss-cad-suite)`. Omitted for a program from elsewhere, such as a custom programmer command |
 | `cwd` | absolute path | The folder it ran in |
 | `args` | list of text | The program as an absolute path, then its arguments, exactly as passed |
 | `shell` | text | One POSIX shell command line that runs it again the same way: in the same folder, with the same minimal environment, `PATH` (the package's `bin` folder, then `/usr/bin:/bin`), `HOME` and `TMPDIR` |
@@ -258,7 +258,7 @@ Example:
 ```json
 {
   "tool": "verilator_bin",
-  "package": "logix-core 2026-11-10 (oss-cad-suite)",
+  "package": "logix-core 2026.11.10 (oss-cad-suite)",
   "cwd": "/home/user/proj",
   "args": ["/home/user/.logix/ide/engine/packages/logix-core/2026-11-10/oss-cad-suite/bin/verilator_bin", "--lint-only", "--quiet", "main.v"],
   "shell": "cd /home/user/proj && env -i PATH=/home/user/.logix/ide/engine/packages/logix-core/2026-11-10/oss-cad-suite/bin:/usr/bin:/bin HOME=\"$HOME\" TMPDIR=\"$TMPDIR\" /home/user/.logix/ide/engine/packages/logix-core/2026-11-10/oss-cad-suite/bin/verilator_bin --lint-only --quiet main.v"
@@ -290,7 +290,7 @@ Download progress is one phase per package, such as "Downloading logix-core". It
 
 | Path in the engine folder | Contents |
 | --- | --- |
-| `packages/<name>/<version>/` | A downloaded package, such as `packages/logix-core/2026-11-10/`, with one folder per tool in the core (`oss-cad-suite/`, `openxc7/`, `verible/`). Several versions can sit side by side. Its download record, `logix-download.json`, is written last |
+| `packages/<name>/<release tag>/` | A downloaded package, by its release tag (`yyyy-mm-dd`), such as `packages/logix-core/2026-11-10/`, with one folder per tool in the core (`oss-cad-suite/`, `openxc7/`, `verible/`). Several versions can sit side by side. Its download record, `logix-download.json`, is written last |
 | `downloads/` | Partial downloads, deleted when a download ends |
 | `locks/` | One lock file per package, held while downloading it |
 | `logs/` | Log files, described in [Command line](command-line.md) |
@@ -1093,16 +1093,16 @@ Returns the Logix Engine's version, platform and package status. A host calls it
 
 | Field | Type | Description |
 | --- | --- | --- |
-| `engine_version` | date tag | The engine release |
+| `engine_version` | version | The engine version, its release date as `yyyy.mm.dd` |
 | `protocol_versions` | list of text | The MCP protocol versions the engine accepts, such as 2026-07-28 and 2025-11-25 |
 | `platform` | text | The platform the engine runs on, such as `darwin-arm64` |
 | `engine_folder` | absolute path | The engine folder, set by the host with the `--engine-folder` command-line argument when it launches the engine |
 | `auto_download` | boolean | Whether automatic package download and repair is on. It is on by default, and the host turns it off with the `--no-auto-download` command-line argument when it launches the engine |
 | `command_line` | list of text | The command-line arguments the engine was launched with, as given, for diagnostics |
 | `log_file` | absolute path | The log file this engine process writes, in the `logs` subfolder of the engine folder |
-| `packages` | list of packages | Every package in the engine's manifest: `logix-catalog` (the board catalog) and `logix-core` (the FPGA tools). Each has a text `name`, a date tag `version`, a `status`: `ready`, `missing` or `broken`, and, for a ready `logix-core`, `components`: its tools, each with a `name` (`oss-cad-suite`, `openxc7`, `verible` and `elkjs`), a `description` and `bin_folder`, the absolute path of the folder with its programs, for hosts that run one directly, such as Verible's language server `verible-verilog-ls` from the `verible` component |
+| `packages` | list of packages | Every package in the engine's manifest: `logix-catalog` (the board catalog) and `logix-core` (the FPGA tools). Each has a text `name`, a `version` (its release date as `yyyy.mm.dd`), a `status`: `ready`, `missing` or `broken`, and, for a ready `logix-core`, `components`: its tools, each with a `name` (`oss-cad-suite`, `openxc7`, `verible` and `elkjs`), a `description` and `bin_folder`, the absolute path of the folder with its programs, for hosts that run one directly, such as Verible's language server `verible-verilog-ls` from the `verible` component |
 | `boards_schema` | text | The address of the board schema this engine reads, Logix Catalog's JSON Schema of a board file, in the catalog and in custom boards folders, such as `https://www.openlogix.org/schemas/logix-board-v1.json` (see Board specification) |
-| `catalog` | object | The board catalog: `version`, the `logix-catalog` release (yyyy-mm-dd) this engine pins, and `local`, true only when the engine reads a local catalog folder (`LOGIX_ENGINE_DEV_CATALOG_FOLDER`, a diagnostic setting), whose `version` is then `local` |
+| `catalog` | object | The board catalog: `version`, the date of the `logix-catalog` release this engine pins, as `yyyy.mm.dd`, and `local`, true only when the engine reads a local catalog folder (`LOGIX_ENGINE_DEV_CATALOG_FOLDER`, a diagnostic setting), whose `version` is then `local` |
 | `report` | multiline text | The facts above as lines for people, the engine's part of a frontend's system info (see Show system info under Recipes): the version, platform, engine folder, log file, automatic download, command line, each package with its version and status, the board catalog's version and the board schema. Show it as is; its wording can change in any version, so programs read the fields above |
 
 **Errors:** engine errors only.
@@ -1113,7 +1113,7 @@ Output:
 
 ```json
 {
-  "engine_version": "2026-12-01",
+  "engine_version": "2026.12.01",
   "protocol_versions": ["2026-07-28", "2025-11-25"],
   "platform": "darwin-arm64",
   "engine_folder": "/Users/user/.myhost/engine",
@@ -1121,14 +1121,14 @@ Output:
   "command_line": ["--engine-folder", "/Users/user/.myhost/engine"],
   "log_file": "/Users/user/.myhost/engine/logs/20261028-4123.log",
   "packages": [
-    { "name": "logix-catalog", "version": "2026-11-10", "status": "ready" },
-    { "name": "logix-core", "version": "2026-11-10", "status": "ready", "components": [
+    { "name": "logix-catalog", "version": "2026.11.10", "status": "ready" },
+    { "name": "logix-core", "version": "2026.11.10", "status": "ready", "components": [
       { "name": "verible", "description": "CHIPS Alliance Verible: the Verilog formatter and language server", "bin_folder": "/Users/user/.myhost/engine/packages/logix-core/2026-11-10/verible/bin" }
     ] }
   ],
   "boards_schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
-  "catalog": { "version": "2026-11-10" },
-  "report": "Logix Engine 2026-12-01\nPlatform: darwin-arm64\nEngine folder: /Users/user/.myhost/engine\n..."
+  "catalog": { "version": "2026.11.10" },
+  "report": "Logix Engine 2026.12.01\nPlatform: darwin-arm64\nEngine folder: /Users/user/.myhost/engine\n..."
 }
 ```
 
@@ -1166,8 +1166,8 @@ Output:
 {
   "downloaded": ["logix-core"],
   "packages": [
-    { "name": "logix-catalog", "version": "2026-11-10", "status": "ready" },
-    { "name": "logix-core", "version": "2026-11-10", "status": "ready", "components": [ ... ] }
+    { "name": "logix-catalog", "version": "2026.11.10", "status": "ready" },
+    { "name": "logix-core", "version": "2026.11.10", "status": "ready", "components": [ ... ] }
   ]
 }
 ```

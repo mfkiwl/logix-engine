@@ -1,7 +1,8 @@
 #!/bin/bash
 # Builds the release engine binary: target/release/logix-engine.
-# Release builds in CI set LOGIX_ENGINE_BUILD_VERSION to the release tag. Local
-# builds use today's date as the version.
+# Release builds in CI set LOGIX_ENGINE_BUILD_VERSION to the release tag
+# (yyyy-mm-dd); the engine reports it as yyyy.mm.dd. Local builds use today's
+# date.
 
 set -euo pipefail
 cd "$(dirname "$0")/.."

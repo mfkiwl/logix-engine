@@ -16,7 +16,7 @@ pub struct CommandRecord {
     /// The program's name, such as yosys.
     pub tool: String,
     /// The package the program came from, with its version and the core's
-    /// tool, such as "logix-core 2026-11-10 (oss-cad-suite)". Omitted for a
+    /// tool, such as "logix-core 2026.11.10 (oss-cad-suite)". Omitted for a
     /// program from elsewhere, such as a custom programmer command.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub package: Option<String>,
@@ -53,7 +53,8 @@ pub fn shell_quote(word: &str) -> String {
 
 /// The package a program in `bin_dir` came from, from the engine folder
 /// layout packages/<name>/<version>/..., with the core component it's in,
-/// such as "logix-core 2026-11-10 (oss-cad-suite)".
+/// such as "logix-core 2026.11.10 (oss-cad-suite)" (the version as people see
+/// it; the folder is named by the release tag).
 fn package_of(program: &Path, bin_dir: &Path) -> Option<String> {
     if program.parent() != Some(bin_dir) {
         return None;
@@ -62,7 +63,8 @@ fn package_of(program: &Path, bin_dir: &Path) -> Option<String> {
         a.parent().and_then(Path::parent).and_then(Path::file_name) == Some("packages".as_ref())
     })?;
     let name = version_dir.parent()?.file_name()?.to_string_lossy();
-    let version = version_dir.file_name()?.to_string_lossy();
+    let version =
+        crate::packages::manifest::shown_version(&version_dir.file_name()?.to_string_lossy());
     match bin_dir.strip_prefix(version_dir).ok()?.components().next() {
         Some(c) => Some(format!(
             "{name} {version} ({})",
@@ -133,7 +135,7 @@ mod tests {
         assert_eq!(r.tool, "yosys");
         assert_eq!(
             r.package.as_deref(),
-            Some("logix-core 2026-11-10 (oss-cad-suite)")
+            Some("logix-core 2026.11.10 (oss-cad-suite)")
         );
         assert_eq!(r.cwd, "/home/user/my proj");
         assert_eq!(

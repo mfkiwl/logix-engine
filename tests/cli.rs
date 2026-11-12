@@ -19,7 +19,15 @@ fn version_prints_the_date_version_and_exits() {
     let stdout = String::from_utf8(out.stdout).unwrap();
     let version = stdout.trim().strip_prefix("logix-engine ").expect(&stdout);
     assert!(
-        version.len() >= 10 && &version[4..5] == "-" && &version[7..8] == "-",
+        version.len() == 10
+            && version
+                .bytes()
+                .enumerate()
+                .all(|(i, c)| if i == 4 || i == 7 {
+                    c == b'.'
+                } else {
+                    c.is_ascii_digit()
+                }),
         "{version}"
     );
 }

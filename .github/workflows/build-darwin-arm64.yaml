@@ -56,7 +56,20 @@ jobs:
         working-directory: _repo
         run: scripts/test.sh
 
-      # The engine version is the release tag.
+      # Cargo needs a semver version: the release date without leading zeros
+      # (2026-05-07 is 2026.5.7), never shown (the Open Logix versioning rule).
+      - name: Write the semver version
+        working-directory: _repo
+        run: |
+          IFS=- read -r y m d <<< "$RELEASE_TAG"
+          semver="$((10#$y)).$((10#$m)).$((10#$d))"
+          export SEMVER="$semver"
+          perl -0pi -e 's/^version = "[^"]*"/version = "$ENV{SEMVER}"/m' Cargo.toml
+          perl -0pi -e 's/(name = "logix-engine"\nversion = )"[^"]*"/$1"$ENV{SEMVER}"/' Cargo.lock
+          grep -q "^version = \"$semver\"" Cargo.toml
+          grep -A1 '^name = "logix-engine"$' Cargo.lock | grep -q "^version = \"$semver\""
+
+      # The engine version is the release tag's date, shown as yyyy.mm.dd.
       - name: Build the engine
         working-directory: _repo
         env:
@@ -74,7 +87,7 @@ jobs:
           tar -tzvf "logix-engine-darwin-arm64-${PACKAGE_TAG}.tgz"
 
       # Checks what users get: the binary from the package runs, reports the
-      # release tag as its version, and has a valid (ad-hoc) signature
+      # release date as its version (yyyy.mm.dd), and has a valid (ad-hoc) signature
       # (Apple Silicon doesn't run unsigned binaries).
       - name: Verify the package
         run: |
@@ -85,8 +98,9 @@ jobs:
           test -f _check/logix-engine/LICENSE-APACHE
           version="$("$bin" --version)"
           echo "$version"
-          if [[ "$version" != "logix-engine ${RELEASE_TAG}" ]]; then
-            echo "Error: expected version ${RELEASE_TAG}, got: $version"
+          expected="logix-engine ${RELEASE_TAG//-/.}"
+          if [[ "$version" != "$expected" ]]; then
+            echo "Error: expected $expected, got: $version"
             exit 1
           fi
           codesign --verify --strict --verbose=2 "$bin"

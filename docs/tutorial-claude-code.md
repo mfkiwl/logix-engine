@@ -79,7 +79,7 @@ Check that it runs:
 ~/Downloads/logix-engine/logix-engine --version
 ```
 
-It prints the engine's version, a date such as `2026-11-09`.
+It prints the engine's version, a date such as `2026.11.09`.
 
 ## 2. Connect Claude Code to the engine
 

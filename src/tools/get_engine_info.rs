@@ -32,9 +32,9 @@ pub struct GetEngineInfoInput {}
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct GetEngineInfoOutput {
-    /// The engine release, as a date tag (yyyy-mm-dd, or yyyy-mm-dd-N for a
-    /// later release on the same day). Compare versions by date.
-    #[schemars(pattern(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}(-[1-9][0-9]*)?$"))]
+    /// The engine version: its release date, as yyyy.mm.dd (its release tag
+    /// is the same date as yyyy-mm-dd). Compare versions by date.
+    #[schemars(pattern(r"^[0-9]{4}\.[0-9]{2}\.[0-9]{2}$"))]
     pub engine_version: String,
     /// The MCP protocol versions the engine accepts, newest first.
     pub protocol_versions: Vec<String>,
@@ -75,9 +75,9 @@ pub struct GetEngineInfoOutput {
 #[derive(Debug, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]
 pub struct CatalogInfo {
-    /// The catalog's version: the logix-catalog release (yyyy-mm-dd) this
-    /// engine release pins, or "local" for a catalog folder from
-    /// LOGIX_ENGINE_DEV_CATALOG_FOLDER.
+    /// The catalog's version: the date of the logix-catalog release this
+    /// engine release pins, as yyyy.mm.dd, or "local" for a catalog folder
+    /// from LOGIX_ENGINE_DEV_CATALOG_FOLDER.
     pub version: String,
     /// True when the engine reads a catalog folder from
     /// LOGIX_ENGINE_DEV_CATALOG_FOLDER (a diagnostic setting) instead of
@@ -92,8 +92,8 @@ pub struct CatalogInfo {
 pub struct PackageInfo {
     /// The package name: logix-catalog or logix-core.
     pub name: String,
-    /// The package release, as a date tag (yyyy-mm-dd).
-    #[schemars(pattern(r"^[0-9]{4}-[0-9]{2}-[0-9]{2}(-[1-9][0-9]*)?$"))]
+    /// The package version: its release date, as yyyy.mm.dd.
+    #[schemars(pattern(r"^[0-9]{4}\.[0-9]{2}\.[0-9]{2}$"))]
     pub version: String,
     pub status: PackageStatus,
     /// The tools in logix-core, each its upstream release in a folder of
@@ -157,7 +157,7 @@ pub fn run(
                     .packages
                     .manifest()
                     .get(crate::packages::CATALOG)
-                    .map(|s| s.version.clone())
+                    .map(|s| crate::packages::manifest::shown_version(&s.version))
                     .unwrap_or_default(),
                 local: false,
             },
@@ -237,7 +237,7 @@ pub fn package_info(packages: &PackageManager, spec: &PackageSpec) -> PackageInf
     let status = packages.status(spec);
     PackageInfo {
         name: spec.name.clone(),
-        version: spec.version.clone(),
+        version: crate::packages::manifest::shown_version(&spec.version),
         status,
         components: match (status, spec.name.as_str()) {
             (PackageStatus::Ready, crate::packages::CORE) => packages
@@ -266,7 +266,7 @@ mod tests {
     #[test]
     fn the_report_lists_the_facts_for_people() {
         let mut info = GetEngineInfoOutput {
-            engine_version: "2026-11-08".into(),
+            engine_version: "2026.11.08".into(),
             protocol_versions: vec!["2025-11-25".into()],
             platform: "darwin-arm64".into(),
             engine_folder: "/Users/you/.logix/ide/engine".into(),
@@ -279,20 +279,20 @@ mod tests {
             packages: vec![
                 PackageInfo {
                     name: "logix-catalog".into(),
-                    version: "2026-11-08".into(),
+                    version: "2026.11.08".into(),
                     status: PackageStatus::Ready,
                     components: Vec::new(),
                 },
                 PackageInfo {
                     name: "logix-core".into(),
-                    version: "2026-11-10".into(),
+                    version: "2026.11.10".into(),
                     status: PackageStatus::Missing,
                     components: Vec::new(),
                 },
             ],
             boards_schema: crate::catalog::BOARDS_SCHEMA.into(),
             catalog: CatalogInfo {
-                version: "2026-11-08".into(),
+                version: "2026.11.08".into(),
                 local: false,
             },
             report: String::new(),
@@ -300,16 +300,16 @@ mod tests {
         info.report = report(&info);
         assert_eq!(
             info.report,
-            "Logix Engine 2026-11-08
+            "Logix Engine 2026.11.08
 Platform: darwin-arm64
 Engine folder: /Users/you/.logix/ide/engine
 Log file: /Users/you/.logix/ide/engine/logs/20261108-1.log
 Automatic package download: on
 Command line: --engine-folder /Users/you/.logix/ide/engine
 Packages:
-  logix-catalog  2026-11-08  ready
-  logix-core     2026-11-10  missing
-Board catalog: Logix Catalog 2026-11-08
+  logix-catalog  2026.11.08  ready
+  logix-core     2026.11.10  missing
+Board catalog: Logix Catalog 2026.11.08
 Boards schema: https://www.openlogix.org/schemas/logix-board-v1.json"
         );
     }
