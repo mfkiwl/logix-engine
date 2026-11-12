@@ -65,7 +65,7 @@ Same conventions as logix-ide, using the shared actions from `openlogix/.github`
 - **Errors are data.** Use the six error categories and the suggested action codes from the tool API. A failing test or missed timing is a result, not an error. Messages never assume a particular host.
 - **Schemas come from Rust types.** Don't hand-write JSON schemas. Every tool and field needs a clear, self-contained description, because AI agents learn the tools from them alone.
 - **No network at startup, no silent upgrades.** Network access happens only to download or repair packages an operation needs, or when a host asks.
-- **Date versions.** Canonical form `yyyy-mm-dd`. Compare by date, never as mixed-form strings.
+- **Date versions.** The engine follows the Open Logix versioning rule (the website repo's `CLAUDE.md`, Remote updates, Versions and tags): `yyyy-mm-dd` for tags and pins, `yyyymmdd` only in file names, `yyyy.mm.dd` for the version people see, semver (`2026.5.7`) only where a tool requires it, and at most one release a day. Compare by date, never as mixed-form strings. (The code still accepts `yyyy-mm-dd-N` and reports `yyyy-mm-dd`: to change with remote updates.)
 
 ## A reference for frontends
 

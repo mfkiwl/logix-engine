@@ -260,22 +260,23 @@ Ideally, a single engine instance will support simultaneous operations and multi
 
 ## Versioning
 
-The engine, its packages and the catalog all use date versions. The canonical form is `yyyy-mm-dd`. The other forms below are exact conversions of it, used where a context requires them.
+The engine, its packages and the catalog all use date versions, as every Open Logix component does. Each form is an exact conversion of the release date, used where a context requires it. There is at most one release a day.
 
 **Table 12.** Version formats
 
-| Context | Form | Example | Second release on the same day |
-| --- | --- | --- | --- |
-| Canonical: docs, git tags, GitHub releases, version reports | `yyyy-mm-dd` | `2026-01-05` | `2026-01-05-2` |
-| File names, such as package files | `yyyymmdd` | `logix-core-linux-x86-64-20260105.tgz` | `20260105-2` |
-| Package registries, such as PyPI and npm | `yyyy.m.d`, without leading zeros | `2026.1.5` | `2026.1.5.2` |
+| Context | Form | Example |
+| --- | --- | --- |
+| Tags: git tags, GitHub releases, pins | `yyyy-mm-dd` | `2026-01-05` |
+| File names, such as package files | `yyyymmdd` | `logix-core-linux-x86-64-20260105.tgz` |
+| The version people see: version reports, docs | `yyyy.mm.dd` | `2026.01.05` |
+| Only where a tool requires semver, such as Cargo | `yyyy.m.d`, without leading zeros | `2026.1.5` |
 
 - **Comparison.** Versions are always compared by their canonical date, never as strings in mixed forms.
 - **Pinned packages.** Each engine release includes a manifest that names the exact date and checksum of every package it was tested with. By default, the engine downloads exactly those, so a given engine version always produces the same toolchain.
 - **Immutable releases.** Once a published engine release pins a package release, that package release never changes, and a fix gets a new date. During development, daily package releases may still be replaced, and development builds of the engine refresh their manifest to match.
 - **Side-by-side packages.** The engine folder can hold several dates of the same package, so engine versions that share an engine folder do not overwrite each other. Unused dates can be removed.
 - **Override for testing.** A host can request a different package date, such as a newer daily build. The engine reports that it is running an untested combination.
-- **Catalog.** The catalog ships with each engine release and has the same version.
+- **Catalog.** The catalog is a package like the others, with its own date, pinned in the manifest.
 - **Tool API never breaks.** Changes only add tools or optional fields. A breaking change gets a new tool name, and the old tool keeps working until it is retired in a documented, announced way.
 - **Version check.** A host asks the engine for its version and downloaded package dates when it starts. Each host declares the minimum engine version it needs and tells the user clearly when the engine is older.
 - **No silent upgrades.** The engine never updates itself or its packages on its own. Upgrades happen only when a host asks.
