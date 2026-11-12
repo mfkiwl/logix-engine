@@ -35,12 +35,6 @@ async fn start(engine_folder: &Path, extra: &[&str]) -> RunningService<RoleClien
 }
 
 /// The version of a package the manifest pins.
-/// A pinned package's version as get_engine_info reports it (yyyy.mm.dd).
-fn pinned(name: &str) -> String {
-    let m = logix_engine::packages::manifest::builtin();
-    logix_engine::packages::manifest::shown_version(&m.get(name).unwrap().version)
-}
-
 async fn call(client: &RunningService<RoleClient, ()>, name: &str, args: Value) -> CallToolResult {
     let mut params = CallToolRequestParams::new(name.to_string());
     if let Value::Object(map) = args {
@@ -121,13 +115,14 @@ async fn get_engine_info_reports_the_launch_settings() {
         out["protocol_versions"],
         json!(["2026-07-28", "2025-11-25"])
     );
-    // A fresh engine folder has the manifest's packages, not yet downloaded.
+    // A fresh engine folder: no remote config read yet, so no packages.
+    assert_eq!(out["packages"], json!([]));
     assert_eq!(
-        out["packages"],
-        json!([
-            {"name": "logix-catalog", "version": pinned("logix-catalog"), "status": "missing"},
-            {"name": "logix-core", "version": pinned("logix-core"), "status": "missing"}
-        ])
+        out["remote_config"],
+        json!({
+            "config_version": logix_engine::packages::remote_config::CONFIG_VERSION,
+            "source": logix_engine::packages::remote_config::default_url(),
+        })
     );
 
     // The log file is in the engine folder's logs subfolder, named
@@ -253,14 +248,17 @@ async fn real_download_packages_with_progress() {
     let progress = handler.0.lock().unwrap().clone();
     assert!(progress.len() > 10, "{}", progress.len());
     assert_eq!(
-        progress[0].message.as_deref(),
-        Some("Downloading logix-catalog")
+        progress[0]
+            .message
+            .as_deref()
+            .map(|m| m.starts_with("Downloading logix-catalog ")),
+        Some(true)
     );
-    assert!(
-        progress
-            .iter()
-            .any(|p| p.message.as_deref() == Some("Downloading logix-core"))
-    );
+    assert!(progress.iter().any(|p| {
+        p.message
+            .as_deref()
+            .is_some_and(|m| m.starts_with("Downloading logix-core "))
+    }));
     // One phase per package, 100 each.
     assert!(progress.iter().all(|p| p.total == Some(200.0)));
     assert!(progress.windows(2).all(|w| w[1].progress > w[0].progress));
@@ -282,15 +280,19 @@ async fn without_its_catalog_package_a_board_tool_is_a_setup_error() {
     assert_eq!(r.is_error, Some(true));
     let err = r.structured_content.unwrap();
     assert_eq!(err["category"], "setup", "{err}");
+    // Automatic download is off, so it hasn't read its remote config.
     assert!(
-        err["message"].as_str().unwrap().contains("logix-catalog"),
+        err["message"]
+            .as_str()
+            .unwrap()
+            .contains("Can't read the engine's remote config: automatic download is turned off"),
         "{err}"
     );
     let info = call(&client, "get_engine_info", json!({}))
         .await
         .structured_content
         .unwrap();
-    assert_eq!(info["catalog"], json!({"version": pinned("logix-catalog")}));
+    assert_eq!(info["packages"], json!([]));
     client.cancel().await.unwrap();
 }
 
@@ -451,8 +453,12 @@ async fn build_streams_tool_output_when_asked() {
     .unwrap();
     std::fs::write(src.join("pinout.pcf"), "set_io LED0 45\nset_io CLK 49\n").unwrap();
 
+    // The releases the repo's remote config names, as the build tests use.
     let mut cmd = Command::new(ENGINE);
-    cmd.arg("--engine-folder").arg(&engine);
+    cmd.arg("--engine-folder").arg(&engine).env(
+        logix_engine::packages::remote_config::DEV_REMOTE_CONFIG_VAR,
+        logix_engine::packages::remote_config::repo_file_source().location,
+    );
     let handler = OutputClient::default();
     let client = handler
         .clone()

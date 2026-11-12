@@ -31,8 +31,8 @@ impl EngineTool for DownloadPackages {
 #[serde(deny_unknown_fields)]
 pub struct DownloadPackagesInput {
     /// Names of the packages to download or repair, as get_engine_info lists
-    /// them: logix-catalog or logix-core. Omitted means every package in the
-    /// engine's manifest.
+    /// them: logix-catalog or logix-core. Omitted means every package the
+    /// engine uses.
     #[serde(default)]
     pub packages: Option<Vec<String>>,
     /// Download the packages again even if they are ready, replacing the
@@ -50,7 +50,7 @@ pub struct DownloadPackagesOutput {
     /// Names of the packages this call downloaded, repaired or downloaded again.
     /// Empty when they were all downloaded already and force was off.
     pub downloaded: Vec<String>,
-    /// Every package in the engine's manifest, with its status.
+    /// Every package the engine uses, with its status.
     pub packages: Vec<PackageInfo>,
 }
 
@@ -59,13 +59,7 @@ pub async fn run(
     input: DownloadPackagesInput,
     call: &Call,
 ) -> Result<DownloadPackagesOutput, ToolError> {
-    let all: Vec<String> = state
-        .packages
-        .manifest()
-        .packages
-        .iter()
-        .map(|p| p.name.clone())
-        .collect();
+    let all = state.packages.package_names();
     let names = match input.packages {
         None => all.clone(),
         Some(names) => {
@@ -78,6 +72,9 @@ pub async fn run(
             names
         }
     };
+    // The host asked: read the remote config first if it's due, even with
+    // automatic download off.
+    state.packages.refresh(false, true).await?;
     let mut seen = std::collections::HashSet::new();
     let names: Vec<&str> = names
         .iter()
@@ -90,7 +87,7 @@ pub async fn run(
             .filter_map(|n| state.packages.manifest().get(n).cloned())
             .collect()
     } else {
-        state.packages.needing_download(&names)?
+        state.packages.needing_download(&names).await?
     };
     let phases = Phases::new(call.progress.clone(), needed.len());
     // The host asked, so this downloads even when automatic download is off.

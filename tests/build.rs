@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 use logix_engine::errors::Category;
 use logix_engine::packages::PackageManager;
-use logix_engine::packages::manifest;
+use logix_engine::packages::{manifest, remote_config};
 use logix_engine::progress::{NoProgress, Phases, ProgressSink};
 use logix_engine::state::{self, EngineState};
 use logix_engine::tools::{Call, build, clean_build};
@@ -28,15 +28,16 @@ async fn engine() -> EngineState {
     let folder = engine_folder();
     std::fs::create_dir_all(&folder).unwrap();
     let folder = folder.canonicalize().unwrap();
-    let packages = PackageManager::new(
+    let packages = PackageManager::with_remote_config(
         &folder,
-        Arc::new(manifest::builtin().clone()),
+        remote_config::repo_file_source(),
+        true,
         &state::platform(),
         manifest::GITHUB,
     );
     READY
         .get_or_init(|| async {
-            let missing = packages.needing_download(&["logix-core"]).unwrap();
+            let missing = packages.needing_download(&["logix-core"]).await.unwrap();
             let phases = Phases::new(Arc::new(NoProgress), missing.len());
             packages
                 .ensure(&missing, true, &phases, &CancellationToken::new())
@@ -1401,7 +1402,7 @@ async fn the_pinned_catalog_fits_the_pinned_core() {
     use logix_engine::catalog;
     use logix_engine::packages::CATALOG;
     let state = engine().await;
-    let missing = state.packages.needing_download(&[CATALOG]).unwrap();
+    let missing = state.packages.needing_download(&[CATALOG]).await.unwrap();
     let phases = Phases::new(Arc::new(NoProgress), missing.len());
     state
         .packages

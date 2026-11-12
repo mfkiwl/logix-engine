@@ -1,37 +1,35 @@
-//! The package manifest (docs/requirements.md, "Versioning" and "Packages"):
-//! the exact release and checksum of every package this engine release was
-//! tested with, for each platform. It is built into the engine from
-//! manifest.json.
+//! The package set: the release, file and checksum of every package the
+//! engine uses on this platform. It's resolved from the engine's remote
+//! config (`remote_config.rs`): there's no built-in list (docs/requirements.md,
+//! "Versioning" and "Packages").
 
 use std::collections::BTreeMap;
-use std::sync::OnceLock;
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Where package files are downloaded from: GitHub releases.
 pub const GITHUB: &str = "https://github.com";
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Manifest {
     pub packages: Vec<PackageSpec>,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PackageSpec {
     /// The package name, logix-core or logix-catalog.
     pub name: String,
     /// The package release, a date tag.
     pub version: String,
-    pub description: String,
     /// The package file for each platform, such as darwin-arm64, or for
     /// "any" platform.
     pub files: BTreeMap<String, PackageFile>,
 }
 
 /// One package file, a GitHub release asset.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct PackageFile {
     pub owner: String,
@@ -39,8 +37,10 @@ pub struct PackageFile {
     pub tag: String,
     /// The asset file name, a .tgz.
     pub file: String,
-    /// The file size in bytes.
-    pub size: u64,
+    /// The file size in bytes, when known; otherwise the download's own
+    /// length is used.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub size: Option<u64>,
     /// The SHA-256 checksum of the file, as lowercase hex.
     pub sha256: String,
 }
@@ -104,8 +104,8 @@ impl Manifest {
                         return Err(format!("{ctx}: bad {what} {v:?}"));
                     }
                 }
-                if f.size == 0 {
-                    return Err(format!("{ctx}: size must be set"));
+                if f.size == Some(0) {
+                    return Err(format!("{ctx}: size can't be 0"));
                 }
             }
         }
@@ -148,45 +148,37 @@ pub fn shown_version(tag: &str) -> String {
     }
 }
 
-/// The manifest built into this engine release.
-pub fn builtin() -> &'static Manifest {
-    static MANIFEST: OnceLock<Manifest> = OnceLock::new();
-    MANIFEST.get_or_init(|| {
-        Manifest::parse(include_str!("manifest.json")).expect("the built-in manifest is valid")
-    })
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    const SET: &str = r#"{
+  "packages": [
+    {
+      "name": "logix-catalog",
+      "version": "2026-11-11",
+      "files": {
+        "any": {
+          "owner": "openlogix",
+          "repo": "logix-catalog",
+          "tag": "2026-11-11",
+          "file": "logix-catalog-20261111.tgz",
+          "sha256": "431d4a9eefdea9d0baa84bc7f26d0556b75a2cca83ca6ce45a97ad79bb08d05a"
+        }
+      }
+    }
+  ]
+}"#;
+
     #[test]
-    fn builtin_manifest_is_valid_and_covers_every_platform() {
-        let m = builtin();
-        let names: Vec<&str> = m.packages.iter().map(|p| p.name.as_str()).collect();
-        // The catalog first: it's small, so boards can be listed while the
-        // tools download.
-        assert_eq!(names, ["logix-catalog", "logix-core"]);
-        let core = m.get("logix-core").unwrap();
-        for platform in ["darwin-arm64", "linux-x86-64", "windows-x86-64"] {
-            let f = &core.files[platform];
-            assert_eq!(
-                f.url(GITHUB),
-                format!(
-                    "https://github.com/openlogix/logix-core/releases/download/{}/logix-core-{platform}-{}.tgz",
-                    core.version,
-                    core.version.replace('-', "")
-                )
-            );
-        }
-        assert!(m.get("logix-catalog").unwrap().files.contains_key("any"));
-        // The file name carries the same date as the package version.
-        for p in &m.packages {
-            let compact = p.version.replace('-', "");
-            for f in p.files.values() {
-                assert!(f.file.contains(&compact), "{} {}", p.name, f.file);
-            }
-        }
+    fn a_set_reads_and_gives_its_urls() {
+        let m = Manifest::parse(SET).unwrap();
+        let f = &m.get("logix-catalog").unwrap().files["any"];
+        assert_eq!(
+            f.url(GITHUB),
+            "https://github.com/openlogix/logix-catalog/releases/download/2026-11-11/logix-catalog-20261111.tgz"
+        );
+        assert_eq!(f.size, None);
     }
 
     #[test]
@@ -202,20 +194,21 @@ mod tests {
 
     #[test]
     fn unsafe_values_are_refused() {
-        let ok = include_str!("manifest.json");
-        let core = builtin().get("logix-core").unwrap();
-        let version = format!("\"{}\",\n      \"description\"", core.version);
-        let file = &core.files["darwin-arm64"];
-        let sha = &file.sha256;
         for (from, to) in [
-            ("\"logix-core\"".to_string(), "\"../x\"".to_string()),
-            (version, "\"latest\",\n      \"description\"".to_string()),
-            (file.file.clone(), "../evil.tgz".to_string()),
-            ("\"openlogix\"".to_string(), "\"a/b\"".to_string()),
-            (sha.to_string(), sha.to_uppercase()),
+            (
+                "\"logix-catalog\",\n      \"version\"",
+                "\"../x\",\n      \"version\"",
+            ),
+            ("\"version\": \"2026-11-11\"", "\"version\": \"latest\""),
+            (
+                "\"file\": \"logix-catalog-20261111.tgz\"",
+                "\"file\": \"../evil.tgz\"",
+            ),
+            ("\"owner\": \"openlogix\"", "\"owner\": \"a/b\""),
+            ("431d4a9eef", "431D4A9EEF"),
         ] {
-            assert!(ok.contains(&from), "{from}");
-            let bad = ok.replacen(&from, &to, 1);
+            assert!(SET.contains(from), "{from}");
+            let bad = SET.replacen(from, to, 1);
             assert!(Manifest::parse(&bad).is_err(), "{to} should be refused");
         }
     }

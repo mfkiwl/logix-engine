@@ -3,12 +3,11 @@
 
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
-use std::sync::Arc;
 
 use clap::{Parser, ValueEnum};
 use rmcp::ServiceExt;
 
-use logix_engine::packages::{PackageManager, manifest};
+use logix_engine::packages::{PackageManager, manifest, remote_config};
 use logix_engine::state::{self, EngineState};
 use logix_engine::{catalog, logging, paths, server};
 
@@ -86,9 +85,31 @@ fn main() -> ExitCode {
         .join("logs")
         .join(log_path.file_name().unwrap_or_default());
 
-    let packages = PackageManager::new(
+    // The packages come from the engine's remote config, or from the
+    // diagnostic override: a URL, or a local file that must exist.
+    let source = match remote_config::ConfigSource::from_env() {
+        Some(o) => {
+            let is_url = o.location.starts_with("https://") || o.location.starts_with("http://");
+            if !is_url && !Path::new(&o.location).is_file() {
+                return fail(&format!(
+                    "{}: no such file: {}",
+                    remote_config::DEV_REMOTE_CONFIG_VAR,
+                    o.location
+                ));
+            }
+            log::warn!(
+                "Using the remote config {} ({})",
+                o.location,
+                remote_config::DEV_REMOTE_CONFIG_VAR
+            );
+            o
+        }
+        None => remote_config::ConfigSource::regular(),
+    };
+    let packages = PackageManager::with_remote_config(
         &resolved,
-        Arc::new(manifest::builtin().clone()),
+        source,
+        !args.no_auto_download,
         &state::platform(),
         manifest::GITHUB,
     );

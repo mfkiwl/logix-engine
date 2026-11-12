@@ -398,7 +398,10 @@ pub async fn diagram(
     req: DiagramRequest,
     call: &Call,
 ) -> Result<DiagramResult, ToolError> {
-    let needed = state.packages.needing_download(&[crate::packages::CORE])?;
+    let needed = state
+        .packages
+        .needing_download(&[crate::packages::CORE])
+        .await?;
     let phases = Phases::new(call.progress.clone(), needed.len() + 2);
     let (bin, package_dir) = toolchain(state, &needed, &phases, call).await?;
     let elk = state.packages.component_dir(ELKJS)?.join(ELK_BUNDLE);

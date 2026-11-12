@@ -44,12 +44,12 @@ jobs:
           rustup show active-toolchain
 
       # The build tests download the toolchain package (about 526 MB). Cached
-      # until the package manifest changes.
+      # until the remote config changes.
       - name: Cache the test toolchain
         uses: actions/cache@v6
         with:
           path: _repo/target/tmp/test-engine/packages
-          key: test-engine-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('_repo/src/packages/manifest.json') }}
+          key: test-engine-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('_repo/remote-config/**') }}
 
       # Don't publish a build that fails its own checks.
       - name: Run checks and tests

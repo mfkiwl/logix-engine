@@ -280,17 +280,20 @@ Every operation that can take more than a second or two reports progress by phas
 
 ### Packages
 
-Before running, each tool checks that the packages it needs from the manifest are downloaded and intact. It downloads missing packages and repairs broken ones itself. A package is broken when its download record is missing or incomplete, or when one of its tools fails to start. Download progress is sent as the operation's progress notifications, and cancelling the operation cancels the download. Two Logix Engine instances never download the same package at the same time.
+**Which releases.** The Logix Engine reads which release of each package to use from its remote config, `remote-config/logix-engine/config-NNN.jsonc` in its repo (`NNN` is the config version this engine reads, `001` today), from GitHub. It reads it before an operation that needs packages when it last read it more than 24 hours ago, and when a host calls `check_updates`, and keeps a copy in the engine folder, which it uses offline. When the config names a newer release, the next operation downloads it and the old one is deleted. So a newer catalog or set of tools reaches an engine without a new engine release. A config that can't be read leaves the one in use; with none to use yet (a first start offline), a tool that needs packages returns a setup error. The diagnostic setting `LOGIX_ENGINE_DEV_REMOTE_CONFIG` names another config to read instead, a URL or a local file, such as a pull request's version (see [Command line](command-line.md)).
+
+Before running, each tool checks that the packages it needs are downloaded and intact. It downloads missing packages and repairs broken ones itself. A package is broken when its receipt is missing or doesn't match the release the remote config names (its URL, platform and SHA-256), or when one of its tools fails to start. Download progress is sent as the operation's progress notifications, and cancelling the operation cancels the download. Two Logix Engine instances never download the same package at the same time.
 
 The `--no-auto-download` command-line argument, described in [Command line](command-line.md), turns this off for offline or managed setups. A missing or broken package is then a setup error with `download_packages`, and so is a download that fails, such as when there's no network. To download, the host calls the download_packages tool, which works whether automatic download is on or off.
 
-Download progress is one phase per package, such as "Downloading logix-core". Its percentage covers the download (the first 80%) and then unpacking.
+Download progress is one phase per package, such as "Downloading logix-core 2026.11.10". Its percentage covers the download (the first 80%) and then unpacking.
 
 **Engine folder layout.** Hosts don't need to know it, but it helps when troubleshooting:
 
 | Path in the engine folder | Contents |
 | --- | --- |
-| `packages/<name>/<release tag>/` | A downloaded package, by its release tag (`yyyy-mm-dd`), such as `packages/logix-core/2026-11-10/`, with one folder per tool in the core (`oss-cad-suite/`, `openxc7/`, `verible/`). Several versions can sit side by side. Its download record, `logix-download.json`, is written last |
+| `remote-config/config.json` | The remote config in use: where it was read, when, and the release and SHA-256 of each package |
+| `packages/<name>/<release tag>/` | A downloaded package, by its release tag (`yyyy-mm-dd`), such as `packages/logix-core/2026-11-10/`, with one folder per tool in the core (`oss-cad-suite/`, `openxc7/`, `verible/`). Its receipt, `logix-download.json`, is written last; once a newer release is in place, the old one is deleted |
 | `downloads/` | Partial downloads, deleted when a download ends |
 | `locks/` | One lock file per package, held while downloading it |
 | `logs/` | Log files, described in [Command line](command-line.md) |
@@ -1081,7 +1084,7 @@ Output:
 
 ## get_engine_info tool
 
-Returns the Logix Engine's version, platform and package status. A host calls it when it starts, to check that the engine is new enough and to show what is downloaded. It is fast and local: it never uses the network and doesn't verify checksums.
+Returns the Logix Engine's version, platform and package status. A host calls it when it starts, to check that the engine is new enough and to show what is downloaded. It is fast and local: it never uses the network and doesn't verify checksums. Until the engine has read its remote config, which it does before its first operation that needs packages, `packages` is empty.
 
 **Table 16.** get_engine_info tool inputs
 
@@ -1100,9 +1103,10 @@ Returns the Logix Engine's version, platform and package status. A host calls it
 | `auto_download` | boolean | Whether automatic package download and repair is on. It is on by default, and the host turns it off with the `--no-auto-download` command-line argument when it launches the engine |
 | `command_line` | list of text | The command-line arguments the engine was launched with, as given, for diagnostics |
 | `log_file` | absolute path | The log file this engine process writes, in the `logs` subfolder of the engine folder |
-| `packages` | list of packages | Every package in the engine's manifest: `logix-catalog` (the board catalog) and `logix-core` (the FPGA tools). Each has a text `name`, a `version` (its release date as `yyyy.mm.dd`), a `status`: `ready`, `missing` or `broken`, and, for a ready `logix-core`, `components`: its tools, each with a `name` (`oss-cad-suite`, `openxc7`, `verible` and `elkjs`), a `description` and `bin_folder`, the absolute path of the folder with its programs, for hosts that run one directly, such as Verible's language server `verible-verilog-ls` from the `verible` component |
+| `packages` | list of packages | Every package the engine uses, from its remote config (empty until it has read one): `logix-catalog` (the board catalog) and `logix-core` (the FPGA tools). Each has a text `name`, a `version` (its release date as `yyyy.mm.dd`), a `status`: `ready`, `missing` or `broken`, and, for a ready `logix-core`, `components`: its tools, each with a `name` (`oss-cad-suite`, `openxc7`, `verible` and `elkjs`), a `description` and `bin_folder`, the absolute path of the folder with its programs, for hosts that run one directly, such as Verible's language server `verible-verilog-ls` from the `verible` component |
 | `boards_schema` | text | The address of the board schema this engine reads, Logix Catalog's JSON Schema of a board file, in the catalog and in custom boards folders, such as `https://www.openlogix.org/schemas/logix-board-v1.json` (see Board specification) |
-| `catalog` | object | The board catalog: `version`, the date of the `logix-catalog` release this engine pins, as `yyyy.mm.dd`, and `local`, true only when the engine reads a local catalog folder (`LOGIX_ENGINE_DEV_CATALOG_FOLDER`, a diagnostic setting), whose `version` is then `local` |
+| `remote_config` | object | The remote config: `config_version` (such as `001`), `source` (the URL it's read from, or a local file), `is_override` (true only for `LOGIX_ENGINE_DEV_REMOTE_CONFIG`) and `read_at`, when the one in use was read (UTC, `yyyy-mm-ddThh:mm:ssZ`; omitted before the first read) |
+| `catalog` | object | The board catalog: `version`, the date of the `logix-catalog` release in use, as `yyyy.mm.dd`, and `local`, true only when the engine reads a local catalog folder (`LOGIX_ENGINE_DEV_CATALOG_FOLDER`, a diagnostic setting), whose `version` is then `local` |
 | `report` | multiline text | The facts above as lines for people, the engine's part of a frontend's system info (see Show system info under Recipes): the version, platform, engine folder, log file, automatic download, command line, each package with its version and status, the board catalog's version and the board schema. Show it as is; its wording can change in any version, so programs read the fields above |
 
 **Errors:** engine errors only.
@@ -1126,6 +1130,11 @@ Output:
       { "name": "verible", "description": "CHIPS Alliance Verible: the Verilog formatter and language server", "bin_folder": "/Users/user/.myhost/engine/packages/logix-core/2026-11-10/verible/bin" }
     ] }
   ],
+  "remote_config": {
+    "config_version": "001",
+    "source": "https://raw.githubusercontent.com/openlogix/logix-engine/main/remote-config/logix-engine/config-001.jsonc",
+    "read_at": "2026-12-01T09:30:00Z"
+  },
   "boards_schema": "https://www.openlogix.org/schemas/logix-board-v1.json",
   "catalog": { "version": "2026.11.10" },
   "report": "Logix Engine 2026.12.01\nPlatform: darwin-arm64\nEngine folder: /Users/user/.myhost/engine\n..."
@@ -1134,13 +1143,13 @@ Output:
 
 ## download_packages tool
 
-Downloads or repairs the Logix Engine's packages. Packages that are already ready are left alone, unless `force` is set. Other tools download the packages they need on their own, so a host calls this only to download ahead of time, such as before going offline, or to act on the `download_packages` action, such as when automatic download is off. It downloads whether or not automatic download is on, since the host asked. It reports progress, one phase per package, and can be cancelled.
+Downloads or repairs the Logix Engine's packages, reading its remote config first when that's due. Packages that are already ready are left alone, unless `force` is set. Other tools download the packages they need on their own, so a host calls this only to download ahead of time, such as before going offline, or to act on the `download_packages` action, such as when automatic download is off. It downloads whether or not automatic download is on, since the host asked. It reports progress, one phase per package, and can be cancelled.
 
 **Table 18.** download_packages tool inputs
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `packages` | list of text | No | Names of the packages to download or repair, as `get_engine_info` lists them. Omitted means every package in the manifest |
+| `packages` | list of text | No | Names of the packages to download or repair, as `get_engine_info` lists them. Omitted means every package the engine uses |
 | `force` | boolean | No | Download the packages again even if they are ready, replacing the current copies. It fixes files that were damaged or deleted after the download, which the status check doesn't see. The current copy stays until the new one is complete. Defaults to false |
 
 **Table 19.** download_packages tool outputs
@@ -1148,7 +1157,7 @@ Downloads or repairs the Logix Engine's packages. Packages that are already read
 | Field | Type | Description |
 | --- | --- | --- |
 | `downloaded` | list of text | Names of the packages this call downloaded, repaired or downloaded again. Empty when they were all downloaded already and `force` was off |
-| `packages` | list of packages | Every package in the manifest with its status afterwards, as in `get_engine_info` |
+| `packages` | list of packages | Every package the engine uses, with its status afterwards, as in `get_engine_info` |
 
 **Errors:** request errors for unknown package names. Setup errors with `download_packages` when a download fails. Engine errors and cancellation.
 
@@ -1169,6 +1178,47 @@ Output:
     { "name": "logix-catalog", "version": "2026.11.10", "status": "ready" },
     { "name": "logix-core", "version": "2026.11.10", "status": "ready", "components": [ ... ] }
   ]
+}
+```
+
+## check_updates tool
+
+Checks now for newer releases of the Logix Engine's packages: reads its remote config, downloads what it names that isn't downloaded yet, and uses it from the next call. The engine also checks on its own before an operation that needs packages, when it last checked more than 24 hours ago, so a host calls this only to check now, such as when the user asks for updates (Logix IDE's Help > Check for Updates). It works whether or not automatic download is on, since the host asked. It reports progress, one phase per package downloaded, and can be cancelled.
+
+**Table 37.** check_updates tool inputs
+
+| Field | Type | Required | Description |
+| --- | --- | --- | --- |
+| (none) |  |  | The tool takes no inputs |
+
+**Table 38.** check_updates tool outputs
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `updates` | list of objects | The packages whose release changed, each with its `name`, `from` (the release used before, as `yyyy.mm.dd`; omitted for a new package) and `to` (the release used now). Empty when nothing changed |
+| `downloaded` | list of text | Names of the packages this call downloaded or repaired |
+| `packages` | list of packages | Every package the engine uses, with its status afterwards, as in `get_engine_info` |
+| `remote_config` | object | The remote config just read, as in `get_engine_info` |
+
+**Errors:** setup errors with `download_packages` when the remote config can't be read and there's none to use, or a download fails. Engine errors and cancellation.
+
+**Example**
+
+Output:
+
+```json
+{
+  "updates": [{ "name": "logix-catalog", "from": "2026.11.24", "to": "2026.11.30" }],
+  "downloaded": ["logix-catalog"],
+  "packages": [
+    { "name": "logix-catalog", "version": "2026.11.30", "status": "ready" },
+    { "name": "logix-core", "version": "2026.11.10", "status": "ready", "components": [ ... ] }
+  ],
+  "remote_config": {
+    "config_version": "001",
+    "source": "https://raw.githubusercontent.com/openlogix/logix-engine/main/remote-config/logix-engine/config-001.jsonc",
+    "read_at": "2026-12-01T09:30:00Z"
+  }
 }
 ```
 
@@ -1258,7 +1308,7 @@ Logic that every frontend would need and that doesn't depend on a frontend's own
 
 1. Launch the Logix Engine with `--engine-folder`, do the MCP handshake, then call `get_engine_info`.
 2. Check that `engine_version` is one your frontend supports, by its own rule, such as a version range or a list of tested releases. If it isn't, call no other tools: tell the user which Logix Engine versions the frontend needs, then stop or fall back as the frontend decides.
-3. Show package status from `packages`. Nothing has to be downloaded first: tools download what they need on first use. To download ahead of time, such as before going offline, call `download_packages` and show its progress.
+3. Call `download_packages` and show its progress. It reads the engine's remote config when that's due and downloads only what's missing, so it returns at once when everything is ready, and it's how a first start downloads the packages with the host's own progress screen. (Tools would download what they need on first use anyway.) Then show package status from its `packages`. To check for newer packages now, call `check_updates`.
 
 ### Show whether the board is connected
 

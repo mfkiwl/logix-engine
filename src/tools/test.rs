@@ -217,7 +217,10 @@ pub async fn run(
     }
     let includes = sources.include_args()?;
 
-    let needed = state.packages.needing_download(&[crate::packages::CORE])?;
+    let needed = state
+        .packages
+        .needing_download(&[crate::packages::CORE])
+        .await?;
     let phases = Phases::new(
         call.progress.clone(),
         needed.len() + 2 * sources.testbench_files.len(),

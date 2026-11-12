@@ -3,6 +3,7 @@
 //! types, so the code, the validation and the exported schemas agree.
 
 pub mod build;
+pub mod check_updates;
 pub mod clean_build;
 pub mod compare_boards;
 pub mod diagram;
@@ -118,6 +119,7 @@ pub fn all_definitions() -> Vec<Tool> {
     vec![
         definition::<get_engine_info::GetEngineInfo>(),
         definition::<download_packages::DownloadPackages>(),
+        definition::<check_updates::CheckUpdates>(),
         definition::<get_catalog::GetCatalog>(),
         definition::<compare_boards::CompareBoards>(),
         definition::<lint::Lint>(),
@@ -195,6 +197,7 @@ pub async fn call(
     call: &Call,
 ) -> Option<CallToolResult> {
     use build::Build;
+    use check_updates::CheckUpdates;
     use clean_build::CleanBuild;
     use compare_boards::CompareBoards;
     use diagram::Diagram;
@@ -225,6 +228,26 @@ pub async fn call(
     };
     let call = &named;
     let display = &*display;
+    // Every tool that may use packages reads the remote config first when
+    // it's due (24 hours), so it works with the releases the config names.
+    // Best effort: a tool that needs a package and has none to use gets the
+    // error from needing_download; one that doesn't, such as get_catalog
+    // with a local catalog folder, works anyway. download_packages and
+    // check_updates read it themselves (they may use the network even with
+    // automatic download off), and get_engine_info and clean_build use no
+    // packages.
+    if ![
+        GetEngineInfo::NAME,
+        CleanBuild::NAME,
+        DownloadPackages::NAME,
+        CheckUpdates::NAME,
+    ]
+    .contains(&name)
+        && all_definitions().iter().any(|t| t.name == name)
+        && let Err(e) = state.packages.refresh(false, false).await
+    {
+        log::info!("Before {name}: {}", e.message);
+    }
     // The tools that read boards load the catalog first.
     if [
         GetCatalog::NAME,
@@ -352,6 +375,16 @@ pub async fn call(
             with_commands(
                 match parse_input::<DownloadPackages>(arguments) {
                     Ok(input) => download_packages::run(state, input, call).await,
+                    Err(e) => Err(e),
+                },
+                call,
+            ),
+        ),
+        CheckUpdates::NAME => to_call_result(
+            display,
+            with_commands(
+                match parse_input::<CheckUpdates>(arguments) {
+                    Ok(input) => check_updates::run(state, input, call).await,
                     Err(e) => Err(e),
                 },
                 call,

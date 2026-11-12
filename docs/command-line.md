@@ -7,7 +7,7 @@ A host launches the engine as a child process on the same computer and talks MCP
 | Argument | Required | Description |
 | --- | --- | --- |
 | `--engine-folder <absolute path>` | Yes | The host's engine folder. It must satisfy the path keyword rules. Hosts don't share engine folders by default |
-| `--no-auto-download` | No | Turns off automatic package download and repair. A missing or broken package is then a setup error with `download_packages` |
+| `--no-auto-download` | No | Turns off automatic package download and repair, and the engine's own reading of its remote config. A missing or broken package is then a setup error with `download_packages`; `download_packages` and `check_updates` still work, since the host asks |
 | `--log-level <level>` | No | One of `error`, `warn`, `info` and `debug`. Defaults to `info` |
 | `--version` | No | Prints the engine version and exits, without starting MCP |
 | `--help` | No | Prints the arguments and exits, without starting MCP |
@@ -24,6 +24,15 @@ logix-engine --engine-folder /Users/user/.myhost/engine --log-level debug
 - **Bad arguments.** An unknown argument, a missing `--engine-folder` or an engine folder that fails the path checks makes the engine exit before starting MCP, with a non-zero exit code and a message on stderr.
 - **Launch settings are fixed.** The arguments apply for the life of the process. A host that wants different settings launches a new instance.
 - **Internal: the layout worker.** The engine starts itself as `logix-engine --diagram-layout-worker <ELK bundle>` to lay out diagrams in a process of its own (one JSON graph per line in, one result per line out), so a layout that fails can't stop the engine. It isn't for hosts and may change at any time.
+
+## Diagnostic settings
+
+Environment variables the engine reads at startup, for Open Logix developers and for testing. A bad value stops the engine with a message on stderr, never a silent fallback.
+
+| Variable | Description |
+| --- | --- |
+| `LOGIX_ENGINE_DEV_REMOTE_CONFIG` | A remote config to read instead of the engine's own: an `https://` URL, such as a pull request's `config-001.jsonc` on its branch or a fork, or a local file. `get_engine_info` reports it in `remote_config` |
+| `LOGIX_ENGINE_DEV_CATALOG_FOLDER` | A catalog folder, such as a logix-catalog clone, to read instead of the `logix-catalog` package. `get_engine_info` reports it in `catalog` |
 
 ## Logs
 

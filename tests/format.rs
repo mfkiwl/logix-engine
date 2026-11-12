@@ -10,7 +10,7 @@ use std::sync::{Arc, Mutex};
 use logix_engine::errors::Severity;
 use logix_engine::format::FileStatus;
 use logix_engine::packages::PackageManager;
-use logix_engine::packages::manifest;
+use logix_engine::packages::{manifest, remote_config};
 use logix_engine::progress::{NoProgress, OutputSink, ToolLine};
 use logix_engine::state::{self, EngineState};
 use logix_engine::tools::{Call, format};
@@ -21,9 +21,10 @@ fn engine() -> EngineState {
     let folder = Path::new(env!("CARGO_TARGET_TMPDIR")).join("test-engine");
     std::fs::create_dir_all(&folder).unwrap();
     let folder = folder.canonicalize().unwrap();
-    let packages = PackageManager::new(
+    let packages = PackageManager::with_remote_config(
         &folder,
-        Arc::new(manifest::builtin().clone()),
+        remote_config::repo_file_source(),
+        true,
         &state::platform(),
         manifest::GITHUB,
     );

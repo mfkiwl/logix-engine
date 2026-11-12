@@ -116,7 +116,10 @@ pub async fn lint(
     call: &Call,
 ) -> Result<LintResult, ToolError> {
     let includes = req.sources.include_args()?;
-    let needed = state.packages.needing_download(&[crate::packages::CORE])?;
+    let needed = state
+        .packages
+        .needing_download(&[crate::packages::CORE])
+        .await?;
     let phases = Phases::new(call.progress.clone(), needed.len() + 1);
     let (bin, package) = toolchain(state, &needed, &phases, call).await?;
     let lib = SimLibrary::for_board(&req.sources.board, &package);

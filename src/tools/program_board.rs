@@ -141,7 +141,10 @@ pub async fn run_with_programmers(
     let variant = &board.variant;
     let custom = input.programmer_command.as_deref();
 
-    let needed = state.packages.needing_download(&[crate::packages::CORE])?;
+    let needed = state
+        .packages
+        .needing_download(&[crate::packages::CORE])
+        .await?;
     let checks_fpga = custom.is_none() && program::checks_fpga(variant, &board.fpga);
     let steps = if custom.is_some() { 2 } else { 3 } + usize::from(checks_fpga);
     let phases = Phases::new(call.progress.clone(), needed.len() + steps);

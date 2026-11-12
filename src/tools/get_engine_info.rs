@@ -52,8 +52,12 @@ pub struct GetEngineInfoOutput {
     /// The log file this engine process writes, in the logs subfolder of the
     /// engine folder. Useful when reporting a problem.
     pub log_file: String,
-    /// Every package in the engine's manifest, with its status.
+    /// Every package the engine uses, from its remote config, with its
+    /// status. Empty until the engine has read its remote config (before
+    /// its first operation that needs packages).
     pub packages: Vec<PackageInfo>,
+    /// The engine's remote config: where its package releases come from.
+    pub remote_config: RemoteConfigInfo,
     /// The address of the board schema this engine reads (Logix Catalog's):
     /// the JSON Schema of each board file, in the catalog and in custom
     /// boards folders, which may name it in a "$schema" key so editors can
@@ -68,6 +72,27 @@ pub struct GetEngineInfoOutput {
     /// status, the board catalog and the boards schema. Show it as is; its wording can change
     /// in any version, so read the fields above, not this text.
     pub report: String,
+}
+
+/// The engine's remote config: which config file it reads, from where, and
+/// when it last read it. It reads it again before an operation when that
+/// was more than 24 hours ago, or when a host calls check_updates.
+#[derive(Debug, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct RemoteConfigInfo {
+    /// The config version this engine reads, such as 001
+    /// (remote-config/logix-engine/config-001.jsonc in the engine's repo).
+    pub config_version: String,
+    /// Where it's read: a URL, or a local file for the diagnostic override.
+    pub source: String,
+    /// True when the source is LOGIX_ENGINE_DEV_REMOTE_CONFIG (a diagnostic
+    /// setting); omitted otherwise.
+    #[serde(default, skip_serializing_if = "std::ops::Not::not")]
+    pub is_override: bool,
+    /// When the config in use was read, in UTC (yyyy-mm-ddThh:mm:ssZ);
+    /// omitted when it hasn't been read yet.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub read_at: Option<String>,
 }
 
 /// The board catalog (Logix Catalog, github.com/openlogix/logix-catalog),
@@ -146,6 +171,7 @@ pub fn run(
         command_line: state.command_line.clone(),
         log_file: state.log_file.display().to_string(),
         packages: package_list(state),
+        remote_config: remote_config_info(&state.packages),
         boards_schema: crate::catalog::BOARDS_SCHEMA.to_string(),
         catalog: match crate::catalog::source() {
             Some(s) if s.local => CatalogInfo {
@@ -216,11 +242,39 @@ fn report(info: &GetEngineInfoOutput) -> String {
             ""
         }
     ));
+    let r = &info.remote_config;
+    lines.push(format!(
+        "Remote config: {} from {}{}, {}",
+        r.config_version,
+        r.source,
+        if r.is_override {
+            " (LOGIX_ENGINE_DEV_REMOTE_CONFIG)"
+        } else {
+            ""
+        },
+        r.read_at
+            .as_ref()
+            .map_or("not read yet".to_string(), |t| format!("read {t}"))
+    ));
     lines.push(format!("Boards schema: {}", info.boards_schema));
     lines.join("\n")
 }
 
-/// Every package in the manifest, with its status.
+/// The remote config the package manager uses.
+pub fn remote_config_info(packages: &PackageManager) -> RemoteConfigInfo {
+    use crate::packages::remote_config;
+    let r = packages.remote_info();
+    RemoteConfigInfo {
+        config_version: remote_config::CONFIG_VERSION.to_string(),
+        source: r
+            .as_ref()
+            .map_or_else(remote_config::default_url, |r| r.location.clone()),
+        is_override: r.as_ref().is_some_and(|r| r.is_override),
+        read_at: r.and_then(|r| r.fetched).map(remote_config::utc_time),
+    }
+}
+
+/// Every package the engine uses, with its status.
 pub fn package_list(state: &EngineState) -> Vec<PackageInfo> {
     state
         .packages
@@ -290,6 +344,12 @@ mod tests {
                     components: Vec::new(),
                 },
             ],
+            remote_config: RemoteConfigInfo {
+                config_version: "001".into(),
+                source: "https://raw.githubusercontent.com/openlogix/logix-engine/main/remote-config/logix-engine/config-001.jsonc".into(),
+                is_override: false,
+                read_at: Some("2026-11-08T09:30:00Z".into()),
+            },
             boards_schema: crate::catalog::BOARDS_SCHEMA.into(),
             catalog: CatalogInfo {
                 version: "2026.11.08".into(),
@@ -310,6 +370,7 @@ Packages:
   logix-catalog  2026.11.08  ready
   logix-core     2026.11.10  missing
 Board catalog: Logix Catalog 2026.11.08
+Remote config: 001 from https://raw.githubusercontent.com/openlogix/logix-engine/main/remote-config/logix-engine/config-001.jsonc, read 2026-11-08T09:30:00Z
 Boards schema: https://www.openlogix.org/schemas/logix-board-v1.json"
         );
     }

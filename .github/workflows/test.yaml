@@ -20,6 +20,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # The remote config (remote-config/logix-engine/config-NNN.jsonc): the
+  # shared check (schema, releases and files exist, SHA256SUMS lists them,
+  # only openlogix repos on main). The tests below then run with what it
+  # names.
+  remote-config:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@v7
+
+      - name: Check the remote config
+        uses: openlogix/.github/actions/check-remote-config@main
+        with:
+          platforms: darwin-arm64
+
   test:
     name: test (${{ matrix.os }})
     # macOS on Apple Silicon: the only platform in Milestone 1, on the macOS
@@ -45,12 +60,12 @@ jobs:
           rustup show active-toolchain
 
       # The build tests download the toolchain package (about 526 MB) into
-      # target/tmp/test-engine. Cached until the package manifest changes.
+      # target/tmp/test-engine. Cached until the remote config changes.
       - name: Cache the test toolchain
         uses: actions/cache@v6
         with:
           path: target/tmp/test-engine/packages
-          key: test-engine-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('src/packages/manifest.json') }}
+          key: test-engine-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('remote-config/**') }}
 
       - name: Run checks and tests
         run: scripts/test.sh

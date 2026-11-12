@@ -518,7 +518,10 @@ pub async fn build(
     call: &Call,
 ) -> Result<BuildResult, ToolError> {
     let includes = find_includes(&req.source_folder, &req.source_files)?;
-    let core = state.packages.spec(crate::packages::CORE)?.clone();
+    // The core release the remote config names, which the up-to-date check
+    // compares (reading the config first when it's due).
+    state.packages.refresh(false, false).await?;
+    let core = state.packages.spec(crate::packages::CORE)?;
     let fpga = &req.board.fpga;
     let checksum = inputs_checksum(&req, &includes, &core.version)?;
 
@@ -545,7 +548,10 @@ pub async fn build(
         return Ok(result);
     }
 
-    let needed = state.packages.needing_download(&[crate::packages::CORE])?;
+    let needed = state
+        .packages
+        .needing_download(&[crate::packages::CORE])
+        .await?;
     let phases = Phases::new(call.progress.clone(), needed.len() + 3);
     state
         .packages

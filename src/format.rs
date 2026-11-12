@@ -173,7 +173,10 @@ pub async fn format(
     req: FormatRequest,
     call: &Call,
 ) -> Result<FormatResult, ToolError> {
-    let needed = state.packages.needing_download(&[crate::packages::CORE])?;
+    let needed = state
+        .packages
+        .needing_download(&[crate::packages::CORE])
+        .await?;
     let phases = Phases::new(call.progress.clone(), needed.len() + 1);
     let bin = verible(state, &needed, &phases, call).await?;
     phases.start("Formatting");

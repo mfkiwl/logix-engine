@@ -51,11 +51,15 @@
           "type": "string"
         },
         "packages": {
-          "description": "Every package in the engine's manifest, with its status.",
+          "description": "Every package the engine uses, from its remote config, with its\nstatus. Empty until the engine has read its remote config (before\nits first operation that needs packages).",
           "type": "array",
           "items": {
             "$ref": "#/$defs/PackageInfo"
           }
+        },
+        "remote_config": {
+          "description": "The engine's remote config: where its package releases come from.",
+          "$ref": "#/$defs/RemoteConfigInfo"
         },
         "boards_schema": {
           "description": "The address of the board schema this engine reads (Logix Catalog's):\nthe JSON Schema of each board file, in the catalog and in custom\nboards folders, which may name it in a \"$schema\" key so editors can\ncheck them. A file that names another schema is refused.",
@@ -80,6 +84,7 @@
         "command_line",
         "log_file",
         "packages",
+        "remote_config",
         "boards_schema",
         "catalog",
         "report"
@@ -159,6 +164,36 @@
             "bin_folder"
           ]
         },
+        "RemoteConfigInfo": {
+          "description": "The engine's remote config: which config file it reads, from where, and\nwhen it last read it. It reads it again before an operation when that\nwas more than 24 hours ago, or when a host calls check_updates.",
+          "type": "object",
+          "properties": {
+            "config_version": {
+              "description": "The config version this engine reads, such as 001\n(remote-config/logix-engine/config-001.jsonc in the engine's repo).",
+              "type": "string"
+            },
+            "source": {
+              "description": "Where it's read: a URL, or a local file for the diagnostic override.",
+              "type": "string"
+            },
+            "is_override": {
+              "description": "True when the source is LOGIX_ENGINE_DEV_REMOTE_CONFIG (a diagnostic\nsetting); omitted otherwise.",
+              "type": "boolean"
+            },
+            "read_at": {
+              "description": "When the config in use was read, in UTC (yyyy-mm-ddThh:mm:ssZ);\nomitted when it hasn't been read yet.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "config_version",
+            "source"
+          ]
+        },
         "CatalogInfo": {
           "description": "The board catalog (Logix Catalog, github.com/openlogix/logix-catalog),\ndownloaded as the logix-catalog package.",
           "type": "object",
@@ -195,7 +230,7 @@
       "type": "object",
       "properties": {
         "packages": {
-          "description": "Names of the packages to download or repair, as get_engine_info lists\nthem: logix-catalog or logix-core. Omitted means every package in the\nengine's manifest.",
+          "description": "Names of the packages to download or repair, as get_engine_info lists\nthem: logix-catalog or logix-core. Omitted means every package the\nengine uses.",
           "type": [
             "array",
             "null"
@@ -227,7 +262,7 @@
           }
         },
         "packages": {
-          "description": "Every package in the engine's manifest, with its status.",
+          "description": "Every package the engine uses, with its status.",
           "type": "array",
           "items": {
             "$ref": "#/$defs/PackageInfo"
@@ -312,6 +347,194 @@
             "name",
             "description",
             "bin_folder"
+          ]
+        }
+      }
+    },
+    "annotations": {
+      "readOnlyHint": false,
+      "destructiveHint": false,
+      "openWorldHint": true
+    }
+  },
+  {
+    "name": "check_updates",
+    "description": "Checks now for newer releases of the engine's packages (the board catalog and the FPGA tools): reads the engine's remote config, downloads what it names that isn't downloaded yet, and uses it from the next call. The engine also checks on its own, before an operation that needs packages, when it last checked more than 24 hours ago, so call this only to check now, such as when the user asks for updates. It works even when automatic download is off. A download can take a few minutes; the tool reports progress and can be cancelled.",
+    "inputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "CheckUpdatesInput",
+      "description": "The check_updates tool takes no inputs.",
+      "type": "object",
+      "additionalProperties": false
+    },
+    "outputSchema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "CheckUpdatesOutput",
+      "description": "What changed, and every package's status afterwards.",
+      "type": "object",
+      "properties": {
+        "updates": {
+          "description": "The packages whose release changed, each with the release used before\n(from) and now (to). Empty when nothing changed.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/UpdateInfo"
+          }
+        },
+        "downloaded": {
+          "description": "Names of the packages this call downloaded or repaired.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "packages": {
+          "description": "Every package the engine uses, with its status.",
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/PackageInfo"
+          }
+        },
+        "remote_config": {
+          "description": "The remote config just read.",
+          "$ref": "#/$defs/RemoteConfigInfo"
+        }
+      },
+      "additionalProperties": false,
+      "required": [
+        "updates",
+        "downloaded",
+        "packages",
+        "remote_config"
+      ],
+      "$defs": {
+        "UpdateInfo": {
+          "description": "A package whose release changed.",
+          "type": "object",
+          "properties": {
+            "name": {
+              "description": "The package name, such as logix-catalog.",
+              "type": "string"
+            },
+            "from": {
+              "description": "The release used before, as yyyy.mm.dd; omitted for a new package.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "to": {
+              "description": "The release used now, as yyyy.mm.dd.",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "to"
+          ]
+        },
+        "PackageInfo": {
+          "description": "A package (logix-catalog or logix-core) and whether it's downloaded.",
+          "type": "object",
+          "properties": {
+            "name": {
+              "description": "The package name: logix-catalog or logix-core.",
+              "type": "string"
+            },
+            "version": {
+              "description": "The package version: its release date, as yyyy.mm.dd.",
+              "type": "string",
+              "pattern": "^[0-9]{4}\\.[0-9]{2}\\.[0-9]{2}$"
+            },
+            "status": {
+              "$ref": "#/$defs/PackageStatus"
+            },
+            "components": {
+              "description": "The tools in logix-core, each its upstream release in a folder of\nits own, when the core is downloaded; empty otherwise, and for\nlogix-catalog.",
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/ComponentInfo"
+              }
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "version",
+            "status"
+          ]
+        },
+        "PackageStatus": {
+          "description": "Whether a package is ready to use.",
+          "oneOf": [
+            {
+              "description": "Downloaded and intact.",
+              "type": "string",
+              "const": "ready"
+            },
+            {
+              "description": "Not downloaded.",
+              "type": "string",
+              "const": "missing"
+            },
+            {
+              "description": "Downloaded but incomplete or damaged. It is repaired when a tool needs\nit, unless auto-download is off.",
+              "type": "string",
+              "const": "broken"
+            }
+          ]
+        },
+        "ComponentInfo": {
+          "description": "One tool in logix-core, such as verible.",
+          "type": "object",
+          "properties": {
+            "name": {
+              "description": "The component name: oss-cad-suite, openxc7, verible or elkjs\n(Windows).",
+              "type": "string"
+            },
+            "description": {
+              "type": "string"
+            },
+            "bin_folder": {
+              "description": "The folder with the component's programs, as an absolute path. For\nhosts that run one of its programs directly, such as Verible's\nlanguage server verible-verilog-ls from the verible component.",
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "name",
+            "description",
+            "bin_folder"
+          ]
+        },
+        "RemoteConfigInfo": {
+          "description": "The engine's remote config: which config file it reads, from where, and\nwhen it last read it. It reads it again before an operation when that\nwas more than 24 hours ago, or when a host calls check_updates.",
+          "type": "object",
+          "properties": {
+            "config_version": {
+              "description": "The config version this engine reads, such as 001\n(remote-config/logix-engine/config-001.jsonc in the engine's repo).",
+              "type": "string"
+            },
+            "source": {
+              "description": "Where it's read: a URL, or a local file for the diagnostic override.",
+              "type": "string"
+            },
+            "is_override": {
+              "description": "True when the source is LOGIX_ENGINE_DEV_REMOTE_CONFIG (a diagnostic\nsetting); omitted otherwise.",
+              "type": "boolean"
+            },
+            "read_at": {
+              "description": "When the config in use was read, in UTC (yyyy-mm-ddThh:mm:ssZ);\nomitted when it hasn't been read yet.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "additionalProperties": false,
+          "required": [
+            "config_version",
+            "source"
           ]
         }
       }

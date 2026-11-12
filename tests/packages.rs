@@ -12,6 +12,7 @@ use std::time::Duration;
 
 use logix_engine::errors::{ActionCode, Category};
 use logix_engine::packages::manifest::{self, Manifest};
+use logix_engine::packages::remote_config;
 use logix_engine::packages::{PackageManager, RECORD_FILE};
 use logix_engine::progress::{NoProgress, Phases, ProgressSink};
 use logix_engine::state::EngineState;
@@ -34,6 +35,28 @@ struct Served {
 struct Server {
     base: String,
     requests: Arc<AtomicUsize>,
+    /// The files it serves, by path; tests may change them.
+    files: Arc<Mutex<HashMap<String, Served>>>,
+}
+
+impl Server {
+    fn put(&self, path: &str, body: &[u8]) {
+        self.files.lock().unwrap().insert(
+            path.to_string(),
+            Served {
+                body: body.to_vec(),
+                stall_after: None,
+            },
+        );
+    }
+
+    fn remove(&self, path: &str) {
+        self.files.lock().unwrap().remove(path);
+    }
+
+    fn count(&self) -> usize {
+        self.requests.load(Ordering::SeqCst)
+    }
 }
 
 fn serve(files: HashMap<String, Served>) -> Server {
@@ -41,18 +64,23 @@ fn serve(files: HashMap<String, Served>) -> Server {
     let base = format!("http://{}", listener.local_addr().unwrap());
     let requests = Arc::new(AtomicUsize::new(0));
     let count = requests.clone();
-    let files = Arc::new(files);
+    let files = Arc::new(Mutex::new(files));
+    let shared = files.clone();
     std::thread::spawn(move || {
         for stream in listener.incoming().flatten() {
-            let files = files.clone();
+            let files = shared.clone();
             count.fetch_add(1, Ordering::SeqCst);
             std::thread::spawn(move || handle(stream, &files));
         }
     });
-    Server { base, requests }
+    Server {
+        base,
+        requests,
+        files,
+    }
 }
 
-fn handle(mut stream: TcpStream, files: &HashMap<String, Served>) {
+fn handle(mut stream: TcpStream, files: &Mutex<HashMap<String, Served>>) {
     let mut reader = BufReader::new(stream.try_clone().unwrap());
     let mut first = String::new();
     reader.read_line(&mut first).unwrap();
@@ -63,7 +91,8 @@ fn handle(mut stream: TcpStream, files: &HashMap<String, Served>) {
         }
     }
     let path = first.split_whitespace().nth(1).unwrap_or("").to_string();
-    let Some(file) = files.get(&path) else {
+    let file = files.lock().unwrap().get(&path).cloned();
+    let Some(file) = file else {
         let _ = stream
             .write_all(b"HTTP/1.1 404 Not Found\r\nContent-Length: 0\r\nConnection: close\r\n\r\n");
         return;
@@ -133,7 +162,6 @@ fn manifest_for(name: &str, version: &str, file: &str, data: &[u8], sha: Option<
         "packages": [{
             "name": name,
             "version": version,
-            "description": "test package",
             "files": { PLATFORM: {
                 "owner": "test", "repo": "pkg", "tag": version, "file": file,
                 "size": data.len(), "sha256": sha.map(str::to_string).unwrap_or_else(|| sha256(data)),
@@ -204,14 +232,14 @@ async fn downloads_a_missing_package() {
     let spec = s.pm.manifest().get("pkg").unwrap().clone();
     assert_eq!(s.pm.status(&spec), PackageStatus::Missing);
     assert!(package_info(&s.pm, &spec).components.is_empty());
-    assert_eq!(s.pm.needing_download(&["pkg"]).unwrap().len(), 1);
+    assert_eq!(s.pm.needing_download(&["pkg"]).await.unwrap().len(), 1);
 
     s.pm.download(&spec, &phases(), &CancellationToken::new())
         .await
         .unwrap();
 
     assert_eq!(s.pm.status(&spec), PackageStatus::Ready);
-    assert!(s.pm.needing_download(&["pkg"]).unwrap().is_empty());
+    assert!(s.pm.needing_download(&["pkg"]).await.unwrap().is_empty());
     let dir = s.pm.package_dir(&spec);
     assert_eq!(dir, s.engine.join("packages/pkg/2026-01-02"));
     assert_eq!(
@@ -230,7 +258,15 @@ async fn downloads_a_missing_package() {
     let record: serde_json::Value =
         serde_json::from_str(&std::fs::read_to_string(dir.join(RECORD_FILE)).unwrap()).unwrap();
     assert_eq!(record["name"], "pkg");
-    assert_eq!(record["version"], "2026-01-02");
+    assert_eq!(record["release"], "2026-01-02");
+    assert_eq!(record["platform"], PLATFORM);
+    assert_eq!(record["layout"], 1);
+    assert!(
+        record["downloaded_by"]
+            .as_str()
+            .unwrap()
+            .starts_with("logix-engine ")
+    );
     // Nothing left over: no partial download, no unpack folder.
     assert!(entries(&s.engine.join("downloads")).is_empty());
     assert_eq!(entries(&s.engine.join("packages/pkg")), vec!["2026-01-02"]);
@@ -248,7 +284,7 @@ async fn reports_increasing_progress() {
     let s = setup(good_package(), None, None);
     let rec = Arc::new(Rec::default());
     let phases = Phases::new(rec.clone(), 1);
-    let spec = s.pm.needing_download(&["pkg"]).unwrap();
+    let spec = s.pm.needing_download(&["pkg"]).await.unwrap();
     s.pm.ensure(&spec, true, &phases, &CancellationToken::new())
         .await
         .unwrap();
@@ -311,7 +347,7 @@ async fn a_record_from_another_release_is_broken() {
 #[tokio::test]
 async fn auto_download_off_is_a_setup_error_listing_the_packages() {
     let s = setup(good_package(), None, None);
-    let missing = s.pm.needing_download(&["pkg"]).unwrap();
+    let missing = s.pm.needing_download(&["pkg"]).await.unwrap();
     let err =
         s.pm.ensure(
             &missing,
@@ -356,12 +392,7 @@ async fn a_failed_download_is_a_setup_error() {
     assert!(err.details.contains("404"), "{}", err.details);
 
     // No server at all.
-    let pm = PackageManager::new(
-        &s.engine,
-        Arc::new(pm.manifest().clone()),
-        PLATFORM,
-        "http://127.0.0.1:9",
-    );
+    let pm = PackageManager::new(&s.engine, pm.manifest(), PLATFORM, "http://127.0.0.1:9");
     let err = pm
         .download(&spec, &phases(), &CancellationToken::new())
         .await
@@ -474,7 +505,10 @@ async fn download_packages_tool_downloads_once_even_with_auto_download_off() {
     assert_eq!(out.packages.len(), 1);
     assert_eq!(out.packages[0].status, PackageStatus::Ready);
     let reports = rec.0.lock().unwrap().clone();
-    assert_eq!(reports[0], (0.0, 100.0, Some("Downloading pkg".into())));
+    assert_eq!(
+        reports[0],
+        (0.0, 100.0, Some("Downloading pkg 2026.01.02".into()))
+    );
 
     // Again: nothing to do, no download, no progress.
     let rec2 = Arc::new(Messages::default());
@@ -533,18 +567,14 @@ async fn a_failed_redownload_keeps_the_current_copy() {
         .await
         .unwrap();
     // The server now has no file: the second download fails.
-    let pm = PackageManager::new(
-        &s.engine,
-        Arc::new(s.pm.manifest().clone()),
-        PLATFORM,
-        "http://127.0.0.1:9",
-    );
+    let pm = PackageManager::new(&s.engine, s.pm.manifest(), PLATFORM, "http://127.0.0.1:9");
     let err = pm
         .redownload(&spec, &phases(), &CancellationToken::new())
         .await
         .unwrap_err();
     assert_eq!(err.category, Category::Setup);
-    assert_eq!(pm.status(&spec), PackageStatus::Ready);
+    // The current copy stays (its receipt names the first server's URL).
+    assert_eq!(s.pm.status(&spec), PackageStatus::Ready);
     assert!(pm.package_dir(&spec).join("bin/tool").exists());
 }
 
@@ -575,18 +605,19 @@ async fn real_core_download() {
     let tmp = tempfile::tempdir().unwrap();
     let engine = tmp.path().canonicalize().unwrap().join("engine");
     std::fs::create_dir(&engine).unwrap();
-    let pm = PackageManager::new(
+    let pm = PackageManager::with_remote_config(
         &engine,
-        Arc::new(manifest::builtin().clone()),
+        remote_config::repo_file_source(),
+        true,
         "darwin-arm64",
         manifest::GITHUB,
     );
-    let missing = pm.needing_download(&["logix-core"]).unwrap();
+    let missing = pm.needing_download(&["logix-core"]).await.unwrap();
     let phases = Phases::new(Arc::new(NoProgress), missing.len());
     pm.ensure(&missing, true, &phases, &CancellationToken::new())
         .await
         .unwrap();
-    let spec = manifest::builtin().get("logix-core").unwrap();
+    let spec = &pm.spec("logix-core").unwrap();
     assert_eq!(pm.status(spec), PackageStatus::Ready);
     // get_engine_info reports where each component's programs are.
     let info = package_info(&pm, spec);
@@ -619,4 +650,271 @@ async fn real_core_download() {
             + &String::from_utf8_lossy(&out.stderr);
         assert!(text.contains(expect), "{tool} {arg}: {text}");
     }
+}
+
+// ----- The remote config: read, cached for 24 hours, switched, kept.
+
+/// A test release: its file and its SHA256SUMS.
+fn put_release(server: &Server, repo: &str, tag: &str, file: &str, data: &[u8]) {
+    let dir = format!("/test/{repo}/releases/download/{tag}");
+    server.put(&format!("{dir}/{file}"), data);
+    server.put(
+        &format!("{dir}/SHA256SUMS"),
+        format!("{}  {file}\n", sha256(data)).as_bytes(),
+    );
+}
+
+fn config_text(catalog: &str) -> String {
+    format!(
+        r#"// A test config.
+{{
+  "$schema": "https://www.openlogix.org/schemas/logix-remote-config-v1.json",
+  /* The tools. */
+  "logix-core": {{
+    "repo": "test/core",
+    "release": "2026-01-02",
+    "file": "core-${{PLATFORM}}-${{YYYYMMDD}}.tgz"
+  }},
+  "logix-catalog": {{
+    "repo": "test/catalog",
+    "release": "{catalog}",
+    "file": "catalog-${{YYYYMMDD}}.tgz"
+  }}
+}}
+"#
+    )
+}
+
+struct RemoteSetup {
+    _tmp: tempfile::TempDir,
+    engine: std::path::PathBuf,
+    server: Server,
+}
+
+/// A server with core 2026-01-02, catalogs 2026-01-02 and 2026-01-03, and a
+/// config naming catalog 2026-01-02, at /config.jsonc.
+fn remote_setup() -> RemoteSetup {
+    let tmp = tempfile::tempdir().unwrap();
+    let engine = tmp.path().canonicalize().unwrap().join("engine");
+    std::fs::create_dir(&engine).unwrap();
+    let server = serve(HashMap::new());
+    put_release(
+        &server,
+        "core",
+        "2026-01-02",
+        &format!("core-{PLATFORM}-20260102.tgz"),
+        &good_package(),
+    );
+    put_release(
+        &server,
+        "catalog",
+        "2026-01-02",
+        "catalog-20260102.tgz",
+        &good_package(),
+    );
+    put_release(
+        &server,
+        "catalog",
+        "2026-01-03",
+        "catalog-20260103.tgz",
+        &good_package(),
+    );
+    server.put("/config.jsonc", config_text("2026-01-02").as_bytes());
+    RemoteSetup {
+        _tmp: tmp,
+        engine,
+        server,
+    }
+}
+
+impl RemoteSetup {
+    fn pm(&self, network: bool, is_override: bool) -> PackageManager {
+        PackageManager::with_remote_config(
+            &self.engine,
+            remote_config::ConfigSource {
+                location: format!("{}/config.jsonc", self.server.base),
+                is_override,
+            },
+            network,
+            PLATFORM,
+            &self.server.base,
+        )
+    }
+}
+
+const BOTH: [&str; 2] = ["logix-catalog", "logix-core"];
+
+async fn download_all(pm: &PackageManager) -> Vec<String> {
+    let needed = pm.needing_download(&BOTH).await.unwrap();
+    pm.ensure(&needed, true, &phases(), &CancellationToken::new())
+        .await
+        .unwrap();
+    needed
+        .into_iter()
+        .map(|s| format!("{} {}", s.name, s.version))
+        .collect()
+}
+
+#[tokio::test]
+async fn reads_the_remote_config_then_downloads_what_it_names() {
+    let r = remote_setup();
+    let pm = r.pm(true, false);
+    assert!(
+        pm.manifest().packages.is_empty(),
+        "nothing before the first read"
+    );
+    assert_eq!(pm.remote_info().unwrap().fetched, None);
+    assert_eq!(
+        download_all(&pm).await,
+        ["logix-catalog 2026-01-02", "logix-core 2026-01-02"]
+    );
+    for name in BOTH {
+        assert_eq!(pm.status(&pm.spec(name).unwrap()), PackageStatus::Ready);
+    }
+    assert!(pm.remote_info().unwrap().fetched.is_some());
+    let record: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(
+            r.engine
+                .join("packages/logix-core/2026-01-02")
+                .join(RECORD_FILE),
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    assert_eq!(record["repo"], "test/core");
+    assert_eq!(
+        record["url"],
+        format!(
+            "{}/test/core/releases/download/2026-01-02/core-{PLATFORM}-20260102.tgz",
+            r.server.base
+        )
+    );
+    assert_eq!(record["size"], good_package().len());
+    // The config, the two SHA256SUMS and the two packages.
+    assert_eq!(r.server.count(), 5);
+}
+
+#[tokio::test]
+async fn the_cached_config_is_used_for_24_hours() {
+    let r = remote_setup();
+    download_all(&r.pm(true, false)).await;
+    let before = r.server.count();
+    // A new engine process with the same engine folder.
+    let pm = r.pm(true, false);
+    assert!(pm.remote_info().unwrap().fetched.is_some());
+    assert!(pm.needing_download(&BOTH).await.unwrap().is_empty());
+    assert_eq!(r.server.count(), before, "no network use");
+}
+
+#[tokio::test]
+async fn a_new_config_switches_releases_and_deletes_the_old_ones() {
+    let r = remote_setup();
+    let pm = r.pm(true, false);
+    download_all(&pm).await;
+    r.server
+        .put("/config.jsonc", config_text("2026-01-03").as_bytes());
+    let updates = pm.refresh(true, false).await.unwrap();
+    assert_eq!(updates.len(), 1);
+    assert_eq!(updates[0].name, "logix-catalog");
+    assert_eq!(updates[0].from.as_deref(), Some("2026.01.02"));
+    assert_eq!(updates[0].to, "2026.01.03");
+    assert_eq!(download_all(&pm).await, ["logix-catalog 2026-01-03"]);
+    assert_eq!(
+        entries(&r.engine.join("packages/logix-catalog")),
+        vec!["2026-01-03"]
+    );
+    assert_eq!(
+        entries(&r.engine.join("packages/logix-core")),
+        vec!["2026-01-02"]
+    );
+    // Nothing changed since: no updates.
+    assert!(pm.refresh(true, false).await.unwrap().is_empty());
+}
+
+#[tokio::test]
+async fn a_package_rebuilt_under_the_same_tag_is_downloaded_again() {
+    let r = remote_setup();
+    let pm = r.pm(true, false);
+    download_all(&pm).await;
+    let rebuilt = tgz(|b| add_file(b, "./rebuilt.txt", b"a rebuilt package", 0o644));
+    put_release(
+        &r.server,
+        "catalog",
+        "2026-01-02",
+        "catalog-20260102.tgz",
+        &rebuilt,
+    );
+    pm.refresh(true, false).await.unwrap();
+    assert_eq!(download_all(&pm).await, ["logix-catalog 2026-01-02"]);
+}
+
+#[tokio::test]
+async fn the_config_in_use_stays_when_a_new_one_cant_be_read() {
+    let r = remote_setup();
+    let pm = r.pm(true, false);
+    download_all(&pm).await;
+    r.server.remove("/config.jsonc");
+    assert!(pm.refresh(true, false).await.unwrap().is_empty());
+    assert!(pm.needing_download(&BOTH).await.unwrap().is_empty());
+    // A bad config is refused the same way.
+    r.server.put("/config.jsonc", b"{ \"nope\": 1 }");
+    assert!(pm.refresh(true, false).await.unwrap().is_empty());
+    assert_eq!(pm.spec("logix-catalog").unwrap().version, "2026-01-02");
+}
+
+#[tokio::test]
+async fn without_a_config_to_use_it_is_a_setup_error() {
+    let r = remote_setup();
+    r.server.remove("/config.jsonc");
+    let err = r.pm(true, false).needing_download(&BOTH).await.unwrap_err();
+    assert_eq!(err.category, Category::Setup);
+    assert!(
+        err.message
+            .contains("Can't read the engine's remote config"),
+        "{}",
+        err.message
+    );
+    assert!(err.message.contains("404"), "{}", err.message);
+}
+
+#[tokio::test]
+async fn with_automatic_download_off_only_a_request_reads_the_config() {
+    let r = remote_setup();
+    let pm = r.pm(false, false);
+    let err = pm.needing_download(&BOTH).await.unwrap_err();
+    assert!(
+        err.message.contains("automatic download is turned off"),
+        "{}",
+        err.message
+    );
+    assert_eq!(r.server.count(), 0);
+    pm.refresh(false, true).await.unwrap();
+    assert_eq!(pm.needing_download(&BOTH).await.unwrap().len(), 2);
+}
+
+#[tokio::test]
+async fn the_override_never_falls_back() {
+    let r = remote_setup();
+    let pm = r.pm(true, true);
+    download_all(&pm).await;
+    r.server.remove("/config.jsonc");
+    let err = pm.refresh(true, false).await.unwrap_err();
+    assert!(
+        err.message.contains(remote_config::DEV_REMOTE_CONFIG_VAR),
+        "{}",
+        err.message
+    );
+}
+
+#[tokio::test]
+async fn a_package_the_config_drops_is_deleted() {
+    let r = remote_setup();
+    let pm = r.pm(true, false);
+    download_all(&pm).await;
+    std::fs::create_dir_all(r.engine.join("packages/logix-old/2025-01-01")).unwrap();
+    pm.refresh(true, false).await.unwrap();
+    assert_eq!(
+        entries(&r.engine.join("packages")),
+        vec!["logix-catalog", "logix-core"]
+    );
 }

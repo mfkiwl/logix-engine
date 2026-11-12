@@ -45,8 +45,9 @@ pub struct EngineState {
 }
 
 impl EngineState {
-    /// Makes sure the board catalog is loaded: the logix-catalog package of
-    /// the manifest, downloaded first when needed and auto-download is on.
+    /// Makes sure the board catalog is loaded: the logix-catalog release the
+    /// remote config names, downloaded first when needed and auto-download
+    /// is on.
     /// A catalog folder from LOGIX_ENGINE_DEV_CATALOG_FOLDER, loaded at
     /// startup, stays.
     pub async fn ensure_catalog(
@@ -57,8 +58,8 @@ impl EngineState {
         if crate::catalog::source().is_some_and(|s| s.local) {
             return Ok(());
         }
-        let spec = self.packages.spec(CATALOG)?.clone();
-        let needed = self.packages.needing_download(&[CATALOG])?;
+        let needed = self.packages.needing_download(&[CATALOG]).await?;
+        let spec = self.packages.spec(CATALOG)?;
         if !needed.is_empty() {
             let phases = crate::progress::Phases::new(call.progress.clone(), 1);
             self.packages
