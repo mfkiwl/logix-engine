@@ -676,7 +676,12 @@ pub fn build(
             if let Some(b) = blocks.get_mut(name) {
                 b.fixed.insert(p.clone(), text.clone());
             }
-            add_label(&mut labels, "in", &text, new, "fixed", Some(name), Some(&p));
+            // An input whose value doesn't matter is left unconnected: a
+            // fresh net with nothing on it draws no wire (the user's choice,
+            // 2026-11-11). The model and the port's hover still say so.
+            if text != DONT_CARE {
+                add_label(&mut labels, "in", &text, new, "fixed", Some(name), Some(&p));
+            }
         }
     }
     for (pn, pv) in &module.ports {
@@ -684,6 +689,9 @@ pub fn build(
             let text = fixed_text(&pv.bits);
             let new = fresh(pv.bits.len());
             pins.insert(pn.clone(), new.clone());
+            if text == DONT_CARE {
+                continue;
+            }
             add_label(
                 &mut labels,
                 "in",
@@ -903,7 +911,7 @@ mod tests {
         "$meminit$9":{"type":"$meminit_v2","parameters":{"MEMID":"\\rom"},"attributes":{"src":"main.v:9.5-9.30"},
           "connections":{}},
         "$memrd$8":{"type":"$memrd_v2","parameters":{"MEMID":"\\rom"},
-          "port_directions":{"ADDR":"input","DATA":"output"},"connections":{"ADDR":[5],"DATA":[6]}}
+          "port_directions":{"ADDR":"input","EN":"input","DATA":"output"},"connections":{"ADDR":[5],"EN":["x"],"DATA":[6]}}
       },
       "netnames":{"clk":{"hide_name":0,"bits":[2]},"rst":{"hide_name":0,"bits":[3]},
                   "led":{"hide_name":0,"bits":[4]},"$auto$1":{"hide_name":1,"bits":[5]},
@@ -925,6 +933,10 @@ mod tests {
         assert_eq!(reg.title, "Register with reset");
         assert_eq!(reg.name.as_deref(), Some("q"));
         assert_eq!(m.blocks["$memrd$8"].memory.as_deref(), Some("rom"));
+        // An input whose value doesn't matter: no label, no wire, but the
+        // model says so.
+        assert_eq!(m.blocks["$memrd$8"].fixed["EN"], DONT_CARE);
+        assert!(!m.labels.values().any(|l| l.port.as_deref() == Some("EN")));
         let node = |name: &str| {
             s.nodes
                 .iter()
