@@ -1,6 +1,7 @@
 svg.logix-diagram{stroke:var(--logix-diagram-wire,#23303c);fill:none;stroke-linecap:round}
 svg.logix-diagram text{fill:var(--logix-diagram-text,var(--logix-diagram-wire,#23303c));stroke:none;font:400 10px var(--logix-diagram-font,ui-monospace,"SF Mono",Menlo,Consolas,monospace)}
 svg.logix-diagram .nodelabel{text-anchor:middle}
+svg.logix-diagram .glyph{text-anchor:middle;font-weight:600}
 svg.logix-diagram .bar,svg.logix-diagram .junction{fill:var(--logix-diagram-wire,#23303c);stroke:none}
 svg.logix-diagram .block>.body{stroke-width:1.6;fill:var(--logix-diagram-gate-fill,#e9eef3);stroke:var(--logix-diagram-gate,#4b5a69)}
 svg.logix-diagram .block>.mark{stroke:var(--logix-diagram-wire,#23303c)}

@@ -105,8 +105,11 @@ impl Shape {
     pub fn size(self) -> (f64, f64) {
         match self {
             Shape::Mux => (20.0, 40.0),
-            Shape::And | Shape::Nand | Shape::Or => (30.0, 25.0),
-            Shape::Nor | Shape::Xor | Shape::Xnor => (33.0, 25.0),
+            Shape::And | Shape::Or => (30.0, 25.0),
+            Shape::Xor => (33.0, 25.0),
+            // A negation bubble, then the output's square beside it.
+            Shape::Nand | Shape::Nor => (40.0, 25.0),
+            Shape::Xnor => (41.0, 25.0),
             Shape::Not => (30.0, 20.0),
             Shape::Add | Shape::Sub | Shape::Eq | Shape::Lt | Shape::Le | Shape::Ge | Shape::Gt => {
                 (25.0, 25.0)
@@ -130,12 +133,12 @@ impl Shape {
                 ("Y", 20.0, 20.0),
             ],
             Shape::And => &[("A", 0.0, 5.0), ("B", 0.0, 20.0), ("Y", 30.0, 12.5)],
-            Shape::Nand => &[("A", 0.0, 5.0), ("B", 0.0, 20.0), ("Y", 36.0, 12.5)],
+            Shape::Nand => &[("A", 0.0, 5.0), ("B", 0.0, 20.0), ("Y", 39.5, 12.5)],
             Shape::Or => &[("A", 3.0, 5.0), ("B", 3.0, 20.0), ("Y", 30.0, 12.5)],
-            Shape::Nor => &[("A", 3.0, 5.0), ("B", 3.0, 20.0), ("Y", 36.0, 12.5)],
+            Shape::Nor => &[("A", 3.0, 5.0), ("B", 3.0, 20.0), ("Y", 39.5, 12.5)],
             Shape::Xor => &[("A", 3.0, 5.0), ("B", 3.0, 20.0), ("Y", 33.0, 12.5)],
-            Shape::Xnor => &[("A", 3.0, 5.0), ("B", 3.0, 20.0), ("Y", 38.0, 12.5)],
-            Shape::Not => &[("A", 0.0, 10.0), ("Y", 25.0, 10.0)],
+            Shape::Xnor => &[("A", 3.0, 5.0), ("B", 3.0, 20.0), ("Y", 40.5, 12.5)],
+            Shape::Not => &[("A", 0.0, 10.0), ("Y", 28.5, 10.0)],
             Shape::Add | Shape::Sub | Shape::Eq | Shape::Lt | Shape::Le | Shape::Ge | Shape::Gt => {
                 TWO_IN
             }
@@ -147,8 +150,8 @@ impl Shape {
             ],
             Shape::Dffn => &[
                 ("Q", 30.0, 10.0),
-                ("CLK", -6.0, 30.0),
-                ("C", -6.0, 30.0),
+                ("CLK", -8.5, 30.0),
+                ("C", -8.5, 30.0),
                 ("D", 0.0, 10.0),
             ],
             Shape::PinIn => &[("Y", 28.0, 10.0)],
@@ -278,6 +281,22 @@ mod tests {
             Shape::for_cell("SB_IO", ["D_IN_0"].into_iter()),
             Shape::Generic
         );
+    }
+
+    #[test]
+    fn port_squares_are_outside_negation_bubbles() {
+        // Each bubble's right edge, and the 5-unit square centered on the port.
+        for (shape, bubble) in [
+            (Shape::Not, 26.0),
+            (Shape::Nand, 37.0),
+            (Shape::Nor, 37.0),
+            (Shape::Xnor, 38.0),
+        ] {
+            let (x, _) = shape.port("Y").unwrap();
+            assert!(x - 2.5 >= bubble, "{shape:?}");
+            assert!(x <= shape.size().0 + 0.5, "{shape:?}");
+        }
+        assert!(Shape::Dffn.port("CLK").unwrap().0 + 2.5 <= -6.0);
     }
 
     #[test]

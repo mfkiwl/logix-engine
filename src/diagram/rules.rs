@@ -76,6 +76,10 @@ pub struct Block {
     /// A memory's initial contents: where they're loaded.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub memory_init: Option<Source>,
+    /// A memory or memory port's memory, by name: its read and write ports
+    /// share it.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub memory: Option<String>,
     /// Inputs fixed to a value, by port, such as {"B": "1"}.
     #[serde(skip_serializing_if = "IndexMap::is_empty")]
     pub fixed: IndexMap<String, String>,
@@ -275,6 +279,46 @@ fn fixed_text(bits: &[Bit]) -> String {
     }
 }
 
+/// The longest title shown above a block; longer ones are cut, with "…".
+const MAX_TITLE: usize = 18;
+
+/// A title, cut to `MAX_TITLE` characters.
+fn short_title(t: &str) -> String {
+    if t.chars().count() <= MAX_TITLE {
+        t.to_string()
+    } else {
+        let cut: String = t.chars().take(MAX_TITLE - 1).collect();
+        format!("{cut}…")
+    }
+}
+
+/// The short sign inside a generic logic block, saying what it is.
+fn glyph(ty: &str) -> Option<&'static str> {
+    Some(match ty {
+        "$memrd" | "$memrd_v2" => "RD",
+        "$memwr" | "$memwr_v2" => "WR",
+        "$mem" | "$mem_v2" => "MEM",
+        "$reduce_and" => "&",
+        "$reduce_or" | "$reduce_bool" => "|",
+        "$reduce_xor" => "^",
+        "$reduce_xnor" => "~^",
+        "$ne" => "≠",
+        "$mul" => "×",
+        "$div" => "÷",
+        "$mod" => "%",
+        "$neg" => "−",
+        "$shl" | "$sshl" => "<<",
+        "$shr" => ">>",
+        "$sshr" => ">>>",
+        "$shift" | "$shiftx" => "<>",
+        "$bmux" => "MUX",
+        "$tribuf" => "Z",
+        _ if ty.starts_with("$dlatch") || ty.starts_with("$adlatch") => "LAT",
+        _ if category(ty) == "reg" => "REG",
+        _ => return None,
+    })
+}
+
 /// The most bits a fixed value may have to be drawn as a label.
 const MAX_LABEL_BITS: usize = 32;
 
@@ -362,6 +406,7 @@ pub fn build(
                 module: Some(key.clone()),
                 source,
                 memory_init: None,
+                memory: None,
                 fixed: IndexMap::new(),
                 ports: IndexMap::new(),
             }
@@ -377,6 +422,7 @@ pub fn build(
                 module: None,
                 source,
                 memory_init: None,
+                memory: None,
                 fixed: IndexMap::new(),
                 ports: IndexMap::new(),
             }
@@ -398,6 +444,9 @@ pub fn build(
                 module: None,
                 source,
                 memory_init,
+                memory: netlist::text(w.cell.parameters.get("MEMID"))
+                    .filter(|_| t.starts_with("$mem"))
+                    .map(plain_name),
                 fixed: IndexMap::new(),
                 ports: IndexMap::new(),
             }
@@ -728,15 +777,19 @@ pub fn build(
         }
         n.category = Some(block.category);
         n.is_dff = w.ty == "$dff";
+        // Above a block only a name worth reading: a module's, a register's
+        // or a memory's (shared by its ports), cut when long. What other
+        // blocks are shows as a short sign inside, and in full on hover.
         n.title = match block.kind {
             BlockKind::Module => Some(block.title.clone()),
             BlockKind::Fpga => None,
-            BlockKind::Logic => match (&block.name, shape) {
-                (Some(reg), _) => Some(reg.clone()),
-                (None, Shape::Generic) => Some(block.title.clone()),
-                _ => None,
-            },
-        };
+            BlockKind::Logic => block.memory.clone().or_else(|| block.name.clone()),
+        }
+        .map(|t| short_title(&t));
+        if shape == Shape::Generic && block.kind == BlockKind::Logic {
+            n.glyph = glyph(&w.ty).map(str::to_string);
+        }
+        n.memory = block.memory.clone();
         nodes.push(n);
     }
     let mut pin_models: IndexMap<String, Pin> = IndexMap::new();
@@ -863,6 +916,18 @@ mod tests {
         assert_eq!(reg.fixed["D"], "1");
         assert_eq!(reg.title, "Register with reset");
         assert_eq!(reg.name.as_deref(), Some("q"));
+        assert_eq!(m.blocks["$memrd$8"].memory.as_deref(), Some("rom"));
+        let node = |name: &str| {
+            s.nodes
+                .iter()
+                .find(|n| n.role == Role::Block(name.into()))
+                .unwrap()
+        };
+        // A memory port: its memory's name above, a sign inside.
+        assert_eq!(node("$memrd$8").title.as_deref(), Some("rom"));
+        assert_eq!(node("$memrd$8").glyph.as_deref(), Some("RD"));
+        assert_eq!(node("$procdff$2").title.as_deref(), Some("q"));
+        assert_eq!(node("pad").title, None);
         assert!(reg.ports["CLK"].by_label);
         assert_eq!(reg.ports["CLK"].signal, "clk");
         // A fixed module output: a label too.
@@ -901,6 +966,18 @@ mod tests {
         let one = DESIGN.replace(r#""CLK":[2],"SRST""#, r#""CLK":[7],"SRST""#);
         let (_, m, _) = cx_build(&module(&one));
         assert!(!m.labels.values().any(|l| l.text == "clk"));
+    }
+
+    #[test]
+    fn long_titles_are_cut() {
+        assert_eq!(short_title("bram_data_out"), "bram_data_out");
+        assert_eq!(
+            short_title("a_very_long_register_name"),
+            "a_very_long_regis…"
+        );
+        assert_eq!(glyph("$memwr_v2"), Some("WR"));
+        assert_eq!(glyph("$sdffe"), Some("REG"));
+        assert_eq!(glyph("$add"), None);
     }
 
     #[test]

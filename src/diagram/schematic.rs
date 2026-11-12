@@ -84,6 +84,11 @@ pub struct Node {
     /// A plain register ($dff): wires from it get no layout priority, as in
     /// netlistsvg.
     pub is_dff: bool,
+    /// A short sign drawn inside a generic block, such as RD.
+    pub glyph: Option<String>,
+    /// A memory port's memory: hovering one of its blocks lights up the
+    /// others.
+    pub memory: Option<String>,
 }
 
 impl Node {
@@ -98,6 +103,8 @@ impl Node {
             text: None,
             category: None,
             is_dff: false,
+            glyph: None,
+            memory: None,
         }
     }
 
@@ -321,10 +328,18 @@ impl Schematic {
                         json!({"id": format!("{}.{k}", n.id), "width": 0, "height": 0, "x": x, "y": y})
                     })
                     .collect();
-                json!({
+                let mut child = json!({
                     "id": n.id, "width": w, "height": h, "ports": ports,
                     "layoutOptions": {"org.eclipse.elk.portConstraints": "FIXED_POS"},
-                })
+                });
+                // The title above the block: ELK makes room for it, so it
+                // doesn't run into its neighbours.
+                if let Some(t) = &n.title {
+                    child["labels"] = json!([{"text": t, "width": text_width(t), "height": TITLE_HEIGHT}]);
+                    child["layoutOptions"]["org.eclipse.elk.nodeLabels.placement"] =
+                        json!("[H_CENTER, V_TOP, OUTSIDE]");
+                }
+                child
             })
             .collect();
         let mut edges: Vec<Value> = vec![];
@@ -392,11 +407,19 @@ impl Schematic {
         classes: &dyn Fn(&[u64]) -> Option<&'static str>,
         module_key: &str,
     ) -> String {
-        let positions: HashMap<&str, (f64, f64)> = laid["children"]
+        let positions: HashMap<&str, (f64, f64, Option<(f64, f64)>)> = laid["children"]
             .as_array()
             .into_iter()
             .flatten()
-            .filter_map(|c| Some((c["id"].as_str()?, (c["x"].as_f64()?, c["y"].as_f64()?))))
+            .filter_map(|c| {
+                let label = c["labels"][0]["x"]
+                    .as_f64()
+                    .zip(c["labels"][0]["y"].as_f64());
+                Some((
+                    c["id"].as_str()?,
+                    (c["x"].as_f64()?, c["y"].as_f64()?, label),
+                ))
+            })
             .collect();
         let width = laid["width"].as_f64().unwrap_or(100.0);
         let height = laid["height"].as_f64().unwrap_or(100.0);
@@ -414,10 +437,10 @@ impl Schematic {
         let mut blocks = String::new();
         let mut boxes = String::new();
         for n in &self.nodes {
-            let Some(&(x, y)) = positions.get(n.id.as_str()) else {
+            let Some(&(x, y, label)) = positions.get(n.id.as_str()) else {
                 continue;
             };
-            render_node(n, x, y, &mut blocks, &mut boxes);
+            render_node(n, x, y, label, &mut blocks, &mut boxes);
         }
         let mut wires = String::new();
         for (e, net) in edges.iter().zip(&layout.nets) {
@@ -506,14 +529,24 @@ fn point(v: &Value) -> (f64, f64) {
 
 /// Draws a node into `out`, and its port squares into `boxes` (drawn above
 /// the wires, so no wire runs into one).
-fn render_node(n: &Node, x: f64, y: f64, out: &mut String, boxes: &mut String) {
+fn render_node(
+    n: &Node,
+    x: f64,
+    y: f64,
+    label: Option<(f64, f64)>,
+    out: &mut String,
+    boxes: &mut String,
+) {
     let (w, h) = n.size();
     let mut class = String::from("block");
     if let Some(c) = n.category {
         write!(class, " cat-{c}").unwrap();
     }
     let data = match &n.role {
-        Role::Block(name) => format!(r#" data-block="{}""#, esc(name)),
+        Role::Block(name) => match &n.memory {
+            Some(m) => format!(r#" data-block="{}" data-memory="{}""#, esc(name), esc(m)),
+            None => format!(r#" data-block="{}""#, esc(name)),
+        },
         Role::Pin(name) => format!(r#" data-pin="{}""#, esc(name)),
         Role::Label(id) => {
             class.push_str(" label");
@@ -551,11 +584,27 @@ fn render_node(n: &Node, x: f64, y: f64, out: &mut String, boxes: &mut String) {
     )
     .unwrap();
     if let Some(t) = &n.title {
+        // Where ELK put it, else centered just above the block.
+        let (tx, ty) = match label {
+            Some((lx, ly)) => (lx + text_width(t) / 2.0, ly + TITLE_HEIGHT - 2.0),
+            None => (w / 2.0, -4.0),
+        };
         write!(
             out,
-            r#"<text x="{}" y="-4" class="nodelabel">{}</text>"#,
-            num(w / 2.0),
+            r#"<text x="{}" y="{}" class="nodelabel">{}</text>"#,
+            num(tx),
+            num(ty),
             esc(t)
+        )
+        .unwrap();
+    }
+    if let Some(g) = &n.glyph {
+        write!(
+            out,
+            r#"<text x="{}" y="{}" class="glyph">{}</text>"#,
+            num(w / 2.0),
+            num(h / 2.0 + 3.5),
+            esc(g)
         )
         .unwrap();
     }
@@ -834,6 +883,13 @@ fn remove_dummy_edges(edges: &mut [Value], meets: &[Option<(usize, bool)>]) {
         }
         n += 1;
     }
+}
+
+/// A title's height, and its width at 6 units per character (10-unit
+/// monospace text).
+const TITLE_HEIGHT: f64 = 11.0;
+fn text_width(t: &str) -> f64 {
+    t.chars().count() as f64 * 6.0
 }
 
 /// A coordinate, rounded to hundredths.
