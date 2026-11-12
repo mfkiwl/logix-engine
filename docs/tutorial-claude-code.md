@@ -2,7 +2,7 @@
 
 In this tutorial, [Claude Code](https://claude.com/claude-code) designs
 hardware for you through Logix Engine. You describe what you want, such as
-"make the LEDs sweep back and forth", and Claude writes the necessary source
+"make the LED fade through the colors of the rainbow", and Claude writes the necessary source
 files, builds them, tests them, shows the waveforms and programs the board.
 You don't need to set up a toolchain, write Verilog yourself or even
 understand the Verilog language.
@@ -28,9 +28,9 @@ project.
   `claude` starts it in a terminal. If it isn't installed yet, follow the
   official [Claude Code installation instructions](https://code.claude.com/docs/en/setup).
 - An FPGA board from the engine's catalog, and its USB cable. The examples
-  use the **Alhambra II**, which has 8 LEDs. Any board in the catalog works:
-  replace "Alhambra II" with your board in the prompts, and Claude adapts
-  the designs to it.
+  use the **iCESugar v1.5**, which has an RGB LED and 4 switches. Any board
+  in the catalog works: replace "iCESugar v1.5" with your board in the
+  prompts, and Claude adapts the designs to it.
 
 > [!NOTE]
 > Without a board, you can still do every step but 9.
@@ -160,17 +160,18 @@ what's on their pins. Find yours, and ask about it:
 **Claude Code:**
 
 ```text
-Tell me about the Alhambra II: its FPGA, its clock, and its LEDs.
+Tell me about the iCESugar v1.5: its FPGA, its clock, its LED and its switches.
 ```
 
-Claude answers from the engine's board catalog: an iCE40 HX4K, a 12 MHz
-clock on pin 49, and 8 LEDs with their pins. It never has to guess a pin.
+Claude answers from the engine's board catalog: an iCE40 UltraPlus UP5K, a
+12 MHz clock on pin 35, an RGB LED that's lit when its pins are low, and 4
+switches, with their pins. It never has to guess a pin.
 To see how two boards differ:
 
 **Claude Code:**
 
 ```text
-Compare the Alhambra II with the iCEstick.
+Compare the iCESugar v1.5 with the iCEBreaker.
 ```
 
 ## 6. Blink an LED
@@ -178,12 +179,12 @@ Compare the Alhambra II with the iCEstick.
 **Claude Code:**
 
 ```text
-Start a new project here for the Alhambra II: blink LED 0 about once a second. Then build it.
+Start a new project here for the iCESugar v1.5: blink the RGB LED in green about once a second. Then build it.
 ```
 
 Claude writes three files and builds them:
 
-- `main.v`: the design, a counter whose top bit drives the LED.
+- `main.v`: the design, a counter whose top bit drives the LED's green pin.
 - `pinout.pcf`: which FPGA pins the design's signals use.
 - `logix.json`: Claude's notes on the project, such as its board.
 
@@ -199,7 +200,7 @@ simulation that checks what the design does:
 **Claude Code:**
 
 ```text
-Write a testbench that checks LED 0 turns on and off at the right times, using a small counter so the test is quick. Run it.
+Write a testbench that checks the green LED turns on and off at the right times, using a small counter so the test is quick. Run it.
 ```
 
 Claude writes `main_tb.v`, and the test passes. Now see a failure:
@@ -243,8 +244,8 @@ Then:
 Program the board with the design.
 ```
 
-LED 0 blinks, about once a second: a design that went from a sentence to
-real hardware.
+The LED blinks green, about once a second: a design that went from a
+sentence to real hardware.
 
 ## 10. Change it with prompts
 
@@ -255,25 +256,25 @@ and watch the board after each:
 **Claude Code:**
 
 ```text
-Change the design: make the 8 LEDs count in binary, about 4 counts a second. Update the testbench, run it, then program the board.
+Change the design: make the LED step through its 8 colors (off, red, green, blue and their mixes), about 2 a second. Update the testbench, run it, then program the board.
 ```
 
 **Claude Code:**
 
 ```text
-Change it into a Knight Rider light: one LED sweeping back and forth, about one sweep a second. Test it and program the board.
+Use the 4 switches: switch 1 pauses the colors, and switches 2 to 4 set the speed. Test it and program the board.
 ```
 
 **Claude Code:**
 
 ```text
-Make the sweeping LED leave a fading trail behind it, using PWM. Program the board.
+Make the LED fade smoothly through the colors of the rainbow, using PWM. Program the board.
 ```
 
 **Claude Code:**
 
 ```text
-Make LED 0 breathe slowly on and off, like a sleeping laptop, while the other LEDs keep sweeping.
+When switch 1 is on, make the LED breathe slowly on and off in blue, like a sleeping laptop, instead of the rainbow.
 ```
 
 Bigger changes work too:
@@ -281,12 +282,12 @@ Bigger changes work too:
 **Claude Code:**
 
 ```text
-Put the sweep in its own module with a speed parameter, give it its own testbench, and keep main.v short. Run all the tests.
+Put the rainbow in its own module with a speed parameter, give it its own testbench, and keep main.v short. Run all the tests.
 ```
 
 > [!TIP]
 > If the board does something you didn't expect, say what you see, such as
-> "the LEDs are lit when they should be off", and let Claude find out why.
+> "the LED is green when it should be red", and let Claude find out why.
 
 ## 11. Ask questions
 
@@ -360,10 +361,10 @@ again and ask again.
 
 Some ideas, each one prompt:
 
-- "Show a progress bar on the LEDs that fills up every 3 seconds, then starts over."
-- "Make a reaction game: light a random LED, and count how long until I press a button." Tell Claude which pin your board's button is on, if the engine's catalog doesn't list it.
-- "Turn the LED pattern into a table at the top of main.v that I can edit."
-- "Make the design work on the iCEstick too." Then ask what changed.
+- "Send 'hello' over the board's USB serial port once a second, and show me how to read it on my Mac."
+- "Make a reaction game: light the LED in a random color, and count how long until I flip switch 1."
+- "Turn the color sequence into a table at the top of main.v that I can edit."
+- "Make the design work on the iCEBreaker too." Then ask what changed.
 
 Start each new design in its own folder, and run `claude` there.
 
