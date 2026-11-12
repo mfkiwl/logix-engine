@@ -261,8 +261,9 @@ fn category(ty: &str) -> &'static str {
     }
 }
 
-/// A fixed value as a label shows it: decimal, or hex from 10 up; "x" when
-/// it has undefined bits.
+/// A fixed value as a label shows it: decimal, or hex from 10 up; "don't
+/// care" when it has undefined bits (yosys's x: an input left unconnected,
+/// whose value doesn't matter).
 fn fixed_text(bits: &[Bit]) -> String {
     let digits: Option<String> = bits
         .iter()
@@ -275,7 +276,7 @@ fn fixed_text(bits: &[Bit]) -> String {
     match digits.and_then(|d| u64::from_str_radix(&d, 2).ok()) {
         Some(v) if bits.len() == 1 || v < 10 => v.to_string(),
         Some(v) => format!("0x{v:x}"),
-        None => "x".into(),
+        None => DONT_CARE.into(),
     }
 }
 
@@ -318,6 +319,9 @@ fn glyph(ty: &str) -> Option<&'static str> {
         _ => return None,
     })
 }
+
+/// The label of an input whose value doesn't matter.
+pub const DONT_CARE: &str = "don't care";
 
 /// The most bits a fixed value may have to be drawn as a label.
 const MAX_LABEL_BITS: usize = 32;
@@ -714,7 +718,11 @@ pub fn build(
     for l in labels.values() {
         let name = if l.kind == "fixed" {
             classes.fixed.extend(&l.bits);
-            format!("fixed value {}", l.text)
+            if l.text == DONT_CARE {
+                "not connected (don't care)".to_string()
+            } else {
+                format!("fixed value {}", l.text)
+            }
         } else {
             classes.labeled.extend(&l.bits);
             l.text.clone()
@@ -991,6 +999,6 @@ mod tests {
         assert_eq!(fixed_text(&c("1")), "1");
         assert_eq!(fixed_text(&c("0101")), "5");
         assert_eq!(fixed_text(&c("11111111")), "0xff");
-        assert_eq!(fixed_text(&c("1x")), "x");
+        assert_eq!(fixed_text(&c("1x")), "don't care");
     }
 }

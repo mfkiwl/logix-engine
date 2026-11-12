@@ -58,10 +58,11 @@ button[hidden] { display: none; }
 .canvas svg .block * { pointer-events: all; }
 .canvas svg .portbox { pointer-events: all; }
 .canvas svg .hit { stroke: transparent; stroke-width: 10; pointer-events: stroke; }
-.canvas svg .hl > .body { stroke: var(--hover); stroke-width: 2.2; }
-.canvas svg .portbox.hl { fill: var(--hover); stroke: var(--hover); }
-.canvas svg .netHl { stroke: var(--hover); stroke-width: 2.5; }
-.canvas svg .junction.netHl { fill: var(--hover); }
+/* Highlights win over the SVG's own colors (its style comes later). */
+.canvas svg .hl > .body { stroke: var(--hover) !important; stroke-width: 2.2 !important; }
+.canvas svg .portbox.hl { fill: var(--hover) !important; stroke: var(--hover) !important; }
+.canvas svg .netHl { stroke: var(--hover) !important; stroke-width: 2.5 !important; }
+.canvas svg .junction.netHl { fill: var(--hover) !important; }
 .hint { position: absolute; left: 10px; bottom: 8px; font-size: 12px; color: var(--muted); pointer-events: none; background: var(--logix-diagram-sheet); padding: 2px 6px; border-radius: 4px; }
 .note { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; color: var(--muted); text-align: center; line-height: 1.5; }
 .pop { position: fixed; z-index: 20; max-width: 320px; pointer-events: none; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 6px 20px rgb(0 0 0 / .18); padding: 10px 12px; }
@@ -288,7 +289,8 @@ button[hidden] { display: none; }
       const p = (info.ports || {})[t.dataset.port] || {};
       const fixed = (info.fixed || {})[t.dataset.port];
       let html = `<p class="title">${esc(t.dataset.port)}</p><p class="sub">${esc(p.direction || "port")}${p.width ? ", " + bitsText(p.width) : ""} of ${esc(info.name || info.title || "")}</p><dl class="kv">`;
-      if (fixed != null) html += `<dt>Fixed to</dt><dd>${esc(fixed)}</dd>`;
+      if (fixed === "don't care") html += `<dt>Value</dt><dd>don't care: not connected, any value will do</dd>`;
+      else if (fixed != null) html += `<dt>Fixed to</dt><dd>${esc(fixed)}</dd>`;
       else html += `<dt>Signal</dt><dd>${esc(p.signal || "unnamed")}</dd>`;
       show(html + "</dl>", cx, cy);
       return;
@@ -297,7 +299,8 @@ button[hidden] { display: none; }
     if (lbl) {
       const l = (m.labels || {})[lbl.dataset.label] || {};
       if (l.kind === "signal") { const names = labeledNames(); lightWires((bits) => { const s = signal(bits[0]); return s && s.name === l.text && names.has(l.text); }); }
-      let sub = l.kind === "fixed" ? "a fixed value" : "a signal, drawn as a label";
+      let sub = l.text === "don't care" ? "not connected: any value will do"
+        : l.kind === "fixed" ? "a fixed value" : "a signal, drawn as a label";
       if (l.block && l.direction === "in") {
         const box = blockBox(l.block, l.port);
         if (box) light(box, "hl");
