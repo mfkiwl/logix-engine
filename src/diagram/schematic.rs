@@ -407,7 +407,7 @@ impl Schematic {
         classes: &dyn Fn(&[u64]) -> Option<&'static str>,
         module_key: &str,
     ) -> String {
-        let positions: HashMap<&str, (f64, f64, Option<(f64, f64)>)> = laid["children"]
+        let positions: HashMap<&str, Placed> = laid["children"]
             .as_array()
             .into_iter()
             .flatten()
@@ -499,6 +499,9 @@ impl Schematic {
         )
     }
 }
+
+/// Where ELK put a node, and its title if it has one.
+type Placed = (f64, f64, Option<(f64, f64)>);
 
 /// The graph ELK lays out, with what drawing needs to know about its edges.
 pub struct LayoutGraph {
